@@ -31,4 +31,14 @@ make install
 cd $SKNANO_HOME
 ```
 
+### Check Python compatibility
+```python
+from ROOT import Particle
+p = Particle()
+p.SetPtEtaPhiM(30, 2.1, 1.3, 0.1)
+p.SetCharge(1)
+p.Print()
+```
+
+
 If you want to compile with updated source codes, remove the build directory follow the steps again.
