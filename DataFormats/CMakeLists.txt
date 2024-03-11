@@ -24,11 +24,9 @@ target_link_libraries(DataFormats ${ROOT_LIBRARIES})
 # Specify where to install the library
 install(TARGETS DataFormats DESTINATION lib)
 
-# Glob the .rootmap and .pcm files and install them
-message(STATUS "Current binary dir: ${CMAKE_CURRENT_BINARY_DIR}")
-file(GLOB ROOTMAPS "${CMAKE_CURRENT_BINARY_DIR}/*.rootmap")
-file(GLOB PCMS "${CMAKE_CURRENT_BINARY_DIR}/*.pcm")
-message(STATUS "Rootmaps: ${ROOTMAPS}")
-message(STATUS "PCMs: ${PCMS}")
-
-install(FILES ${ROOTMAPS} ${PCMS} DESTINATION lib)
+# Iinstall .rootmap and .pcm files to the lib
+set(ROOTMAP "${CMAKE_CURRENT_BINARY_DIR}/libDataFormats.rootmap")
+set(PCM "${CMAKE_CURRENT_BINARY_DIR}/libDataFormats_rdict.pcm")
+message(STATUS "ROOTMAP: ${ROOTMAP}")
+message(STATUS "PCM: ${PCM}")
+install(FILES ${ROOTMAP} ${PCM} DESTINATION lib)
