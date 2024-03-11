@@ -4,3 +4,4 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class Particle+;
+#pragma link C++ class Lepton+;

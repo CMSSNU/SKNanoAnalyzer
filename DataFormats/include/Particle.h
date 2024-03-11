@@ -35,7 +35,7 @@ public:
     virtual void Print();
 
 private:
-    double j_Charge;
+    float j_Charge;
     ClassDef(Particle, 1)
 
 };
