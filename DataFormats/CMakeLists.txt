@@ -3,13 +3,19 @@ include_directories(${ROOT_INCLUDE_DIRS})
 
 # Generate the ROOT dictionary before defining the library
 ROOT_GENERATE_DICTIONARY(G__DataFormats 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Particle.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Lepton.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Muon.h
     LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/DataFormatsLinkDef.h
 )
 
 # Define the library with source files and the generated dictionary
 add_library(DataFormats SHARED
+    src/Event.cc
     src/Particle.cc
+    src/Lepton.cc
+    src/Muon.cc
     G__DataFormats.cxx
 )
 
@@ -24,7 +30,9 @@ target_link_libraries(DataFormats ${ROOT_LIBRARIES})
 # Specify where to install the library
 install(TARGETS DataFormats DESTINATION lib)
 
-# Glob the .rootmap and .pcm files and install them
-file(GLOB ROOTMAPS ${CMAKE_CURRENT_BINARY_DIR}/*.rootmap)
-file(GLOB PCMS ${CMAKE_CURRENT_BINARY_DIR}/*.pcm)
-install(FILES ${ROOTMAPS} ${PCMS} DESTINATION lib)
+# Iinstall .rootmap and .pcm files to the lib
+set(ROOTMAP "${CMAKE_CURRENT_BINARY_DIR}/libDataFormats.rootmap")
+set(PCM "${CMAKE_CURRENT_BINARY_DIR}/libDataFormats_rdict.pcm")
+message(STATUS "ROOTMAP: ${ROOTMAP}")
+message(STATUS "PCM: ${PCM}")
+install(FILES ${ROOTMAP} ${PCM} DESTINATION lib)
