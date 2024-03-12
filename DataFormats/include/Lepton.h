@@ -8,31 +8,29 @@ public:
     Lepton();
     ~Lepton();
 
-    void SetdXY(float dXY, float dXYerr) { j_dXY = dXY; j_dXYerr = dXYerr;}
-    inline float dXY() const {return j_dXY;}
-    inline float dXYerr() const {return j_dXYerr;}
+    void SetdXY(float dxy, float dxyErr) { j_dxy = dxy; j_dxyErr = dxyErr;}
+    inline float dXY() const {return j_dxy;}
+    inline float dXYerr() const {return j_dxyErr;}
 
-    void SetdZ(float dZ, float dZerr) { j_dZ = dZ; j_dZerr = dZerr;}
-    inline float dZ() const {return j_dZ;}
-    inline float dZerr() const {return j_dZerr;}
+    void SetdZ(float dz, float dzErr) { j_dz = dz; j_dzErr = dzErr;}
+    inline float dZ() const {return j_dz;}
+    inline float dZerr() const {return j_dzErr;}
 
-    void SetIP3D(float IP3D, double IP3Derr) { j_IP3D = IP3D; j_IP3Derr = IP3Derr;}
-    inline float IP3D() const {return j_IP3D;}
-    inline float IP3Derr() const {return j_IP3Derr;}
+    void SetIP3D(float ip3d, float sip3d) { j_ip3d = ip3d; j_sip3d = sip3d;}
+    inline float IP3D() const {return j_ip3d;}
+    inline float SIP3d() const {return j_sip3d;}
 
     //==== AbsIso will be set in Muon/Electron,
     //==== and use SetRelIso to save calculated RelIso
-    void SetRelIso(float r) {j_RelIso = r;}
-    inline float RelIso() const {return j_RelIso;}
+    void SetTkRelIso(float r) {j_tkRelIso = r;}
+    void SetPfRelIso03(float r) {j_pfRelIso03_all = r;}
+    void SetPfRelIso04(float r) {j_pfRelIso04_all = r;}
+    void SetMiniPFRelIso(float r) {j_miniPFRelIso_all = r;}
+    inline float TkRelIso() const {return j_tkRelIso;}
+    inline float PfRelIso03() const {return j_pfRelIso03_all;}
+    inline float PfRelIso04() const {return j_pfRelIso04_all;}
+    inline float MiniPFRelIso() const {return j_miniPFRelIso_all;}
 
-    // TODO: MiniIso already calculated in NANOAOD -> need fix
-    void SetMiniIso(float ch, float nh, float ph, float pu, float rho, float EA) {
-        float r_mini = ConeSizeMiniIso();
-        float correction = rho * EA * (r_mini/0.3) * (r_mini/0.3);
-        float correctedIso = ch + max(float(0.), nh + ph - correction);
-        j_MiniRelIso = correctedIso/this->Pt();
-    }
-    inline float MiniRelIso() const {return j_MiniRelIso;}
     // UPDATE: miniIsoDr to ConeSizeMiniIso
     float ConeSizeMiniIso() const;
 
@@ -60,12 +58,11 @@ public:
     virtual void Print();
 
 private:
-    double j_dXY, j_dXYerr;
-    double j_dZ, j_dZerr;
-    double j_IP3D, j_IP3Derr;
-
-    double j_RelIso, j_MiniRelIso;
-    double j_ptcone;
+    float j_dxy, j_dxyErr;
+    float j_dz, j_dzErr;
+    float j_ip3d, j_sip3d;
+    float j_tkRelIso, j_pfRelIso03_all, j_pfRelIso04_all, j_miniPFRelIso_all;
+    float j_ptcone;
     Flavour j_LeptonFlavour;
 
     ClassDef(Lepton,1)

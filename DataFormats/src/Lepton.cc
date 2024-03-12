@@ -3,14 +3,16 @@
 ClassImp(Lepton)
 
 Lepton::Lepton(): Particle() {
-    j_dXY = -999.;
-    j_dXYerr = -999.;
-    j_dZ = -999.;
-    j_dZerr = -999.;
-    j_IP3D = -999.;
-    j_IP3Derr = -999.;
-    j_RelIso = -999.;
-    j_MiniRelIso = -999.;
+    j_dxy = -999.;
+    j_dxyErr = -999.;
+    j_dz = -999.;
+    j_dzErr = -999.;
+    j_ip3d = -999.;
+    j_sip3d = -999.;
+    j_tkRelIso = -999.;
+    j_pfRelIso03_all = -999.;
+    j_pfRelIso04_all = -999.;
+    j_miniPFRelIso_all = -999.;
     j_ptcone = -999.;
     j_LeptonFlavour = NONE;
 }

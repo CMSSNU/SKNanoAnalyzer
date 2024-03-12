@@ -10,3 +10,4 @@ include(${ROOT_USE_FILE})
 
 # Add subdirectories
 add_subdirectory(DataFormats)
+add_subdirectory(Analyzers)
