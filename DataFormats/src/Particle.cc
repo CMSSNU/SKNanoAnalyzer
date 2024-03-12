@@ -5,7 +5,7 @@ ClassImp(Particle);
 Particle::Particle(): TLorentzVector(), j_Charge(0) {}
 Particle::Particle(const TLorentzVector &p): TLorentzVector(p), j_Charge(0) {}
 Particle::Particle(const Particle &p): TLorentzVector(p), j_Charge(p.Charge()) {}
-Particle::Particle(double px, double py, double pz, double e): TLorentzVector(px, py, pz, e), j_Charge(0) {}
+Particle::Particle(float px, float py, float pz, float e): TLorentzVector(px, py, pz, e), j_Charge(0) {}
 Particle::~Particle() {}
 
 Particle &Particle::operator+=(const Particle &p) {
@@ -22,7 +22,7 @@ Particle &Particle::operator=(const Particle &p) {
     return *this;
 }
 
-void Particle::SetCharge(double q) {
+void Particle::SetCharge(float q) {
     j_Charge = q;
 }
 

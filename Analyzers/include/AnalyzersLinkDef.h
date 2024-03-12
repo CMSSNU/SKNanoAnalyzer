@@ -4,3 +4,5 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class SKNanoLoader+;
+#pragma link C++ class AnalyzerCore+;
+#pragma link C++ class TestAnalyzer+;
