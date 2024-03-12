@@ -1,9 +1,8 @@
 #ifndef Particle_h
 #define Particle_h
 
-#include <TBuffer.h>
-#include <TLorentzVector.h>
-#include <TString.h>
+#include "TLorentzVector.h"
+#include "TString.h"
 #include <iostream>
 using namespace std;
 
@@ -35,7 +34,7 @@ public:
     virtual void Print();
 
 private:
-    double j_Charge;
+    float j_Charge;
     ClassDef(Particle, 1)
 
 };
