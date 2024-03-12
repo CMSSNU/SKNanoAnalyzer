@@ -2,6 +2,7 @@
 ---
 
 NOTE: THIS IS DEVELOPMENT VERSION!!
+
 VERSION 0.1.0
 
 ## Project Updates
