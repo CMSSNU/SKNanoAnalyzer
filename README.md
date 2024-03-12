@@ -9,12 +9,13 @@ VERSION 0.1.0
 [HedgeDoc](https://demo.hedgedoc.org/VrWRIlceTjO9SPOVLKUNVA?view)
 
 ## How to
+Recommend to fork the repo to your account.
 ```bash
 # Clone the repository
-git clone git@github.com:CMSSNU/SKNanoAnalyzer.git
+git clone git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
 
 # Add to your remote repo
-git remote add upstream git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
+git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
 git checkout $DEVBRANCH
 
 # No first time setup yet
