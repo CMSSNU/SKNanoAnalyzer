@@ -51,7 +51,7 @@ p->Print()
 
 ```python
 python
-from ROOT import TestAnalyzer
+from ROOT import Particle
 p = Particle()
 p.SetPtEtaPhiM(30, 2.1, 1.3, 0.1)
 p.SetCharge(1)
