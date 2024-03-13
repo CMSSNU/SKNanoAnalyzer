@@ -2,20 +2,16 @@
 include_directories(${ROOT_INCLUDE_DIRS})
 
 # Generate the ROOT dictionary before defining the library
+file(GLOB HEADERS include/*.h)
 ROOT_GENERATE_DICTIONARY(G__DataFormats 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Event.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Particle.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Lepton.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Muon.h
-    LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/DataFormatsLinkDef.h
+    ${HEADERS}
+    LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/DataFormatsLinkDef.hpp
 )
 
 # Define the library with source files and the generated dictionary
+file(GLOB SOURCES src/*.cc)
 add_library(DataFormats SHARED
-    src/Event.cc
-    src/Particle.cc
-    src/Lepton.cc
-    src/Muon.cc
+    ${SOURCES}
     G__DataFormats.cxx
 )
 

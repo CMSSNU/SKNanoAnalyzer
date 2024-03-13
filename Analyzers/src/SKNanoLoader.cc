@@ -54,6 +54,27 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
     fChain->SetBranchAddress("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all);
     fChain->SetBranchAddress("Muon_tkRelIso", Muon_tkRelIso);
+    fChain->SetBranchAddress("Muon_isTracker", Muon_isTracker);
+    fChain->SetBranchAddress("Muon_isStandalone", Muon_isStandalone);
+    fChain->SetBranchAddress("Muon_isGlobal", Muon_isGlobal);
+    fChain->SetBranchAddress("Muon_looseId", Muon_looseId);
+    fChain->SetBranchAddress("Muon_mediumId", Muon_mediumId);
+    fChain->SetBranchAddress("Muon_mediumPromptId", Muon_mediumPromptId);
+    fChain->SetBranchAddress("Muon_tightId", Muon_tightId);
+    fChain->SetBranchAddress("Muon_softId", Muon_softId);
+    fChain->SetBranchAddress("Muon_softMvaId", Muon_softMvaId);
+    fChain->SetBranchAddress("Muon_triggerIdLoose", Muon_triggerIdLoose);
+    fChain->SetBranchAddress("Muon_highPtId", Muon_highPtId);
+    fChain->SetBranchAddress("Muon_miniIsoId", Muon_miniIsoId);
+    fChain->SetBranchAddress("Muon_multiIsoId", Muon_multiIsoId);
+    fChain->SetBranchAddress("Muon_mvaId", Muon_mvaId);
+    fChain->SetBranchAddress("Muon_mvaLowPtId", Muon_mvaLowPtId);
+    fChain->SetBranchAddress("Muon_pfIsoId", Muon_pfIsoId);
+    fChain->SetBranchAddress("Muon_puppiIsoId", Muon_puppiIsoId);
+    fChain->SetBranchAddress("Muon_tkIsoId", Muon_tkIsoId);
+    fChain->SetBranchAddress("Muon_softMva", Muon_softMva);
+    fChain->SetBranchAddress("Muon_mvaLowPt", Muon_mvaLowPt);
+    fChain->SetBranchAddress("Muon_mvaTTH", Muon_mvaTTH);
 }
 
 

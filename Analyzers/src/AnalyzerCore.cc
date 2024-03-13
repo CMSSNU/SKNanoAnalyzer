@@ -28,6 +28,24 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetdXY(Muon_dxy[i], Muon_dxyErr[i]);
         muon.SetdZ(Muon_dz[i], Muon_dzErr[i]);
         muon.SetIP3D(Muon_ip3d[i], Muon_sip3d[i]);
+        muon.SetBIDBit(Muon::BooleanID::LOOSE, Muon_looseId[i]);
+        muon.SetBIDBit(Muon::BooleanID::MEDIUM, Muon_mediumId[i]);
+        muon.SetBIDBit(Muon::BooleanID::MEDIUMPROMPT, Muon_mediumPromptId[i]);
+        muon.SetBIDBit(Muon::BooleanID::TIGHT, Muon_tightId[i]);
+        muon.SetBIDBit(Muon::BooleanID::SOFT, Muon_softId[i]);
+        muon.SetBIDBit(Muon::BooleanID::SOFTMVA, Muon_softMvaId[i]);
+        muon.SetBIDBit(Muon::BooleanID::TRIGGERLOOSE, Muon_triggerIdLoose[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::HIGHPT, Muon_highPtId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::MINIISO, Muon_miniIsoId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::MVA, Muon_mvaId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::PFISO, Muon_pfIsoId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::PUPPIISO, Muon_puppiIsoId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::TKISO, Muon_tkIsoId[i]);
+        muon.SetMVAID(Muon::MVAID::SOFTMVA, Muon_softMva[i]);
+        muon.SetMVAID(Muon::MVAID::MVALOWPT, Muon_mvaLowPt[i]);
+        muon.SetMVAID(Muon::MVAID::MVATTH, Muon_mvaTTH[i]);
 
         muons.push_back(muon);
     }
@@ -35,37 +53,35 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     return muons;
 }
 
-TH1F* AnalyzerCore::GetHist1D(TString histname) {
-    auto mapit = histmap.find(histname);
-    return (mapit != histmap.end()) ? mapit->second : nullptr;
-}
-
-void AnalyzerCore::FillHist(TString histname, float value, float weight, int n_bin, float x_min, float x_max) {
-    TH1F *this_hist = GetHist1D(histname);
-    if ( !this_hist) {
-        this_hist = new TH1F(histname, "", n_bin, x_min, x_max);
+void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
+    auto it = histmap.find(histname);
+    if (it == histmap.end()) {
+        TH1F *this_hist = new TH1F(histname.c_str(), "", n_bin, x_min, x_max);
         this_hist->SetDirectory(nullptr);
         histmap[histname] = this_hist;
+        this_hist->Fill(value, weight);
     }
-    this_hist->Fill(value, weight);
+    else {
+        it->second->Fill(value, weight);
+    }
 }
 
 void AnalyzerCore::WriteHist() {
-    outfile->cd();
-    for (const auto &hist: histmap) {
-        // Extract the histogram name
-        TString this_fullname = hist.second->GetName();
-        TString this_name = this_fullname(this_fullname.Last('/') + 1, this_fullname.Length());
-        TString this_suffix = this_fullname(0, this_fullname.Last('/'));
+    for (const auto &pair: histmap) {
+        const string &histname = pair.first;
+        TH1F *hist = pair.second;
+       
+        // Split the directory and name
+        // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
+        // e.g. "histname" -> "", "histname"
+        size_t last_slash = histname.find_last_of('/');
+        string this_prefix, this_name;
+        last_slash == string::npos ? this_prefix = "" : this_prefix = histname.substr(0, last_slash);
+        last_slash == string::npos ? this_name = histname : this_name = histname.substr(last_slash + 1);
 
-        // Get or create the directory for this histogram
-        TDirectory *dir = outfile->GetDirectory(this_suffix);
-        if (!dir) {
-            dir = outfile->mkdir(this_suffix);
-        }
-
-        // change to the appropriate directory and write the histogram
-        dir->cd();
-        hist.second->Write(this_name);
+        TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
+        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        outfile->cd(this_prefix.c_str());
+        hist->Write(this_name.c_str());
     }
 }

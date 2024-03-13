@@ -23,6 +23,12 @@ source setup.sh
 
 ### Compilation
 Now using cmake for the default compiling management.
+Use scripts/build.sh for clean compilation.
+```bash
+./scripts/build.sh
+```
+
+Or you can do it manually
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$SKNANO_HOME ..
@@ -31,14 +37,23 @@ make install
 cd $SKNANO_HOME
 ```
 
-### Check Python compatibility
+## Check modules
+Every module(or class) can be imported both in ROOT and python
+```cpp
+root -l
+Particle *p = new Particle;
+p->SetPtEtaPhiM(30, 2.1, 1.3, 0.1);
+p->SetCharge(1);
+p->Print()
+```
+
 ```python
-from ROOT import Particle
+python
+from ROOT import TestAnalyzer
 p = Particle()
 p.SetPtEtaPhiM(30, 2.1, 1.3, 0.1)
 p.SetCharge(1)
 p.Print()
 ```
 
-
-If you want to compile with updated source codes, remove the build directory follow the steps again.
+For testing other modules and analyzers, check scripts/test.py

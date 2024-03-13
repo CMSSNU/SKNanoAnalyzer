@@ -54,6 +54,7 @@ public:
     // Declaration of leaf types
     static constexpr int kMaxMuon = 50;
     UInt_t  nMuon;
+    // Muon
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
     Float_t Muon_phi[kMaxMuon];
@@ -69,6 +70,28 @@ public:
     Float_t Muon_pfRelIso04_all[kMaxMuon];
     Float_t Muon_miniPFRelIso_all[kMaxMuon];
     Float_t Muon_tkRelIso[kMaxMuon];
+    Bool_t  Muon_isTracker[kMaxMuon];
+    Bool_t  Muon_isStandalone[kMaxMuon];
+    Bool_t  Muon_isGlobal[kMaxMuon];
+    Bool_t  Muon_looseId[kMaxMuon];
+    Bool_t  Muon_mediumId[kMaxMuon];
+    Bool_t  Muon_mediumPromptId[kMaxMuon];
+    Bool_t  Muon_tightId[kMaxMuon];
+    Bool_t  Muon_softId[kMaxMuon];
+    Bool_t  Muon_softMvaId[kMaxMuon];
+    Bool_t  Muon_triggerIdLoose[kMaxMuon];
+    UChar_t Muon_highPtId[kMaxMuon];
+    UChar_t Muon_miniIsoId[kMaxMuon];
+    UChar_t Muon_multiIsoId[kMaxMuon];
+    UChar_t Muon_mvaId[kMaxMuon];
+    UChar_t Muon_mvaLowPtId[kMaxMuon];
+    UChar_t Muon_pfIsoId[kMaxMuon];
+    UChar_t Muon_puppiIsoId[kMaxMuon];
+    UChar_t Muon_tkIsoId[kMaxMuon];
+    Float_t Muon_softMva[kMaxMuon];
+    Float_t Muon_mvaLowPt[kMaxMuon];
+    Float_t Muon_mvaTTH[kMaxMuon];
+    
 
 };
 

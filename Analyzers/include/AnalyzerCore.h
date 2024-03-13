@@ -2,12 +2,13 @@
 #define AnalyzerCore_h
 
 #include <iostream>
-#include <vector>
 #include <map>
+#include <string>
 using namespace std;
 
 #include "TFile.h"
 #include "TH1F.h"
+#include "TString.h"
 
 #include "SKNanoLoader.h"
 #include "Event.h"
@@ -32,12 +33,12 @@ public:
 
     // Functions
     void SetOutfilePath(TString outpath);
-    TH1F* GetHist1D(TString histname);
-    void FillHist(TString histname, float value, float weight, int n_bin, float x_min, float x_max);
+    TH1F* GetHist1D(const string &histname);
+    void FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max);
     virtual void WriteHist();
 
 private:
-    map<TString, TH1F*> histmap;
+    unordered_map<string, TH1F*> histmap;
     TFile *outfile;
 };
 
