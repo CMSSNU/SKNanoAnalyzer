@@ -15,7 +15,7 @@ public:
     // Copy constructor
     Particle(const Particle &p);
     // Constructor from 4-vector components
-    Particle(double px, double py, double pz, double e);
+    Particle(float px, float py, float pz, float e);
 
     // Charge operator
     Particle &operator+=(const Particle &p);
@@ -27,8 +27,8 @@ public:
     ~Particle();
 
     // set functions
-    void SetCharge(double q);
-    inline double Charge() const { return j_Charge; }
+    void SetCharge(float q);
+    inline float Charge() const { return j_Charge; }
 
     // print p4
     virtual void Print();
