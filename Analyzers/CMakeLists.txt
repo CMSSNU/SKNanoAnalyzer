@@ -2,14 +2,16 @@
 include_directories(${ROOT_INCLUDE_DIRS})
 
 # Generate the ROOT dictionary before defining the library
+file(GLOB HEADERS include/*.h)
 ROOT_GENERATE_DICTIONARY(G__Analyzers 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/SKNanoLoader.h
-    LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/AnalyzersLinkDef.h
+    ${HEADERS}
+    LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/AnalyzersLinkDef.hpp
 )
 
 # Define the library with source files and the generated dictionary
+file(GLOB SOURCES src/*.cc)
 add_library(Analyzers SHARED
-    src/SKNanoLoader.cc
+    ${SOURCES}
     G__Analyzers.cxx
 )
 
@@ -20,6 +22,7 @@ target_include_directories(Analyzers PUBLIC
 
 # Link ROOT libraries
 target_link_libraries(Analyzers ${ROOT_LIBRARIES})
+target_link_libraries(Analyzers DataFormats)
 
 # Specify where to install the library
 install(TARGETS Analyzers DESTINATION lib)

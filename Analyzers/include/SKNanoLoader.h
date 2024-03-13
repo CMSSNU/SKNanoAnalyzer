@@ -37,7 +37,7 @@ public:
     virtual void Loop();
 
     //virtual void beginEvent(){};
-    //virtual void executeEvent(){};
+    virtual void executeEvent(){};
     //virtual void endEvent(){};
 
     virtual void SetEra(TString era) {
@@ -52,38 +52,46 @@ public:
     TChain *fChain=nullptr;
 
     // Declaration of leaf types
-    RVec<Float_t> *Muon_pt;
-    RVec<Float_t> *Muon_eta;
-    RVec<Float_t> *Muon_phi;
-    RVec<Float_t> *Muon_mass;
-    RVec<Int_t>   *Muon_charge;
-    RVec<Float_t> *Muon_dxy;
-    RVec<Float_t> *Muon_dxyErr;
-    RVec<Float_t> *Muon_dz;
-    RVec<Float_t> *Muon_dzErr;
-    RVec<Float_t> *Muon_ip3d;
-    RVec<Float_t> *Muon_sip3d;
-    RVec<Float_t> *Muon_pfRelIso03_all;
-    RVec<Float_t> *Muon_pfRelIso04_all;
-    RVec<Float_t> *Muon_miniPFRelIso_all;
-    RVec<Float_t> *Muon_tkRelIso;
-
-    // list of branches
-    TBranch *b_Muon_pt;
-    TBranch *b_Muon_eta;
-    TBranch *b_Muon_phi;
-    TBranch *b_Muon_mass;
-    TBranch *b_Muon_charge;
-    TBranch *b_Muon_dxy;
-    TBranch *b_Muon_dxyErr;
-    TBranch *b_Muon_dz;
-    TBranch *b_Muon_dzErr;
-    TBranch *b_Muon_ip3d;
-    TBranch *b_Muon_sip3d;
-    TBranch *b_Muon_pfRelIso03_all;
-    TBranch *b_Muon_pfRelIso04_all;
-    TBranch *b_Muon_miniPFRelIso_all;
-    TBranch *b_Muon_tkRelIso;
+    static constexpr int kMaxMuon = 50;
+    UInt_t  nMuon;
+    // Muon
+    Float_t Muon_pt[kMaxMuon];
+    Float_t Muon_eta[kMaxMuon];
+    Float_t Muon_phi[kMaxMuon];
+    Float_t Muon_mass[kMaxMuon];
+    Int_t   Muon_charge[kMaxMuon];
+    Float_t Muon_dxy[kMaxMuon];
+    Float_t Muon_dxyErr[kMaxMuon];
+    Float_t Muon_dz[kMaxMuon];
+    Float_t Muon_dzErr[kMaxMuon];
+    Float_t Muon_ip3d[kMaxMuon];
+    Float_t Muon_sip3d[kMaxMuon];
+    Float_t Muon_pfRelIso03_all[kMaxMuon];
+    Float_t Muon_pfRelIso04_all[kMaxMuon];
+    Float_t Muon_miniPFRelIso_all[kMaxMuon];
+    Float_t Muon_tkRelIso[kMaxMuon];
+    Bool_t  Muon_isTracker[kMaxMuon];
+    Bool_t  Muon_isStandalone[kMaxMuon];
+    Bool_t  Muon_isGlobal[kMaxMuon];
+    Bool_t  Muon_looseId[kMaxMuon];
+    Bool_t  Muon_mediumId[kMaxMuon];
+    Bool_t  Muon_mediumPromptId[kMaxMuon];
+    Bool_t  Muon_tightId[kMaxMuon];
+    Bool_t  Muon_softId[kMaxMuon];
+    Bool_t  Muon_softMvaId[kMaxMuon];
+    Bool_t  Muon_triggerIdLoose[kMaxMuon];
+    UChar_t Muon_highPtId[kMaxMuon];
+    UChar_t Muon_miniIsoId[kMaxMuon];
+    UChar_t Muon_multiIsoId[kMaxMuon];
+    UChar_t Muon_mvaId[kMaxMuon];
+    UChar_t Muon_mvaLowPtId[kMaxMuon];
+    UChar_t Muon_pfIsoId[kMaxMuon];
+    UChar_t Muon_puppiIsoId[kMaxMuon];
+    UChar_t Muon_tkIsoId[kMaxMuon];
+    Float_t Muon_softMva[kMaxMuon];
+    Float_t Muon_mvaLowPt[kMaxMuon];
+    Float_t Muon_mvaTTH[kMaxMuon];
+    
 
 };
 
