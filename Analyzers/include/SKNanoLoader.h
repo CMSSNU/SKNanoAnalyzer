@@ -53,7 +53,7 @@ public:
 
     // Declaration of leaf types
     static constexpr int kMaxMuon = 50;
-    UInt_t  nMuon;
+    Int_t  nMuon;
     // Muon
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
@@ -83,8 +83,8 @@ public:
     UChar_t Muon_highPtId[kMaxMuon];
     UChar_t Muon_miniIsoId[kMaxMuon];
     UChar_t Muon_multiIsoId[kMaxMuon];
-    UChar_t Muon_mvaId[kMaxMuon];
-    UChar_t Muon_mvaLowPtId[kMaxMuon];
+    UChar_t Muon_mvaMuId[kMaxMuon];
+    //UChar_t Muon_mvaLowPtId[kMaxMuon];
     UChar_t Muon_pfIsoId[kMaxMuon];
     UChar_t Muon_puppiIsoId[kMaxMuon];
     UChar_t Muon_tkIsoId[kMaxMuon];
