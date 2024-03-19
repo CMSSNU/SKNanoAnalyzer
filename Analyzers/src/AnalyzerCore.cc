@@ -53,6 +53,45 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     return muons;
 }
 
+RVec<Electron> AnalyzerCore::GetAllElectrons() {
+    RVec<Electron> electrons;
+    for (int i = 0; i < nElectron; i++) {
+        Electron electron;
+        electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
+        electron.SetCharge(Electron_charge[i]);
+        electron.SetPfRelIso03(Electron_pfRelIso03_all[i]);
+        electron.SetMiniPFRelIso(Electron_miniPFRelIso_all[i]);
+        electron.SetdXY(Electron_dxy[i], Electron_dxyErr[i]);
+        electron.SetdZ(Electron_dz[i], Electron_dzErr[i]);
+        electron.SetIP3D(Electron_ip3d[i], Electron_sip3d[i]);
+        electron.SetConvVeto(Electron_convVeto[i]);
+        electron.SetLostHits(Electron_lostHits[i]);
+        electron.SetSeedGain(Electron_seedGain[i]);
+        electron.SetTightCharge(Electron_tightCharge[i]);
+        electron.SetSieie(Electron_sieie[i]);
+        electron.SetHoe(Electron_hoe[i]);
+        electron.SetEInvMinusPInv(Electron_eInvMinusPInv[i]);
+        electron.SetDr03EcalRecHitSumEt(Electron_dr03EcalRecHitSumEt[i]);
+        electron.SetDr03HcalDepth1TowerSumEt(Electron_dr03HcalDepth1TowerSumEt[i]);
+        electron.SetDr03TkSumPt(Electron_dr03TkSumPt[i]);
+        electron.SetDr03TkSumPtHEEP(Electron_dr03TkSumPtHEEP[i]);
+        electron.SetR9(Electron_r9[i]);
+        electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
+        electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
+        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
+        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+        electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
+        electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+        electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
+        electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
+        electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
+
+        electrons.push_back(electron);
+    }
+
+    return electrons;
+}
+
 void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto it = histmap1d.find(histname);
     if (it == histmap1d.end()) {

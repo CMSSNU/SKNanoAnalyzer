@@ -17,6 +17,7 @@ using namespace std;
 #include "Particle.h"
 #include "Lepton.h"
 #include "Muon.h"
+#include "Electron.h"
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -29,9 +30,10 @@ public:
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparing(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
-    // Get muons
+    // Get objects
     //Event GetEvent();
     RVec<Muon> GetAllMuons();
+    RVec<Electron> GetAllElectrons();
 
     // Functions
     void SetOutfilePath(TString outpath);
@@ -56,9 +58,9 @@ public:
     virtual void WriteHist();
 
 private:
-    map<string, TH1F*> histmap1d;
-    map<string, TH2F*> histmap2d;
-    map<string, TH3F*> histmap3d;
+    unordered_map<string, TH1F*> histmap1d;
+    unordered_map<string, TH2F*> histmap2d;
+    unordered_map<string, TH3F*> histmap3d;
     TFile *outfile;
 };
 

@@ -20,7 +20,7 @@ public:
     // Boolean IDs
     enum class BooleanID {NONE, LOOSE, MEDIUM, MEDIUMPROMPT, TIGHT, SOFT, SOFTMVA, TRIGGERLOOSE};
 
-    void SetBIDBit(BooleanID id, bool value);
+    void SetBIDBit(BooleanID id, bool idbit);
     inline bool isPOGTightId() const {return j_tightId;}
     inline bool isPOGMediumId() const {return j_mediumId;}
     inline bool isPOGMediumPromptId() const {return j_mediumPromptId;}
@@ -31,7 +31,7 @@ public:
 
     // Unsigned char IDs
     enum class WorkingPointID {NONE, HIGHPT, MINIISO, MULTIISO, MVAMU, PFISO, PUPPIISO, TKISO};
-    enum class WorkingPoint {None, VLOOSE, LOOSE, MEDIUM, TIGHT, VTIGHT, VVTIGHT};
+    enum class WorkingPoint {NONE, VLOOSE, LOOSE, MEDIUM, TIGHT, VTIGHT, VVTIGHT};
 
     void SetWIDBit(WorkingPointID id, unsigned char value);
     inline WorkingPoint HighPtId() const {return (WorkingPoint)j_highPtId;}
