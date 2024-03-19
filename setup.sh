@@ -11,9 +11,9 @@ export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
 export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
 
 # root configuration
-source ~/.conda-activate
-conda activate nano
-
+# source ~/.conda-activate
+# conda activate nano
+source /cvmfs/sft.cern.ch/lcg/views/LCG_105_cuda/x86_64-el9-gcc11-opt/setup.sh
 
 export SKNANO_LIB=$SKNANO_HOME/lib
 export SKNANO_VERSION="Run3UltraLegacy_v1"
