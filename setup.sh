@@ -1,8 +1,7 @@
-RELEASE="`cat /etc/redhat-release`"
-echo "@@@@@@@@@@@@@@@@ WARNING @@@@@@@@@@@@@@@@@@@"
-echo "@@@@ THIS IS DEVELOPMENT VERSION        @@@@"
-echo "@@@@ Setup in SNU Server might not work @@@@"
-echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+echo -e "\033[31m##################### WARNING ########################\033[0m"
+echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
+echo -e "\033[31m######################################################\033[0m"
+echo ""
 
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
@@ -11,9 +10,22 @@ export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
 export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
 
 # root configuration
-# source ~/.conda-activate
-# conda activate nano
-source /cvmfs/sft.cern.ch/lcg/views/LCG_105_cuda/x86_64-el9-gcc11-opt/setup.sh
+RELEASE="`cat /etc/redhat-release`"
+echo "@@@@ Configuring ROOT for $RELEASE"
+if [[ $RELEASE == *"7."* ]]; then
+    source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-centos7-gcc12-opt/setup.sh
+elif [[ $RELEASE == *"8."* ]]; then
+    source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos8-gcc12-opt/setup.sh
+elif [[ $RELEASE == *"9."* ]]; then
+    source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
+else
+    echo "@@@@ Not running on redhat 7, 8, or 9"
+    echo "@@@@ Assuming root is installed in conda environment"
+    source ~/.conda-activate
+    conda activate nano
+fi
+echo "@@@@ ROOT path: $ROOTSYS"
+
 
 export SKNANO_LIB=$SKNANO_HOME/lib
 export SKNANO_VERSION="Run3UltraLegacy_v1"
