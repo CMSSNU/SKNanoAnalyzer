@@ -67,8 +67,8 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Muon_highPtId", Muon_highPtId);
     fChain->SetBranchAddress("Muon_miniIsoId", Muon_miniIsoId);
     fChain->SetBranchAddress("Muon_multiIsoId", Muon_multiIsoId);
-    fChain->SetBranchAddress("Muon_mvaId", Muon_mvaId);
-    fChain->SetBranchAddress("Muon_mvaLowPtId", Muon_mvaLowPtId);
+    fChain->SetBranchAddress("Muon_mvaMuID_WP", Muon_mvaMuId);
+    // fChain->SetBranchAddress("Muon_mvaLowPtId", Muon_mvaLowPtId);
     fChain->SetBranchAddress("Muon_pfIsoId", Muon_pfIsoId);
     fChain->SetBranchAddress("Muon_puppiIsoId", Muon_puppiIsoId);
     fChain->SetBranchAddress("Muon_tkIsoId", Muon_tkIsoId);

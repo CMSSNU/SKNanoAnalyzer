@@ -8,6 +8,8 @@ using namespace std;
 
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH2F.h"
+#include "TH3F.h"
 #include "TString.h"
 
 #include "SKNanoLoader.h"
@@ -35,10 +37,28 @@ public:
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     void FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max);
+    void FillHist(const string &histname, float value, float weight, int n_bin, float *xbins);
+    void FillHist(const string &histname, float value_x, float value_y, float weight, 
+                                          int n_binx, float x_min, float x_max, 
+                                          int n_biny, float y_min, float y_max);
+    void FillHist(const string &histname, float value_x, float value_y, float weight,
+                                          int n_binx, float *xbins,
+                                          int n_biny, float *ybins);
+    void FillHist(const string &histname, float value_x, float value_y, float value_z, float weight,
+                                          int n_binx, float x_min, float x_max,
+                                          int n_biny, float y_min, float y_max,
+                                          int n_binz, float z_min, float z_max);
+    void FillHist(const string &histname, float value_x, float value_y, float value_z, float weight,
+                                          int n_binx, float *xbins,
+                                          int n_biny, float *ybins,
+                                          int n_binz, float *zbins);
+
     virtual void WriteHist();
 
 private:
-    unordered_map<string, TH1F*> histmap;
+    map<string, TH1F*> histmap1d;
+    map<string, TH2F*> histmap2d;
+    map<string, TH3F*> histmap3d;
     TFile *outfile;
 };
 
