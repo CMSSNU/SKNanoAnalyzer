@@ -52,9 +52,9 @@ public:
     TChain *fChain=nullptr;
 
     // Declaration of leaf types
-    static constexpr int kMaxMuon = 50;
-    UInt_t  nMuon;
     // Muon
+    static constexpr int kMaxMuon = 20;
+    Int_t  nMuon;
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
     Float_t Muon_phi[kMaxMuon];
@@ -83,15 +83,53 @@ public:
     UChar_t Muon_highPtId[kMaxMuon];
     UChar_t Muon_miniIsoId[kMaxMuon];
     UChar_t Muon_multiIsoId[kMaxMuon];
-    UChar_t Muon_mvaId[kMaxMuon];
-    UChar_t Muon_mvaLowPtId[kMaxMuon];
+    UChar_t Muon_mvaMuId[kMaxMuon];
+    //UChar_t Muon_mvaLowPtId[kMaxMuon];
     UChar_t Muon_pfIsoId[kMaxMuon];
     UChar_t Muon_puppiIsoId[kMaxMuon];
     UChar_t Muon_tkIsoId[kMaxMuon];
     Float_t Muon_softMva[kMaxMuon];
     Float_t Muon_mvaLowPt[kMaxMuon];
     Float_t Muon_mvaTTH[kMaxMuon];
-    
+    // Electron
+    static constexpr int kMaxElectron = 20;
+    Int_t nElectron;
+    Float_t Electron_pt[kMaxElectron];
+    Float_t Electron_eta[kMaxElectron];
+    Float_t Electron_phi[kMaxElectron];
+    Float_t Electron_mass[kMaxElectron];
+    Int_t   Electron_charge[kMaxElectron];
+    Float_t Electron_dxy[kMaxElectron];
+    Float_t Electron_dxyErr[kMaxElectron];
+    Float_t Electron_dz[kMaxElectron];
+    Float_t Electron_dzErr[kMaxElectron];
+    Float_t Electron_ip3d[kMaxElectron];
+    Float_t Electron_sip3d[kMaxElectron];
+    Float_t Electron_pfRelIso03_all[kMaxElectron];
+    Float_t Electron_miniPFRelIso_all[kMaxElectron];
+    Float_t Electron_energyErr[kMaxElectron];
+    Bool_t  Electron_convVeto[kMaxElectron];
+    UChar_t Electron_lostHits[kMaxElectron];
+    UChar_t Electron_seedGain[kMaxElectron];
+    UChar_t Electron_tightCharge[kMaxElectron];
+    Float_t Electron_sieie[kMaxElectron];
+    Float_t Electron_hoe[kMaxElectron];
+    Float_t Electron_eInvMinusPInv[kMaxElectron];
+    Float_t Electron_dr03EcalRecHitSumEt[kMaxElectron];
+    Float_t Electron_dr03HcalDepth1TowerSumEt[kMaxElectron];
+    Float_t Electron_dr03TkSumPt[kMaxElectron];
+    Float_t Electron_dr03TkSumPtHEEP[kMaxElectron];
+    Float_t Electron_deltaEtaSC[kMaxElectron];
+    Bool_t  Electron_mvaIso_WP80[kMaxElectron];
+    Bool_t  Electron_mvaIso_WP90[kMaxElectron];
+    Bool_t  Electron_mvaNoIso_WP80[kMaxElectron];
+    Bool_t  Electron_mvaNoIso_WP90[kMaxElectron];
+    Bool_t  Electron_cutBased_HEEP[kMaxElectron];
+    UChar_t Electron_cutBased[kMaxElectron];
+    Float_t Electron_mvaIso[kMaxElectron];
+    Float_t Electron_mvaNoIso[kMaxElectron];
+    Float_t Electron_mvaTTH[kMaxElectron];
+    Float_t Electron_r9[kMaxElectron];
 
 };
 

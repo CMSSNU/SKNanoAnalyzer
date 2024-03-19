@@ -18,7 +18,7 @@ public:
 
     void SetIP3D(float ip3d, float sip3d) { j_ip3d = ip3d; j_sip3d = sip3d;}
     inline float IP3D() const {return j_ip3d;}
-    inline float SIP3d() const {return j_sip3d;}
+    inline float SIP3D() const {return j_sip3d;}
 
     //==== AbsIso will be set in Muon/Electron,
     //==== and use SetRelIso to save calculated RelIso
