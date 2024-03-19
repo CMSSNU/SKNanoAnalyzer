@@ -75,6 +75,43 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Muon_softMva", Muon_softMva);
     fChain->SetBranchAddress("Muon_mvaLowPt", Muon_mvaLowPt);
     fChain->SetBranchAddress("Muon_mvaTTH", Muon_mvaTTH);
+    fChain->SetBranchAddress("nElectron", &nElectron);
+    fChain->SetBranchAddress("Electron_pt", Electron_pt);
+    fChain->SetBranchAddress("Electron_eta", Electron_eta);
+    fChain->SetBranchAddress("Electron_phi", Electron_phi);
+    fChain->SetBranchAddress("Electron_mass", Electron_mass);
+    fChain->SetBranchAddress("Electron_charge", Electron_charge);
+    fChain->SetBranchAddress("Electron_dxy", Electron_dxy);
+    fChain->SetBranchAddress("Electron_dxyErr", Electron_dxyErr);
+    fChain->SetBranchAddress("Electron_dz", Electron_dz);
+    fChain->SetBranchAddress("Electron_dzErr", Electron_dzErr);
+    fChain->SetBranchAddress("Electron_ip3d", Electron_ip3d);
+    fChain->SetBranchAddress("Electron_sip3d", Electron_sip3d);
+    fChain->SetBranchAddress("Electron_pfRelIso03_all", Electron_pfRelIso03_all);
+    fChain->SetBranchAddress("Electron_miniPFRelIso_all", Electron_miniPFRelIso_all);
+    fChain->SetBranchAddress("Electron_energyErr", Electron_energyErr);
+    fChain->SetBranchAddress("Electron_convVeto", Electron_convVeto);
+    fChain->SetBranchAddress("Electron_lostHits", Electron_lostHits);
+    fChain->SetBranchAddress("Electron_seedGain", Electron_seedGain);
+    fChain->SetBranchAddress("Electron_tightCharge", Electron_tightCharge);
+    fChain->SetBranchAddress("Electron_sieie", Electron_sieie);
+    fChain->SetBranchAddress("Electron_hoe", Electron_hoe);
+    fChain->SetBranchAddress("Electron_eInvMinusPInv", Electron_eInvMinusPInv);
+    fChain->SetBranchAddress("Electron_dr03EcalRecHitSumEt", Electron_dr03EcalRecHitSumEt);
+    fChain->SetBranchAddress("Electron_dr03HcalDepth1TowerSumEt", Electron_dr03HcalDepth1TowerSumEt);
+    fChain->SetBranchAddress("Electron_dr03TkSumPt", Electron_dr03TkSumPt);
+    fChain->SetBranchAddress("Electron_dr03TkSumPtHEEP", Electron_dr03TkSumPtHEEP);
+    fChain->SetBranchAddress("Electron_deltaEtaSC", Electron_deltaEtaSC);
+    fChain->SetBranchAddress("Electron_mvaIso_WP80", Electron_mvaIso_WP80);
+    fChain->SetBranchAddress("Electron_mvaIso_WP90", Electron_mvaIso_WP90);
+    fChain->SetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80);
+    fChain->SetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90);
+    fChain->SetBranchAddress("Electron_cutBased_HEEP", Electron_cutBased_HEEP);
+    fChain->SetBranchAddress("Electron_cutBased", Electron_cutBased);
+    fChain->SetBranchAddress("Electron_mvaIso", Electron_mvaIso);
+    fChain->SetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso);
+    fChain->SetBranchAddress("Electron_mvaTTH", Electron_mvaTTH);
+    fChain->SetBranchAddress("Electron_r9", Electron_r9);
 }
 
 

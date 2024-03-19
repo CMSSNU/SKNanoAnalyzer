@@ -20,7 +20,7 @@ elif [[ $RELEASE == *"9."* ]]; then
     source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
 else
     echo "@@@@ Not running on redhat 7, 8, or 9"
-    echo "@@@@ Assuming root is installed in conda environment"
+    echo "@@@@ Assuming root is installed in conda environment nano"
     source ~/.conda-activate
     conda activate nano
 fi
