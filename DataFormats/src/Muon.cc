@@ -66,3 +66,60 @@ void Muon::SetMVAID(MVAID id, float score) {
         default: break;
     }
 }
+
+bool Muon::PassID(const TString ID) const {
+    if (ID == "NOCUT")            return true;
+    if (ID == "POGTight")         return isPOGTightId();
+    if (ID == "POGMedium")        return isPOGMediumId();
+    if (ID == "POGMediumPrompt")  return isPOGMediumPromptId();
+    if (ID == "POGLoose")         return isPOGLooseId();
+    if (ID == "POGSoft")          return isPOGSoftId();
+    if (ID == "POGSoftMVA")       return isPOGSoftMvaId();
+    if (ID == "POGTriggerLoose")  return isPOGTriggerIdLoose();
+    if (ID == "POGTrackerHighPt") return (int)HighPtId() == 1;
+    if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 2;
+    if (ID == "POGMiniIsoLoose")  return MiniIsoId() == WorkingPoint::LOOSE;
+    if (ID == "POGMiniIsoMedium") return MiniIsoId() == WorkingPoint::MEDIUM;
+    if (ID == "POGMiniIsoTight")  return MiniIsoId() == WorkingPoint::TIGHT;
+    if (ID == "POGMiniIsoVTight") return MiniIsoId() == WorkingPoint::VTIGHT;
+    if (ID == "POGMultiIsoLoose") return MultiIsoId() == WorkingPoint::LOOSE;
+    if (ID == "POGMultiIsoMedium")return MultiIsoId() == WorkingPoint::MEDIUM;
+    if (ID == "POGMvaMuMedium")   return MvaMuId() == WorkingPoint::MEDIUM;
+    if (ID == "POGMvaMuTight")    return MvaMuId() == WorkingPoint::TIGHT;
+    if (ID == "POGPfIsoVLoose")   return PfIsoId() == WorkingPoint::VLOOSE;
+    if (ID == "POGPfIsoLoose")    return PfIsoId() == WorkingPoint::LOOSE;
+    if (ID == "POGPfIsoMedium")   return PfIsoId() == WorkingPoint::MEDIUM;
+    if (ID == "POGPfIsoTight")    return PfIsoId() == WorkingPoint::TIGHT;
+    if (ID == "POGPfIsoVTight")   return PfIsoId() == WorkingPoint::VTIGHT;
+    if (ID == "POGPfIsoVVTight")  return PfIsoId() == WorkingPoint::VVTIGHT;
+    if (ID == "POGPuppiIsoLoose") return PuppiIsoId() == WorkingPoint::LOOSE;
+    if (ID == "POGPuppiIsoMedium")return PuppiIsoId() == WorkingPoint::MEDIUM;
+    if (ID == "POGPuppiIsoTight") return PuppiIsoId() == WorkingPoint::TIGHT;
+    if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 1;
+    if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 2;
+    cerr << "[Muon::PassID] " << ID << " is not implemented." << endl;
+    exit(ENODATA);
+
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
