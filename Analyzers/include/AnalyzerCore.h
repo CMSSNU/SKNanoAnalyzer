@@ -33,7 +33,13 @@ public:
     // Get objects
     //Event GetEvent();
     RVec<Muon> GetAllMuons();
+    RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
+    RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
+
+    // Select objects
+    RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
 
     // Functions
     void SetOutfilePath(TString outpath);

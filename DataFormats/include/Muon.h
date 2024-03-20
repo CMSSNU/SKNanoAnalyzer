@@ -51,6 +51,8 @@ public:
     inline float MvaLowPt() const {return j_mvaLowPt;}
     inline float MvaTTH() const {return j_mvaTTH;}
 
+    // ID helper functions
+    bool PassID(const TString ID) const;
 
 private:
     bool j_isTracker, j_isStandalone, j_isGlobal;

@@ -16,9 +16,20 @@ class Electron : public Lepton {
 public:
     Electron();
     ~Electron();
+
+    enum class ETAREGION {IB, OB, GAP, EC};
+    inline ETAREGION etaRegion() const {
+        if (fabs(scEta()) < 0.8)        return ETAREGION::IB;
+        else if (fabs(scEta()) < 1.444) return ETAREGION::OB;
+        else if (fabs(scEta()) < 1.566) return ETAREGION::GAP;
+        else return ETAREGION::EC;
+    }
     
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
     inline bool ConvVeto() const { return j_convVeto; }
+
+    void SetDeltaEtaSC(float deltaEtaSC) { j_deltaEtaSC = deltaEtaSC; }
+    inline float scEta() const { return Eta() + j_deltaEtaSC; }
 
     void SetLostHits(unsigned char lostHits) { j_lostHits = lostHits; }
     inline unsigned char LostHits() const { return j_lostHits; }
@@ -66,7 +77,7 @@ public:
     // cut-based ID
     enum class CutBasedID {NONE, CUTBASED};
     enum class WORKINGPOINT {NONE, VETO, LOOSE, MEDIUM, TIGHT};
-    void SetCBIDBit(CutBasedID id, bool value);
+    void SetCBIDBit(CutBasedID id, unsigned int value);
     inline WORKINGPOINT CutBased() const {return (WORKINGPOINT)j_cutBased; }
 
     // MVA scores
@@ -75,6 +86,9 @@ public:
     inline float MvaIso() const { return j_mvaIso; }
     inline float MvaNoIso() const { return j_mvaNoIso; }
     inline float MvaTTH() const { return j_mvaTTH; }
+
+    // ID helper functions
+    bool PassID(const TString ID) const;
 
 private:
     // uncertainties
