@@ -47,7 +47,7 @@ void Electron::SetBIDBit(BooleanID id, bool idbit) {
     }
 }
 
-void Electron::SetCBIDBit(CutBasedID id, bool idbit) {
+void Electron::SetCBIDBit(CutBasedID id, unsigned int idbit) {
     switch (id) {
         case CutBasedID::CUTBASED:             j_cutBased = idbit; break;
         default: break;
@@ -62,3 +62,37 @@ void Electron::SetMVA(MVATYPE type, float score) {
         default: break;
     }
 }
+
+bool Electron::PassID(const TString ID) const {
+    // always veto gap
+    // cout << "Eta: " << Eta() << "\t" << scEta() << endl;
+    if (etaRegion() == ETAREGION::GAP) return false;
+
+    // POG
+    if (ID == "POGVeto")          return CutBased() == WORKINGPOINT::VETO;
+    if (ID == "POGLoose")         return CutBased() == WORKINGPOINT::LOOSE;
+    if (ID == "POGMedium")        return CutBased() == WORKINGPOINT::MEDIUM;
+    if (ID == "POGTight")         return CutBased() == WORKINGPOINT::TIGHT;
+    if (ID == "POGHEEP")          return isCutBasedHEEP();
+    if (ID == "POGMVAIsoWP80")    return isMVAIsoWP80();
+    if (ID == "POGMVAIsoWP90")    return isMVAIsoWP90();
+    if (ID == "POGMVANoIsoWP80")  return isMVANoIsoWP80();
+    if (ID == "POGMVANoIsoWP90")  return isMVANoIsoWP90();
+
+    cerr << "[Electron::PassID] " << ID << " is not implemented" << endl;
+    exit(ENODATA);
+
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+

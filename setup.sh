@@ -13,14 +13,17 @@ export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
 RELEASE="`cat /etc/redhat-release`"
 echo "@@@@ Configuring ROOT for $RELEASE"
 if [[ $RELEASE == *"7."* ]]; then
+    echo "@@@@ Running on $RELEASE"
     source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-centos7-gcc12-opt/setup.sh
 elif [[ $RELEASE == *"8."* ]]; then
+    echo "@@@@ Running on $RELEASE"
     source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos8-gcc12-opt/setup.sh
 elif [[ $RELEASE == *"9."* ]]; then
+    echo "@@@@ Running on $RELEASE"
     source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
 else
     echo "@@@@ Not running on redhat 7, 8, or 9"
-    echo "@@@@ Assuming root is installed in conda environment nano"
+    echo "@@@@ Assuming root is installed in conda environment 'nano'"
     source ~/.conda-activate
     conda activate nano
 fi
@@ -40,3 +43,7 @@ export PYTHONPATH=$PYTHONPATH:$SKNANO_PYTHON
 export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
+
+# env for correctionlibs
+export CORRECTION_LIBS=`correction config --libdir`
+export CORRECTION_CMAKE_PREFIX=`correction config --cmake`
