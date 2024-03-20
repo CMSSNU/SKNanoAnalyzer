@@ -5,6 +5,9 @@ project(SKNanoAnalyzer VERSION 0.1.0)
 find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include(${ROOT_USE_FILE})
 
+# correctionlibs
+find_package(correctionlib REQUIRED)
+
 # Add subdirectories
 add_subdirectory(DataFormats)
 add_subdirectory(Analyzers)
