@@ -130,7 +130,56 @@ public:
     Float_t Electron_mvaNoIso[kMaxElectron];
     Float_t Electron_mvaTTH[kMaxElectron];
     Float_t Electron_r9[kMaxElectron];
-
+    // Jet
+    static constexpr int kMaxJet = 25;
+    Int_t nJet; 
+    Float_t Jet_PNetRegPtRawCorr[kMaxJet];
+    Float_t Jet_PNetRegPtRawCorrNeutrino[kMaxJet];
+    Float_t Jet_PNetRegPtRawRes[kMaxJet];
+    Float_t Jet_area[kMaxJet];
+    Float_t Jet_btagDeepFlavB[kMaxJet];
+    Float_t Jet_btagDeepFlavCvB[kMaxJet];
+    Float_t Jet_btagDeepFlavCvL[kMaxJet];
+    Float_t Jet_btagDeepFlavQG[kMaxJet];
+    Float_t Jet_btagPNetB[kMaxJet];
+    Float_t Jet_btagPNetCvB[kMaxJet];
+    Float_t Jet_btagPNetCvL[kMaxJet];
+    Float_t Jet_btagPNetQvG[kMaxJet];
+    Float_t Jet_btagPNetTauVJet[kMaxJet];
+    Float_t Jet_btagRobustParTAK4B[kMaxJet];
+    Float_t Jet_btagRobustParTAK4CvB[kMaxJet];
+    Float_t Jet_btagRobustParTAK4CvL[kMaxJet];
+    Float_t Jet_btagRobustParTAK4QG[kMaxJet];
+    Float_t Jet_chEmEF[kMaxJet];
+    Float_t Jet_chHEF[kMaxJet];
+    Short_t Jet_electronIdx1[kMaxJet];
+    Short_t Jet_electronIdx2[kMaxJet];
+    Float_t Jet_eta[kMaxJet];
+    Short_t Jet_genJetIdx[kMaxJet];
+    UChar_t Jet_hadronFlavour[kMaxJet];
+    Int_t Jet_hfadjacentEtaStripsSize[kMaxJet];
+    Int_t Jet_hfcentralEtaStripSize[kMaxJet];
+    Float_t Jet_hfsigmaEtaEta[kMaxJet];
+    Float_t Jet_hfsigmaPhiPhi[kMaxJet];
+    UChar_t Jet_jetId[kMaxJet];
+    Float_t Jet_mass[kMaxJet];
+    Float_t Jet_muEF[kMaxJet];
+    Short_t Jet_muonIdx1[kMaxJet];
+    Short_t Jet_muonIdx2[kMaxJet];
+    Float_t Jet_muonSubtrFactor[kMaxJet];
+    UChar_t Jet_nConstituents[kMaxJet];
+    UChar_t Jet_nElectrons[kMaxJet];
+    UChar_t Jet_nMuons[kMaxJet];
+    UChar_t Jet_nSVs[kMaxJet];
+    Float_t Jet_neEmEF[kMaxJet];
+    Float_t Jet_neHEF[kMaxJet];
+    Short_t Jet_partonFlavour[kMaxJet];
+    Float_t Jet_phi[kMaxJet];
+    Float_t Jet_pt[kMaxJet];
+    Float_t Jet_rawFactor[kMaxJet];
+    Short_t Jet_svIdx1[kMaxJet];
+    Short_t Jet_svIdx2[kMaxJet];
+    
 };
 
 #endif
