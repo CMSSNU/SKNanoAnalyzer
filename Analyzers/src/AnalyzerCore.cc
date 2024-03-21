@@ -92,6 +92,30 @@ RVec<Electron> AnalyzerCore::GetAllElectrons() {
     return electrons;
 }
 
+RVec<Jet> AnalyzerCore::GetAllJets() {
+    RVec<Jet> Jets;
+    for (int i = 0; i < nJet; i++) {
+        Jet jet;
+        jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
+        jet.SetArea(Jet_area[i]);
+        jet.SetGenFlavours(Jet_hadronFlavour[i], Jet_partonFlavour[i]);
+        std::vector<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
+                                 Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
+                                 Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
+        jet.SetTaggerResults(tvs);
+        jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
+        jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
+        jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
+        jet.SetJetID(Jet_jetId[i]);
+        std::vector<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
+        jet.SetCorrections(tvs2);
+
+        Jets.push_back(jet);
+    }
+
+    return Jets;
+}
+
 void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto it = histmap1d.find(histname);
     if (it == histmap1d.end()) {

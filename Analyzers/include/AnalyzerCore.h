@@ -18,6 +18,7 @@ using namespace std;
 #include "Lepton.h"
 #include "Muon.h"
 #include "Electron.h"
+#include "Jet.h"
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -34,6 +35,7 @@ public:
     //Event GetEvent();
     RVec<Muon> GetAllMuons();
     RVec<Electron> GetAllElectrons();
+    RVec<Jet> GetAllJets();
 
     // Functions
     void SetOutfilePath(TString outpath);
