@@ -53,12 +53,36 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     return muons;
 }
 
+RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const float fetamax) {
+    RVec<Muon> muons = GetAllMuons();
+    RVec<Muon> selected_muons;
+    for (const auto &muon: muons) {
+        if (! (muon.Pt() > ptmin)) continue;
+        if (! (fabs(muon.Eta()) < fetamax)) continue;
+        if (! muon.PassID(ID)) continue;
+        selected_muons.push_back(muon);
+    }
+    return selected_muons;
+}
+
+RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) {
+    RVec<Muon> selected_muons;
+    for (const auto &muon: muons) {
+        if (! (muon.Pt() > ptmin)) continue;
+        if (! (fabs(muon.Eta()) < fetamax)) continue;
+        if (! muon.PassID(ID)) continue;
+        selected_muons.push_back(muon);
+    }
+    return selected_muons;
+}
+
 RVec<Electron> AnalyzerCore::GetAllElectrons() {
     RVec<Electron> electrons;
     for (int i = 0; i < nElectron; i++) {
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
+        electron.SetDeltaEtaSC(Electron_deltaEtaSC[i]);
         electron.SetPfRelIso03(Electron_pfRelIso03_all[i]);
         electron.SetMiniPFRelIso(Electron_miniPFRelIso_all[i]);
         electron.SetdXY(Electron_dxy[i], Electron_dxyErr[i]);
@@ -92,6 +116,44 @@ RVec<Electron> AnalyzerCore::GetAllElectrons() {
     return electrons;
 }
 
+RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, const float fetamax) {
+    RVec<Electron> electrons = GetAllElectrons();
+    RVec<Electron> selected_electrons;
+    for (const auto &electron: electrons) {
+        if (! (electron.Pt() > ptmin)) continue;
+        if (! (fabs(electron.Eta()) < fetamax)) continue;
+        if (! electron.PassID(ID)) continue;
+        selected_electrons.push_back(electron);
+    }
+    return selected_electrons;
+}
+
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax) {
+    RVec<Electron> selected_electrons;
+    for (const auto &electron: electrons) {
+        if (! (electron.Pt() > ptmin)) continue;
+        if (! (fabs(electron.Eta()) < fetamax)) continue;
+        if (! electron.PassID(ID)) continue;
+        selected_electrons.push_back(electron);
+    }
+    return selected_electrons;
+}
+
+
+
+void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
+    auto it = histmap1d.find(histname);
+    if (it == histmap1d.end()) {
+        TH1F *this_hist = new TH1F(histname.c_str(), "", n_bin, x_min, x_max);
+        this_hist->SetDirectory(nullptr);
+        histmap1d[histname] = this_hist;
+        this_hist->Fill(value, weight);
+    }
+    else {
+        it->second->Fill(value, weight);
+    }
+}
+
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
     for (int i = 0; i < nJet; i++) {
@@ -114,19 +176,6 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     }
 
     return Jets;
-}
-
-void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
-    auto it = histmap1d.find(histname);
-    if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histname.c_str(), "", n_bin, x_min, x_max);
-        this_hist->SetDirectory(nullptr);
-        histmap1d[histname] = this_hist;
-        this_hist->Fill(value, weight);
-    }
-    else {
-        it->second->Fill(value, weight);
-    }
 }
 
 void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float *xbins) {
