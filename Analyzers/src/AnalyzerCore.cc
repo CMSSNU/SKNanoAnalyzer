@@ -139,6 +139,48 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
     return selected_electrons;
 }
 
+RVec<Tau> AnalyzerCore::GetAllTaus(){
+
+    RVec<Tau> taus;
+    
+    for (int i = 0; i < nTau; i++) {
+
+        Tau tau;
+        tau.SetPtEtaPhiM(Tau_pt[i], Tau_eta[i], Tau_phi[i], Tau_mass[i]);
+        tau.SetCharge(Tau_charge[i]);
+        tau.SetDecayMode(Tau_decayMode[i]);
+        tau.SetDxy(Tau_dxy[i]);
+        tau.SetDz(Tau_dz[i]);
+        tau.SetGenPartFlav(Tau_genPartFlav[i]);
+        tau.SetGenPartIdx(Tau_genPartIdx[i]);
+        tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
+        tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
+        tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
+        tau.SetIdDecayModeNewDMs(Tau_idDecayModeNewDMs[i]);
+        taus.push_back(tau);
+        
+    }
+
+    return taus;
+
+}
+
+RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax){
+    
+    RVec<Tau> selected_taus;
+    
+    for (const auto &tau: taus) {
+
+        if (! (tau.Pt() > ptmin)) continue;
+        if (! (fabs(tau.Eta()) < fetamax)) continue;
+        if (! tau.PassID(ID)) continue;
+        selected_taus.push_back(tau);
+
+    }
+
+    return selected_taus;
+
+}
 
 
 void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {

@@ -20,6 +20,9 @@ public :
     void SetGenPartFlav(unsigned char genPartFlav) {j_genPartFlav = genPartFlav;}
     inline unsigned char GenPartFlav() const {return j_genPartFlav;}
     
+    void SetGenPartIdx(short genPartIdx) {j_genPartIdx = genPartIdx;}
+    inline short GenPartIdx() const {return j_genPartIdx;}
+
     void SetIdDeepTau2018v2p5VSjet(unsigned char id) {j_idDeepTau2018v2p5VSjet = id;}
     inline bool passVVVLIDvJet() const {return j_idDeepTau2018v2p5VSjet == 1;}
     inline bool passVVLIDvJet()  const {return j_idDeepTau2018v2p5VSjet == 2;}
@@ -51,10 +54,12 @@ public :
 private :
     
     bool j_idDecayModeNewDMs;
-    unsigned char j_decayMode, j_genPartFlav;
-    unsigned char j_idDeepTau2018v2p5VSe, j_idDeepTau2018v2p5VSjet, j_idDeepTau2018v2p5VSmu;
-    float j_rawDeepTau2018v2p5VSe, j_rawDeepTau2018v2p5VSjet, j_rawDeepTau2018v2p5VSmu;
-    int j_decayModePNet;
+    unsigned char j_decayMode;
+    unsigned char j_genPartFlav;
+    short j_genPartIdx;
+    unsigned char j_idDeepTau2018v2p5VSe;
+    unsigned char j_idDeepTau2018v2p5VSjet;
+    unsigned char j_idDeepTau2018v2p5VSmu;
     ClassDef(Tau, 1);
 
 };
