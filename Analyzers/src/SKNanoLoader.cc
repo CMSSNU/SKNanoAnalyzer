@@ -160,6 +160,22 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Jet_rawFactor", Jet_rawFactor);
     fChain->SetBranchAddress("Jet_svIdx1", Jet_svIdx1);
     fChain->SetBranchAddress("Jet_svIdx2", Jet_svIdx2);
+    fChain->SetBranchAddress("nTau", &nTau);
+    fChain->SetBranchAddress("Tau_pt", Tau_pt);
+    fChain->SetBranchAddress("Tau_eta", Tau_eta);
+    fChain->SetBranchAddress("Tau_phi", Tau_phi);
+    fChain->SetBranchAddress("Tau_mass", Tau_mass);
+    fChain->SetBranchAddress("Tau_charge", Tau_charge);
+    fChain->SetBranchAddress("Tau_dxy", Tau_dxy);
+    fChain->SetBranchAddress("Tau_dz", Tau_dz);
+    fChain->SetBranchAddress("Tau_idDeepTau2018v2p5VSe", Tau_idDeepTau2018v2p5VSe);
+    fChain->SetBranchAddress("Tau_idDeepTau2018v2p5VSjet", Tau_idDeepTau2018v2p5VSjet);
+    fChain->SetBranchAddress("Tau_idDeepTau2018v2p5VSmu", Tau_idDeepTau2018v2p5VSmu);
+    fChain->SetBranchAddress("Tau_decayMode", Tau_decayMode);
+    fChain->SetBranchAddress("Tau_idDecayModeNewDMs", Tau_idDecayModeNewDMs);
+    fChain->SetBranchAddress("Tau_genPartFlav", Tau_genPartFlav);
+    fChain->SetBranchAddress("Tau_genPartIdx", Tau_genPartIdx);
+
 }
 
 

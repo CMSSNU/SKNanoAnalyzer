@@ -19,6 +19,7 @@ using namespace std;
 #include "Muon.h"
 #include "Electron.h"
 #include "Jet.h"
+#include "Tau.h"
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -38,10 +39,12 @@ public:
     RVec<Electron> GetAllElectrons();
     RVec<Jet> GetAllJets();
     RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
+    RVec<Tau> GetAllTaus();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
     RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
+    RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
 
     // Functions
     void SetOutfilePath(TString outpath);
