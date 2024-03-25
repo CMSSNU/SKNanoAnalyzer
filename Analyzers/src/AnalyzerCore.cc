@@ -149,8 +149,8 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
         tau.SetPtEtaPhiM(Tau_pt[i], Tau_eta[i], Tau_phi[i], Tau_mass[i]);
         tau.SetCharge(Tau_charge[i]);
         tau.SetDecayMode(Tau_decayMode[i]);
-        tau.SetDxy(Tau_dxy[i]);
-        tau.SetDz(Tau_dz[i]);
+        tau.SetdXY(Tau_dxy[i]);
+        tau.SetdZ(Tau_dz[i]);
         tau.SetGenPartFlav(Tau_genPartFlav[i]);
         tau.SetGenPartIdx(Tau_genPartIdx[i]);
         tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
@@ -158,7 +158,7 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
         tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
         tau.SetIdDecayModeNewDMs(Tau_idDecayModeNewDMs[i]);
         taus.push_back(tau);
-        
+
     }
 
     return taus;
@@ -172,7 +172,7 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
     for (const auto &tau: taus) {
 
         if (! (tau.Pt() > ptmin)) continue;
-        if (! (fabs(tau.Eta()) < fetamax)) continue;
+        if (! (fabs(tau.Eta()) < absetamax)) continue;
         if (! tau.PassID(ID)) continue;
         selected_taus.push_back(tau);
 
