@@ -10,4 +10,5 @@ find_package(correctionlib REQUIRED)
 
 # Add subdirectories
 add_subdirectory(DataFormats)
+add_subdirectory(AnalyzerTools)
 add_subdirectory(Analyzers)
