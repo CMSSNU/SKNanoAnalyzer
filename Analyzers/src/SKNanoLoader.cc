@@ -112,6 +112,54 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso);
     fChain->SetBranchAddress("Electron_mvaTTH", Electron_mvaTTH);
     fChain->SetBranchAddress("Electron_r9", Electron_r9);
+    
+    fChain->SetBranchAddress("nJet", &nJet);
+    fChain->SetBranchAddress("Jet_PNetRegPtRawCorr", Jet_PNetRegPtRawCorr);
+    fChain->SetBranchAddress("Jet_PNetRegPtRawCorrNeutrino", Jet_PNetRegPtRawCorrNeutrino);
+    fChain->SetBranchAddress("Jet_PNetRegPtRawRes", Jet_PNetRegPtRawRes);
+    fChain->SetBranchAddress("Jet_area", Jet_area);
+    fChain->SetBranchAddress("Jet_btagDeepFlavB", Jet_btagDeepFlavB);
+    fChain->SetBranchAddress("Jet_btagDeepFlavCvB", Jet_btagDeepFlavCvB);
+    fChain->SetBranchAddress("Jet_btagDeepFlavCvL", Jet_btagDeepFlavCvL);
+    fChain->SetBranchAddress("Jet_btagDeepFlavQG", Jet_btagDeepFlavQG);
+    fChain->SetBranchAddress("Jet_btagPNetB", Jet_btagPNetB);
+    fChain->SetBranchAddress("Jet_btagPNetCvB", Jet_btagPNetCvB);
+    fChain->SetBranchAddress("Jet_btagPNetCvL", Jet_btagPNetCvL);
+    fChain->SetBranchAddress("Jet_btagPNetQvG", Jet_btagPNetQvG);
+    fChain->SetBranchAddress("Jet_btagPNetTauVJet", Jet_btagPNetTauVJet);
+    fChain->SetBranchAddress("Jet_btagRobustParTAK4B", Jet_btagRobustParTAK4B);
+    fChain->SetBranchAddress("Jet_btagRobustParTAK4CvB", Jet_btagRobustParTAK4CvB);
+    fChain->SetBranchAddress("Jet_btagRobustParTAK4CvL", Jet_btagRobustParTAK4CvL);
+    fChain->SetBranchAddress("Jet_btagRobustParTAK4QG", Jet_btagRobustParTAK4QG);
+    fChain->SetBranchAddress("Jet_chEmEF", Jet_chEmEF);
+    fChain->SetBranchAddress("Jet_chHEF", Jet_chHEF);
+    fChain->SetBranchAddress("Jet_electronIdx1", Jet_electronIdx1);
+    fChain->SetBranchAddress("Jet_electronIdx2", Jet_electronIdx2);
+    fChain->SetBranchAddress("Jet_eta", Jet_eta);
+    fChain->SetBranchAddress("Jet_genJetIdx", Jet_genJetIdx);
+    fChain->SetBranchAddress("Jet_hadronFlavour", Jet_hadronFlavour);
+    //fChain->SetBranchAddress("Jet_hfadjacentEtaStripsSize", Jet_hfadjacentEtaStripsSize);
+    //fChain->SetBranchAddress("Jet_hfcentralEtaStripSize", Jet_hfcentralEtaStripSize);
+    //fChain->SetBranchAddress("Jet_hfsigmaEtaEta", Jet_hfsigmaEtaEta);
+    //fChain->SetBranchAddress("Jet_hfsigmaPhiPhi", Jet_hfsigmaPhiPhi);
+    fChain->SetBranchAddress("Jet_jetId", Jet_jetId);
+    fChain->SetBranchAddress("Jet_mass", Jet_mass);
+    fChain->SetBranchAddress("Jet_muEF", Jet_muEF);
+    fChain->SetBranchAddress("Jet_muonIdx1", Jet_muonIdx1);
+    fChain->SetBranchAddress("Jet_muonIdx2", Jet_muonIdx2);
+    //fChain->SetBranchAddress("Jet_muonSubtrFactor", Jet_muonSubtrFactor);
+    fChain->SetBranchAddress("Jet_nConstituents", Jet_nConstituents);
+    fChain->SetBranchAddress("Jet_nElectrons", Jet_nElectrons);
+    fChain->SetBranchAddress("Jet_nMuons", Jet_nMuons);
+    fChain->SetBranchAddress("Jet_nSVs", Jet_nSVs);
+    fChain->SetBranchAddress("Jet_neEmEF", Jet_neEmEF);
+    fChain->SetBranchAddress("Jet_neHEF", Jet_neHEF);
+    fChain->SetBranchAddress("Jet_partonFlavour", Jet_partonFlavour);
+    fChain->SetBranchAddress("Jet_phi", Jet_phi);
+    fChain->SetBranchAddress("Jet_pt", Jet_pt);
+    fChain->SetBranchAddress("Jet_rawFactor", Jet_rawFactor);
+    fChain->SetBranchAddress("Jet_svIdx1", Jet_svIdx1);
+    fChain->SetBranchAddress("Jet_svIdx2", Jet_svIdx2);
 }
 
 
