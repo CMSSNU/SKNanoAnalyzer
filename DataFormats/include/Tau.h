@@ -2,7 +2,7 @@
 #define Tau_h
 
 #include "TString.h"
-#include "Tau.h"
+#include "Lepton.h"
 
 class Tau : public Lepton {
     
@@ -12,7 +12,7 @@ public :
     ~Tau();
 
     void SetIdDecayModeNewDMs(bool id) {j_idDecayModeNewDMs = id;}
-    inline bool passDecayModeNewDMs() const {return j_idDecayModeNewDMs;}
+    inline bool idDecayModeNewDMs() const {return j_idDecayModeNewDMs;}
 
     void SetDecayMode(unsigned char decayMode) {j_decayMode = decayMode;}
     inline unsigned char DecayMode() const {return j_decayMode;}
@@ -60,6 +60,7 @@ private :
     unsigned char j_idDeepTau2018v2p5VSe;
     unsigned char j_idDeepTau2018v2p5VSjet;
     unsigned char j_idDeepTau2018v2p5VSmu;
+
     ClassDef(Tau, 1);
 
 };

@@ -26,7 +26,7 @@ bool Tau::PassID(TString ID) const{
         user defined Tau IDs 
     */
     if(ID == "TestID"){
-        if(!DecayModeNewDM())     return false;
+        if(!idDecayModeNewDMs())     return false;
         if(!( fabs(dZ()) < 0.2 )) return false;
         if(!(passTIDvEl() && passTIDvJet() && passTIDvMu())) return false;
         return true;
