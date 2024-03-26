@@ -9,3 +9,5 @@
 #pragma link C++ class Electron+;
 #pragma link C++ class Jet+;
 #pragma link C++ class Event+;
+#pragma link C++ class Tau+;
+#pragma link C++ class Jet+;
