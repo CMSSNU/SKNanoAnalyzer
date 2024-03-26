@@ -20,16 +20,26 @@ using namespace std;
 #include "Electron.h"
 #include "Jet.h"
 
+#include "AnalyzerParameter.h"
+#include "LHAPDFHandler.h"
+#include "PDFReweight.h"
+
 class AnalyzerCore: public SKNanoLoader {
 public:
     AnalyzerCore();
     ~AnalyzerCore();
 
-    //virtual void initializeAnalyzer() {};
-    //virtual void executeEvent() {};
+    virtual void initializeAnalyzer() {};
+    virtual void executeEvent() {};
 
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparing(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
+
+    // helper objects
+    PDFReweight *pdfReweight = nullptr;
+    float GetPDFWeight(LHAPDF::PDF *pdf_);
+    float GetPDFWeight();
+    float GetPDFWeight(int member);
 
     // Get objects
     //Event GetEvent();

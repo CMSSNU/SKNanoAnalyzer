@@ -7,4 +7,5 @@
 #pragma link C++ class Lepton+;
 #pragma link C++ class Muon+;
 #pragma link C++ class Electron+;
+#pragma link C++ class Jet+;
 #pragma link C++ class Event+;
