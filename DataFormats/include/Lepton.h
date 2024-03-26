@@ -9,10 +9,12 @@ public:
     ~Lepton();
 
     void SetdXY(float dxy, float dxyErr) { j_dxy = dxy; j_dxyErr = dxyErr;}
+    void SetdXY(float dxy) { j_dxy = dxy;}
     inline float dXY() const {return j_dxy;}
     inline float dXYerr() const {return j_dxyErr;}
 
     void SetdZ(float dz, float dzErr) { j_dz = dz; j_dzErr = dzErr;}
+    void SetdZ(float dz) { j_dz = dz;}
     inline float dZ() const {return j_dz;}
     inline float dZerr() const {return j_dzErr;}
 

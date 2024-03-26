@@ -179,7 +179,24 @@ public:
     Float_t Jet_rawFactor[kMaxJet];
     Short_t Jet_svIdx1[kMaxJet];
     Short_t Jet_svIdx2[kMaxJet];
-    
+    //Tau
+    static constexpr int kMaxTau = 15;
+    Int_t nTau;
+    Float_t Tau_pt[kMaxTau];
+    Float_t Tau_eta[kMaxTau];
+    Float_t Tau_phi[kMaxTau];
+    Float_t Tau_mass[kMaxTau];
+    Float_t Tau_charge[kMaxTau];
+    Float_t Tau_dxy[kMaxTau];
+    Float_t Tau_dz[kMaxTau];
+    UChar_t Tau_idDeepTau2018v2p5VSe[kMaxTau];
+    UChar_t Tau_idDeepTau2018v2p5VSjet[kMaxTau];
+    UChar_t Tau_idDeepTau2018v2p5VSmu[kMaxTau];
+    UChar_t Tau_decayMode[kMaxTau];
+    Bool_t  Tau_idDecayModeNewDMs[kMaxTau];
+    UChar_t Tau_genPartFlav[kMaxTau];
+    Short_t Tau_genPartIdx[kMaxTau];
+
 };
 
 #endif
