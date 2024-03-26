@@ -53,7 +53,7 @@ public:
 
     // Declaration of leaf types
     // Muon
-    static constexpr int kMaxMuon = 20;
+    static constexpr int kMaxMuon = 8;
     Int_t  nMuon;
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
@@ -92,7 +92,7 @@ public:
     Float_t Muon_mvaLowPt[kMaxMuon];
     Float_t Muon_mvaTTH[kMaxMuon];
     // Electron
-    static constexpr int kMaxElectron = 20;
+    static constexpr int kMaxElectron = 8;
     Int_t nElectron;
     Float_t Electron_pt[kMaxElectron];
     Float_t Electron_eta[kMaxElectron];
@@ -131,7 +131,7 @@ public:
     Float_t Electron_mvaTTH[kMaxElectron];
     Float_t Electron_r9[kMaxElectron];
     // Jet
-    static constexpr int kMaxJet = 25;
+    static constexpr int kMaxJet = 20;
     Int_t nJet; 
     Float_t Jet_PNetRegPtRawCorr[kMaxJet];
     Float_t Jet_PNetRegPtRawCorrNeutrino[kMaxJet];

@@ -2,9 +2,7 @@
 
 ClassImp(Jet)
 
-    Jet::Jet() : Particle()
-{
-
+Jet::Jet() : Particle() {
   // Jet ID
   j_looseJetId = false;
   j_tightJetID = false;
@@ -65,15 +63,11 @@ ClassImp(Jet)
   j_m = -999.0;
 }
 
-Jet::~Jet()
-{
-}
+Jet::~Jet() {}
 
 //////////
 
-bool Jet::PassID(TString ID) const
-{
-
+bool Jet::PassID(TString ID) const {
   if (ID == "loose")
     return j_looseJetId;
   else if (ID == "tight")

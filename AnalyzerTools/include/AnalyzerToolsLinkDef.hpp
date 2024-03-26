@@ -6,5 +6,7 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class LHAPDFHandler+;
+#pragma link C++ class AnalyzerParameter+;
+#pragma link C++ class PDFReweight+;
 
 #endif
