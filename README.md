@@ -59,3 +59,10 @@ p.Print()
 ```
 
 For testing other modules and analyzers, check scripts/test.py
+
+## To do
+- Make ExampleRun runable
+- Event / Jet / AnalyzerParams update
+- external dependencies: LHAPDF / GEScaleSyst(?) / CorrectionLib
+
+

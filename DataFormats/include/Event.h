@@ -15,6 +15,8 @@ public:
 
     void SetnPV(int nPV) { j_nPV = nPV;}
     inline int nPV() const { return j_nPV; }
+    void SetnPileUp(int nPU) { j_nPV = nPU;}
+    inline int nPileUp() const { return j_nPV; }
 
     void SetTrigger(RVec<TString> HLT_TriggerName) { j_HLT_TriggerName = HLT_TriggerName; }
     bool PassTrigger(TString trig);
