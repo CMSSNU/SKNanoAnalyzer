@@ -25,9 +25,27 @@ bool Event::PassTrigger(RVec<TString> trigs) {
     return false;
 }
 
+// NOTE
+// trigger lumi calcuated from brilcalc
+// e.g. brilcalc lumi -b "STABLE BEAMS" \
+//               -u /pb -i /afs/cern.ch/user/c/choij/private/brilcalc/json/Run3/2023.json \
+//               --hltpath "HLT_IsoMu24_v*"
+// No /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json for Run3?
 float Event::GetTriggerLumi(TString trig) {
-    cerr << "WARNING: GetTriggerLumi() not implemented yet" << endl;
-    return -999.;
+    if (GetEra() == "2022preEE") {
+        if (trig=="Full") return 7865.511617201;
+        else return -999.;
+    } else if (GetEra() == "2022postEE") {
+        if (trig == "Full") return 26337.274444149;
+        else return -999.;
+    } else if (GetEra() == "2023") {
+        if (trig == "Full") return 30000.;
+        else return -999.;
+    }
+    else {
+        cerr << "[Event::GetTriggerLumi] No era " << GetEra() << "for Run3" << endl;
+        return -999.;
+    }
 }
 
 bool Event::IsPDForTrigger(TString trig, TString PD) {

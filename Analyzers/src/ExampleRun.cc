@@ -51,7 +51,7 @@ void ExampleRun::initializeAnalyzer() {
     //==== Using new PDF
     //==== It consumes so much time, so only being activated with --userflags RunNewPDF
     //RunNewPDF = HasFlag("RunNewPDF");
-    RunNewPDF = true;
+    RunNewPDF = false;
     cout << "[ExampleRun::initializeAnalyzer] RunNewPDF = " << RunNewPDF << endl;
     if (RunNewPDF && !IsDATA) {
         LHAPDFHandler LHAPDFHandler_Prod;
@@ -65,11 +65,16 @@ void ExampleRun::initializeAnalyzer() {
         LHAPDFHandler_New.AlphaSMember_Down = 101;
         LHAPDFHandler_New.AlphaSMember_Up = 102;
         LHAPDFHandler_New.init();
-
+        
+        cout << "a" << endl;
         pdfReweight->SetProdPDF( LHAPDFHandler_Prod.PDFCentral );
+        cout << "b" << endl;
         pdfReweight->SetNewPDF( LHAPDFHandler_New.PDFCentral );
+        cout << "c" << endl;
         pdfReweight->SetNewPDFErrorSet( LHAPDFHandler_New.PDFErrorSet );
+        cout << "d" << endl;
         pdfReweight->SetNewPDFAlphaS( LHAPDFHandler_New.PDFAlphaS_Down, LHAPDFHandler_New.PDFAlphaS_Up );
+        cout << "e" << endl;
     }
 
     //==== Example 3
@@ -97,8 +102,8 @@ void ExampleRun::executeEvent() {
     // No prefire weight for Run3?
     weight_Prefire = 1.;
 
-    // Declare AnalyzerParmeter
-    AnalyzerParameter param;
+    // Declare parameter set
+    ExampleParameter param;
 
     // Loop over muonIDs
     for (unsigned int it_MuonID=0; it_MuonID < MuonIDs.size(); it_MuonID++) {
@@ -110,10 +115,10 @@ void ExampleRun::executeEvent() {
         param.Clear();
 
         // set which systematic sources you want to run this time
-        param.syst_ = AnalyzerParameter::Central;
+        param.syst = ExampleParameter::SYST::Central;
 
         // set name of the parameter set
-        param.Name = MuonID+"_"+"Central";
+        param.Name = MuonID+"_"+param.GetSystType();
 
         // you can define lepton ID string here
         param.Muon_Tight_ID = MuonID;
@@ -123,14 +128,14 @@ void ExampleRun::executeEvent() {
         param.Jet_ID = "tight";
 
         // now all parameters are set, run executeEventFromParmeter(param)
-        executeEventFromParmeter(param);
+        executeEventFromParameter(param);
 
         // 2) Now, loop over systematic sources
         if (RunSyst) {
-            for (int it_syst=1; it_syst < AnalyzerParameters::NSyst; it_syst++) {
-                param.syst_ = AnalyzerParameter::Syst(it_syst);
+            for (unsigned int syst=1; syst < ExampleParameter::SYST::NSyst; syst++) {
+                param.syst = syst; 
                 param.Name = MuonID+"_"+"Syst_"+param.GetSystType();
-                executeEventFromParmeter(param);
+                executeEventFromParameter(param);
             }
         }
     }
@@ -153,12 +158,12 @@ void ExampleRun::executeEvent() {
     //==== Need Update
 }
 
-void ExampleRun::executeEventFromParameter(AnalyzerParameter param) {
+void ExampleRun::executeEventFromParameter(ExampleParameter param) {
     // No cut
-    FillHist(param.Name+"/NoCut_"+param.Name, 0., 1., 1, 0., 1.);
+    //FillHist(param.Name+"/NoCut_"+param.Name, 0., 1., 1, 0., 1.);
 
     // No MET filter for NanoAODv12? 
-    //Event ev = GetEvent();
+    Event ev = GetEvent();
     //Particle METv = ev.GetMETVector()
     //if (! (ev.PassTrigger(IsoMuTriggerName))) return;
     
@@ -172,11 +177,10 @@ void ExampleRun::executeEventFromParameter(AnalyzerParameter param) {
     // 2. apply ID selections
     // This order should be explicitly followed
     // below are all varibales for available systematic sources
-    //
-    // Update systematics!!
-    if (param.syst_ == AnalyzerParameter::Central) {}
+    // Update systematic sources!
+    if (param.syst == ExampleParameter::SYST::Central) {}
     else {
-        cerr << "[ExampleRun::executeEventFromParameter] syst_ = " << param.syst_ << " is not implemented" << endl;
+        cerr << "[ExampleRun::executeEventFromParameter] syst = " << param.syst << " is not implemented" << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -225,8 +229,3 @@ void ExampleRun::executeEventFromParameter(AnalyzerParameter param) {
     // fill histograms
     FillHist(param.Name+"/ZCand_Mass_"+param.Name, ZCand.M(), weight, 40, 70., 100.);
 }
-
-
-
-
-

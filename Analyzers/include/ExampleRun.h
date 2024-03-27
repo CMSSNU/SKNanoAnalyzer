@@ -2,12 +2,13 @@
 #define ExampleRun_h
 
 #include "AnalyzerCore.h"
+#include "ExampleParameter.h"
 
 class ExampleRun : public AnalyzerCore {
 public:
     void initializeAnalyzer();
     void executeEvent();
-    void executeEventFromParameter(AnalyzerParameter param);
+    void executeEventFromParameter(ExampleParameter param);
 
     bool RunSyst;
     bool RunNewPDF;

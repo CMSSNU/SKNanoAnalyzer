@@ -38,6 +38,20 @@ void SKNanoLoader::Loop() {
 
 void SKNanoLoader::Init() {
     // Set object pointer
+    fChain->SetBranchAddress("Generator_id1", &Generator_id1);
+    fChain->SetBranchAddress("Generator_id2", &Generator_id2);
+    fChain->SetBranchAddress("Generator_x1", &Generator_x1);
+    fChain->SetBranchAddress("Generator_x2", &Generator_x2);
+    fChain->SetBranchAddress("Generator_xpdf1", &Generator_xpdf1);
+    fChain->SetBranchAddress("Generator_xpdf2", &Generator_xpdf2);
+    fChain->SetBranchAddress("Generator_scalePDF", &Generator_scalePDF);
+    fChain->SetBranchAddress("Generator_weight", &Generator_weight);
+    fChain->SetBranchAddress("genWeight", &genWeight);
+    fChain->SetBranchAddress("LHEWeight_originalXWGTUP", &LHEWeight_originalXWGTUP);
+    fChain->SetBranchAddress("LHEPdfWeight", &LHEPdfWeight);
+    fChain->SetBranchAddress("LHEScaleWeight", &LHEScaleWeight);
+    fChain->SetBranchAddress("PSWeight", &PSWeight);
+    fChain->SetBranchAddress("Pileup_nPU", &Pileup_nPU);
     fChain->SetBranchAddress("nMuon", &nMuon);
     fChain->SetBranchAddress("Muon_pt", Muon_pt);
     fChain->SetBranchAddress("Muon_eta", Muon_eta);

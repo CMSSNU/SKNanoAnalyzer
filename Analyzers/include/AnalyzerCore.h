@@ -21,7 +21,6 @@ using namespace std;
 #include "Jet.h"
 #include "Tau.h"
 
-#include "AnalyzerParameter.h"
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
 
@@ -34,16 +33,20 @@ public:
     virtual void executeEvent() {};
 
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
-    inline static bool PtComparing(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
+    inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
     // helper objects
     PDFReweight *pdfReweight = nullptr;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
-    float GetPDFWeight();
-    float GetPDFWeight(int member);
+    float GetPDFReweight();
+    float GetPDFReweight(int member);
+
+    // MC weights
+    float MCweight(bool usesign=true, bool norm_1invpb=true) const;
+    float GetPileUpWeight(int sys);
 
     // Get objects
-    //Event GetEvent();
+    Event GetEvent();
     RVec<Muon> GetAllMuons();
     RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
@@ -59,19 +62,19 @@ public:
     // Functions
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
-    void FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max);
-    void FillHist(const string &histname, float value, float weight, int n_bin, float *xbins);
-    void FillHist(const string &histname, float value_x, float value_y, float weight, 
+    void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
+    void FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins);
+    void FillHist(const TString &histname, float value_x, float value_y, float weight, 
                                           int n_binx, float x_min, float x_max, 
                                           int n_biny, float y_min, float y_max);
-    void FillHist(const string &histname, float value_x, float value_y, float weight,
+    void FillHist(const TString &histname, float value_x, float value_y, float weight,
                                           int n_binx, float *xbins,
                                           int n_biny, float *ybins);
-    void FillHist(const string &histname, float value_x, float value_y, float value_z, float weight,
+    void FillHist(const TString &histname, float value_x, float value_y, float value_z, float weight,
                                           int n_binx, float x_min, float x_max,
                                           int n_biny, float y_min, float y_max,
                                           int n_binz, float z_min, float z_max);
-    void FillHist(const string &histname, float value_x, float value_y, float value_z, float weight,
+    void FillHist(const TString &histname, float value_x, float value_y, float value_z, float weight,
                                           int n_binx, float *xbins,
                                           int n_biny, float *ybins,
                                           int n_binz, float *zbins);
