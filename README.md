@@ -18,9 +18,11 @@ git clone git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
 git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
 git checkout $DEVBRANCH
 
-# No first time setup yet
+# first time setup
 # NOTE: Assuming conda environment, no CMSSW or SFT dependencies!
-source setup.sh
+source setup.sh    # you have to do this every new session
+# install lhapdf
+./script/install_lhapdf.sh
 ```
 
 ### Compilation
@@ -59,6 +61,14 @@ p.Print()
 ```
 
 For testing other modules and analyzers, check scripts/test.py
+
+## About LHAPDFs
+For using LHAPDFHandler and PDFReweight classes, you should download the pdfsets from [here](http://lhapdfsets.web.cern.ch/lhapdfsets/current/).
+Or you can link the path as
+```bash
+export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current/"
+```
+but it slows down in the initialization step
 
 ## To do
 - Make ExampleRun runable -> done
