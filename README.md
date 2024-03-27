@@ -61,8 +61,9 @@ p.Print()
 For testing other modules and analyzers, check scripts/test.py
 
 ## To do
-- Make ExampleRun runable
-- Event / Jet / AnalyzerParams update
+- Make ExampleRun runable -> done
+- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
+- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
 - external dependencies: LHAPDF / GEScaleSyst(?) / CorrectionLib
 
 
