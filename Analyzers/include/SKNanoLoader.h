@@ -44,16 +44,35 @@ public:
         DataEra=era;
         DataYear=TString(era(0,4)).Atoi();
     }
-
-    //virtual TString GetEra() const { return DataEra; }
+    virtual TString GetEra() const { return DataEra; }
     //virtual TString GetEraShort() const;
-    //virtual int GetYear() const { return DataYear; }
+    virtual int GetYear() const { return DataYear; }
 
     TChain *fChain=nullptr;
 
     // Declaration of leaf types
+    // PDFs
+    Int_t Generator_id1;
+    Int_t Generator_id2;
+    Float_t Generator_x1;
+    Float_t Generator_x2;
+    Float_t Generator_xpdf1;
+    Float_t Generator_xpdf2;
+    Float_t Generator_scalePDF;
+    Float_t Generator_weight;
+    // Weights
+    Float_t genWeight;
+    Float_t LHEWeight_originalXWGTUP;
+    static constexpr int nLHEPdfWeight = 110; // 325300 - 325402
+    static constexpr int nLHEScaleWeight = 9;
+    static constexpr int nPSWeight = 4; 
+    Float_t LHEPdfWeight[nLHEPdfWeight];
+    Float_t LHEScaleWeight[nLHEScaleWeight];
+    Float_t PSWeight[nPSWeight];
+    // Event
+    Int_t Pileup_nPU;
     // Muon
-    static constexpr int kMaxMuon = 20;
+    static constexpr int kMaxMuon = 8;
     Int_t  nMuon;
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
@@ -92,7 +111,7 @@ public:
     Float_t Muon_mvaLowPt[kMaxMuon];
     Float_t Muon_mvaTTH[kMaxMuon];
     // Electron
-    static constexpr int kMaxElectron = 20;
+    static constexpr int kMaxElectron = 8;
     Int_t nElectron;
     Float_t Electron_pt[kMaxElectron];
     Float_t Electron_eta[kMaxElectron];
@@ -131,7 +150,7 @@ public:
     Float_t Electron_mvaTTH[kMaxElectron];
     Float_t Electron_r9[kMaxElectron];
     // Jet
-    static constexpr int kMaxJet = 25;
+    static constexpr int kMaxJet = 20;
     Int_t nJet; 
     Float_t Jet_PNetRegPtRawCorr[kMaxJet];
     Float_t Jet_PNetRegPtRawCorrNeutrino[kMaxJet];
@@ -186,7 +205,7 @@ public:
     Float_t Tau_eta[kMaxTau];
     Float_t Tau_phi[kMaxTau];
     Float_t Tau_mass[kMaxTau];
-    Float_t Tau_charge[kMaxTau];
+    Short_t Tau_charge[kMaxTau];
     Float_t Tau_dxy[kMaxTau];
     Float_t Tau_dz[kMaxTau];
     UChar_t Tau_idDeepTau2018v2p5VSe[kMaxTau];

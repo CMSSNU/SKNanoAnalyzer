@@ -2,3 +2,5 @@ build/*
 lib/*
 test/*
 test.root
+CMakeFiles/*
+external/lhapdf/*
