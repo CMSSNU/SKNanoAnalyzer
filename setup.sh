@@ -44,6 +44,10 @@ export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
+# for LHAPDF
+export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+echo "@@@@ reading LHPPDF from $LHAPDF_DATA_PATH"
+
 # env for correctionlibs
 export CORRECTION_LIBS=`correction config --libdir`
 export CORRECTION_CMAKE_PREFIX=`correction config --cmake`

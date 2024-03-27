@@ -1,7 +1,12 @@
 #ifndef LHAPDFHandler_h
 #define LHAPDFHandler_h
 
+// NOTE: This class is a duplicate of LHAPDFHandler.h in SKFlatAnalyzer
+// From NanoAOD, the PDF weights are stored as a branch in Event tree
+// Validation needed to check if the PDF weights are stored in the same way
+
 #include <iostream>
+#include <string>
 #include "LHAPDF/LHAPDF.h"
 #include "TString.h"
 #include "ROOT/RVec.hxx"
@@ -14,7 +19,7 @@ public:
     ~LHAPDFHandler();
 
     // PDF error sets: Name of the Central PDF and members (0~100 etc..)
-    TString CentralPDFName;
+    string CentralPDFName;
     LHAPDF::PDF* PDFCentral;
     int ErrorSetMember_Start, ErrorSetMember_End;
     RVec<LHAPDF::PDF*> PDFErrorSet;

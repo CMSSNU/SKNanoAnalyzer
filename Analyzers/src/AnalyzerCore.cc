@@ -11,10 +11,45 @@ AnalyzerCore::~AnalyzerCore() {
     }
 }
 
-
-
 void AnalyzerCore::SetOutfilePath(TString outpath) {
     outfile = new TFile(outpath, "RECREATE");
+}
+
+// pdfs
+float AnalyzerCore::GetPDFWeight(LHAPDF::PDF *pdf) {
+    float pdf1 = pdf->xfxQ2(Generator_id1, Generator_x1, Generator_scalePDF);
+    float pdf2 = pdf->xfxQ2(Generator_id2, Generator_x2, Generator_scalePDF);
+    return pdf1 * pdf2;
+}
+
+float AnalyzerCore::GetPDFReweight() {
+    return GetPDFWeight(pdfReweight->NewPDF) / GetPDFWeight(pdfReweight->ProdPDF);
+}
+
+float AnalyzerCore::GetPDFReweight(int member) {
+    return GetPDFWeight(pdfReweight->PDFErrorSet.at(member)) / GetPDFWeight(pdfReweight->ProdPDF);
+}
+
+// MC weights
+// TODO: See SKFlat
+float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
+    if (IsDATA) return 1.;
+    else return genWeight;
+}
+
+// Not implemented yets
+float AnalyzerCore::GetPileUpWeight(int sys) {
+    if (IsDATA) return 1.;
+    else return 1.;
+}
+
+
+// Objects
+Event AnalyzerCore::GetEvent() {
+    Event ev;
+    ev.SetnPileUp(Pileup_nPU);
+    ev.SetEra(GetEra());
+    return ev;
 }
 
 RVec<Muon> AnalyzerCore::GetAllMuons() {
@@ -184,20 +219,6 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 }
 
-
-void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float x_min, float x_max) {
-    auto it = histmap1d.find(histname);
-    if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histname.c_str(), "", n_bin, x_min, x_max);
-        this_hist->SetDirectory(nullptr);
-        histmap1d[histname] = this_hist;
-        this_hist->Fill(value, weight);
-    }
-    else {
-        it->second->Fill(value, weight);
-    }
-}
-
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
     for (int i = 0; i < nJet; i++) {
@@ -222,12 +243,13 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
-void AnalyzerCore::FillHist(const string &histname, float value, float weight, int n_bin, float *xbins) {
-    auto it = histmap1d.find(histname);
+void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
+    auto histkey = string(histname);
+    auto it = histmap1d.find(histkey);
     if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histname.c_str(), "", n_bin, xbins);
+        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, x_min, x_max);
         this_hist->SetDirectory(nullptr);
-        histmap1d[histname] = this_hist;
+        histmap1d[histkey] = this_hist;
         this_hist->Fill(value, weight);
     }
     else {
@@ -235,14 +257,29 @@ void AnalyzerCore::FillHist(const string &histname, float value, float weight, i
     }
 }
 
-void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y, float weight,
+void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins) {
+    auto histkey = string(histname.Data());
+    auto it = histmap1d.find(histkey);
+    if (it == histmap1d.end()) {
+        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, xbins);
+        this_hist->SetDirectory(nullptr);
+        histmap1d[histkey] = this_hist;
+        this_hist->Fill(value, weight);
+    }
+    else {
+        it->second->Fill(value, weight);
+    }
+}
+
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float weight,
                                                    int n_binx, float x_min, float x_max,
                                                    int n_biny, float y_min, float y_max) {
-    auto it = histmap2d.find(histname);
+    auto histkey = string(histname);
+    auto it = histmap2d.find(histkey);
     if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histname.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
+        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
         this_hist->SetDirectory(nullptr);
-        histmap2d[histname] = this_hist;
+        histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
     }
     else {
@@ -250,14 +287,15 @@ void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y
     }
 }
 
-void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y, float weight,
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float weight,
                                                     int n_binx, float *xbins,
                                                     int n_biny, float *ybins) {
-    auto it = histmap2d.find(histname);
+    auto histkey = string(histname);
+    auto it = histmap2d.find(histkey);
     if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histname.c_str(), "", n_binx, xbins, n_biny, ybins);
+        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
         this_hist->SetDirectory(nullptr);
-        histmap2d[histname] = this_hist;
+        histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
     }
     else {
@@ -265,15 +303,16 @@ void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y
     }
 }
 
-void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y, float value_z, 
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z, 
                                       float weight, int n_binx, float x_min, float x_max,
                                                     int n_biny, float y_min, float y_max,
                                                     int n_binz, float z_min, float z_max) {
-    auto it = histmap3d.find(histname);
+    auto histkey = string(histname);
+    auto it = histmap3d.find(histkey);
     if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histname.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
+        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
         this_hist->SetDirectory(nullptr);
-        histmap3d[histname] = this_hist;
+        histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
     }
     else {
@@ -281,15 +320,16 @@ void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y
     }
 }
 
-void AnalyzerCore::FillHist(const string &histname, float value_x, float value_y, float value_z, 
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z, 
                                       float weight, int n_binx, float *xbins,
                                                     int n_biny, float *ybins,
                                                     int n_binz, float *zbins) {
-    auto it = histmap3d.find(histname);
+    auto histkey = string(histname);
+    auto it = histmap3d.find(histkey);
     if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histname.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
+        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
         this_hist->SetDirectory(nullptr);
-        histmap3d[histname] = this_hist;
+        histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
     }
     else {
