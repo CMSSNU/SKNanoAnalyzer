@@ -19,6 +19,7 @@ using namespace std;
 #include "Muon.h"
 #include "Electron.h"
 #include "Jet.h"
+#include "GenJet.h"
 #include "Tau.h"
 #include "FatJet.h"
 
@@ -52,9 +53,11 @@ public:
     RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
     RVec<Jet> GetAllJets();
+    RVec<Jet> GetJets(const TString id, const float ptmin, const float fetamax);
     RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
     RVec<Tau> GetAllTaus();
     RVec<FatJet> GetAllFatJets();
+    RVec<GenJet> GetAllGenJets();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
