@@ -66,15 +66,10 @@ void ExampleRun::initializeAnalyzer() {
         LHAPDFHandler_New.AlphaSMember_Up = 102;
         LHAPDFHandler_New.init();
         
-        //cout << "a" << endl;
         pdfReweight->SetProdPDF( LHAPDFHandler_Prod.PDFCentral );
-        //cout << "b" << endl;
         pdfReweight->SetNewPDF( LHAPDFHandler_New.PDFCentral );
-        //cout << "c" << endl;
         pdfReweight->SetNewPDFErrorSet( LHAPDFHandler_New.PDFErrorSet );
-        //cout << "d" << endl;
         pdfReweight->SetNewPDFAlphaS( LHAPDFHandler_New.PDFAlphaS_Down, LHAPDFHandler_New.PDFAlphaS_Up );
-        //cout << "e" << endl;
     }
 
     //==== Example 3
@@ -100,7 +95,7 @@ void ExampleRun::executeEvent() {
     //AllJets = GetAllJets();
     
     // No prefire weight for Run3?
-    weight_Prefire = 1.;
+    weight_Prefire = 1.;  //조사해보기
 
     // Declare parameter set
     ExampleParameter param;
