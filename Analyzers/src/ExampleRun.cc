@@ -51,7 +51,7 @@ void ExampleRun::initializeAnalyzer() {
     //==== Using new PDF
     //==== It consumes so much time, so only being activated with --userflags RunNewPDF
     //RunNewPDF = HasFlag("RunNewPDF");
-    RunNewPDF = false;
+    RunNewPDF = true;
     cout << "[ExampleRun::initializeAnalyzer] RunNewPDF = " << RunNewPDF << endl;
     if (RunNewPDF && !IsDATA) {
         LHAPDFHandler LHAPDFHandler_Prod;
@@ -66,15 +66,15 @@ void ExampleRun::initializeAnalyzer() {
         LHAPDFHandler_New.AlphaSMember_Up = 102;
         LHAPDFHandler_New.init();
         
-        cout << "a" << endl;
+        //cout << "a" << endl;
         pdfReweight->SetProdPDF( LHAPDFHandler_Prod.PDFCentral );
-        cout << "b" << endl;
+        //cout << "b" << endl;
         pdfReweight->SetNewPDF( LHAPDFHandler_New.PDFCentral );
-        cout << "c" << endl;
+        //cout << "c" << endl;
         pdfReweight->SetNewPDFErrorSet( LHAPDFHandler_New.PDFErrorSet );
-        cout << "d" << endl;
+        //cout << "d" << endl;
         pdfReweight->SetNewPDFAlphaS( LHAPDFHandler_New.PDFAlphaS_Down, LHAPDFHandler_New.PDFAlphaS_Up );
-        cout << "e" << endl;
+        //cout << "e" << endl;
     }
 
     //==== Example 3
