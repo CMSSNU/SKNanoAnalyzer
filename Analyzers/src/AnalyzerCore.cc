@@ -2,13 +2,15 @@
 
 AnalyzerCore::AnalyzerCore() {
     outfile = nullptr;
+    pdfReweight = new PDFReweight();
 }
 
 AnalyzerCore::~AnalyzerCore() {
-    if (outfile != nullptr) {
-        outfile->Close();
-        delete outfile;
-    }
+    for (const auto &pair: histmap1d) delete pair.second; histmap1d.clear();
+    for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
+    for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
+    if (outfile) delete outfile;
+    if (pdfReweight) delete pdfReweight;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
@@ -389,4 +391,5 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    outfile->Close();
 }
