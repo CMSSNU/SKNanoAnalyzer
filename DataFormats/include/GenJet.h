@@ -11,16 +11,18 @@ public:
   // setting functions
   inline void SetGenFlavours(short pf, unsigned char hf)
   {
-    j_partonFlavour = short(pf);
-    j_hadronFlavour = short(hf);
+    j_partonFlavour = pf;
+    j_hadronFlavour = hf;
   };
+  //Parton flavour follows the typical PDG IDs.
+  //For more info. please refer https://indico.cern.ch/event/271460/contributions/1610529/attachments/487999/
   inline short GetPartonFlavour() { return j_partonFlavour; };
-  inline short GetHadronFlavour() { return j_hadronFlavour; };
+  inline int GetHadronFlavour() { return int(j_hadronFlavour); };
 
 
 private:
   // Flavour
-  short j_hadronFlavour;
+  unsigned char j_hadronFlavour;
   short j_partonFlavour;
   ClassDef(GenJet, 1)
 };

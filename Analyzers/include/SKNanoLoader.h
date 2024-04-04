@@ -268,8 +268,8 @@ public:
     Float_t GenJet_mass[kMaxGenJet];
     Float_t GenJet_phi[kMaxGenJet];
     Float_t GenJet_pt[kMaxGenJet];
-    Float_t GenJet_partonFlavour[kMaxGenJet];
-    Float_t GenJet_hadronFlavour[kMaxGenJet];
+    Short_t GenJet_partonFlavour[kMaxGenJet];
+    UChar_t GenJet_hadronFlavour[kMaxGenJet];
 
 };
 
