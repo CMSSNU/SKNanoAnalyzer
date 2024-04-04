@@ -243,6 +243,18 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
+RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float fetamax) {
+    RVec<Jet> jets = GetAllJets();
+    RVec<Jet> selected_jets;
+    for (const auto &jet: jets) {
+        if (jet.Pt() < ptmin) continue;
+        if (fabs(jet.Eta()) > fetamax) continue;
+        if (! jet.PassID(ID)) continue;
+        selected_jets.push_back(jet);
+    }
+    return selected_jets;
+}
+
 RVec<FatJet> AnalyzerCore::GetAllFatJets() {
     
     RVec<FatJet> FatJets;
@@ -280,6 +292,21 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
     return FatJets;
 }
 
+RVec<GenJet> AnalyzerCore::GetAllGenJets() {
+    
+    RVec<GenJet> GenJets;
+
+    for (int i = 0; i < nGenJet; i++) {
+
+        GenJet genjet;
+
+        genjet.SetPtEtaPhiM(GenJet_pt[i], GenJet_eta[i], GenJet_phi[i], GenJet_mass[i]);
+        genjet.SetGenFlavours(GenJet_partonFlavour[i], GenJet_hadronFlavour[i]);
+        GenJets.push_back(genjet);
+    }
+
+    return GenJets;
+}
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
