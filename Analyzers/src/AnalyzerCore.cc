@@ -2,13 +2,15 @@
 
 AnalyzerCore::AnalyzerCore() {
     outfile = nullptr;
+    pdfReweight = new PDFReweight();
 }
 
 AnalyzerCore::~AnalyzerCore() {
-    if (outfile != nullptr) {
-        outfile->Close();
-        delete outfile;
-    }
+    for (const auto &pair: histmap1d) delete pair.second; histmap1d.clear();
+    for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
+    for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
+    if (outfile) delete outfile;
+    if (pdfReweight) delete pdfReweight;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
@@ -226,15 +228,15 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
         jet.SetGenFlavours(Jet_hadronFlavour[i], Jet_partonFlavour[i]);
-        std::vector<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
-                                 Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
-                                 Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
+        RVec<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
+                           Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
+                           Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
         jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
         jet.SetJetID(Jet_jetId[i]);
-        std::vector<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
+        RVec<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
         jet.SetCorrections(tvs2);
 
         Jets.push_back(jet);
@@ -426,4 +428,5 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    outfile->Close();
 }
