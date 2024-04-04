@@ -36,7 +36,7 @@ public:
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
     // helper objects
-    PDFReweight *pdfReweight = nullptr;
+    PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
     float GetPDFReweight();
     float GetPDFReweight(int member);
