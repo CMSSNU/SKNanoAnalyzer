@@ -23,7 +23,7 @@ public:
     LHAPDF::PDF* PDFCentral;
     int ErrorSetMember_Start, ErrorSetMember_End;
     RVec<LHAPDF::PDF*> PDFErrorSet;
-    // PDF AlphaS sets: Usually the last two member o0f central PDF sets
+    // PDF AlphaS sets: Usually the last two member of central PDF sets
     int AlphaSMember_Down, AlphaSMember_Up;
     LHAPDF::PDF* PDFAlphaS_Down;
     LHAPDF::PDF* PDFAlphaS_Up;

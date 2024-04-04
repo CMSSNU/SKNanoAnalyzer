@@ -20,6 +20,7 @@ using namespace std;
 #include "Electron.h"
 #include "Jet.h"
 #include "Tau.h"
+#include "FatJet.h"
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
@@ -36,7 +37,7 @@ public:
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
     // helper objects
-    PDFReweight *pdfReweight = nullptr;
+    PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
     float GetPDFReweight();
     float GetPDFReweight(int member);
@@ -53,6 +54,7 @@ public:
     RVec<Jet> GetAllJets();
     RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
     RVec<Tau> GetAllTaus();
+    RVec<FatJet> GetAllFatJets();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);

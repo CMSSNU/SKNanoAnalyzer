@@ -2,13 +2,15 @@
 
 AnalyzerCore::AnalyzerCore() {
     outfile = nullptr;
+    pdfReweight = new PDFReweight();
 }
 
 AnalyzerCore::~AnalyzerCore() {
-    if (outfile != nullptr) {
-        outfile->Close();
-        delete outfile;
-    }
+    for (const auto &pair: histmap1d) delete pair.second; histmap1d.clear();
+    for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
+    for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
+    if (outfile) delete outfile;
+    if (pdfReweight) delete pdfReweight;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
@@ -243,6 +245,43 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
+RVec<FatJet> AnalyzerCore::GetAllFatJets() {
+    
+    RVec<FatJet> FatJets;
+
+    for (int i = 0; i < nFatJet; i++) {
+
+        FatJet fatjet;
+
+        RVec<float> pnet_m = { FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
+                                      FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i], 
+                                      FatJet_particleNetWithMass_TvsQCD[i]  , FatJet_particleNetWithMass_WvsQCD[i],
+                                      FatJet_particleNetWithMass_ZvsQCD[i] };
+
+        RVec<float> pnet   = { FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
+                                      FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
+                                      FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
+                                      FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
+                                      FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i],
+                                      FatJet_particleNet_XttVsQCD[i], FatJet_particleNet_massCorr[i] };
+
+        fatjet.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
+        fatjet.SetArea(FatJet_area[i]);
+        fatjet.SetSDMass(FatJet_msoftdrop[i]);
+        fatjet.SetLSF3(FatJet_lsf3[i]);
+        fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
+        fatjet.SetConstituents(FatJet_nBHadrons[i], FatJet_nCHadrons[i], FatJet_nConstituents[i]);
+        fatjet.SetBTaggingInfo(FatJet_btagDDBvLV2[i], FatJet_btagDDCvBV2[i], FatJet_btagDDCvLV2[i], FatJet_btagDeepB[i], FatJet_btagHbb[i]);
+        fatjet.SetPNetwithMassResults(pnet_m);
+        fatjet.SetPNetResults(pnet);
+        fatjet.SetSubjettiness(FatJet_tau1[i], FatJet_tau2[i], FatJet_tau3[i], FatJet_tau4[i]);
+
+        FatJets.push_back(fatjet);
+    }
+
+    return FatJets;
+}
+
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
@@ -389,4 +428,5 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    outfile->Close();
 }
