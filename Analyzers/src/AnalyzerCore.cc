@@ -251,12 +251,12 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
 
         FatJet fatjet;
 
-        std::vector<float> pnet_m = { FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
+        RVec<float> pnet_m = { FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
                                       FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i], 
                                       FatJet_particleNetWithMass_TvsQCD[i]  , FatJet_particleNetWithMass_WvsQCD[i],
                                       FatJet_particleNetWithMass_ZvsQCD[i] };
 
-        std::vector<float> pnet   = { FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
+        RVec<float> pnet   = { FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
                                       FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
                                       FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
                                       FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
