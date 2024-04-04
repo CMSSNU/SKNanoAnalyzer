@@ -47,7 +47,7 @@ public:
         j_btagDDBvLV2 = ddbv2; j_btagDDCvBV2 = ddcv2; j_btagDDCvLV2 = ddclv2; j_btagDeepB = db; j_btagHbb = hbb;
     };
 
-    void SetPNetwithMassResults(std::vector<float> ds){
+    void SetPNetwithMassResults(RVec<float> ds){
         j_particleNetWithMass_H4qvsQCD = ds[0];
         j_particleNetWithMass_HccvsQCD = ds[1];
         j_particleNetWithMass_HbbvsQCD = ds[2];
@@ -57,7 +57,7 @@ public:
         j_particleNetWithMass_ZvsQCD   = ds[6];
     };
     
-    void SetPNetResults(std::vector<float> ds){
+    void SetPNetResults(RVec<float> ds){
         j_particleNet_QCD      = ds[0];
         j_particleNet_QCD0HF   = ds[1];
         j_particleNet_QCD1HF   = ds[2];

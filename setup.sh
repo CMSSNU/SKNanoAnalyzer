@@ -44,10 +44,27 @@ export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
-# for LHAPDF
-export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
-echo "@@@@ reading LHPPDF from $LHAPDF_DATA_PATH"
+# setting LHAPDFs
+if [ -d "external/lhapdf" ]; then
+    export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+    export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+elif [ -d "/cvmfs" ]; then
+    echo ""@@@@ configuring LHAPDF from cvmfs
+else
+    echo "@@@@ LHAPDF not found"
+    echo "@@@@ consider to install LHAPDF using ./scripts/install_lhapdf.sh"
+    exit(1)
+fi
+export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
+export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+
+
+echo "@@@@ LHAPDF include: $LHAPDF_INCLUDE_DIR"
+echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
+echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 
 # env for correctionlibs
-export CORRECTION_LIBS=`correction config --libdir`
-export CORRECTION_CMAKE_PREFIX=`correction config --cmake`
+#export CORRECTION_LIBS=`correction config --libdir`
+#export CORRECTION_CMAKE_PREFIX=`correction config --cmake`

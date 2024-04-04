@@ -4,9 +4,6 @@
 #include "Particle.h"
 #include "TString.h"
 #include "TObject.h"
-#include "ROOT/RVec.hxx"
-using namespace std;
-using namespace ROOT::VecOps;
 
 class Event: public TObject {
 public:

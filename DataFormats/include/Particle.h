@@ -1,10 +1,12 @@
 #ifndef Particle_h
 #define Particle_h
 
+#include <iostream>
 #include "TLorentzVector.h"
 #include "TString.h"
-#include <iostream>
+#include "ROOT/RVec.hxx"
 using namespace std;
+using namespace ROOT::VecOps;
 
 class Particle: public TLorentzVector{
 public:
