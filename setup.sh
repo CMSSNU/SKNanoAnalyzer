@@ -45,20 +45,22 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
-if [ -d "/cvmfs" ]; then
-    echo "@@@@ Configuring LHAPDF from cvmfs"
-    export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
-    export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
-    # export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current"
-elif [ -d "$SKNANO_HOME/external/lhapdf" ]; then
-    echo "@@@@ Configuring LHAPDF from local"
-    export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
-    export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+if [ -d "external/lhapdf" ]; then
+    export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
     export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+elif [ -d "/cvmfs" ]; then
+    echo ""@@@@ configuring LHAPDF from cvmfs
 else
-    echo -e "\033[31m@@@@ cannot configure LHAPDF"
-    echo -e "\033[31m@@@@ Consider installing lhapdf using ./scripts/install_lhapdf.sh"
+    echo "@@@@ LHAPDF not found"
+    echo "@@@@ consider to install LHAPDF using ./scripts/install_lhapdf.sh"
+    exit(1)
 fi
+export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
+export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+
+
 echo "@@@@ LHAPDF include: $LHAPDF_INCLUDE_DIR"
 echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
 echo "@@@@ reading data from $LHAPDF_DATA_PATH"
