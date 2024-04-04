@@ -44,12 +44,24 @@ export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
-# for LHAPDF
-export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
-export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
-export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current/"
-# export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
-echo "@@@@ reading LHPPDF from $LHAPDF_DATA_PATH"
+# setting LHAPDFs
+if [ -d "/cvmfs" ]; then
+    echo "@@@@ Configuring LHAPDF from cvmfs"
+    export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
+    export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+    # export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current"
+elif [ -d "$SKNANO_HOME/external/lhapdf" ]; then
+    echo "@@@@ Configuring LHAPDF from local"
+    export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
+    export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+    export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+else
+    echo -e "\033[31m@@@@ cannot configure LHAPDF"
+    echo -e "\033[31m@@@@ Consider installing lhapdf using ./scripts/install_lhapdf.sh"
+fi
+echo "@@@@ LHAPDF include: $LHAPDF_INCLUDE_DIR"
+echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
+echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 
 # env for correctionlibs
 #export CORRECTION_LIBS=`correction config --libdir`
