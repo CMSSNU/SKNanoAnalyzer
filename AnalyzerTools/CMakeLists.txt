@@ -6,8 +6,10 @@ else()
 endif()
 
 # find LHAPDF
-set(LHAPDF_INCLUDE_DIR $ENV{SKNANO_HOME}/external/lhapdf/include)
-set(LHAPDF_LIBRARY $ENV{SKNANO_HOME}/external/lhapdf/lib/libLHAPDF.${LIB_EXT})
+#set(LHAPDF_INCLUDE_DIR $ENV{SKNANO_HOME}/external/lhapdf/include)
+#set(LHAPDF_LIBRARY $ENV{SKNANO_HOME}/external/lhapdf/lib/libLHAPDF.${LIB_EXT})
+set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE})
+set(LHAPDF_LIBRARY $ENV{LHAPDF_LIB})
 
 # include ROOT and LHAPDF
 include_directories(${ROOT_INCLUDE_DIRS})

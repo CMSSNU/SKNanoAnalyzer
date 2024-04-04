@@ -45,9 +45,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # for LHAPDF
-export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
+export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
+export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current/"
+# export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
 echo "@@@@ reading LHPPDF from $LHAPDF_DATA_PATH"
 
 # env for correctionlibs
-export CORRECTION_LIBS=`correction config --libdir`
-export CORRECTION_CMAKE_PREFIX=`correction config --cmake`
+#export CORRECTION_LIBS=`correction config --libdir`
+#export CORRECTION_CMAKE_PREFIX=`correction config --cmake`
