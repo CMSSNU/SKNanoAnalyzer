@@ -6,7 +6,7 @@ find_package(ROOT REQUIRED COMPONENTS)
 include(${ROOT_USE_FILE})
 
 # correctionlibs
-find_package(correctionlib REQUIRED)
+# find_package(correctionlib REQUIRED)
 
 # Add subdirectories
 add_subdirectory(DataFormats)
