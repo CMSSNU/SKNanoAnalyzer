@@ -1,3 +1,4 @@
+#!/bin/sh
 echo -e "\033[31m##################### WARNING ########################\033[0m"
 echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
 echo -e "\033[31m######################################################\033[0m"
@@ -9,26 +10,46 @@ export SKNANO_HOME=`pwd`
 export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
 export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
 
-# root configuration
-RELEASE="`cat /etc/redhat-release`"
-echo "@@@@ Configuring ROOT for $RELEASE"
-if [[ $RELEASE == *"7."* ]]; then
-    echo "@@@@ Running on $RELEASE"
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-centos7-gcc12-opt/setup.sh
-elif [[ $RELEASE == *"8."* ]]; then
-    echo "@@@@ Running on $RELEASE"
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos8-gcc12-opt/setup.sh
-elif [[ $RELEASE == *"9."* ]]; then
-    echo "@@@@ Running on $RELEASE"
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
+# check configuration
+CONFIG_FILE=$SKNANO_HOME/config/config.$USER
+if [ -f "${CONFIG_FILE}" ]; then
+    echo "@@@@ Reading configuration from $CONFIG_FILE"
+    SYSTEM=$(grep '\[SYSTEM\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
 else
-    echo "@@@@ Not running on redhat 7, 8, or 9"
-    echo "@@@@ Assuming root is installed in conda environment 'nano'"
+    echo "@@@@ Configuration file $CONFIG_FILE not found"
+    echo "@@@@ Please create a configuration file in config/ with your username"
+    exit 1
+fi
+echo "@@@@ System:  $SYSTEM"
+echo "@@@@ Package: $PACKAGE"
+
+# root configuration
+# no cvmfs related configuration for conda
+if [ $PACKAGE = "conda" ]; then
+    echo "@@@@ Primary environment using conda"
     source ~/.conda-activate
     conda activate nano
+elif [ $PACKAGE = "cvmfs" ]; then
+    echo "@@@@ Primary environment using cvmfs"
+    RELEASE="`cat /etc/redhat-release`"
+    if [[ $RELEASE == *"7."* ]]; then
+        source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-centos7-gcc12-opt/setup.sh
+    elif [[ $RELEASE == *"8."* ]]; then
+        source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos8-gcc12-opt/setup.sh
+    elif [[ $RELEASE == *"9."* ]]; then
+        source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
+    else
+        echo "@@@@ Not running on redhat 7, 8, or 9"
+        echo "@@@@ Consider using conda environment"
+        exit 1
+    fi
+else
+    echo "@@@@ Package not recognized"
+    echo "@@@@ Please check configuration file in config/config.$USER"
+    exit 1
 fi
 echo "@@@@ ROOT path: $ROOTSYS"
-
 
 export SKNANO_LIB=$SKNANO_HOME/lib
 export SKNANO_VERSION="Run3UltraLegacy_v1"
@@ -45,17 +66,23 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
-if [ -d "external/lhapdf" ]; then
-    export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-    export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
-elif [ -d "/cvmfs" ]; then
-    echo ""@@@@ configuring LHAPDF from cvmfs
+if [ $PACKAGE = "conda" ]; then
+    if [ -d "external/lhapdf"]; then
+        export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+        export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+        export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
+    else
+        echo "@@@@ LHAPDF not found"
+        echo "@@@@ consider to install LHAPDF using ./scripts/install_lhapdf.sh"
+        exit 1
+    fi
+elif [ $PACKAGE = "cvmfs" ]; then
+    echo "@@@@ configuring LHAPDF from cvmfs"
+    #export LHAPDF_DATA_PATH=/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current
 else
     echo "@@@@ LHAPDF not found"
-    echo "@@@@ consider to install LHAPDF using ./scripts/install_lhapdf.sh"
-    exit(1)
+    exit 1
 fi
 export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
 export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
@@ -65,11 +92,23 @@ echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
 echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 
 # env for correctionlibs
-export CORRECTION_INCLUDE_DIR=`correction config --incdir`
-export CORRECTION_LIB_DIR=`correction config --libdir`
+if [ $PACKAGE = "conda" ]; then
+    export CORRECTION_INCLUDE_DIR=`correction config --incdir`
+    export CORRECTION_LIB_DIR=`correction config --libdir`
+    export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
+elif [ $PACKAGE = "cvmfs" ]; then
+    CORRECTION=`ll $(correction config --libdir | sed 's|/lib$||') | grep version.py | awk '{print $NF}' | sed 's|/lib/python3.9/site-packages/correctionlib/version.py||'`
+    export CORRECTION_INCLUDE_DIR=${CORRECTION}/include
+    export CORRECTION_LIB_DIR=${CORRECTION}/lib
+    #export CORRECTION_INCLUDE_DIR=/cvmfs/sft.cern.ch/lcg/releases/correctionlib/2.2.2-c7cee/x86_64-el9-gcc13-opt/include
+    #export CORRECTION_LIB_DIR=/cvmfs/sft.cern.ch/lcg/releases/correctionlib/2.2.2-c7cee/x86_64-el9-gcc13-opt/lib
+    export JSONPOG_INTEGRATION_PATH=/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration
+else
+    echo "@@@@ Correctionlib not found"
+    exit 1
+fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
-export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
 
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
-echo "@@@@ Correction lib: $CORRECTION_LIBS"
+echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
