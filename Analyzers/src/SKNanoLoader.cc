@@ -237,7 +237,13 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("FatJet_btagHbb",FatJet_btagHbb);
     fChain->SetBranchAddress("FatJet_subJetIdx1",FatJet_subJetIdx1);
     fChain->SetBranchAddress("FatJet_subJetIdx2",FatJet_subJetIdx2);
-
+    fChain->SetBranchAddress("nGenJet", &nGenJet);
+    fChain->SetBranchAddress("GenJet_pt", GenJet_pt);
+    fChain->SetBranchAddress("GenJet_eta", GenJet_eta);
+    fChain->SetBranchAddress("GenJet_phi", GenJet_phi);
+    fChain->SetBranchAddress("GenJet_mass", GenJet_mass);
+    fChain->SetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour);
+    fChain->SetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour);
 }
 
 
