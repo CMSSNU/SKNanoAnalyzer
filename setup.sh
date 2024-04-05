@@ -60,11 +60,16 @@ fi
 export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
 export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
 
-
 echo "@@@@ LHAPDF include: $LHAPDF_INCLUDE_DIR"
 echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
 echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 
 # env for correctionlibs
-#export CORRECTION_LIBS=`correction config --libdir`
-#export CORRECTION_CMAKE_PREFIX=`correction config --cmake`
+export CORRECTION_INCLUDE_DIR=`correction config --incdir`
+export CORRECTION_LIB_DIR=`correction config --libdir`
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
+export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
+
+echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
+echo "@@@@ Correction lib: $CORRECTION_LIBS"

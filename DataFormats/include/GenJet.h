@@ -16,8 +16,8 @@ public:
   };
   //Parton flavour follows the typical PDG IDs.
   //For more info. please refer https://indico.cern.ch/event/271460/contributions/1610529/attachments/487999/
-  inline short GetPartonFlavour() { return j_partonFlavour; };
-  inline int GetHadronFlavour() { return int(j_hadronFlavour); };
+  inline short GetPartonFlavour() const { return j_partonFlavour; };
+  inline int GetHadronFlavour() const { return int(j_hadronFlavour); };
 
 
 private:
