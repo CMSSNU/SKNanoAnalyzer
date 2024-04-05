@@ -19,7 +19,6 @@ if [ -f "${CONFIG_FILE}" ]; then
 else
     echo "@@@@ Configuration file $CONFIG_FILE not found"
     echo "@@@@ Please create a configuration file in config/ with your username"
-    exit 1
 fi
 echo "@@@@ System:  $SYSTEM"
 echo "@@@@ Package: $PACKAGE"
@@ -42,12 +41,10 @@ elif [ $PACKAGE = "cvmfs" ]; then
     else
         echo "@@@@ Not running on redhat 7, 8, or 9"
         echo "@@@@ Consider using conda environment"
-        exit 1
     fi
 else
     echo "@@@@ Package not recognized"
     echo "@@@@ Please check configuration file in config/config.$USER"
-    exit 1
 fi
 echo "@@@@ ROOT path: $ROOTSYS"
 
@@ -67,22 +64,19 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
 if [ $PACKAGE = "conda" ]; then
-    if [ -d "external/lhapdf"]; then
+    if [[ -d "external/lhapdf" ]]; then
         export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
         export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
         export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
     else
-        echo "@@@@ LHAPDF not found"
-        echo "@@@@ consider to install LHAPDF using ./scripts/install_lhapdf.sh"
-        exit 1
+        echo "@@@@ Installing LHAPDF for conda environment"
+        ./scripts/install_lhapdf.sh
     fi
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ configuring LHAPDF from cvmfs"
-    #export LHAPDF_DATA_PATH=/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current
 else
     echo "@@@@ LHAPDF not found"
-    exit 1
 fi
 export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
 export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
@@ -105,7 +99,6 @@ elif [ $PACKAGE = "cvmfs" ]; then
     export JSONPOG_INTEGRATION_PATH=/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration
 else
     echo "@@@@ Correctionlib not found"
-    exit 1
 fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
