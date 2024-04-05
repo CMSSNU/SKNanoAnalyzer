@@ -4,3 +4,4 @@ test/*
 test.root
 CMakeFiles/*
 external/lhapdf/*
+config/config.choij
