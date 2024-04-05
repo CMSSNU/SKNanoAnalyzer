@@ -72,4 +72,4 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
 
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
-echo "@@@@ Correction lib: $CORRECTION_LIBS"
+echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
