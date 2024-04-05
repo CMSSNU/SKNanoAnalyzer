@@ -1,19 +1,13 @@
-# Determine library extension based on OS
-if (APPLE)
-    set(LIB_EXT "dylib")
-else()
-    set(LIB_EXT "so")
-endif()
-
-# find LHAPDF
+# find LHAPDF and CorrectionLib
 set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE_DIR})
-set(LHAPDF_LIBRARY $ENV{LHAPDF_LIB_DIR}/libLHAPDF.${LIB_EXT})
+set(CORRECTION_INCLUDE_DIR $ENV{CORRECTION_INCLUDE_DIR})
 
 # include ROOT
 include_directories(${ROOT_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../DataFormats/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include)
 include_directories(${LHAPDF_INCLUDE_DIR})
+include_directories(${CORRECTION_INCLUDE_DIR})
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
@@ -36,7 +30,6 @@ target_include_directories(Analyzers PUBLIC
 
 # Link ROOT libraries
 target_link_libraries(Analyzers ${ROOT_LIBRARIES})
-target_link_libraries(Analyzers ${LHAPDF_LIBRARY})
 target_link_libraries(Analyzers DataFormats)
 target_link_libraries(Analyzers AnalyzerTools)
 

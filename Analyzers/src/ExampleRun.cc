@@ -15,7 +15,7 @@ void ExampleRun::initializeAnalyzer() {
     // Dimuon Z-peak with two muon IDs
     // "RVec<TString> MuonIDs;" is defined in Analyzers/include/ExampleRun.h
     MuonIDs = {"POGMedium", "POGTight"};
-    MuonIDSFKeys = {"", ""};        // SF with correctionlib has not been updated yet
+    MuonIDSFKeys = {"NUM_MediumID_DEN_TrackerMuons", "NUM_TightID_DEN_TrackerMuons"};
 
     // At this point, sample informations (e.g. IsDATA, DataStream, MCSample, or DataEra) are all set
     // You can define sample-dependent or era-dependent variables here
@@ -46,12 +46,14 @@ void ExampleRun::initializeAnalyzer() {
     // add taggers and WP that you wnat to use in analysis
     // Not implemented yet
     
+    // MCCorrection
+    mcCorr = new MCCorrection(DataEra);
 
     //==== Example 2
     //==== Using new PDF
     //==== It consumes so much time, so only being activated with --userflags RunNewPDF
     //RunNewPDF = HasFlag("RunNewPDF");
-    RunNewPDF = true;
+    RunNewPDF = false;
     cout << "[ExampleRun::initializeAnalyzer] RunNewPDF = " << RunNewPDF << endl;
     if (RunNewPDF && !IsDATA) {
         LHAPDFHandler LHAPDFHandler_Prod;
@@ -213,10 +215,8 @@ void ExampleRun::executeEventFromParameter(ExampleParameter param) {
 
         // example of applying muon scale factors
         for (const auto &muon: muons) {
-            float this_idsf = 1.;
+            float this_idsf = mcCorr->GetMuonIDSF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt(), "nominal");
             float this_isosf = 1.;
-            //float this_idsf = mcCorr->MuonID_SF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
-            //float this_isosf = mcCorr->MuonISO_SF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
             weight *= this_idsf * this_isosf;
         }
     }

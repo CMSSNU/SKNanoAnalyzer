@@ -12,7 +12,7 @@ VERSION 0.1.0
 Recommend to fork the repo to your account.
 ```bash
 # Clone the repository
-git clone git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
+git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
 
 # Add to your remote repo
 git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
