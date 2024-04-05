@@ -261,6 +261,16 @@ public:
     Short_t FatJet_subJetIdx1[kMaxFatJet];
     Short_t FatJet_subJetIdx2[kMaxFatJet];
 
+    // GenJet
+    static constexpr int kMaxGenJet = 20;
+    Int_t nGenJet;
+    Float_t GenJet_eta[kMaxGenJet];
+    Float_t GenJet_mass[kMaxGenJet];
+    Float_t GenJet_phi[kMaxGenJet];
+    Float_t GenJet_pt[kMaxGenJet];
+    Short_t GenJet_partonFlavour[kMaxGenJet];
+    UChar_t GenJet_hadronFlavour[kMaxGenJet];
+
 };
 
 #endif
