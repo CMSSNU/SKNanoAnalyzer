@@ -12,17 +12,19 @@ VERSION 0.1.0
 Recommend to fork the repo to your account.
 ```bash
 # Clone the repository
+# jsonpog-integration should be cloned as a submodule if you don't use cvmfs
 git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
 
 # Add to your remote repo
 git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
 git checkout $DEVBRANCH
 
+# create config file
+cp config/config.default config/config.$USER
+# edit the configuration!
+
 # first time setup
-# NOTE: Assuming conda environment, no CMSSW or SFT dependencies!
 source setup.sh    # you have to do this every new session
-# install lhapdf
-./script/install_lhapdf.sh
 ```
 
 ### Compilation
@@ -63,12 +65,23 @@ p.Print()
 For testing other modules and analyzers, check scripts/test.py
 
 ## About LHAPDFs
-For using LHAPDFHandler and PDFReweight classes, you should download the pdfsets from [here](http://lhapdfsets.web.cern.ch/lhapdfsets/current/).
-Or you can link the path as
+For using LHAPDFHandler and PDFReweight classes, two possible options
+1. install lhapdf manually.
 ```bash
-export LHAPDF_DATA_PATH="/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current/"
+./scripts/install_lhapdf.sh
 ```
-but it slows down in the initialization step
+It would be run automatically for the first time setup.
+2. use lhapdf from cvmfs
+
+## About correctionlibs
+In the config/config.$USER file, there is an option to choose bewteen conda and cvmfs. When configuring your environment with conda, at least ROOT and correctionlibs should be installed:
+```bash
+# example
+conda env create -n nano python=3.11
+conda activate nano
+conda install -c conda-forge root
+pip install correctionlib
+```
 
 ## To do
 - Make ExampleRun runable -> done
