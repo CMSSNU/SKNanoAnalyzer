@@ -8,10 +8,13 @@ endif()
 # find LHAPDF
 set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE_DIR})
 set(LHAPDF_LIBRARY $ENV{LHAPDF_LIB_DIR}/libLHAPDF.${LIB_EXT})
+set(CORRECTION_INCLUDE_DIR $ENV{CORRECTION_INCLUDE_DIR})
+set(CORRECTION_LIBRARY $ENV{CORRECTION_LIB_DIR}/libcorrectionlib.${LIB_EXT})
 
-# include ROOT and LHAPDF
+# include ROOT, LHAPDF, and correctionlib
 include_directories(${ROOT_INCLUDE_DIRS})
 include_directories(${LHAPDF_INCLUDE_DIR})
+include_directories(${CORRECTION_INCLUDE_DIR})
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
@@ -35,6 +38,7 @@ target_include_directories(AnalyzerTools PUBLIC
 # Link ROOT and lhapdf libraries
 target_link_libraries(AnalyzerTools ${ROOT_LIBRARIES})
 target_link_libraries(AnalyzerTools ${LHAPDF_LIBRARY})
+target_link_libraries(AnalyzerTools ${CORRECTION_LIBRARY})
 target_link_libraries(AnalyzerTools DataFormats)
 
 # Specify where to install the library

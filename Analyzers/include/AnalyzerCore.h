@@ -1,10 +1,8 @@
 #ifndef AnalyzerCore_h
 #define AnalyzerCore_h
 
-#include <iostream>
 #include <map>
 #include <string>
-using namespace std;
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -25,6 +23,7 @@ using namespace std;
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
+#include "MCCorrection.h"
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -37,11 +36,16 @@ public:
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
-    // helper objects
+    // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
     float GetPDFReweight();
     float GetPDFReweight(int member);
+    
+    // MCCorrection
+    MCCorrection *mcCorr;
+    //unique_ptr<CorrectionSet> csetMuon;
+    //unique_ptr<CorrectionSet> csetElectron;
 
     // MC weights
     float MCweight(bool usesign=true, bool norm_1invpb=true) const;

@@ -11,6 +11,7 @@ AnalyzerCore::~AnalyzerCore() {
     for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
     if (outfile) delete outfile;
     if (pdfReweight) delete pdfReweight;
+    if (mcCorr) delete mcCorr;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
