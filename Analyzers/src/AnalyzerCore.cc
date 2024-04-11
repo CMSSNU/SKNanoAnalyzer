@@ -310,6 +310,43 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
 
     return GenJets;
 }
+
+RVec<Gen> AnalyzerCore::GetGens() {
+
+    RVec<Gen> Gens;
+
+    for (int i = 0; i < nGenPart; i++) {
+
+        Gen gen;
+
+        gen.SetIsEmpty(false);
+        gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
+        gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
+        gen.SetMother(GenPart_genPartIdxMother[i]);
+        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
+        /*gen.SetGenStatusFlag_isPrompt();
+        gen.SetGenStatusFlag_isDecayedLeptonHadron();
+        gen.SetGenStatusFlag_isTauDecayProduct();
+        gen.SetGenStatusFlag_isPromptTauDecayProduct();
+        gen.SetGenStatusFlag_isDirectTauDecayProduct();
+        gen.SetGenStatusFlag_isDirectPromptTauDecayProduct();
+        gen.SetGenStatusFlag_isDirectHadronDecayProduct();
+        gen.SetGenStatusFlag_isHardProcess();
+        gen.SetGenStatusFlag_fromHardProcess();
+        gen.SetGenStatusFlag_isHardProcessTauDecayProduct();
+        gen.SetGenStatusFlag_isDirectHardProcessTauDecayProduct();
+        gen.SetGenStatusFlag_fromHardProcessBeforeFSR();
+        gen.SetGenStatusFlag_isFirstCopy();
+        gen.SetGenStatusFlag_isLastCopy();
+        gen.SetGenStatusFlag_isLastCopyBeforeFSR();
+        */
+
+        Gens.push_back(gen);
+    }
+
+    return Gens;
+}
+
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);

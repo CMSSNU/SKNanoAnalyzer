@@ -20,6 +20,7 @@
 #include "GenJet.h"
 #include "Tau.h"
 #include "FatJet.h"
+#include "Gen.h"
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
@@ -62,6 +63,7 @@ public:
     RVec<Tau> GetAllTaus();
     RVec<FatJet> GetAllFatJets();
     RVec<GenJet> GetAllGenJets();
+    RVec<Gen> GetGens();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
