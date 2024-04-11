@@ -324,22 +324,6 @@ RVec<Gen> AnalyzerCore::GetGens() {
         gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
         gen.SetMother(GenPart_genPartIdxMother[i]);
         gen.SetGenStatusFlags(GenPart_statusFlags[i]);
-        /*gen.SetGenStatusFlag_isPrompt();
-        gen.SetGenStatusFlag_isDecayedLeptonHadron();
-        gen.SetGenStatusFlag_isTauDecayProduct();
-        gen.SetGenStatusFlag_isPromptTauDecayProduct();
-        gen.SetGenStatusFlag_isDirectTauDecayProduct();
-        gen.SetGenStatusFlag_isDirectPromptTauDecayProduct();
-        gen.SetGenStatusFlag_isDirectHadronDecayProduct();
-        gen.SetGenStatusFlag_isHardProcess();
-        gen.SetGenStatusFlag_fromHardProcess();
-        gen.SetGenStatusFlag_isHardProcessTauDecayProduct();
-        gen.SetGenStatusFlag_isDirectHardProcessTauDecayProduct();
-        gen.SetGenStatusFlag_fromHardProcessBeforeFSR();
-        gen.SetGenStatusFlag_isFirstCopy();
-        gen.SetGenStatusFlag_isLastCopy();
-        gen.SetGenStatusFlag_isLastCopyBeforeFSR();
-        */
 
         Gens.push_back(gen);
     }
