@@ -4,13 +4,11 @@ ClassImp(Gen)
 
 Gen::Gen() : Particle() {
 
-    j_IsEmpty = true; //?
+    j_IsEmpty = true;
     j_index = -1;
     j_PID = 0;
     j_status = 0;
     j_mother_index = -1;
-    /*j_isPrompt = false;
-     */
     j_status_flags = -1;
     
 }
@@ -37,23 +35,3 @@ void Gen::SetGenStatusFlags(unsigned short f){
 void Gen::Print() const{
     cout << "(Index, PID, Status, MotherIndex, Pt, Eta, Phi, M) = " << Index() << "\t" << PID() << "\t" << Status() << "\t" << MotherIndex() << "\t" << Pt() << "\t" << Eta() << "\t" << Phi() << "\t" << M() << endl;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
