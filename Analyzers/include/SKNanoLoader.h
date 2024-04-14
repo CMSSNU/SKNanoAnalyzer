@@ -271,6 +271,19 @@ public:
     Short_t GenJet_partonFlavour[kMaxGenJet];
     UChar_t GenJet_hadronFlavour[kMaxGenJet];
 
+    // Gen
+    static constexpr int kMaxGenPart = 200;
+    Float_t GenPart_eta[kMaxGenPart];
+    Short_t GenPart_genPartIdxMother[kMaxGenPart];
+    Float_t GenPart_mass[kMaxGenPart];
+    Int_t   GenPart_pdgId[kMaxGenPart];
+    Float_t GenPart_phi[kMaxGenPart];
+    Float_t GenPart_pt[kMaxGenPart];
+    Int_t   GenPart_status[kMaxGenPart];
+    UShort_t    GenPart_statusFlags[kMaxGenPart];
+    Int_t   nGenPart;
+
+
 };
 
 #endif
