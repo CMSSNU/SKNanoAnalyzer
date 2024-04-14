@@ -272,7 +272,7 @@ public:
     UChar_t GenJet_hadronFlavour[kMaxGenJet];
 
     // Gen
-    static constexpr int kMaxGenPart = 500; //?
+    static constexpr int kMaxGenPart = 200;
     Float_t GenPart_eta[kMaxGenPart];
     Short_t GenPart_genPartIdxMother[kMaxGenPart];
     Float_t GenPart_mass[kMaxGenPart];
