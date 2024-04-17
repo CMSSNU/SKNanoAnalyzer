@@ -4,7 +4,7 @@ ClassImp(Photon)
 
 Photon::Photon() : Particle() {
   j_scEta = -999.;
-  j_scPhi = -999.;
+//  j_scPhi = -999.;
   j_scE = -999.;
   j_passLooseID = false;
   j_passMediumID = false;
@@ -23,13 +23,13 @@ void Photon::SetSC(double sceta, double scphi){
   j_scPhi = scphi;
 }
 
-void Photon::SetCutBasedIDVariables(double Full5x5_sigmaIetaIeta, double HoverE, double ChIsoWithEA, double NhIsoWithEA, double PhIsoWithEA){
-  j_Full5x5_sigmaIetaIeta = Full5x5_sigmaIetaIeta;
-  j_HoverE = HoverE;
-  j_ChIsoWithEA = ChIsoWithEA;
-  j_NhIsoWithEA = NhIsoWithEA;
-  j_PhIsoWithEA = PhIsoWithEA;
-}
+//void Photon::SetCutBasedIDVariables(double Full5x5_sigmaIetaIeta, double HoverE, double ChIsoWithEA, double NhIsoWithEA, double PhIsoWithEA){
+//  j_Full5x5_sigmaIetaIeta = Full5x5_sigmaIetaIeta;
+//  j_HoverE = HoverE;
+//  j_ChIsoWithEA = ChIsoWithEA;
+//  j_NhIsoWithEA = NhIsoWithEA;
+//  j_PhIsoWithEA = PhIsoWithEA;
+//}
 
 void Photon::SetPOGIDs(std::vector<bool> bs){
   j_passLooseID = bs.at(0);
