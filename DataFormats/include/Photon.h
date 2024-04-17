@@ -12,14 +12,14 @@ public:
   
   void SetSC(double sceta, double scphi);
   inline double scEta() const { return j_scEta; }
-  inline double scPhi() const { return j_scPhi; }
+//  inline double scPhi() const { return j_scPhi; }
     
-  void SetCutBasedIDVariables(double Full5x5_sigmaIetaIeta, double HoverE, double ChIsoWithEA, double NhIsoWithEA, double PhIsoWithEA);
+//  void SetCutBasedIDVariables(double Full5x5_sigmaIetaIeta, double HoverE, double ChIsoWithEA, double NhIsoWithEA, double PhIsoWithEA);
   inline double Full5x5_sigmaIetaIeta() const { return j_Full5x5_sigmaIetaIeta; }
   inline double HoverE() const { return j_HoverE; }
-  inline double ChIsoWithEA() const { return j_ChIsoWithEA; }
-  inline double NhIsoWithEA() const { return j_NhIsoWithEA; }
-  inline double PhIsoWithEA() const { return j_PhIsoWithEA; }
+//  inline double ChIsoWithEA() const { return j_ChIsoWithEA; }
+//  inline double NhIsoWithEA() const { return j_NhIsoWithEA; }
+//  inline double PhIsoWithEA() const { return j_PhIsoWithEA; }
   
 
   void SetPOGIDs(std::vector<bool> bs);
@@ -44,13 +44,13 @@ public:
 
 private:
   double j_scEta;
-  double j_scPhi;
+//  double j_scPhi;
   double j_scE;
   double j_Full5x5_sigmaIetaIeta;
   double j_HoverE;
-  double j_ChIsoWithEA;
-  double j_NhIsoWithEA;
-  double j_PhIsoWithEA;
+//  double j_ChIsoWithEA;
+//  double j_NhIsoWithEA;
+//  double j_PhIsoWithEA;
   bool j_passLooseID;
   bool j_passMediumID;
   bool j_passTightID;
