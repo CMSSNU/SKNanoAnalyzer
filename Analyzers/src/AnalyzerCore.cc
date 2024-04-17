@@ -243,6 +243,99 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
+float AnalyzerCore::Photon_SCEta(const int i) { // IF Photon_superclusterEta[i] does not exist, which is included in NanoAODv13!!
+    float tg_theta_over_2 = TMath::Exp(-Photon_eta[i]);
+    float tg_theta        = 2 * tg_theta_over_2 / (1-tg_theta_over_2*tg_theta_over_2);
+    float tg_sctheta;
+    if ( Photon_isScEtaEB[i] ) {
+        float R             = 130;
+        float angle_x0_y0   = 0;
+        if      (PV_x>0) angle_x0_y0 = TMath::ATan(PV_y/PV_x);
+        else if (PV_x<0) angle_x0_y0 = TMath::Pi() + TMath::ATan(PV_y/PV_x);
+        else if (PV_y>0) angle_x0_y0 = TMath::Pi() / 2;
+        else             angle_x0_y0 = -TMath::Pi() / 2;
+
+        float alpha      = angle_x0_y0 + (TMath::Pi() - Photon_phi[i]);
+        float sin_beta   = TMath::Sqrt(PV_x*PV_x + PV_y*PV_y) / R * TMath::Sin(alpha);
+        float beta       = TMath::Abs(TMath::ASin(sin_beta));
+        float gamma      = TMath::Pi()/2 - alpha - beta;
+        float l          = TMath::Sqrt(R*R + (PV_x*PV_x + PV_y*PV_y) - 2*R*TMath::Sqrt(PV_x*PV_x + PV_y*PV_y)*TMath::Cos(gamma));
+        
+        float z0_zSC     = l/tg_theta;
+        tg_sctheta       = R / (PV_z + z0_zCS);
+    } else if ( Photon_isScEtaEE[i] ) {
+        float intersection_z;
+        if ( Photon_eta[i] > 0 ) intersection_z = 310;
+        else intersection_z = -310;
+        float base           = intersection_z - PV_z;
+        float r              = base * tg_theta;
+
+        float crystalX       = PV_x + r * TMath::Cos(Photon_phi[i]);
+        float crystalY       = PV_y + r * TMath::Sin(Photon_phi[i]);
+        tg_sctheta           = sqrt( crystalX*crystalX + crystalY*crystalY ) /intersection_z;
+    }
+    else return Photon_eta[i];
+
+    float sctheta = TMath::ATan(tg_sctheta);
+    if (sctheta<0) sctheta += TMath::Pi();
+    float tg_sctheta_over_2 = TMath::Tan(sctheta/2);
+    float SCEta = -TMath::Log(tg_sctheta_over_2);
+
+    return SCEta;
+}
+ 
+
+
+
+RVec<Photon> AnalyzerCore::GetAllPhotons() {
+    RVec<Photon> Photons;
+    for (int i = 0; i< nPhoton; i++) {
+        Photon pho;
+        pho.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
+        float pho_theta = pho.Theta();
+        float pho_E = Photon_pt[i] / TMath::Sin( pho_theta );
+        pho.SetPtEtaPhiE( Photon_pt[i], Photon_eta[i], Photon_phi[i], pho_E);
+        
+
+        pho.SetSC(Photon_SCEta(i))
+
+        pho.SetCutBasedIDVariables( // Variable changed to sieie & Rho Corrected HoverE/PF charged hadron Iso/PF ECal Iso/PF HCal Iso
+            Photon_hoe_rhoCorr[i],
+            Photon_sieie[i],
+            Photon_pfChgHadIso_rhoCorr[i],
+            Photon_pfHCalIso_rhoCorr[i],
+            Photon_pfECalIso_rhoCorr[i]
+        );
+        RVec<bool> ids = { // Check if  cutBased work as intended
+            Photon_cutBased[i] == '1',
+            Photon_cutBased[i] == '2',
+            Photon_cutBased[i] == '3',
+            Photon_mvaID_WP80[i],
+            Photon_mvaID_WP90[i]
+        };
+        pho.SetPOGIDs(ids);
+        out.push_back(pho);
+    }
+    return Photons;
+}
+
+RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax) {
+    RVec<Photon> photons = GetAllPhotons();
+    RVec<Photon> out;
+    for(unsigned int i=0; i<photons.size(); i++) {
+        if(!( photons.at(i).Pt()>ptmin )){
+            continue;
+        }
+        if (!( fabs(photons.at(i).scEta())<fetamax)) {
+            continue;
+        }
+        if(!( photons.at(i).PassID(id))) {
+            continue;
+        }
+        out.push_back(photons.at(i));
+    return out;
+}
+
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
