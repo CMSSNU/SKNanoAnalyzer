@@ -32,10 +32,10 @@ bool Event::PassTrigger(RVec<TString> trigs) {
 //               --hltpath "HLT_IsoMu24_v*"
 // No /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json for Run3?
 float Event::GetTriggerLumi(TString trig) {
-    if (GetEra() == "2022preEE") {
+    if (GetEra() == "2022") {
         if (trig=="Full") return 7865.511617201;
         else return -999.;
-    } else if (GetEra() == "2022postEE") {
+    } else if (GetEra() == "2022EE") {
         if (trig == "Full") return 26337.274444149;
         else return -999.;
     } else if (GetEra() == "2023") {

@@ -2,13 +2,16 @@
 
 AnalyzerCore::AnalyzerCore() {
     outfile = nullptr;
+    pdfReweight = new PDFReweight();
 }
 
 AnalyzerCore::~AnalyzerCore() {
-    if (outfile != nullptr) {
-        outfile->Close();
-        delete outfile;
-    }
+    for (const auto &pair: histmap1d) delete pair.second; histmap1d.clear();
+    for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
+    for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
+    if (outfile) delete outfile;
+    if (pdfReweight) delete pdfReweight;
+    if (mcCorr) delete mcCorr;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
@@ -226,15 +229,15 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
         jet.SetGenFlavours(Jet_hadronFlavour[i], Jet_partonFlavour[i]);
-        std::vector<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
-                                 Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
-                                 Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
+        RVec<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
+                           Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
+                           Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
         jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
         jet.SetJetID(Jet_jetId[i]);
-        std::vector<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
+        RVec<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
         jet.SetCorrections(tvs2);
 
         Jets.push_back(jet);
@@ -243,6 +246,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
+<<<<<<< HEAD
 float AnalyzerCore::Photon_SCEta(const int i) { // IF Photon_superclusterEta[i] does not exist, which is included in NanoAODv13!!
     float tg_theta_over_2 = TMath::Exp(-Photon_eta[i]);
     float tg_theta        = 2 * tg_theta_over_2 / (1-tg_theta_over_2*tg_theta_over_2);
@@ -336,6 +340,72 @@ RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax) 
     return out;
 }
 
+=======
+RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float fetamax) {
+    RVec<Jet> jets = GetAllJets();
+    RVec<Jet> selected_jets;
+    for (const auto &jet: jets) {
+        if (jet.Pt() < ptmin) continue;
+        if (fabs(jet.Eta()) > fetamax) continue;
+        if (! jet.PassID(ID)) continue;
+        selected_jets.push_back(jet);
+    }
+    return selected_jets;
+}
+
+RVec<FatJet> AnalyzerCore::GetAllFatJets() {
+    
+    RVec<FatJet> FatJets;
+
+    for (int i = 0; i < nFatJet; i++) {
+
+        FatJet fatjet;
+
+        RVec<float> pnet_m = { FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
+                                      FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i], 
+                                      FatJet_particleNetWithMass_TvsQCD[i]  , FatJet_particleNetWithMass_WvsQCD[i],
+                                      FatJet_particleNetWithMass_ZvsQCD[i] };
+
+        RVec<float> pnet   = { FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
+                                      FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
+                                      FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
+                                      FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
+                                      FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i],
+                                      FatJet_particleNet_XttVsQCD[i], FatJet_particleNet_massCorr[i] };
+
+        fatjet.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
+        fatjet.SetArea(FatJet_area[i]);
+        fatjet.SetSDMass(FatJet_msoftdrop[i]);
+        fatjet.SetLSF3(FatJet_lsf3[i]);
+        fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
+        fatjet.SetConstituents(FatJet_nBHadrons[i], FatJet_nCHadrons[i], FatJet_nConstituents[i]);
+        fatjet.SetBTaggingInfo(FatJet_btagDDBvLV2[i], FatJet_btagDDCvBV2[i], FatJet_btagDDCvLV2[i], FatJet_btagDeepB[i], FatJet_btagHbb[i]);
+        fatjet.SetPNetwithMassResults(pnet_m);
+        fatjet.SetPNetResults(pnet);
+        fatjet.SetSubjettiness(FatJet_tau1[i], FatJet_tau2[i], FatJet_tau3[i], FatJet_tau4[i]);
+
+        FatJets.push_back(fatjet);
+    }
+
+    return FatJets;
+}
+
+RVec<GenJet> AnalyzerCore::GetAllGenJets() {
+    
+    RVec<GenJet> GenJets;
+
+    for (int i = 0; i < nGenJet; i++) {
+
+        GenJet genjet;
+
+        genjet.SetPtEtaPhiM(GenJet_pt[i], GenJet_eta[i], GenJet_phi[i], GenJet_mass[i]);
+        genjet.SetGenFlavours(GenJet_partonFlavour[i], GenJet_hadronFlavour[i]);
+        GenJets.push_back(genjet);
+    }
+
+    return GenJets;
+}
+>>>>>>> 6836fe8b3f9f6c5ae01287ea9c19cd0aa9068f57
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
@@ -482,4 +552,5 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    outfile->Close();
 }

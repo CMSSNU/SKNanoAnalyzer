@@ -215,6 +215,61 @@ public:
     Bool_t  Tau_idDecayModeNewDMs[kMaxTau];
     UChar_t Tau_genPartFlav[kMaxTau];
     Short_t Tau_genPartIdx[kMaxTau];
+    // FatJet
+    static constexpr int kMaxFatJet = 10;
+    Int_t nFatJet;
+    Float_t FatJet_pt[kMaxFatJet];
+    Float_t FatJet_eta[kMaxFatJet];
+    Float_t FatJet_phi[kMaxFatJet];
+    Float_t FatJet_mass[kMaxFatJet];
+    Float_t FatJet_msoftdrop[kMaxFatJet];
+    Float_t FatJet_area[kMaxFatJet];
+    Short_t FatJet_genJetAK8Idx[kMaxFatJet];
+    UChar_t FatJet_jetId[kMaxFatJet];
+    Float_t FatJet_lsf3[kMaxFatJet];
+    UChar_t FatJet_nBHadrons[kMaxFatJet];
+    UChar_t FatJet_nCHadrons[kMaxFatJet];
+    UChar_t FatJet_nConstituents[kMaxFatJet];
+    Float_t FatJet_btagDDBvLV2[kMaxFatJet];
+    Float_t FatJet_btagDDCvBV2[kMaxFatJet];
+    Float_t FatJet_btagDDCvLV2[kMaxFatJet];
+    Float_t FatJet_btagDeepB[kMaxFatJet];
+    Float_t FatJet_btagHbb[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_H4qvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_HccvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_HbbvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_QCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_TvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_WvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNetWithMass_ZvsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_QCD[kMaxFatJet];
+    Float_t FatJet_particleNet_QCD0HF[kMaxFatJet];
+    Float_t FatJet_particleNet_QCD1HF[kMaxFatJet];
+    Float_t FatJet_particleNet_QCD2HF[kMaxFatJet];
+    Float_t FatJet_particleNet_XbbVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XccVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XqqVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XggVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XteVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XtmVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_XttVsQCD[kMaxFatJet];
+    Float_t FatJet_particleNet_massCorr[kMaxFatJet];
+    Float_t FatJet_tau1[kMaxFatJet];
+    Float_t FatJet_tau2[kMaxFatJet];
+    Float_t FatJet_tau3[kMaxFatJet];
+    Float_t FatJet_tau4[kMaxFatJet];
+    Short_t FatJet_subJetIdx1[kMaxFatJet];
+    Short_t FatJet_subJetIdx2[kMaxFatJet];
+
+    // GenJet
+    static constexpr int kMaxGenJet = 20;
+    Int_t nGenJet;
+    Float_t GenJet_eta[kMaxGenJet];
+    Float_t GenJet_mass[kMaxGenJet];
+    Float_t GenJet_phi[kMaxGenJet];
+    Float_t GenJet_pt[kMaxGenJet];
+    Short_t GenJet_partonFlavour[kMaxGenJet];
+    UChar_t GenJet_hadronFlavour[kMaxGenJet];
 
 };
 
