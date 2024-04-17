@@ -15,7 +15,7 @@ void ExampleRun::initializeAnalyzer() {
     // Dimuon Z-peak with two muon IDs
     // "RVec<TString> MuonIDs;" is defined in Analyzers/include/ExampleRun.h
     MuonIDs = {"POGMedium", "POGTight"};
-    MuonIDSFKeys = {"", ""};        // SF with correctionlib has not been updated yet
+    MuonIDSFKeys = {"NUM_MediumID_DEN_TrackerMuons", "NUM_TightID_DEN_TrackerMuons"};
 
     // At this point, sample informations (e.g. IsDATA, DataStream, MCSample, or DataEra) are all set
     // You can define sample-dependent or era-dependent variables here
@@ -46,6 +46,8 @@ void ExampleRun::initializeAnalyzer() {
     // add taggers and WP that you wnat to use in analysis
     // Not implemented yet
     
+    // MCCorrection
+    mcCorr = new MCCorrection(DataEra);
 
     //==== Example 2
     //==== Using new PDF
@@ -66,15 +68,10 @@ void ExampleRun::initializeAnalyzer() {
         LHAPDFHandler_New.AlphaSMember_Up = 102;
         LHAPDFHandler_New.init();
         
-        cout << "a" << endl;
         pdfReweight->SetProdPDF( LHAPDFHandler_Prod.PDFCentral );
-        cout << "b" << endl;
         pdfReweight->SetNewPDF( LHAPDFHandler_New.PDFCentral );
-        cout << "c" << endl;
         pdfReweight->SetNewPDFErrorSet( LHAPDFHandler_New.PDFErrorSet );
-        cout << "d" << endl;
         pdfReweight->SetNewPDFAlphaS( LHAPDFHandler_New.PDFAlphaS_Down, LHAPDFHandler_New.PDFAlphaS_Up );
-        cout << "e" << endl;
     }
 
     //==== Example 3
@@ -100,7 +97,7 @@ void ExampleRun::executeEvent() {
     //AllJets = GetAllJets();
     
     // No prefire weight for Run3?
-    weight_Prefire = 1.;
+    weight_Prefire = 1.;  //조사해보기
 
     // Declare parameter set
     ExampleParameter param;
@@ -218,10 +215,8 @@ void ExampleRun::executeEventFromParameter(ExampleParameter param) {
 
         // example of applying muon scale factors
         for (const auto &muon: muons) {
-            float this_idsf = 1.;
+            float this_idsf = mcCorr->GetMuonIDSF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt(), "nominal");
             float this_isosf = 1.;
-            //float this_idsf = mcCorr->MuonID_SF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
-            //float this_isosf = mcCorr->MuonISO_SF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
             weight *= this_idsf * this_isosf;
         }
     }

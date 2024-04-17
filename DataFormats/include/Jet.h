@@ -17,7 +17,7 @@ public:
     j_hadronFlavour = short(hf);
   };
 
-  inline void SetTaggerResults(std::vector<float> ds)
+  inline void SetTaggerResults(RVec<float> ds)
   {
     j_btagDeepFlavB = ds[0];
     j_btagDeepFlavCvB = ds[1];
@@ -69,7 +69,7 @@ public:
     j_tightLepVetoJetID = (b & 4);
   };
 
-  inline void SetCorrections(std::vector<float> corrs)
+  inline void SetCorrections(RVec<float> corrs)
   {
     j_PNetRegPtRawCorr = corrs[0];
     j_PNetRegPtRawCorrNeutrino = corrs[1];
