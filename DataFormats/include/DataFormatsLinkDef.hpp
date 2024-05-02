@@ -11,9 +11,4 @@
 #pragma link C++ class Event+;
 #pragma link C++ class Tau+;
 #pragma link C++ class Jet+;
-<<<<<<< HEAD
 #pragma link C++ class Photon+;
-=======
-#pragma link C++ class GenJet+;
-#pragma link C++ class FatJet+;
->>>>>>> 6836fe8b3f9f6c5ae01287ea9c19cd0aa9068f57

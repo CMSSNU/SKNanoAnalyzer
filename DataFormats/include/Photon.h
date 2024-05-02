@@ -2,64 +2,78 @@
 #define Photon_h
 
 #include "Particle.h"
-
+#include <cmath>
 class Photon: public Particle {
 public:
 
-  Photon();
-  ~Photon();
+    Photon();
+    ~Photon();
   
-  
-  void SetSC(double sceta, double scphi);
-  inline double scEta() const { return j_scEta; }
-//  inline double scPhi() const { return j_scPhi; }
-    
-//  void SetCutBasedIDVariables(double Full5x5_sigmaIetaIeta, double HoverE, double ChIsoWithEA, double NhIsoWithEA, double PhIsoWithEA);
-  inline double Full5x5_sigmaIetaIeta() const { return j_Full5x5_sigmaIetaIeta; }
-  inline double HoverE() const { return j_HoverE; }
-//  inline double ChIsoWithEA() const { return j_ChIsoWithEA; }
-//  inline double NhIsoWithEA() const { return j_NhIsoWithEA; }
-//  inline double PhIsoWithEA() const { return j_PhIsoWithEA; }
-  
+    enum class ETAREGION {IB, OB, GAP, EC};
+    inline ETAREGION etaRegion() const {
+        if (fabs(scEta()) < 0.8)        return ETAREGION::IB;
+        else if (fabs(scEta()) < 1.444) return ETAREGION::OB;
+        else if (fabs(scEta()) < 1.566) return ETAREGION::GAP;
+        else return ETAREGION::EC;
+    }
 
-  void SetPOGIDs(std::vector<bool> bs);
-  inline bool passLooseID() const { return j_passLooseID; }
-  inline bool passMediumID() const { return j_passMediumID; }
-  inline bool passTightID() const { return j_passTightID; }
-  inline bool passMVAID_WP80() const { return j_passMVAID_WP80; }
-  inline bool passMVAID_WP90() const { return j_passMVAID_WP90; }
-  
-  
-  // === ID
-  bool PassID(TString ID);
-  bool Pass_CutBasedLoose();
-  bool Pass_CutBasedMedium();
-  bool Pass_CutBasedTight();
-  
-  bool Pass_Prefire_ID();
+    inline float scEta() const { return j_scEta; }
 
-  void SetRho(double r);
-  inline double Rho() const { return j_Rho; }
-  
+
+    void SetEnergy(float energy) { j_energy = energy; }
+    inline float energy() const { return j_energy; }
+    void SetSigmaIetaIeta(float sieie) { j_sieie = sieie; }
+    inline float sieie() const { return j_sieie; }
+    void SetHoe(float hoe) { j_hoe = hoe; }
+    inline float hoe() const { return j_hoe; }
+    void SetEnergyRaw(float energyRaw) { j_energyRaw = energyRaw; }
+    inline float energyRaw() const { return j_energyRaw; }
+    void SetPixelSeed(bool pixelSeed ) { j_pixelSeed = pixelSeed; }
+    inline bool pixelSeed() const { return j_pixelSeed; }
+
+    void SetisScEtaEB(bool isScEtaEB ) { j_isScEtaEB = isScEtaEB; }
+    inline bool isScEtaEB() const { return j_isScEtaEB; }
+    void SetisScEtaEE(bool isScEtaEE ) { j_isScEtaEE = isScEtaEE; }
+    inline bool isScEtaEE() const { return j_isScEtaEE; }
+
+    void SetSCEta(float eta, float phi, float PV_x, float PV_y, float PV_z,bool isScEtaEB, bool isScEtaEE); 
+
+
+    // Boolean IDs
+    enum class BooleanID {NONE, MVAIDWP80, MVAIDWP90};
+    void SetBIDBit(BooleanID id, bool idbit);
+    inline bool isMVAIDWP80() const { return j_mvaID_WP80; }
+    inline bool isMVAIDWP90() const { return j_mvaID_WP90; }
+
+
+    // cut-based ID
+    enum class CutBasedID {NONE, CUTBASED};
+    enum class WORKINGPOINT {NONE, VETO, LOOSE, MEDIUM, TIGHT};
+    void SetCBIDBit(CutBasedID id, unsigned int value);
+    inline WORKINGPOINT CutBased() const {return (WORKINGPOINT)j_cutBased; }
+    bool PassID(const TString ID) const;
+
+    // MVA scores
+    enum class MVATYPE {NONE, MVAID};
+    void SetMVA(MVATYPE type, float score);
+    inline float MvaID() const { return j_mvaID; }
+
+    // ID helper functions
 
 private:
-  double j_scEta;
-//  double j_scPhi;
-  double j_scE;
-  double j_Full5x5_sigmaIetaIeta;
-  double j_HoverE;
-//  double j_ChIsoWithEA;
-//  double j_NhIsoWithEA;
-//  double j_PhIsoWithEA;
-  bool j_passLooseID;
-  bool j_passMediumID;
-  bool j_passTightID;
-  bool j_passMVAID_WP80;
-  bool j_passMVAID_WP90;
-
-  double j_Rho;
-
-  ClassDef(Photon,1)
+    float j_scEta;
+    float j_energyRaw;
+    float j_sieie;
+    float j_hoe;
+    unsigned char j_cutBased;
+    bool j_mvaID_WP80;
+    bool j_mvaID_WP90;
+    float j_mvaID;
+    float j_energy;
+    float j_pixelSeed;
+    bool j_isScEtaEB;
+    bool j_isScEtaEE;
+    ClassDef(Photon,1)
 
 };
 
