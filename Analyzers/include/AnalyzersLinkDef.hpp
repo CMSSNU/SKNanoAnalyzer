@@ -7,3 +7,4 @@
 #pragma link C++ class AnalyzerCore+;
 #pragma link C++ class ExampleRun+;
 #pragma link C++ class TestAnalyzer+;
+#pragma link C++ class TestAnalyzer2+;
