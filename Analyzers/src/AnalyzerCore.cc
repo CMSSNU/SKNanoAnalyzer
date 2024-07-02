@@ -34,10 +34,28 @@ float AnalyzerCore::GetPDFReweight(int member) {
 }
 
 // MC weights
-// TODO: See SKFlat
+// TODO: Treat MiNNLO and Sherpa weights 
 float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
     if (IsDATA) return 1.;
-    else return genWeight;
+    float weight = genWeight;
+      if (usesign){
+        if (weight > 0)
+        weight = 1.0;
+        else if (weight < 0)
+        weight = -1.0;
+        else
+        weight = 0.0;
+    }
+
+    if (norm_1invpb)
+    {
+        if (usesign)
+        weight *= xsec / sumSign;
+        else
+        weight *= xsec / sumW;
+    }
+    return weight;
+
 }
 
 // Not implemented yets
