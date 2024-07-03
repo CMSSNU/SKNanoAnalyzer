@@ -1,0 +1,32 @@
+import os
+import json
+import argparse
+#This script is used to generate the path information for the sample data
+#Sample information is stored in the CommonSampleInfo.json
+#This script will generate the path information for the sample data
+def fillSamplePath(era):
+    basePath = '/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/' #currently my private directory
+    
+   
+    sampleInfoJson = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','CommonSampleInfo.json')
+    sampleInfos = json.load(open(sampleInfoJson))
+    isMC = 'MC'
+    for alias,sampleInfo in sampleInfos.items():
+        path = os.path.join(basePath,era,isMC,sampleInfo['PD'])
+        filePaths = []
+        #Folder structure is not fixed yet, so let's do the recursive search until the .root file appears, and save all absolute paths
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if file.endswith('.root'):
+                    filePaths.append(os.path.join(root,file))
+        
+        #now save the path information to another json file
+        fileJsonPath = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','ForSNU',alias+'.json')
+        with open(fileJsonPath,'w') as f:
+            json.dump(filePaths, f, indent=4)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--fillSamplePath', action='store_true',help='Fill the path information')
+    parser.add_argument('--updateXsec',action='store_true',help='update the Xsec to json from Xsec formula')
+    parser.add_argument('--updateMcInfo',action='store_true',help='update the MC information to json from result of GetEffLumi(SumW, nmc)')
+    eras = ['2022','2022EE']
