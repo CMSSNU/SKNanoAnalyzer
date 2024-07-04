@@ -139,7 +139,8 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
                 
             f.writelines(f"module.SetOutfilePath('output/hists_{i}.root')\n")
             if reduction > 1:
-                f.writelines(f"module.MaxEvent = int(int(module.fChain.GetEntries())/{int(reduction)})\n")
+                f.writelines(f"from math import ceil\n")
+                f.writelines(f"module.MaxEvent = ceil(int(module.fChain.GetEntries())/{int(reduction)})\n")
             f.writelines(f"module.Init()\n")
             f.writelines(f"module.initializeAnalyzer()\n")
             f.writelines(f"module.Loop()\n")
@@ -258,10 +259,3 @@ if __name__ == '__main__':
         cluster_id = schedd.submit(dag_submit).cluster()
         print(f"DAGMan job cluster is {cluster_id}")
         os.chdir(current_dir)
-        
-
-    
-    
-
- 
-    
