@@ -58,13 +58,6 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 
 }
 
-// Not implemented yets
-float AnalyzerCore::GetPileUpWeight(int sys) {
-    if (IsDATA) return 1.;
-    else return 1.;
-}
-
-
 // Objects
 Event AnalyzerCore::GetEvent() {
     Event ev;
@@ -426,7 +419,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: histmap1d) {
         const string &histname = pair.first;
         TH1F *hist = pair.second;
-       
+        if (!hist) continue;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -443,7 +436,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: histmap2d) {
         const string &histname = pair.first;
         TH2F *hist = pair.second;
-
+        if (!hist) continue;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -460,7 +453,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: histmap3d) {
         const string &histname = pair.first;
         TH3F *hist = pair.second;
-
+        if (!hist) continue;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
