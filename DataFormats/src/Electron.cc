@@ -32,6 +32,8 @@ Electron::Electron() {
     j_mvaTTH = -999.;
     // others
     j_r9 = -999.;
+    j_genPartFlav = 0;
+    j_genPartIdx = -1;
 }
 
 Electron::~Electron() {}
@@ -69,10 +71,10 @@ bool Electron::PassID(const TString ID) const {
     if (etaRegion() == ETAREGION::GAP) return false;
 
     // POG
-    if (ID == "POGVeto")          return CutBased() == WORKINGPOINT::VETO;
-    if (ID == "POGLoose")         return CutBased() == WORKINGPOINT::LOOSE;
-    if (ID == "POGMedium")        return CutBased() == WORKINGPOINT::MEDIUM;
-    if (ID == "POGTight")         return CutBased() == WORKINGPOINT::TIGHT;
+    if (ID == "POGVeto")          return (int)(CutBased()) >= (int)(WORKINGPOINT::VETO);
+    if (ID == "POGLoose")         return (int)(CutBased()) >= (int)(WORKINGPOINT::LOOSE);
+    if (ID == "POGMedium")        return (int)(CutBased()) >= (int)(WORKINGPOINT::MEDIUM);
+    if (ID == "POGTight")         return (int)(CutBased()) >= (int)(WORKINGPOINT::TIGHT);
     if (ID == "POGHEEP")          return isCutBasedHEEP();
     if (ID == "POGMVAIsoWP80")    return isMVAIsoWP80();
     if (ID == "POGMVAIsoWP90")    return isMVAIsoWP90();

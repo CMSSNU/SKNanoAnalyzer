@@ -64,6 +64,12 @@ public:
     void SetR9(float r9) { j_r9 = r9; }
     inline float r9() const { return j_r9; }
 
+    void SetGenPartFlav(unsigned char genPartFlav) { j_genPartFlav = genPartFlav; }
+    inline unsigned char GenPartFlav() const { return j_genPartFlav; }
+
+    void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
+    inline short GenPartIdx() const { return j_genPartIdx; }
+
     // Boolean IDs
     enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVANOISOWP80, MVANOISOWP90, CUTBASEDHEEP};
     void SetBIDBit(BooleanID id, bool idbit);
@@ -110,6 +116,8 @@ private:
 
     // others
     float j_r9;
+    unsigned char j_genPartFlav;
+    short j_genPartIdx;
     ClassDef(Electron, 1);
 };
 
