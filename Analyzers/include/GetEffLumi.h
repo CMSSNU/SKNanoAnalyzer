@@ -8,9 +8,10 @@
 class GetEffLumi : public AnalyzerCore {
 public:
     void executeEvent();
-
     GetEffLumi();
     ~GetEffLumi();
+    ;
+    void initializeAnalyzer();
 };
 
 #endif
