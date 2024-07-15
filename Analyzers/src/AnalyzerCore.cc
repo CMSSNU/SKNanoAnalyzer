@@ -2,7 +2,7 @@
 
 AnalyzerCore::AnalyzerCore() {
     outfile = nullptr;
-    pdfReweight = new PDFReweight();
+    // pdfReweight = new PDFReweight();
 }
 
 AnalyzerCore::~AnalyzerCore() {
@@ -10,8 +10,8 @@ AnalyzerCore::~AnalyzerCore() {
     for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
     for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
     if (outfile) delete outfile;
-    if (pdfReweight) delete pdfReweight;
     if (mcCorr) delete mcCorr;
+    // if (pdfReweight) delete pdfReweight;
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath) {
@@ -59,10 +59,14 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 }
 
 // Objects
-Event AnalyzerCore::GetEvent() {
+Event AnalyzerCore::GetEvent(RVec<TString> HLT_List)
+{
     Event ev;
     ev.SetnPileUp(Pileup_nPU);
+    ev.SetnTrueInt(Pileup_nTrueInt);
+    ev.SetnPVsGood(PV_npvsGood);
     ev.SetEra(GetEra());
+    ev.SetTrigger(HLT_List, TriggerMap);
     return ev;
 }
 
@@ -118,18 +122,40 @@ RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const flo
 
 RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) {
     RVec<Muon> selected_muons;
+
     for (const auto &muon: muons) {
         if (! (muon.Pt() > ptmin)) continue;
         if (! (fabs(muon.Eta()) < fetamax)) continue;
-        if (! muon.PassID(ID)) continue;
+        if (ID.Contains("&&"))
+        {
+            TObjArray *IDs = ID.Tokenize("&&");
+            bool pass = true;
+            for (int i = 0; i < IDs->GetEntries(); i++)
+            {
+                TString thisID = ((TObjString *)IDs->At(i))->GetString();
+                if (!muon.PassID(thisID))
+                {
+                    pass = false;
+                    break;
+                }
+            }
+            delete IDs;
+            if (!pass)
+                continue;
+        }
+        else
+        {
+            if (!muon.PassID(ID))
+                continue;
+        }
         selected_muons.push_back(muon);
     }
     return selected_muons;
 }
 
-RVec<Electron> AnalyzerCore::GetAllElectrons() {
+RVec<Electron> AnalyzerCore::GetAllElectrons(){
     RVec<Electron> electrons;
-    for (int i = 0; i < nElectron; i++) {
+    for (int i = 0; i < nElectron; i++){
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
@@ -160,6 +186,8 @@ RVec<Electron> AnalyzerCore::GetAllElectrons() {
         electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
+        electron.SetGenPartFlav(Electron_genPartFlav[i]);
+        electron.SetGenPartIdx(Electron_genPartIdx[i]);
 
         electrons.push_back(electron);
     }
@@ -267,6 +295,54 @@ RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float
         selected_jets.push_back(jet);
     }
     return selected_jets;
+}
+
+RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, const float ptmin, const float fetamax){
+    RVec<Jet> selected_jets;
+    for (const auto &jet: jets) {
+        if (jet.Pt() < ptmin) continue;
+        if (fabs(jet.Eta()) > fetamax) continue;
+        if (! jet.PassID(ID)) continue;
+        selected_jets.push_back(jet);
+    }
+    return selected_jets;
+}
+
+RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR){
+    RVec<Jet> selected_jets;
+    for(const auto &jet: jets){
+        bool isLeptonInside = false;
+        for(const auto &electron: electrons){
+            if(jet.DeltaR(electron) < dR){
+                isLeptonInside = true;
+                break;
+            }
+        }
+        if(isLeptonInside) continue;
+        for(const auto &muon: muons){
+            if(jet.DeltaR(muon) < dR){
+                isLeptonInside = true;
+                break;
+            }
+        }
+        if(isLeptonInside) continue;
+        selected_jets.push_back(jet);
+    }
+    return selected_jets;
+}
+
+bool AnalyzerCore::IsEventJetMapVetoed(const TString mapCategory){
+    RVec<Jet> selected_jets;
+    RVec<Jet> this_jet = GetJets("tight", 15., 5.0);
+    RVec<Muon> this_muon = GetAllMuons();
+    this_jet = JetsVetoLeptonInside(this_jet, {} ,this_muon, 0.2);
+    for(const auto &jet: this_jet){
+        if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
+    }
+    for(const auto &jet: selected_jets){
+        if(mcCorr->IsJetVetoZone(jet.Pt(), jet.Eta(), mapCategory)) return true;
+    }
+    return false;
 }
 
 RVec<FatJet> AnalyzerCore::GetAllFatJets() {
@@ -416,10 +492,11 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
 }
 
 void AnalyzerCore::WriteHist() {
+    cout << "[AnalyzerCore::WriteHist] Writing histograms to " << outfile->GetName() << endl;
     for (const auto &pair: histmap1d) {
         const string &histname = pair.first;
         TH1F *hist = pair.second;
-        if (!hist) continue;
+        cout << "[AnalyzerCore::WriteHist] Writing 1D histogram" << histname << endl;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -435,8 +512,8 @@ void AnalyzerCore::WriteHist() {
     }
     for (const auto &pair: histmap2d) {
         const string &histname = pair.first;
+        cout << "[AnalyzerCore::WriteHist] Writing 2D histogram" << histname << endl;
         TH2F *hist = pair.second;
-        if (!hist) continue;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -452,8 +529,8 @@ void AnalyzerCore::WriteHist() {
     }
     for (const auto &pair: histmap3d) {
         const string &histname = pair.first;
+        cout << "[AnalyzerCore::WriteHist] Writing 3D histogram" << histname << endl;
         TH3F *hist = pair.second;
-        if (!hist) continue;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -467,5 +544,6 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    cout << "[AnalyzerCore::WriteHist] Writing histograms done" << endl;
     outfile->Close();
 }
