@@ -9,6 +9,7 @@
 #include "TH2F.h"
 #include "TH3F.h"
 #include "TString.h"
+#include "TObjString.h"
 
 #include "SKNanoLoader.h"
 #include "Event.h"
@@ -24,6 +25,7 @@
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
 #include "MCCorrection.h"
+#include "JetTaggingParameter.h"
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -40,19 +42,17 @@ public:
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
     float GetPDFReweight();
-    float GetPDFReweight(int member);
-    
+    float GetPDFReweight(int member);    
     // MCCorrection
     MCCorrection *mcCorr;
     //unique_ptr<CorrectionSet> csetMuon;
-    //unique_ptr<CorrectionSet> csetElectron;
+    //unique_ptr<CorrectionSet> csetElectron;;
 
     // MC weights
-    float MCweight(bool usesign=true, bool norm_1invpb=true) const;
-    float GetPileUpWeight(int sys);
+    float MCweight(bool usesign = true, bool norm_1invpb = true) const;
 
     // Get objects
-    Event GetEvent();
+    Event GetEvent(RVec<TString> HLT_List = {});
     RVec<Muon> GetAllMuons();
     RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
@@ -65,12 +65,18 @@ public:
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
+    RVec<Jet> SelectJets(const RVec<Jet> &jets, const TString id, const float ptmin, const float fetamax);
+    RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.4);
     RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
-
     // Functions
+    inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetBTaggingWP(tagger, wp); }
+    inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetCTaggingWP(tagger, wp); }
+    inline float GetBTaggingWP(){ return mcCorr->GetBTaggingWP(); }
+    inline pair<float, float> GetCTaggingWP(){ return mcCorr->GetCTaggingWP(); }
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
+    bool IsEventJetMapVetoed(const TString mapCategory = "jetvetomap");
     void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
     void FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins);
     void FillHist(const TString &histname, float value_x, float value_y, float weight, 
@@ -88,12 +94,15 @@ public:
                                           int n_biny, float *ybins,
                                           int n_binz, float *zbins);
 
+    // void FillTree(const TString &treename, const TString &branchname, auto value);
+
     virtual void WriteHist();
 
 private:
     unordered_map<string, TH1F*> histmap1d;
     unordered_map<string, TH2F*> histmap2d;
     unordered_map<string, TH3F*> histmap3d;
+    unordered_map<string, TTree *> treemap;
     TFile *outfile;
 };
 

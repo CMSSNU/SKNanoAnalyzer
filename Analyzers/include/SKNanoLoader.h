@@ -71,6 +71,8 @@ public:
     Float_t PSWeight[nPSWeight];
     // Event
     Int_t Pileup_nPU;
+    Float_t Pileup_nTrueInt;
+    UChar_t PV_npvsGood;
     // Muon
     static constexpr int kMaxMuon = 8;
     Int_t  nMuon;
@@ -113,6 +115,8 @@ public:
     // Electron
     static constexpr int kMaxElectron = 8;
     Int_t nElectron;
+    UChar_t Electron_genPartFlav[kMaxElectron];
+    Short_t Electron_genPartIdx[kMaxElectron];
     Float_t Electron_pt[kMaxElectron];
     Float_t Electron_eta[kMaxElectron];
     Float_t Electron_phi[kMaxElectron];
@@ -271,6 +275,8 @@ public:
     Short_t GenJet_partonFlavour[kMaxGenJet];
     UChar_t GenJet_hadronFlavour[kMaxGenJet];
 
+    // Trigger Saving Map
+    std::map<TString, Bool_t *> TriggerMap;
 };
 
 #endif
