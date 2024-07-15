@@ -2,7 +2,7 @@
 #define Jet_h
 
 #include "Particle.h"
-// #include "JetTaggingParameters.h"
+#include "JetTaggingParameter.h"
 
 class Jet : public Particle
 {
@@ -86,11 +86,15 @@ public:
   inline int hadronFlavour() const { return j_hadronFlavour; };
   inline bool Pass_tightJetID() const { return j_tightJetID; }
   inline bool Pass_tightLepVetoJetID() const { return j_tightLepVetoJetID; }
+  inline float chargedEMFraction() const { return j_chEmEF; }
+  inline float chargedHadronFraction() const { return j_chHEF; }
+  inline float neutralEMFraction() const { return j_neEmEF; }
+  inline float neutralHadronFraction() const { return j_neHEF; }
+  inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
+  float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
+  pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
 
   bool PassID(TString ID) const;
-
-  // double GetTaggerResult(JetTagging::Tagger tg) const;
-
 private:
   // jetID
   bool j_looseJetId;

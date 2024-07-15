@@ -82,13 +82,29 @@ bool Jet::PassID(TString ID) const {
   return false;
 }
 
-/*float Jet::GetTaggerResult(JetTagging::Tagger tg) const
-{
-  if (1)
-    cout << "[Jet::GetTaggerResult] Not Implemented yet" << endl;
+float Jet::GetBTaggerResult(JetTagging::JetFlavTagger tagger) const{
+  if(tagger == JetTagging::JetFlavTagger::DeepJet)
+    return j_btagDeepFlavB;
+  else if(tagger == JetTagging::JetFlavTagger::ParticleNet)
+    return j_btagPNetB;
+  else if(tagger == JetTagging::JetFlavTagger::ParT)
+    return j_btagRobustParTAK4B;
   else
-  {
-    cout << "[Jet::GetTaggerResult] ERROR; Wrong tagger : " << tg << endl;
-    return -999;
-  }
-}*/
+    cout << "[Jet::GetBTaggerResult] No tagger" << endl;
+    exit(ENODATA);
+  return -999.0;
+}
+
+pair<float,float> Jet::GetCTaggerResult(JetTagging::JetFlavTagger tagger) const{
+  if(tagger == JetTagging::JetFlavTagger::DeepJet)
+    return make_pair(j_btagDeepFlavCvB,j_btagDeepFlavCvL);
+  else if(tagger == JetTagging::JetFlavTagger::ParticleNet)
+    return make_pair(j_btagPNetCvB,j_btagPNetCvL);
+  else if(tagger == JetTagging::JetFlavTagger::ParT)
+    return make_pair(j_btagRobustParTAK4CvB,j_btagRobustParTAK4CvL);
+  else
+    cout << "[Jet::GetCTaggerResult] No tagger" << endl;
+    exit(ENODATA);
+  return make_pair(-999.0,-999.0);
+}
+
