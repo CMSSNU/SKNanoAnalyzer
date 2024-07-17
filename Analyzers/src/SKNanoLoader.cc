@@ -1,5 +1,7 @@
 #define SKNanoLoader_cxx
 #include "SKNanoLoader.h"
+#include "json.hpp"
+using json = nlohmann::json;
 
 SKNanoLoader::SKNanoLoader() {
     MaxEvent = -1;
@@ -17,6 +19,9 @@ SKNanoLoader::SKNanoLoader() {
 
 SKNanoLoader::~SKNanoLoader() {
     if (!fChain) return;
+    for (auto& [key, value] : TriggerMap) {
+        delete value;
+    }
     delete fChain->GetCurrentFile();
 }
 
@@ -28,9 +33,8 @@ void SKNanoLoader::Loop() {
     cout << "[SKNanoLoader::Loop] Event Loop Started" << endl;
     for (long jentry=0; jentry<nentries; jentry++) {
         if (jentry < NSkipEvent) continue;
-        if (jentry % 1000 == 0) cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries << endl;
+        if (jentry % LogEvery == 0) cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries << endl;
         if (fChain->GetEntry(jentry) < 0) exit(EIO);
-
         executeEvent();
     }
     cout << "[SKNanoLoader::Loop] Event Loop Finished" << endl;
@@ -38,20 +42,58 @@ void SKNanoLoader::Loop() {
 
 void SKNanoLoader::Init() {
     // Set object pointer
-    fChain->SetBranchAddress("Generator_id1", &Generator_id1);
-    fChain->SetBranchAddress("Generator_id2", &Generator_id2);
-    fChain->SetBranchAddress("Generator_x1", &Generator_x1);
-    fChain->SetBranchAddress("Generator_x2", &Generator_x2);
-    fChain->SetBranchAddress("Generator_xpdf1", &Generator_xpdf1);
-    fChain->SetBranchAddress("Generator_xpdf2", &Generator_xpdf2);
-    fChain->SetBranchAddress("Generator_scalePDF", &Generator_scalePDF);
-    fChain->SetBranchAddress("Generator_weight", &Generator_weight);
-    fChain->SetBranchAddress("genWeight", &genWeight);
-    fChain->SetBranchAddress("LHEWeight_originalXWGTUP", &LHEWeight_originalXWGTUP);
-    fChain->SetBranchAddress("LHEPdfWeight", &LHEPdfWeight);
-    fChain->SetBranchAddress("LHEScaleWeight", &LHEScaleWeight);
-    fChain->SetBranchAddress("PSWeight", &PSWeight);
-    fChain->SetBranchAddress("Pileup_nPU", &Pileup_nPU);
+    if(!IsDATA){
+        fChain->SetBranchAddress("Generator_id1", &Generator_id1);
+        fChain->SetBranchAddress("Generator_id2", &Generator_id2);
+        fChain->SetBranchAddress("Generator_x1", &Generator_x1);
+        fChain->SetBranchAddress("Generator_x2", &Generator_x2);
+        fChain->SetBranchAddress("Generator_xpdf1", &Generator_xpdf1);
+        fChain->SetBranchAddress("Generator_xpdf2", &Generator_xpdf2);
+        fChain->SetBranchAddress("Generator_scalePDF", &Generator_scalePDF);
+        fChain->SetBranchAddress("Generator_weight", &Generator_weight);
+        fChain->SetBranchAddress("genWeight", &genWeight);
+        fChain->SetBranchAddress("LHEWeight_originalXWGTUP", &LHEWeight_originalXWGTUP);
+        fChain->SetBranchAddress("LHEPdfWeight", &LHEPdfWeight);
+        fChain->SetBranchAddress("LHEScaleWeight", &LHEScaleWeight);
+        fChain->SetBranchAddress("PSWeight", &PSWeight);
+        fChain->SetBranchAddress("Pileup_nPU", &Pileup_nPU);
+        fChain->SetBranchAddress("Pileup_nTrueInt", &Pileup_nTrueInt); 
+        fChain->SetBranchAddress("Electron_genPartFlav", Electron_genPartFlav);
+        fChain->SetBranchAddress("Electron_genPartIdx", Electron_genPartIdx);
+        fChain->SetBranchAddress("Jet_genJetIdx", Jet_genJetIdx);
+        fChain->SetBranchAddress("Jet_hadronFlavour", Jet_hadronFlavour);
+        fChain->SetBranchAddress("Jet_partonFlavour", Jet_partonFlavour);
+        fChain->SetBranchAddress("FatJet_genJetAK8Idx",FatJet_genJetAK8Idx);
+        fChain->SetBranchAddress("FatJet_nBHadrons",FatJet_nBHadrons);
+        fChain->SetBranchAddress("FatJet_nCHadrons",FatJet_nCHadrons);
+        fChain->SetBranchAddress("Tau_genPartFlav", Tau_genPartFlav);
+        fChain->SetBranchAddress("Tau_genPartIdx", Tau_genPartIdx);
+
+        fChain->SetBranchAddress("GenPart_genPartIdxMother", GenPart_genPartIdxMother);
+        fChain->SetBranchAddress("GenPart_pdgId", GenPart_pdgId);
+        fChain->SetBranchAddress("GenPart_status", GenPart_status);
+        fChain->SetBranchAddress("GenPart_statusFlags", GenPart_statusFlags);
+        fChain->SetBranchAddress("GenPart_mass", GenPart_mass);
+        fChain->SetBranchAddress("GenPart_pt", GenPart_pt);
+        fChain->SetBranchAddress("GenPart_eta", GenPart_eta);
+        fChain->SetBranchAddress("GenPart_phi", GenPart_phi);
+
+        fChain->SetBranchAddress("LHEPart_pdgId", LHEPart_pdgId);
+        fChain->SetBranchAddress("LHEPart_pt", LHEPart_pt);
+        fChain->SetBranchAddress("LHEPart_eta", LHEPart_eta);
+        fChain->SetBranchAddress("LHEPart_phi", LHEPart_phi);
+        fChain->SetBranchAddress("LHEPart_mass", LHEPart_mass);
+        fChain->SetBranchAddress("LHEPart_status", LHEPart_status);
+        fChain->SetBranchAddress("LHEPart_spin", LHEPart_spin);
+
+        fChain->SetBranchAddress("nGenJet", &nGenJet);
+        fChain->SetBranchAddress("GenJet_pt", GenJet_pt);
+        fChain->SetBranchAddress("GenJet_eta", GenJet_eta);
+        fChain->SetBranchAddress("GenJet_phi", GenJet_phi);
+        fChain->SetBranchAddress("GenJet_mass", GenJet_mass);
+        fChain->SetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour);
+        fChain->SetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour);
+    }
     fChain->SetBranchAddress("nMuon", &nMuon);
     fChain->SetBranchAddress("Muon_pt", Muon_pt);
     fChain->SetBranchAddress("Muon_eta", Muon_eta);
@@ -88,7 +130,10 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Muon_tkIsoId", Muon_tkIsoId);
     fChain->SetBranchAddress("Muon_softMva", Muon_softMva);
     fChain->SetBranchAddress("Muon_mvaLowPt", Muon_mvaLowPt);
-    fChain->SetBranchAddress("Muon_mvaTTH", Muon_mvaTTH);
+    //fChain->SetBranchAddress("Muon_mvaTTH", Muon_mvaTTH);Due to the unknown error, I hard coded the value of Muon_mvaTTH as array of zeros.
+    for (int i = 0; i < kMaxMuon; i++) Muon_mvaTTH[i] = 0.;
+
+
     fChain->SetBranchAddress("nElectron", &nElectron);
     fChain->SetBranchAddress("Electron_pt", Electron_pt);
     fChain->SetBranchAddress("Electron_eta", Electron_eta);
@@ -150,8 +195,7 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Jet_electronIdx1", Jet_electronIdx1);
     fChain->SetBranchAddress("Jet_electronIdx2", Jet_electronIdx2);
     fChain->SetBranchAddress("Jet_eta", Jet_eta);
-    fChain->SetBranchAddress("Jet_genJetIdx", Jet_genJetIdx);
-    fChain->SetBranchAddress("Jet_hadronFlavour", Jet_hadronFlavour);
+
     //fChain->SetBranchAddress("Jet_hfadjacentEtaStripsSize", Jet_hfadjacentEtaStripsSize);
     //fChain->SetBranchAddress("Jet_hfcentralEtaStripSize", Jet_hfcentralEtaStripSize);
     //fChain->SetBranchAddress("Jet_hfsigmaEtaEta", Jet_hfsigmaEtaEta);
@@ -168,7 +212,6 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Jet_nSVs", Jet_nSVs);
     fChain->SetBranchAddress("Jet_neEmEF", Jet_neEmEF);
     fChain->SetBranchAddress("Jet_neHEF", Jet_neHEF);
-    fChain->SetBranchAddress("Jet_partonFlavour", Jet_partonFlavour);
     fChain->SetBranchAddress("Jet_phi", Jet_phi);
     fChain->SetBranchAddress("Jet_pt", Jet_pt);
     fChain->SetBranchAddress("Jet_rawFactor", Jet_rawFactor);
@@ -187,20 +230,15 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Tau_idDeepTau2018v2p5VSmu", Tau_idDeepTau2018v2p5VSmu);
     fChain->SetBranchAddress("Tau_decayMode", Tau_decayMode);
     fChain->SetBranchAddress("Tau_idDecayModeNewDMs", Tau_idDecayModeNewDMs);
-    fChain->SetBranchAddress("Tau_genPartFlav", Tau_genPartFlav);
-    fChain->SetBranchAddress("Tau_genPartIdx", Tau_genPartIdx);
     fChain->SetBranchAddress("nFatJet",&nFatJet);
     fChain->SetBranchAddress("FatJet_pt",FatJet_pt);
     fChain->SetBranchAddress("FatJet_eta",FatJet_eta);
     fChain->SetBranchAddress("FatJet_phi",FatJet_phi);
     fChain->SetBranchAddress("FatJet_mass",FatJet_mass);
     fChain->SetBranchAddress("FatJet_area",FatJet_area);
-    fChain->SetBranchAddress("FatJet_genJetAK8Idx",FatJet_genJetAK8Idx);
     fChain->SetBranchAddress("FatJet_jetId",FatJet_jetId);
     fChain->SetBranchAddress("FatJet_lsf3",FatJet_lsf3);
     fChain->SetBranchAddress("FatJet_msoftdrop",FatJet_msoftdrop);
-    fChain->SetBranchAddress("FatJet_nBHadrons",FatJet_nBHadrons);
-    fChain->SetBranchAddress("FatJet_nCHadrons",FatJet_nCHadrons);
     fChain->SetBranchAddress("FatJet_nConstituents",FatJet_nConstituents);
     fChain->SetBranchAddress("FatJet_btagDDBvLV2",FatJet_btagDDBvLV2);
     fChain->SetBranchAddress("FatJet_btagDDCvBV2",FatJet_btagDDCvBV2);
@@ -230,20 +268,59 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("FatJet_tau2",FatJet_tau2);
     fChain->SetBranchAddress("FatJet_tau3",FatJet_tau3);
     fChain->SetBranchAddress("FatJet_tau4",FatJet_tau4);
-    fChain->SetBranchAddress("FatJet_btagDDBvLV2",FatJet_btagDDBvLV2);
-    fChain->SetBranchAddress("FatJet_btagDDCvBV2",FatJet_btagDDCvBV2);
-    fChain->SetBranchAddress("FatJet_btagDDCvLV2",FatJet_btagDDCvLV2);
-    fChain->SetBranchAddress("FatJet_btagDeepB",FatJet_btagDeepB);
-    fChain->SetBranchAddress("FatJet_btagHbb",FatJet_btagHbb);
     fChain->SetBranchAddress("FatJet_subJetIdx1",FatJet_subJetIdx1);
     fChain->SetBranchAddress("FatJet_subJetIdx2",FatJet_subJetIdx2);
-    fChain->SetBranchAddress("nGenJet", &nGenJet);
-    fChain->SetBranchAddress("GenJet_pt", GenJet_pt);
-    fChain->SetBranchAddress("GenJet_eta", GenJet_eta);
-    fChain->SetBranchAddress("GenJet_phi", GenJet_phi);
-    fChain->SetBranchAddress("GenJet_mass", GenJet_mass);
-    fChain->SetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour);
-    fChain->SetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour);
+
+    fChain->SetBranchAddress("PuppiMET_pt", &PuppiMET_pt);
+    fChain->SetBranchAddress("PuppiMET_phi", &PuppiMET_phi);
+    fChain->SetBranchAddress("PuppiMET_sumEt", &PuppiMET_sumEt);
+    fChain->SetBranchAddress("PuppiMET_ptJERUp", &PuppiMET_ptJERUp);
+    fChain->SetBranchAddress("PuppiMET_phiJERUp", &PuppiMET_phiJERUp);
+    fChain->SetBranchAddress("PuppiMET_ptJERDown", &PuppiMET_ptJERDown);
+    fChain->SetBranchAddress("PuppiMET_phiJERDown", &PuppiMET_phiJERDown);
+    fChain->SetBranchAddress("PuppiMET_ptUnclusteredUp", &PuppiMET_ptUnclusteredUp);
+    fChain->SetBranchAddress("PuppiMET_phiUnclusteredUp", &PuppiMET_phiUnclusteredUp);
+    fChain->SetBranchAddress("PuppiMET_ptUnclusteredDown", &PuppiMET_ptUnclusteredDown);
+    fChain->SetBranchAddress("PuppiMET_phiUnclusteredDown", &PuppiMET_phiUnclusteredDown);
+    fChain->SetBranchAddress("PuppiMET_ptJESUp", &PuppiMET_ptJESUp);
+    fChain->SetBranchAddress("PuppiMET_phiJESUp", &PuppiMET_phiJESUp);
+    fChain->SetBranchAddress("PuppiMET_ptJESDown", &PuppiMET_ptJESDown);
+    fChain->SetBranchAddress("PuppiMET_phiJESDown", &PuppiMET_phiJESDown);
+
+    fChain->SetBranchAddress("PV_npvsGood", &PV_npvsGood);
+
+    fChain->SetBranchAddress("Flag_METFilters", &Flag_METFilters);
+    fChain->SetBranchAddress("Flag_goodVertices", &Flag_goodVertices);
+    fChain->SetBranchAddress("Flag_globalSuperTightHalo2016Filter", &Flag_globalSuperTightHalo2016Filter);
+    fChain->SetBranchAddress("Flag_ECalDeadCellTriggerPrimitiveFilter", &Flag_ECalDeadCellTriggerPrimitiveFilter);
+    fChain->SetBranchAddress("Flag_BadPFMuonFilter", &Flag_BadPFMuonFilter);
+    fChain->SetBranchAddress("Flag_BadPFMuonDzFilter", &Flag_BadPFMuonDzFilter);
+    fChain->SetBranchAddress("Flag_hfNoisyHitsFilter", &Flag_hfNoisyHitsFilter);
+    fChain->SetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
+    fChain->SetBranchAddress("Flag_eeBadScFilter", &Flag_eeBadScFilter);
+    //fChain->SetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
+    fChain->SetBranchAddress("run", &Run);
+
+   
+
+
+    string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/NanoAODv12_HLT_Path.json";
+    ifstream json_file(json_path);
+    if (json_file.is_open()) {
+        cout << "[SKNanoLoader::Init] Loading HLT Paths in" << json_path << endl;
+        json j;
+        json_file >> j;
+        for (auto& [key, value] : j.items()) {
+            cout << "[SKNanoLoader::Init] HLT Path: " << key << endl;
+            Bool_t* passHLT = new Bool_t();
+            TString key_str = key;
+            TriggerMap[key_str] = passHLT;
+            fChain->SetBranchAddress(key_str, TriggerMap[key_str]);
+        }
+    } 
+    else cerr << "[SKNanoLoader::Init] Cannot open " << json_path << endl;
+    
+
 }
 
 

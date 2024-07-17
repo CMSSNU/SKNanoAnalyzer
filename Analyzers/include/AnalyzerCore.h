@@ -38,6 +38,8 @@ public:
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
+    //MetFilter
+    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
@@ -76,7 +78,7 @@ public:
     inline pair<float, float> GetCTaggingWP(){ return mcCorr->GetCTaggingWP(); }
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
-    bool IsEventJetMapVetoed(const TString mapCategory = "jetvetomap");
+    bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
     void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
     void FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins);
     void FillHist(const TString &histname, float value_x, float value_y, float weight, 

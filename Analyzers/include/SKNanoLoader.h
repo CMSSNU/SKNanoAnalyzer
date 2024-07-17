@@ -73,6 +73,27 @@ public:
     Int_t Pileup_nPU;
     Float_t Pileup_nTrueInt;
     UChar_t PV_npvsGood;
+    //Gen
+    static constexpr int kMaxGen = 40;
+    Int_t nGenPart;
+    Int_t GenPart_pdgId[kMaxGen];
+    Int_t GenPart_status[kMaxGen];
+    UShort_t GenPart_statusFlags[kMaxGen];
+    Short_t GenPart_genPartIdxMother[kMaxGen];
+    Float_t GenPart_pt[kMaxGen];
+    Float_t GenPart_eta[kMaxGen];
+    Float_t GenPart_phi[kMaxGen];
+    Float_t GenPart_mass[kMaxGen];
+    //LHE
+    static constexpr int kMaxLHE = 40;
+    Int_t nLHEPart;
+    Float_t LHEPart_pt[kMaxLHE];
+    Float_t LHEPart_eta[kMaxLHE];
+    Float_t LHEPart_phi[kMaxLHE];
+    Float_t LHEPart_mass[kMaxLHE];
+    Int_t LHEPart_pdgId[kMaxLHE];
+    Int_t LHEPart_status[kMaxLHE];
+    Int_t LHEPart_spin[kMaxLHE];
     // Muon
     static constexpr int kMaxMuon = 8;
     Int_t  nMuon;
@@ -203,7 +224,7 @@ public:
     Short_t Jet_svIdx1[kMaxJet];
     Short_t Jet_svIdx2[kMaxJet];
     //Tau
-    static constexpr int kMaxTau = 15;
+    static constexpr int kMaxTau = 7;
     Int_t nTau;
     Float_t Tau_pt[kMaxTau];
     Float_t Tau_eta[kMaxTau];
@@ -220,7 +241,7 @@ public:
     UChar_t Tau_genPartFlav[kMaxTau];
     Short_t Tau_genPartIdx[kMaxTau];
     // FatJet
-    static constexpr int kMaxFatJet = 10;
+    static constexpr int kMaxFatJet = 6;
     Int_t nFatJet;
     Float_t FatJet_pt[kMaxFatJet];
     Float_t FatJet_eta[kMaxFatJet];
@@ -266,7 +287,7 @@ public:
     Short_t FatJet_subJetIdx2[kMaxFatJet];
 
     // GenJet
-    static constexpr int kMaxGenJet = 20;
+    static constexpr int kMaxGenJet = 25;
     Int_t nGenJet;
     Float_t GenJet_eta[kMaxGenJet];
     Float_t GenJet_mass[kMaxGenJet];
@@ -274,9 +295,39 @@ public:
     Float_t GenJet_pt[kMaxGenJet];
     Short_t GenJet_partonFlavour[kMaxGenJet];
     UChar_t GenJet_hadronFlavour[kMaxGenJet];
+    //MET
+    Float_t PuppiMET_pt;
+    Float_t PuppiMET_phi;
+    Float_t PuppiMET_sumEt;
+    Float_t PuppiMET_ptJERDown;
+    Float_t PuppiMET_phiJERDown;
+    Float_t PuppiMET_ptJERUp;
+    Float_t PuppiMET_phiJERUp;
+    Float_t PuppiMET_ptJESDown;
+    Float_t PuppiMET_phiJESDown;
+    Float_t PuppiMET_ptJESUp;
+    Float_t PuppiMET_phiJESUp;
+    Float_t PuppiMET_ptUnclusteredDown;
+    Float_t PuppiMET_phiUnclusteredDown;
+    Float_t PuppiMET_ptUnclusteredUp;
+    Float_t PuppiMET_phiUnclusteredUp;
+
+    //Flag
+    Bool_t Flag_METFilters; // What is this?
+    Bool_t Flag_goodVertices;
+    Bool_t Flag_globalSuperTightHalo2016Filter;
+    Bool_t Flag_ECalDeadCellTriggerPrimitiveFilter;
+    Bool_t Flag_BadPFMuonFilter;
+    Bool_t Flag_BadPFMuonDzFilter;
+    Bool_t Flag_hfNoisyHitsFilter;
+    Bool_t Flag_ecalBadCalibFilter;
+    Bool_t Flag_eeBadScFilter;
+    //Bool_t Flag_ecalBadCalibFilter;
+    UInt_t Run;
 
     // Trigger Saving Map
-    std::map<TString, Bool_t *> TriggerMap;
+    std::map<TString, Bool_t *>
+        TriggerMap;
 };
 
 #endif

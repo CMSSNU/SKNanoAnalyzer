@@ -1,13 +1,15 @@
 #include "MCCorrection.h"
 MCCorrection::MCCorrection() {}
 
-MCCorrection::MCCorrection(const TString &era) {
+MCCorrection::MCCorrection(const TString &era, const string &btagging_eff_file, const string &ctagging_eff_file) {
     cout << "[MCCorrection::MCCorrection] MCorrection created for " << era << endl;
     SetEra(era);
     string json_muon = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/MUO";
     string json_puWeights = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/LUM";
     string json_btagging = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/BTV";
     string json_ctagging = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/BTV";
+    string json_btagging_eff = string(getenv("SKNANO_DATA"));
+    string json_ctagging_eff = string(getenv("SKNANO_DATA"));
     string json_electron = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/EGM";
     string json_photon = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/EGM";
     string json_jerc = string(getenv("JSONPOG_INTEGRATION_PATH")) + "/POG/JME";
@@ -19,6 +21,8 @@ MCCorrection::MCCorrection(const TString &era) {
         json_puWeights += "/2022_Summer22/puWeights.json.gz";
         json_btagging += "/2022_Summer22/btagging.json.gz";
         json_ctagging += "/2022_Summer22/ctagging.json.gz";
+        json_btagging_eff += "/2022/BTV/"+btagging_eff_file;
+        json_ctagging_eff += "/2022/BTV/"+ctagging_eff_file;
         json_electron += "/2022_Summer22/electron.json.gz";
         json_photon += "/2022_Summer22/photon.json.gz";
         json_jerc += "/2022_Summer22/jet_jerc.json.gz";
@@ -30,6 +34,8 @@ MCCorrection::MCCorrection(const TString &era) {
         json_puWeights += "/2022_Summer22EE/puWeights.json.gz";
         json_btagging += "/2022_Summer22EE/btagging.json.gz";
         json_ctagging += "/2022_Summer22EE/ctagging.json.gz";
+        json_btagging_eff += "/2022EE/BTV/"+btagging_eff_file;
+        json_ctagging_eff += "/2022EE/BTV/"+ctagging_eff_file;
         json_electron += "/2022_Summer22EE/electron.json.gz";
         json_photon += "/2022_Summer22EE/photon.json.gz";
         json_jerc += "/2022_Summer22EE/jet_jerc.json.gz";
@@ -47,6 +53,10 @@ MCCorrection::MCCorrection(const TString &era) {
     cset_btagging = CorrectionSet::from_file(json_btagging);
     cout << "[MCCorrection::MCCorrection] using ctagging file: " << json_ctagging << endl;
     cset_ctagging = CorrectionSet::from_file(json_ctagging);
+    cout << "[MCCorrection::MCCorrection] using btagging eff file: " << json_btagging_eff << endl;
+    cset_btagging_eff = CorrectionSet::from_file(json_btagging_eff);
+    cout << "[MCCorrection::MCCorrection] using ctagging eff file: " << json_ctagging_eff << endl;
+    cset_ctagging_eff = CorrectionSet::from_file(json_ctagging_eff);
     cout << "[MCCorrection::MCCorrection] using electron file: " << json_electron << endl;
     cset_electron = CorrectionSet::from_file(json_electron);
     cout << "[MCCorrection::MCCorrection] using photon file: " << json_photon << endl;
@@ -96,7 +106,14 @@ float MCCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
     return 1.;
 }
 
-float MCCorrection::GetPUWeight(const float nTrueInt, const TString &sys) const {
+float MCCorrection::GetElectronRECOSF(const float eta, const float pt, const TString &sys) const {
+    if(pt < 20.) return GetElectronIDSF("RecoBelow20", eta, pt, sys);
+    else if(pt >= 20. && pt <= 75) return GetElectronIDSF("Reco20to75", eta, pt, sys);
+    else if(pt > 75.) return GetElectronIDSF("RecoAbove75", eta, pt, sys);
+    else return 1.;
+}
+
+float MCCorrection::GetPUWeight(const float nTrueInt, const TString &sys) const{
     //nota bene: Input should be nTrueInt, not nPileUp
     correction::Correction::Ref cset = nullptr;
     if (DataEra == "2022") cset = cset_puWeights->at("Collisions2022_355100_357900_eraBCD_GoldenJson");
@@ -109,33 +126,85 @@ float MCCorrection::GetPUWeight(const float nTrueInt, const TString &sys) const 
     }
 }
 void MCCorrection::SetTaggingParam(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp){
-    taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger);
-    wpStr = JetTagging::GetTaggerCorrectionWPStr(wp);
+    global_tagger = tagger;
+    global_wp = wp;
+    global_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger);
+    global_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp);
 }
 
 float MCCorrection::GetBTaggingWP() const{
-    correction::Correction::Ref cset = cset_btagging->at(taggerStr+"_wp_values");
-    return cset->evaluate({wpStr});
+    correction::Correction::Ref cset = cset_btagging->at(global_taggerStr + "_wp_values");
+    return cset->evaluate({global_wpStr});
 }
 
 float MCCorrection::GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const{
-    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger);
-    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp);
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     correction::Correction::Ref cset = cset_btagging->at(this_taggerStr+"_wp_values");
     return cset->evaluate({this_wpStr});
 }
 
+float MCCorrection::GetBTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys){
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+    correction::Correction::Ref cset = cset_btagging_eff->at(this_taggerStr);
+    return cset->evaluate({sys.Data() ,this_wpStr, });
+}
+
+float MCCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method, const TString &sys){
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+    float weight = 1.;
+        // method is comb, mujets, or shape
+        if (method == "shape"){
+            auto cset = cset_btagging->at(this_taggerStr+"_shape");
+            for(auto &jet : jets){
+                weight *= cset->evaluate({
+                    sys.Data(),
+                    this_wpStr,
+                    jet.hadronFlavour(),
+                    jet.Pt(),
+                    jet.Eta()
+                });
+            } // TODO implement R correction
+            return weight;
+        }
+        else if(method == "comb" or method == "mujets"){
+            auto cset = cset_btagging->at(this_taggerStr+"_"+method.Data());
+            auto cset_light = cset_btagging->at(this_taggerStr+"_light");
+            float this_cut = GetBTaggingWP(tagger, wp);
+            for(auto &jet : jets){
+                float eff = GetBTaggingEff(jet.Eta(), jet.Pt(), tagger, wp, sys);
+                float sf = cset->evaluate({sys.Data(), this_wpStr, jet.hadronFlavour(), jet.Pt(), jet.Eta()});
+                float sf_light = cset_light->evaluate({sys.Data(), this_wpStr, 0, jet.Pt(), jet.Eta()});
+                if (jet.GetBTaggerResult(tagger) > this_cut){
+                    weight *= sf;
+                }
+                else{
+                    weight *= (1 - eff * sf) / (1 - eff);
+                }
+            }
+            return weight;
+        }
+
+        else{
+            cout << "[MCCorrection::GetBTaggingSF] no method " << method << endl;
+            return 1.;
+        }
+}
+
 pair<float,float> MCCorrection::GetCTaggingWP() const{
-    if((int)wp >= 3){
+    if ((int)global_wp >= 3){
         cout << "[MCCorrection::GetCTaggingWP] Workingpoint VeryTight and SuperTight are not available for C-Tagging" << endl;
         exit(ENODATA);
     }
-    correction::Correction::Ref cset = cset_ctagging->at(taggerStr + "_wp_values");
-    return make_pair(cset->evaluate({wpStr ,"CvB"}), cset->evaluate({wpStr ,"CvL"}));
+    correction::Correction::Ref cset = cset_ctagging->at(global_taggerStr + "_wp_values");
+    return make_pair(cset->evaluate({global_wpStr, "CvB"}), cset->evaluate({global_wpStr, "CvL"}));
 }
+
 pair<float,float> MCCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const{
-    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger);
-    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp);
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     if((int)wp >= 3){
         cout << "[MCCorrection::GetCTaggingWP] Workingpoint VeryTight and SuperTight are not available for C-Tagging" << endl;
         exit(ENODATA);
@@ -144,6 +213,66 @@ pair<float,float> MCCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger, 
     return make_pair(cset->evaluate({this_wpStr ,"CvB"}), cset->evaluate({this_wpStr ,"CvL"}));
 }
 
+float MCCorrection::GetCTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys)
+{
+    return 1.;
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+    correction::Correction::Ref cset = cset_btagging_eff->at(this_taggerStr);
+    return cset->evaluate({
+        sys.Data(),
+        this_wpStr,
+    });
+}
+
+float MCCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method, const TString &sys)
+{
+    return 1.;
+    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+    float weight = 1.;
+    // method is comb, mujets, or shape
+    if (method == "shape")
+    {
+        auto cset = cset_btagging->at(this_taggerStr + "_shape");
+        for (auto &jet : jets)
+        {
+            weight *= cset->evaluate({sys.Data(),
+                                      this_wpStr,
+                                      jet.hadronFlavour(),
+                                      jet.Pt(),
+                                      jet.Eta()});
+        } // TODO implement R correction
+        return weight;
+    }
+    else if (method == "comb" or method == "mujets")
+    {
+        auto cset = cset_btagging->at(this_taggerStr + "_" + method.Data());
+        auto cset_light = cset_btagging->at(this_taggerStr + "_light");
+        float this_cut = GetBTaggingWP(tagger, wp);
+        for (auto &jet : jets)
+        {
+            float eff = GetBTaggingEff(jet.Eta(), jet.Pt(), tagger, wp, sys);
+            float sf = cset->evaluate({sys.Data(), this_wpStr, jet.hadronFlavour(), jet.Pt(), jet.Eta()});
+            float sf_light = cset_light->evaluate({sys.Data(), this_wpStr, 0, jet.Pt(), jet.Eta()});
+            if (jet.GetBTaggerResult(tagger) > this_cut)
+            {
+                weight *= sf;
+            }
+            else
+            {
+                weight *= (1 - eff * sf) / (1 - eff);
+            }
+        }
+        return weight;
+    }
+
+    else
+    {
+        cout << "[MCCorrection::GetBTaggingSF] no method " << method << endl;
+        return 1.;
+    }
+}
 
 bool MCCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCategory) const{
     correction::Correction::Ref cset = nullptr;
@@ -151,7 +280,7 @@ bool MCCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCa
     else if(DataEra == "2022EE") cset = cset_jetvetomap->at("Summer22EE_23Sep2023_RunEFG_V1");
     else cout << "[MCCorrection::IsJetVetoZone] no JetVetoMap for era " << GetEra() << endl;
 
-    if (cset->evaluate({eta, phi, mapCategory.Data()}) > 0) return true;
+    if (cset->evaluate({mapCategory.Data(), eta, phi}) > 0) return true;
 
     return false;
 }
