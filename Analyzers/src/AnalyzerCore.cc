@@ -14,6 +14,27 @@ AnalyzerCore::~AnalyzerCore() {
     // if (pdfReweight) delete pdfReweight;
 }
 
+bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
+    bool MetFilter = true;
+    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_ECalDeadCellTriggerPrimitiveFilter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
+
+    if(!MetFilter) return false;
+
+    // Temporarily remove the ecalBadCalibFilter, Instead,
+    if(!(Run <= 367144 && Run >= 362433)) return MetFilter;
+    if (ev.GetMETVector().Pt() <= 100.) return MetFilter;
+    RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
+    for(const auto &jet: this_jet){
+        bool badEcal = (jet.Pt() > 50.);
+        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
+        badEcal = badEcal && jet.DeltaR(ev.GetMETVector()) < 0.3;
+        badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
+        badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
+        if(badEcal) return false;
+    }
+    return true;
+}
+
 void AnalyzerCore::SetOutfilePath(TString outpath) {
     outfile = new TFile(outpath, "RECREATE");
 }
@@ -67,6 +88,7 @@ Event AnalyzerCore::GetEvent(RVec<TString> HLT_List)
     ev.SetnPVsGood(PV_npvsGood);
     ev.SetEra(GetEra());
     ev.SetTrigger(HLT_List, TriggerMap);
+    ev.SetMET(PuppiMET_pt, PuppiMET_phi);
     return ev;
 }
 
@@ -331,18 +353,18 @@ RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<E
     return selected_jets;
 }
 
-bool AnalyzerCore::IsEventJetMapVetoed(const TString mapCategory){
+bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory){
+    RVec<Jet> this_jet = SelectJets(AllJets, "tight", 15., 5.0);
     RVec<Jet> selected_jets;
-    RVec<Jet> this_jet = GetJets("tight", 15., 5.0);
-    RVec<Muon> this_muon = GetAllMuons();
-    this_jet = JetsVetoLeptonInside(this_jet, {} ,this_muon, 0.2);
+    RVec<Electron> empty_electrons;
+    this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
     for(const auto &jet: this_jet){
         if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
     }
     for(const auto &jet: selected_jets){
-        if(mcCorr->IsJetVetoZone(jet.Pt(), jet.Eta(), mapCategory)) return true;
+        if(mcCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;
     }
-    return false;
+    return true;
 }
 
 RVec<FatJet> AnalyzerCore::GetAllFatJets() {

@@ -1,7 +1,8 @@
 #include "GetEffLumi.h"
 //#include "correction.h"
 //using correction::CorrectionSet;
-
+GetEffLumi::GetEffLumi(){};
+GetEffLumi::~GetEffLumi(){};
 void GetEffLumi::initializeAnalyzer(){
   fChain->SetBranchStatus("*", 0);
   if(!IsDATA){
