@@ -1,12 +1,19 @@
 # SKNanoAnalyzer
 ---
 
-NOTE: THIS IS DEVELOPMENT VERSION!!
-
-VERSION 0.1.0
+## THIS IS DEVELOPMENT VERSION!!
 
 ## Project Updates
 [HedgeDoc](https://demo.hedgedoc.org/VrWRIlceTjO9SPOVLKUNVA?view)
+
+## Notes
+- ROOT v6.32.xx have memory leak issue while reading root files with <= v6.30.xx -> Avoid using ROOT >= v6.32.xx temporariliy
+
+## To do
+- Make ExampleRun runable -> done
+- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
+- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
+- external dependencies: ~~LHAPDF~~ / GEScaleSyst(?) / ~~CorrectionLib~~
 
 ## How to
 Recommend to fork the repo to your account.
@@ -81,11 +88,3 @@ conda env create -n nano python=3.11 root=6.30.04 -c conda-forge
 conda activate nano
 pip install correctionlib
 ```
-
-## To do
-- Make ExampleRun runable -> done
-- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
-- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
-- external dependencies: LHAPDF / GEScaleSyst(?) / CorrectionLib
-
-
