@@ -64,15 +64,14 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
 if [ $PACKAGE = "conda" ]; then
-    if [[ -d "external/lhapdf" ]]; then
-        export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-        export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-        export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
-    else
+    if [[ ! -d "external/lhapdf" ]]; then
         echo "@@@@ Installing LHAPDF for conda environment"
         ./scripts/install_lhapdf.sh
     fi
+    export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+    export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ configuring LHAPDF from cvmfs"
 else
