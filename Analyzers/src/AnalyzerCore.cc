@@ -358,6 +358,27 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
 
     return GenJets;
 }
+
+RVec<Gen> AnalyzerCore::GetGens() {
+
+    RVec<Gen> Gens;
+
+    for (int i = 0; i < nGenPart; i++) {
+
+        Gen gen;
+
+        gen.SetIsEmpty(false);
+        gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
+        gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
+        gen.SetMother(GenPart_genPartIdxMother[i]);
+        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
+
+        Gens.push_back(gen);
+    }
+
+    return Gens;
+}
+
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);

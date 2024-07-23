@@ -260,6 +260,17 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("GenJet_mass", GenJet_mass);
     fChain->SetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour);
     fChain->SetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour);
+
+    fChain->SetBranchAddress("GenPart_eta",GenPart_eta);
+    fChain->SetBranchAddress("GenPart_genPartIdxMother",GenPart_genPartIdxMother);
+    fChain->SetBranchAddress("GenPart_mass",GenPart_mass);
+    fChain->SetBranchAddress("GenPart_pdgId",GenPart_pdgId);
+    fChain->SetBranchAddress("GenPart_phi",GenPart_phi);
+    fChain->SetBranchAddress("GenPart_pt",GenPart_pt);
+    fChain->SetBranchAddress("GenPart_status",GenPart_status);
+    fChain->SetBranchAddress("GenPart_statusFlags",GenPart_statusFlags);
+    fChain->SetBranchAddress("nGenPart",&nGenPart);
+
 }
 
 
