@@ -20,6 +20,7 @@
 #include "GenJet.h"
 #include "Tau.h"
 #include "FatJet.h"
+#include "Photon.h"
 #include "Gen.h"
 
 #include "LHAPDFHandler.h"
@@ -63,6 +64,8 @@ public:
     RVec<Tau> GetAllTaus();
     RVec<FatJet> GetAllFatJets();
     RVec<GenJet> GetAllGenJets();
+    RVec<Photon> GetAllPhotons();
+    RVec<Photon> GetPhotons(TString id, double ptmin, double fetamax);
     RVec<Gen> GetGens();
 
     // Select objects
@@ -71,6 +74,7 @@ public:
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
 
     // Functions
+    float Photon_SCEta(const int i);
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
