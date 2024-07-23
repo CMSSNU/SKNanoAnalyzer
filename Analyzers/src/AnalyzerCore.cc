@@ -246,6 +246,54 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
     return Jets;
 }
 
+
+RVec<Photon> AnalyzerCore::GetAllPhotons() {
+    RVec<Photon> Photons;
+    for (int i = 0; i< nPhoton; i++) {
+        Photon photon;
+        photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
+        float photon_theta = photon.Theta();
+        float photon_E = Photon_pt[i] / sin( photon_theta );
+        photon.SetPtEtaPhiE( Photon_pt[i], Photon_eta[i], Photon_phi[i], photon_E);
+        photon.SetEnergy(photon_E);
+        photon.SetSigmaIetaIeta(Photon_sieie[i]);
+        photon.SetHoe(Photon_hoe[i]);
+        photon.SetEnergyRaw(Photon_energyRaw[i]);
+        photon.SetPixelSeed(Photon_pixelSeed[i]);
+        photon.SetisScEtaEB(Photon_isScEtaEB[i]);
+        photon.SetisScEtaEE(Photon_isScEtaEE[i]);
+//        Need to Add PV Info
+//        Photon.SetSCEta(Photon_eta[i], Photon_phi[i], PV_x, PV_y, PV_z, Photon_isScEtaEB[i], Photon_isScEtaEE[i]);  
+        photon.SetSCEta(Photon_eta[i], Photon_phi[i], 0, 0, 0, false, false); 
+        photon.SetBIDBit(Photon::BooleanID::MVAIDWP80, Photon_mvaID_WP80[i]);
+        photon.SetBIDBit(Photon::BooleanID::MVAIDWP90, Photon_mvaID_WP90[i]);
+        photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
+        photon.SetMVA(Photon::MVATYPE::MVAID, Photon_mvaID[i]);
+
+
+        Photons.push_back(photon);
+    }
+    return Photons;
+}
+
+RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax) {
+    RVec<Photon> photons = GetAllPhotons();
+    RVec<Photon> out;
+    for(unsigned int i=0; i<photons.size(); i++) {
+        if(!( photons.at(i).Pt()>ptmin )){
+            continue;
+        }
+        if (!( fabs(photons.at(i).scEta())<fetamax)) {
+            continue;
+        }
+        if(!( photons.at(i).PassID(id))) {
+            continue;
+        }
+        out.push_back(photons.at(i));
+    }
+    return out;
+}
+
 RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float fetamax) {
     RVec<Jet> jets = GetAllJets();
     RVec<Jet> selected_jets;
