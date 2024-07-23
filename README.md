@@ -77,9 +77,8 @@ It would be run automatically for the first time setup.
 In the config/config.$USER file, there is an option to choose bewteen conda and cvmfs. When configuring your environment with conda, at least ROOT and correctionlibs should be installed:
 ```bash
 # example
-conda env create -n nano python=3.11
+conda env create -n nano python=3.11 root=6.30.04 -c conda-forge
 conda activate nano
-conda install -c conda-forge root
 pip install correctionlib
 ```
 
