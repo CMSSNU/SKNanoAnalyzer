@@ -75,7 +75,6 @@ public:
     RVec<GenJet> GetAllGenJets();
     RVec<Photon> GetAllPhotons();
     RVec<Photon> GetPhotons(TString id, double ptmin, double fetamax);
-    RVec<Gen> GetGens();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
