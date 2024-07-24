@@ -11,6 +11,8 @@ def histParser(f):
     denominator_dicts = []
     for keyObj in f.GetListOfKeys():
         key = keyObj.GetName()
+        if not '##' in key:
+            continue
         infos = key.split("##")
         this_info = {}
         isNumerator = True
@@ -41,9 +43,10 @@ def makeTempEffHist(f):
                 denominator_hist = f.Get(denominator_dict['hist_key'])
                 ratio_hist = numerator_hist.Clone()
                 ratio_hist.Divide(denominator_hist)
+                print(f"{numerator_dict['hist_key']} divided by {denominator_dict['hist_key']}")
                 ratio_hist.SetName(numerator_dict['hist_key'].replace("num","eff"))
                 ratio_hists.append(ratio_hist)
-                 
+
     f2 = ROOT.TFile("output.root","RECREATE")
     f2.cd()
     for ratio_hist in ratio_hists:

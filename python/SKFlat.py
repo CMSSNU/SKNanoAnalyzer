@@ -29,13 +29,33 @@ totalEras = ['2022','2022EE']
 TOKEN = os.environ['TOKEN_TELEGRAMBOT']
 chat_id = os.environ['USER_CHATID']
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}"
-
+SKIMMING_MODE = False
 ##############################
 #Load commonSampleInfo.json at start
 sampleInfoJsons = {}
 sampleInfoJsons['2022'] = json.load(open(os.path.join(SKNANO_DATA,'2022','Sample','CommonSampleInfo.json')))
 sampleInfoJsons['2022EE'] = json.load(open(os.path.join(SKNANO_DATA,'2022EE','Sample','CommonSampleInfo.json')))
+skimInfoJsons = {}
+try:
+    skimInfoJsons['2022'] = json.load(open(os.path.join(SKNANO_DATA,'2022','Sample','Skim','skimTreeInfo.json')))
+    skimInfoJsons['2022EE'] = json.load(open(os.path.join(SKNANO_DATA,'2022EE','Sample','Skim','skimTreeInfo.json')))
+except:
+    print('\033[93m'+"Warning: Skimmed tree info is not exist"+'\033[0m')
 ##############################
+def isMCandGetPeriod(sample):
+    #if sample is ends with _one capital letter, it is data
+    #hope there will be no exception(please)
+    if sample.split("_")[-1].isupper() and len(sample.split("_")[-1]) == 1:
+        return False, sample.split("_")[-1]
+    else:
+        return True, None
+    
+def getSkimmingOutBaseAndSuffix(sample, AnalyzerName):
+    isMC, period = isMCandGetPeriod(sample)
+    suffix = f"Temp_Skim_{AnalyzerName.replace('Skim_','')}_{sample if isMC else sample.replace(f'_{period}','')}"
+    out_base = os.path.join('/gv0/Users',username,'DATA/SKFlat/Run3NanoAODv12/',era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+    return out_base, suffix
+
 def getEraList(eras):
     if eras == 'All':
         return totalEras
@@ -49,15 +69,29 @@ def getEraList(eras):
 def addPeriodToSampleList(samplelist,era):
     toBeAdded = []
     copylist = []
-    for sample in samplelist:   
-        if sample not in sampleInfoJsons[era]:
-            print('\033[93m'+f"Warning: {sample} is not exist in era {era}"+'\033[0m')
-            continue
-        sampleInfo = sampleInfoJsons[era][sample]
-        if sampleInfo['isMC']:
-            copylist.append(sample)
-        if not sampleInfo['isMC']:
-            copylist += [f"{sample}_{period}" for period in sampleInfo['periods']]
+    for sample in samplelist:
+        if sample.startswith("Skim_"):
+            if SKIMMING_MODE:
+                print('\033[91m'+f"Error: Skimmed sample {sample} is not allowed in skimming mode"+'\033[0m')
+                exit()
+            if sample not in skimInfoJsons[era]:
+                print('\033[93m'+f"Warning: {sample} is not exist in era {era}"+'\033[0m')
+                continue
+            skimInfo = skimInfoJsons[era][sample]
+            sampleInfo = sampleInfoJsons[era][skimInfo['PD']]
+            if sampleInfo['isMC']:
+                copylist.append(sample)
+            if not sampleInfo['isMC']:
+                copylist += [f"{sample}_{period}" for period in sampleInfo['periods']]
+        else:
+            if sample not in sampleInfoJsons[era]:
+                print('\033[93m'+f"Warning: {sample} is not exist in era {era}"+'\033[0m')
+                continue
+            sampleInfo = sampleInfoJsons[era][sample]
+            if sampleInfo['isMC']:
+                copylist.append(sample)
+            if not sampleInfo['isMC']:
+                copylist += [f"{sample}_{period}" for period in sampleInfo['periods']]
 
     return copylist
 
@@ -81,7 +115,7 @@ def setParser():
     parser.add_argument('-i', dest='InputSample', default="", help="Input sample list, can be txt file, or comma separated")
     #parser.add_argument('-p', dest='DataPeriod', default="ALL")
     #parser.add_argument('-l', dest='InputSampleList', default="")
-    parser.add_argument('-n', dest='NJobs', default=1, type=int)
+    parser.add_argument('-n', dest='NJobs', default=1, type=int, help="Number of jobs, If Negative, it will means number of files per job")
     #parser.add_argument('-o', dest='Outputdir', default="")
     #parser.add_argument('-q', dest='Queue', default="fastq")
     parser.add_argument('-e', dest='Era', default="All",help="2022, 2022EE. can be comma separated")
@@ -90,7 +124,8 @@ def setParser():
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
     parser.add_argument('--memory', dest='Memory', default=2048, type=float)
     parser.add_argument('--batchname',dest='BatchName', default="")
-    parser.add_argument('--telegram', dest='telegram', default=False, action='store_true')
+    parser.add_argument('--skimming_mode',action='store_true',default=False,help="Enable this option when anlyzer is skimmer.")
+    #Note: this option will change the behavior of the script. output directory will be changed to Your GV0, hadd will be disabled, and will creat the info json of skimmed tree   
     return parser
 
 def getMasterDirectoryName(timeStamp, Analyzer, Userflags):
@@ -117,35 +152,58 @@ def getInputSampleList(inputArguments, eras):
     return InputSampleList
             
 def jobFileDivider(files,ngroup):
-    if ngroup > len(files):
-        ngroup = len(files)
-    filegroups = [[] for i in range(ngroup)]
-    for i, file in enumerate(files):
-        filegroups[i%ngroup].append(file)
+    if ngroup > 0:
+        if ngroup > len(files):
+            ngroup = len(files)
+        filegroups = [[] for i in range(ngroup)]
+        for i, file in enumerate(files):
+            filegroups[i%ngroup].append(file)
+    elif ngroup < 0:
+        #if ngroup is negative, it will be number of files per job
+        nfile = abs(ngroup)
+        if nfile > len(files):
+            nfile = len(files)
+        if nfile == 0:
+            return []
+        filegroups = [files[i:i + nfile] for i in range(0, len(files), nfile)]
+        
+    else:
+        print('\033[91m'+"ERROR: ngroup should be positive or negative integer"+'\033[0m')
     return filegroups
  
 def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
-    isMC = True
-    #if sample is ends with _one capital letter, it is data
-    #hope there will be no exception(please)
-    if sample.split("_")[-1].isupper() and len(sample.split("_")[-1]) == 1:
-        isMC = False
+    isMC, period = isMCandGetPeriod(sample)
+    AnalyzerName = argparse.Analyzer
+
         
     working_dir = os.path.join(masterJobDirectory,era,sample)
     os.makedirs(working_dir)
-    os.makedirs(os.path.join(working_dir,"output"))
+    if SKIMMING_MODE:
+        out_base, suffix = getSkimmingOutBaseAndSuffix(sample, AnalyzerName)
+        if not os.path.exists(os.path.dirname(out_base)):
+            os.makedirs(os.path.dirname(out_base))
+    else:
+        os.makedirs(os.path.join(working_dir,"output"))
+        out_base = os.path.join(working_dir,"output","hists.root")
     njobs = argparse.NJobs
     reduction = argparse.Reduction
     
-    
-    sampleInfo = sampleInfoJsons[era][sample if isMC else sample.split("_")[0]]
-
-
-    samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','ForSNU',sample+'.json')))['path']
+    if sample.startswith("Skim_"):
+        SkimInfo = skimInfoJsons[era][sample if isMC else sample.replace(f"_{period}","")]
+        sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
+        samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim',sample+'.json')))['path']
+        
+    else:
+        sampleInfo = sampleInfoJsons[era][sample if isMC else sample.replace(f"_{period}","")]
+        samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','ForSNU',sample+'.json')))['path']
+        
     samplePaths = jobFileDivider(samplePaths, njobs)
+
     
     totalNumberOfJobs = len(samplePaths)
+    
     for i in range(totalNumberOfJobs):
+        output = out_base.replace('.root',f'_{i}.root')
         #python job is too hard to debug. I will use c++ job instead
         # with open(os.path.join(working_dir,f"job{i}.py"),'w') as f:
         #     f.writelines(f"from ROOT import {argparse.Analyzer}\n")
@@ -179,8 +237,9 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
         #     f.writelines(f"module.initializeAnalyzer()\n")
         #     f.writelines(f"module.Loop()\n")
         #     f.writelines(f"module.WriteHist()\n")
+        
         with open(os.path.join(working_dir,f"job{i}.cpp"),'w') as f:
-            f.writelines(f"#include <cmath>\n")
+            f.writelines(f"#include <algorithm>\n")
             f.writelines(f"void job{i}"+"(){\n")
             f.writelines(f"\t{argparse.Analyzer} module;\n")
             f.writelines(f"\tmodule.SetTreeName(\"Events\");\n")
@@ -203,9 +262,9 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
             for path in samplePaths[i]:
                 f.writelines(f"\tmodule.AddFile(\"{path}\");\n")
                 
-            f.writelines(f"\tmodule.SetOutfilePath(\"output/hists_{i}.root\");\n")
+            f.writelines(f"\tmodule.SetOutfilePath(\"{output}\");\n")
             if reduction > 1:
-                f.writelines(f"\tmodule.MaxEvent = ceil(int(module.fChain->GetEntries())/{int(reduction)});\n")
+                f.writelines(f"\tmodule.MaxEvent = std::max(1,static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));\n")
             f.writelines(f"\tmodule.Init();\n")
             f.writelines(f"\tmodule.initializeAnalyzer();\n")
             f.writelines(f"\tmodule.Loop();\n")
@@ -219,7 +278,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     memory = argparse.Memory
     batchname = argparse.BatchName
     if batchname == "":
-        batchname = "SKNano_"+argparse.Analyzer
+        batchname = argparse.Analyzer
     libpath = os.environ['LD_LIBRARY_PATH']
     libpath = libpath.split(":")
     libpath = [x for x in libpath if x != SKNANO_LIB]
@@ -229,6 +288,8 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
         f.writelines("#!/bin/sh\n")
         f.writelines(f"cd {working_dir}\n") 
+        f.writelines(f"export SKNANO_LIB=""\n")
+        
         f.writelines(f"export LD_LIBRARY_PATH=""\n")
         f.writelines(f"export LD_LIBRARY_PATH={libpath}\n")
         #f.writelines(f"python3 job$1.py\n")
@@ -238,7 +299,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     #submit condor jobs
     job_dict = {}
     job_dict['executable'] = os.path.join(working_dir,"run.sh")
-    job_dict['jobbatchname'] = f"{batchname}_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
+    job_dict['JobBatchName'] = f"{batchname}_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
     job_dict['RequestMemory'] = f'ifthenelse(isUndefined(MemoryUsage),{memory},(MemoryUsage * 2))' # 2 times of memory usage
@@ -253,14 +314,14 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     
     return job_dict
 
-def makeHaddJobs(working_dir,argparse):
-    AnalyzerName = argparse.Analyzer
+def makeHaddJobs(working_dir,argparser):
+    AnalyzerName = argparser.Analyzer
     if len(userflags) > 0:
         for flag in userflags:
             AnalyzerName += f"_{flag}"
     hadd_target = os.path.join(SKNANO_OUTPUT,AnalyzerName,working_dir.split('/')[-2],working_dir.split('/')[-1]+'.root')
-    if not os.path.exists(os.path.join(SKNANO_OUTPUT,argparse.Analyzer,working_dir.split('/')[-2])):
-        os.makedirs(os.path.join(SKNANO_OUTPUT,argparse.Analyzer,working_dir.split('/')[-2]))
+    if not os.path.exists(os.path.join(SKNANO_OUTPUT,argparser.Analyzer,working_dir.split('/')[-2])):
+        os.makedirs(os.path.join(SKNANO_OUTPUT,argparser.Analyzer,working_dir.split('/')[-2]))
     
     with open(os.path.join(working_dir,"hadd.sh"),'w') as f:
         f.writelines("#!/bin/bash\n")
@@ -269,7 +330,7 @@ def makeHaddJobs(working_dir,argparse):
         
     job_dict = {}
     job_dict['executable'] = os.path.join(working_dir,"hadd.sh")
-    job_dict['jobbatchname'] = f"Hadd_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
+    job_dict['JobBatchName'] = f"Hadd_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
     job_dict['RequestMemory'] = 2048
@@ -280,8 +341,46 @@ def makeHaddJobs(working_dir,argparse):
 
     return job_dict
 
+def makeSkimPostProcsJobs(working_dir,sample, argparser):
+    AnalyzerName = argparser.Analyzer
+    isMC, period = isMCandGetPeriod(sample)
+    out_base, suffix = getSkimmingOutBaseAndSuffix(sample, AnalyzerName) 
+    out_base = os.path.dirname(out_base)
+    if isMC:
+        with open(os.path.join(working_dir,"postproc.sh"),'w') as f:
+            f.writelines("#!/bin/bash\n")
+            f.writelines(f"mv {out_base} {os.path.join(os.path.dirname(out_base),out_base.split('/')[-1].replace('Temp_',''))}\n")
+            f.writelines(f"cd $SKNANO_PYTHON\n")
+            f.writelines(f"python3 sampleManager.py --era {era} --makeSkimTreeInfo --skimTreeFolder {os.path.dirname(out_base)} --skimTreeSuffix {AnalyzerName.replace('Skim_','')} --skimTreeOrigPD {sample}\n")
+    else:
+        target_dir = os.path.join(os.path.dirname(os.path.dirname(out_base)),os.path.dirname(out_base).split("/")[-1].replace('Temp_',''))
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        with open(os.path.join(working_dir,"postproc.sh"),'w') as f:
+            f.writelines("#!/bin/bash\n")
+            f.writelines(f"mv {out_base} {target_dir}\n")
+            f.writelines(f"cd $SKNANO_PYTHON\n")
+            f.writelines(f"python3 sampleManager.py --era {era} --makeSkimTreeInfo --skimTreeFolder {os.path.dirname(target_dir)} --skimTreeSuffix {AnalyzerName.replace('Skim_','')} --skimTreeOrigPD {sample}\n")
+            f.writelines(f"""if [ -z "$(ls -A {os.path.dirname(out_base)})" ]; then\n""")
+            f.writelines(f"\trmdir {os.path.dirname(out_base)}\n") 
+            f.writelines(f"fi")
+     
+    job_dict = {}
+    job_dict['executable'] = os.path.join(working_dir,"postproc.sh")
+    job_dict['JobBatchName'] = f"PostProc_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
+    job_dict['universe'] = "vanilla"
+    job_dict['getenv'] = "True"
+    job_dict['RequestMemory'] = 1024
+    job_dict['output'] = os.path.join(working_dir,"postproc.out")
+    job_dict['error'] = os.path.join(working_dir,"postproc.err")
+    job_dict['should_transfer_files'] = "YES"
+    job_dict['when_to_transfer_output'] = "ON_EXIT"
 
-def getEachDag(kwarg):
+    return job_dict
+    
+
+
+def getEachAnalyzerToPostDag(kwarg):
     era = kwarg['era']
     sample = kwarg['sample']
     analyzer_sub_dict = kwarg['analyzer_sub_dict']
@@ -301,19 +400,22 @@ def getEachDag(kwarg):
     }
     
     hadd_layer = {
-        'name' : f"Hadd_{batchname}",
+        'name' :  f"Postproc_{batchname}" if SKIMMING_MODE else f"Hadd_{batchname}",
         'submit_description' : htcondor.Submit(hadd_sub_dict)
     }
     
     return (analyzer_layer,hadd_layer)
         
-def getFinalDag(layer_dicts, master_dir):
+def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
+    batchname = argparser.BatchName
+    if batchname == "":
+        batchname = argparser.Analyzer
     dag_dir = os.path.join(master_dir,"dags")
     os.makedirs(dag_dir)
 
     job_dict = {}
     job_dict['executable'] = os.path.join(dag_dir,"final.sh")
-    job_dict['jobbatchname'] = f"Summarize"
+    job_dict['JobBatchName'] = f"Summarize"
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
     job_dict['RequestMemory'] = 1024
@@ -330,30 +432,55 @@ def getFinalDag(layer_dicts, master_dir):
     dag = dags.DAG()
     finaldag = dags.DAG()
     hadd_layers = []
-    for layer_dict in layer_dicts:
-        if layer_dict is None:
-            continue
-        analyzer_dict, hadd_dict = layer_dict
-        if analyzer_dict is None or hadd_dict is None:
-            continue
-        analyzer_layer = dag.layer(
-            name = analyzer_dict['name'],
-            submit_description = analyzer_dict['submit_description'],
-            vars = analyzer_dict['vars']
-        )
-        hadd_layer = analyzer_layer.child_layer(
-            name = hadd_dict['name'],
-            submit_description = hadd_dict['submit_description']
-        )
-        hadd_layers.append(hadd_layer)
+    postproc_layers = []
+    if SKIMMING_MODE:
+        for layer_dict in skim_postproc_layers:
+            if layer_dict is None:
+                continue
+            analyzer_dict, postproc_dict = layer_dict
+            if analyzer_dict is None or postproc_dict is None:
+                continue
+            analyzer_layer = dag.layer(
+                name = analyzer_dict['name'],
+                submit_description = analyzer_dict['submit_description'],
+                vars = analyzer_dict['vars']
+            )
+            postproc_layer = analyzer_layer.child_layer(
+                name = postproc_dict['name'],
+                submit_description = postproc_dict['submit_description']
+            )
+            postproc_layers.append(postproc_layer)
+        #if Skimming, each postproc layer will not run concurrently b/c io
+        for i, layer in enumerate(postproc_layers):
+            if i == 0:
+                continue
+            postproc_layers[i-1].add_parents(postproc_layers[i])
+
+    else:
+        for layer_dict in hadd_layer_dicts:
+            if layer_dict is None:
+                continue
+            analyzer_dict, hadd_dict = layer_dict
+            if analyzer_dict is None or hadd_dict is None:
+                continue
+            analyzer_layer = dag.layer(
+                name = analyzer_dict['name'],
+                submit_description = analyzer_dict['submit_description'],
+                vars = analyzer_dict['vars']
+            )
+            hadd_layer = analyzer_layer.child_layer(
+                name = hadd_dict['name'],
+                submit_description = hadd_dict['submit_description']
+            )
+            hadd_layers.append(hadd_layer)
     
 
 
     
     dag_file = dags.write_dag(dag,dag_dir)
     subdag = finaldag.subdag(name='main_Dag',dag_file=str(dag_file))
-    finalNode = finaldag.final(name=job_dict['jobbatchname'],submit_description=job_dict)
-    with open(os.path.join(dag_dir,job_dict['jobbatchname']+'.sub'),'w') as f:
+    finalNode = finaldag.final(name=job_dict['JobBatchName'],submit_description=job_dict)
+    with open(os.path.join(dag_dir,job_dict['JobBatchName']+'.sub'),'w') as f:
         for key, value in job_dict.items():
             f.writelines(f"{key} = {value}\n")
         f.writelines(f"queue\n")
@@ -365,9 +492,9 @@ def getFinalDag(layer_dicts, master_dir):
         
     
     finalDag_file = dags.write_dag(finaldag,dag_dir,'finaldag.dag')
-
+    
     os.chdir(dag_dir)
-    finalDag_submit = htcondor.Submit.from_dag(str(finalDag_file),{"force":1,"include_env":','.join(list(os.environ.keys())),"batch-name":f"SKNano_{master_dir.split('_')[-1]}"}) 
+    finalDag_submit = htcondor.Submit.from_dag(str(finalDag_file),{"force":1,"include_env":','.join(list(os.environ.keys())),"batch-name":batchname}) 
     cluster_id = htcondor.Schedd().submit(finalDag_submit).cluster()
     print(f"DAGMan job cluster is {cluster_id}")
 
@@ -378,9 +505,7 @@ if __name__ == '__main__':
     parser = setParser()
     args = parser.parse_args()
     eras = getEraList(args.Era)
-
-        
-        
+    SKIMMING_MODE = args.skimming_mode
     userflags = getUserFlagsList(args.Userflags)
     timestamp, string_JobStartTime = getTimeStamp()
     _, abs_MasterDirectoryName= getMasterDirectoryName(timestamp, args.Analyzer, userflags)
@@ -388,6 +513,8 @@ if __name__ == '__main__':
     
     dag_list = []
     hadd_layers = []
+    postproc_layers = []
+
     for era in eras:
         InputSamplelist_era = addPeriodToSampleList(InputSamplelist, era)
         for sample in InputSamplelist_era:
@@ -395,9 +522,19 @@ if __name__ == '__main__':
             if totalNumberofJobs == None:
                 continue
             analyzer_sub_dict = makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberofJobs,args)
-            hadd_sub_dict = makeHaddJobs(working_dir,args)
-            dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':hadd_sub_dict,'totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}"})
-            if dag_list is not None:
-                hadd_layers.append(getEachDag(dag_list[-1]))
+            if SKIMMING_MODE:
+                postproc_sub_dict = makeSkimPostProcsJobs(working_dir,sample,args)
+            else:
+                hadd_sub_dict = makeHaddJobs(working_dir,args)
             
-    getFinalDag(hadd_layers, abs_MasterDirectoryName)
+            if SKIMMING_MODE:
+                dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':postproc_sub_dict,'totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}"})
+            else:
+                dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':hadd_sub_dict,'totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}"})
+            if dag_list is not None:
+                if SKIMMING_MODE:
+                    postproc_layers.append(getEachAnalyzerToPostDag(dag_list[-1]))
+                else:
+                    hadd_layers.append(getEachAnalyzerToPostDag(dag_list[-1]))
+            
+    getFinalDag(hadd_layers, postproc_layers,abs_MasterDirectoryName, args)

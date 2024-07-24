@@ -48,6 +48,9 @@ public:
     float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float abseta, const float pt, const TString &sys = "nominal") const;
     //photon
     //jerc
+    float GetJER(const float eta, const float pt, const float rho) const;
+    float GetJERSF(const float eta, const float pt, const TString &sys = "nom") const;
+    float GetJESUncertainty(const float eta, const float pt, const TString &source, const int &sys) const;
     //jerc_fatjet
     //jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, TString mapCategory) const;

@@ -14,11 +14,13 @@ public :
     inline int Spin() const { return j_spin; }
     inline void SetStatus(int status) { j_status = status; }
     inline int Status() const { return j_status; }
-
+    inline void SetPdgId (int pdgId) { j_pdgId = pdgId; }
+    inline int PdgId() const { return j_pdgId; }
 private :
     float j_incomingPz;
     int j_spin;
     int j_status;
+    int j_pdgId;
     ClassDef(LHE, 1);
 };
 

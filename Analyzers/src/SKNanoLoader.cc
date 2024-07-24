@@ -69,6 +69,7 @@ void SKNanoLoader::Init() {
         fChain->SetBranchAddress("Tau_genPartFlav", Tau_genPartFlav);
         fChain->SetBranchAddress("Tau_genPartIdx", Tau_genPartIdx);
 
+        fChain->SetBranchAddress("nGenPart", &nGenPart);
         fChain->SetBranchAddress("GenPart_genPartIdxMother", GenPart_genPartIdxMother);
         fChain->SetBranchAddress("GenPart_pdgId", GenPart_pdgId);
         fChain->SetBranchAddress("GenPart_status", GenPart_status);
@@ -78,6 +79,7 @@ void SKNanoLoader::Init() {
         fChain->SetBranchAddress("GenPart_eta", GenPart_eta);
         fChain->SetBranchAddress("GenPart_phi", GenPart_phi);
 
+        fChain->SetBranchAddress("nLHEPart", &nLHEPart);
         fChain->SetBranchAddress("LHEPart_pdgId", LHEPart_pdgId);
         fChain->SetBranchAddress("LHEPart_pt", LHEPart_pt);
         fChain->SetBranchAddress("LHEPart_eta", LHEPart_eta);
@@ -287,12 +289,15 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("PuppiMET_ptJESDown", &PuppiMET_ptJESDown);
     fChain->SetBranchAddress("PuppiMET_phiJESDown", &PuppiMET_phiJESDown);
 
+    fChain->SetBranchAddress("Rho_fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll);
+
     fChain->SetBranchAddress("PV_npvsGood", &PV_npvsGood);
 
     fChain->SetBranchAddress("Flag_METFilters", &Flag_METFilters);
     fChain->SetBranchAddress("Flag_goodVertices", &Flag_goodVertices);
     fChain->SetBranchAddress("Flag_globalSuperTightHalo2016Filter", &Flag_globalSuperTightHalo2016Filter);
-    fChain->SetBranchAddress("Flag_ECalDeadCellTriggerPrimitiveFilter", &Flag_ECalDeadCellTriggerPrimitiveFilter);
+    //fChain->SetBranchAddress("Flag_ECalDeadCellTriggerPrimitiveFilter", &Flag_ECalDeadCellTriggerPrimitiveFilter);
+    //documented as this brach exist @ NanoAOD, but not in the file
     fChain->SetBranchAddress("Flag_BadPFMuonFilter", &Flag_BadPFMuonFilter);
     fChain->SetBranchAddress("Flag_BadPFMuonDzFilter", &Flag_BadPFMuonDzFilter);
     fChain->SetBranchAddress("Flag_hfNoisyHitsFilter", &Flag_hfNoisyHitsFilter);

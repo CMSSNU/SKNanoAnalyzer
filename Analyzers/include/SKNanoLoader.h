@@ -74,7 +74,7 @@ public:
     Float_t Pileup_nTrueInt;
     UChar_t PV_npvsGood;
     //Gen
-    static constexpr int kMaxGen = 40;
+    static constexpr int kMaxGen = 50;
     Int_t nGenPart;
     Int_t GenPart_pdgId[kMaxGen];
     Int_t GenPart_status[kMaxGen];
@@ -85,17 +85,20 @@ public:
     Float_t GenPart_phi[kMaxGen];
     Float_t GenPart_mass[kMaxGen];
     //LHE
-    static constexpr int kMaxLHE = 40;
+    static constexpr int kMaxLHE = 50;
     Int_t nLHEPart;
     Float_t LHEPart_pt[kMaxLHE];
     Float_t LHEPart_eta[kMaxLHE];
     Float_t LHEPart_phi[kMaxLHE];
     Float_t LHEPart_mass[kMaxLHE];
+    Float_t LHEPart_incomingpz[kMaxLHE];
     Int_t LHEPart_pdgId[kMaxLHE];
     Int_t LHEPart_status[kMaxLHE];
     Int_t LHEPart_spin[kMaxLHE];
+
     // Muon
-    static constexpr int kMaxMuon = 8;
+    //static constexpr int kMaxMuon = 8;
+    static constexpr int kMaxMuon = 50;
     Int_t  nMuon;
     Float_t Muon_pt[kMaxMuon];
     Float_t Muon_eta[kMaxMuon];
@@ -134,7 +137,8 @@ public:
     Float_t Muon_mvaLowPt[kMaxMuon];
     Float_t Muon_mvaTTH[kMaxMuon];
     // Electron
-    static constexpr int kMaxElectron = 8;
+    //static constexpr int kMaxElectron = 8;
+    static constexpr int kMaxElectron = 50;
     Int_t nElectron;
     UChar_t Electron_genPartFlav[kMaxElectron];
     Short_t Electron_genPartIdx[kMaxElectron];
@@ -175,7 +179,8 @@ public:
     Float_t Electron_mvaTTH[kMaxElectron];
     Float_t Electron_r9[kMaxElectron];
     // Jet
-    static constexpr int kMaxJet = 20;
+    // static constexpr int kMaxJet = 20;
+    static constexpr int kMaxJet = 50;
     Int_t nJet; 
     Float_t Jet_PNetRegPtRawCorr[kMaxJet];
     Float_t Jet_PNetRegPtRawCorrNeutrino[kMaxJet];
@@ -224,7 +229,8 @@ public:
     Short_t Jet_svIdx1[kMaxJet];
     Short_t Jet_svIdx2[kMaxJet];
     //Tau
-    static constexpr int kMaxTau = 7;
+    //static constexpr int kMaxTau = 7;
+    static constexpr int kMaxTau = 20;
     Int_t nTau;
     Float_t Tau_pt[kMaxTau];
     Float_t Tau_eta[kMaxTau];
@@ -241,7 +247,8 @@ public:
     UChar_t Tau_genPartFlav[kMaxTau];
     Short_t Tau_genPartIdx[kMaxTau];
     // FatJet
-    static constexpr int kMaxFatJet = 6;
+    //static constexpr int kMaxFatJet = 6;
+    static constexpr int kMaxFatJet = 20;
     Int_t nFatJet;
     Float_t FatJet_pt[kMaxFatJet];
     Float_t FatJet_eta[kMaxFatJet];
@@ -287,7 +294,8 @@ public:
     Short_t FatJet_subJetIdx2[kMaxFatJet];
 
     // GenJet
-    static constexpr int kMaxGenJet = 25;
+    //static constexpr int kMaxGenJet = 25;
+    static constexpr int kMaxGenJet = 50;
     Int_t nGenJet;
     Float_t GenJet_eta[kMaxGenJet];
     Float_t GenJet_mass[kMaxGenJet];
@@ -311,8 +319,9 @@ public:
     Float_t PuppiMET_phiUnclusteredDown;
     Float_t PuppiMET_ptUnclusteredUp;
     Float_t PuppiMET_phiUnclusteredUp;
-
-    //Flag
+    // rho
+    Float_t fixedGridRhoFastjetAll;
+    // Flag
     Bool_t Flag_METFilters; // What is this?
     Bool_t Flag_goodVertices;
     Bool_t Flag_globalSuperTightHalo2016Filter;
@@ -324,7 +333,6 @@ public:
     Bool_t Flag_eeBadScFilter;
     //Bool_t Flag_ecalBadCalibFilter;
     UInt_t Run;
-
     // Trigger Saving Map
     std::map<TString, Bool_t *>
         TriggerMap;

@@ -16,8 +16,8 @@ AnalyzerCore::~AnalyzerCore() {
 
 bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
     bool MetFilter = true;
-    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_ECalDeadCellTriggerPrimitiveFilter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
-
+    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
+    //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
     if(!MetFilter) return false;
 
     // Temporarily remove the ecalBadCalibFilter, Instead,
@@ -35,7 +35,147 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
     return true;
 }
 
-void AnalyzerCore::SetOutfilePath(TString outpath) {
+float AnalyzerCore::GetScaleVariation(const int &muF_syst, const int &muR_syst) {
+    if(muF_syst == -1 && muR_syst == -1) return LHEScaleWeight[0];
+    else if(muF_syst == 0 && muR_syst == -1) return LHEScaleWeight[1];
+    else if(muF_syst == 1 && muR_syst == -1) return LHEScaleWeight[2];
+    else if(muF_syst == -1 && muR_syst == 0) return LHEScaleWeight[3];
+    else if(muF_syst == 1 && muR_syst == 0) return LHEScaleWeight[4];
+    else if(muF_syst == -1 && muR_syst == 1) return LHEScaleWeight[5];
+    else if(muF_syst == 0 && muR_syst == 1) return LHEScaleWeight[6];
+    else if(muF_syst == 1 && muR_syst == 1) return LHEScaleWeight[7];
+    else if(muF_syst == 0 && muR_syst == 0) return 1.;
+    else{
+        cout << "[AnalyzerCore::GetScaleVariation] muF_syst = " << muF_syst << " and muR_syst = " << muR_syst << " is not implemented" << endl;
+        exit(ENODATA);
+    }
+}
+
+unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR, const float pTJerCut){
+    unordered_map<int, int> matched_genjet_idx;
+    RVec<tuple<int,int,float,float>> possible_matches;
+
+    //All possible matches that pass the dR and pTJerCut
+    for(size_t i = 0; i < jets.size(); i++){
+        for(size_t j = 0; j < genjets.size(); j++){
+            float this_DeltaR = jets[i].DeltaR(genjets[j]);
+            float this_pt_diff = fabs(jets[i].Pt() - genjets[j].Pt());
+            float this_jer = mcCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
+            if(jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut*this_jer){
+                possible_matches.emplace_back(i, j, this_DeltaR, this_pt_diff);
+            }
+        }
+    }
+    //sort them by dR and then pt_diff
+    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<int,int,float,float> &a, const tuple<int,int,float,float> &b){
+        if(get<2>(a) == get<2>(b)) return get<3>(a) < get<3>(b);
+        return get<2>(a) < get<2>(b);
+    });
+    //greeedy matching
+    RVec<bool> used_jet(jets.size(), false);
+    RVec<bool> used_genjet(genjets.size(), false);
+    for(const auto &match: possible_matches){
+        int jet_idx = get<0>(match);
+        int genjet_idx = get<1>(match);
+        if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
+        matched_genjet_idx[jet_idx] = genjet_idx;
+        used_jet[jet_idx] = true;
+        used_genjet[genjet_idx] = true;
+    }
+    // assign -999 to unmatched jet
+    for(size_t i = 0; i < jets.size(); i++){
+        if(used_jet[i]) continue;
+        matched_genjet_idx[i] = -999;
+    }
+    return matched_genjet_idx;
+}
+
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets){
+    unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
+    RVec<Jet> smeared_jets;
+    for(size_t i = 0; i < jets.size(); i++){
+        Jet this_jet = jets.at(i);
+        float this_corr = 1.;
+        float this_jer = mcCorr->GetJER(jets[i].Eta(), jets[i].Pt(), fixedGridRhoFastjetAll);
+        float this_sf = mcCorr->GetJERSF(jets[i].Eta(), jets[i].Pt());
+
+        if(matched_idx[i] < 0){
+            // if the jet is not matched to any genjet, do stochastic smearing
+            this_corr += (gRandom -> Gaus(0,this_jer))*sqrt(max(this_sf * this_sf - 1., 0.0));
+            this_jet *= this_corr;
+            smeared_jets.push_back(this_jet);
+            continue;
+        }
+
+        float this_genjet_pt = genjets[matched_idx[i]].Pt();
+        this_corr += (this_sf-1.)+(this_genjet_pt - jets[i].Pt()) / jets[i].Pt();
+        this_jet *= this_corr;
+        smeared_jets.push_back(this_jet);
+    }
+    return smeared_jets;
+}
+
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const int &syst, const TString &source)
+{
+    RVec<Jet> scaled_jets;
+    RVec<TString> syst_sources = { "AbsoluteMPFBias",
+                                   "AbsoluteScale",
+                                   "AbsoluteStat",
+                                   "FlavorQCD",
+                                   "Fragmentation",
+                                   //"PileUpDataMC",
+                                   //"PileUpPtBB",
+                                   //"PileUpPtEC1",
+                                   //"PileUpPtEC2",
+                                   //"PileUpPtHF",
+                                   //"PileUpPtRef",
+                                   "PileUpEnvelope",
+                                   "RelativeFSR",
+                                   "RelativeJEREC1",
+                                   "RelativeJEREC2",
+                                   "RelativeJERHF",
+                                   "RelativePtBB",
+                                   "RelativePtEC1",
+                                   "RelativePtEC2",
+                                   "RelativePtHF",
+                                   "RelativeBal",
+                                   "RelativeSample",
+                                   "RelativeStatEC",
+                                   "RelativeStatFSR",
+                                   "RelativeStatHF",
+                                   "SinglePionECAL",
+                                   "SinglePionHCAL",
+                                   "TimePtEta" };
+    switch (syst)
+    {
+    case 0:
+        return jets;
+    case 1:
+        break;
+    case -1:
+        break;
+    default:
+        cout << "[AnalyzerCore::ScaleJets] scale = " << syst << " is not implemented" << endl;
+        exit(ENODATA);
+    }
+    for(const auto &jet: jets){
+        Jet this_jet = jet;
+        if(source == ""){
+            for(const auto &it: syst_sources){
+                this_jet *= mcCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), it, syst);
+            }
+            scaled_jets.push_back(this_jet);
+        }
+        else{
+            this_jet *= mcCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), source, syst);
+            scaled_jets.push_back(this_jet);
+        }
+    }
+    return scaled_jets;
+}
+
+void AnalyzerCore::SetOutfilePath(TString outpath)
+{
     outfile = new TFile(outpath, "RECREATE");
 }
 
@@ -89,6 +229,7 @@ Event AnalyzerCore::GetEvent(RVec<TString> HLT_List)
     ev.SetEra(GetEra());
     ev.SetTrigger(HLT_List, TriggerMap);
     ev.SetMET(PuppiMET_pt, PuppiMET_phi);
+    ev.setRho(fixedGridRhoFastjetAll);
     return ev;
 }
 
@@ -238,6 +379,34 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
+}
+
+RVec<Gen> AnalyzerCore::GetAllGens() {
+    RVec<Gen> gens;
+    for (int i = 0; i < nGenPart; i++) {
+        Gen gen;
+        gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
+        gen.SetPdgId(GenPart_pdgId[i]);
+        gen.SetMotherIdx(GenPart_genPartIdxMother[i]);
+        gen.SetStatus(GenPart_status[i]);
+        gen.SetStatusFlags(GenPart_statusFlags[i]);
+        gens.push_back(gen);
+    }
+    return gens;
+}
+
+RVec<LHE> AnalyzerCore::GetAllLHEs() {
+    RVec<LHE> lhes;
+    for (int i = 0; i < nLHEPart; i++) {
+        LHE lhe;
+        lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
+        lhe.SetStatus(LHEPart_status[i]);
+        lhe.SetSpin(LHEPart_spin[i]);
+        lhe.SetIncomingPz(LHEPart_incomingpz[i]);
+        lhe.SetPdgId(LHEPart_pdgId[i]);
+        lhes.push_back(lhe);
+    }
+    return lhes;
 }
 
 RVec<Tau> AnalyzerCore::GetAllTaus(){
@@ -512,10 +681,101 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
         it->second->Fill(value_x, value_y, value_z, weight);
     }
 }
+TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps, const RVec<TString> &drops){
+    auto treekey = string(treename);
+    auto it = treemap.find(treekey);
+    if (it == treemap.end()){
+        //if keeps and drops are empty, make new tree
+        if(keeps.size() == 0 && drops.size() == 0){
+            TTree *newtree = new TTree(treekey.c_str(), "");
+            treemap[treekey] = newtree;
+            return newtree;
+        }
+        else{
+            TTree *newtree = fChain->CloneTree(0);
+            newtree->SetName(treekey.c_str());
+            for (const auto &drop : drops)
+            {
+                newtree->SetBranchStatus(drop, 0);
+            }
+            for (const auto &keep : keeps)
+            {
+                newtree->SetBranchStatus(keep, 1);
+            }
+            treemap[treekey] = newtree;
+            unordered_map<string, TBranch*> this_branchmap;
+            branchmaps[newtree] = this_branchmap;
+            return newtree;
+        }
+    }
+    else{
+        return it->second;
+    }
+}
 
+TTree* AnalyzerCore::GetTree(const TString &treename){
+    auto treekey = string(treename);
+    auto it = treemap.find(treekey);
+    if (it == treemap.end()){
+        cout << "[AnalyzerCore::GetTree] Tree " << treename << " not found" << endl;
+        exit(ENODATA);
+    }
+    return it->second;
+}
+
+void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist){
+    try{
+       void* this_address = address;
+        TTree *tree = GetTree(treename);
+        
+        unordered_map<string, TBranch*>* this_branchmap = &branchmaps[tree];
+        auto it = this_branchmap->find(string(branchname));
+        if (it == this_branchmap->end()){
+            auto br = tree->Branch(branchname, this_address, leaflist);
+            this_branchmap->insert({string(branchname), br});
+        }
+        else{
+            it->second->SetAddress(this_address);
+        }
+    }
+    catch(int e){
+        cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
+        exit(e);
+    }
+}
+
+void AnalyzerCore::FillTrees(){
+    for (const auto &pair : treemap)
+    {
+        const string &treename = pair.first;
+        TTree *tree = pair.second;
+        tree->Fill();
+        RVec<float>().swap(this_floats);
+        RVec<int>().swap(this_ints);
+        RVec<char>().swap(this_bools);
+    }
+}
 void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms to " << outfile->GetName() << endl;
-    for (const auto &pair: histmap1d) {
+    std::vector<std::pair<std::string, TH1F *>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
+    std::vector<std::pair<std::string, TH2F *>> sorted_histograms2d(histmap2d.begin(), histmap2d.end());
+    std::vector<std::pair<std::string, TH3F *>> sorted_histograms3d(histmap3d.begin(), histmap3d.end());
+    std::sort(sorted_histograms1d.begin(), sorted_histograms1d.end(),
+              [](const std::pair<std::string, TH1F *> &a, const std::pair<std::string, TH1F *> &b)
+              {
+                  return a.first < b.first;
+              });
+    std::sort(sorted_histograms2d.begin(), sorted_histograms2d.end(),
+              [](const std::pair<std::string, TH2F *> &a, const std::pair<std::string, TH2F *> &b)
+              {
+                  return a.first < b.first;
+              });
+    std::sort(sorted_histograms3d.begin(), sorted_histograms3d.end(),
+              [](const std::pair<std::string, TH3F *> &a, const std::pair<std::string, TH3F *> &b)
+              {
+                  return a.first < b.first;
+              });
+    for (const auto &pair: sorted_histograms1d) {
         const string &histname = pair.first;
         TH1F *hist = pair.second;
         cout << "[AnalyzerCore::WriteHist] Writing 1D histogram" << histname << endl;
@@ -532,7 +792,7 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
-    for (const auto &pair: histmap2d) {
+    for (const auto &pair: sorted_histograms2d) {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 2D histogram" << histname << endl;
         TH2F *hist = pair.second;
@@ -549,7 +809,7 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
-    for (const auto &pair: histmap3d) {
+    for (const auto &pair: sorted_histograms3d) {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 3D histogram" << histname << endl;
         TH3F *hist = pair.second;
@@ -566,6 +826,25 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    for (const auto &pair: treemap) {
+        const string &treename = pair.first;
+        cout << "[AnalyzerCore::WriteHist] Writing tree" << treename << endl;
+        TTree *tree = pair.second;
+
+        size_t last_slash = treename.find_last_of('/');
+        string this_prefix, this_name;
+        last_slash == string::npos ? this_prefix = "" : this_prefix = treename.substr(0, last_slash);
+        last_slash == string::npos ? this_name = treename : this_name = treename.substr(last_slash + 1);
+
+        TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
+        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        outfile->cd(this_prefix.c_str());
+        TTree* temptree = tree->CloneTree(-1);//this is because the tree contains lot of empty disabled branch. I don't know better way to handle this, so just keep memory-consuming way for now.
+        temptree->Write();
+        delete temptree;
+        delete tree;
+    }
     cout << "[AnalyzerCore::WriteHist] Writing histograms done" << endl;
     outfile->Close();
 }
+

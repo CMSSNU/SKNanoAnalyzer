@@ -2,6 +2,7 @@
 #define JetTaggingParameter_h
 
 #include <iostream>
+#include <TString.h>
 
 using namespace std;
 

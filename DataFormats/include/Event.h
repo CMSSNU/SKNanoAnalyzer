@@ -22,6 +22,8 @@ public:
     inline int nPVsGood() const { return j_nPVsGood; }
     void SetTrigger(RVec<TString> HLT_TriggerName, std::map<TString, Bool_t*> TriggerMap);
     void SetTrigger(TString HLT_TriggerName, std::map<TString, Bool_t*> TriggerMap);
+    void setRho(float rho) { j_fixedGridRhoFastjetAll = rho; }
+    inline float getRho() const { return j_fixedGridRhoFastjetAll; }
     //void SetTrigger(RVec<TString> HLT_TriggerName) { j_HLT_TriggerName = HLT_TriggerName; }
     //void SetTrigger(TString HLT_TriggerName) { j_HLT_TriggerName = {HLT_TriggerName}; }
 
@@ -50,6 +52,7 @@ private:
     Particle j_METVector;
     int j_DataYear;
     TString j_DataEra;
+    float j_fixedGridRhoFastjetAll;
 
     ClassDef(Event, 1)
 };
