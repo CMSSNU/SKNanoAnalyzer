@@ -16,6 +16,8 @@ if [ -f "${CONFIG_FILE}" ]; then
     echo "@@@@ Reading configuration from $CONFIG_FILE"
     SYSTEM=$(grep '\[SYSTEM\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
 else
     echo "@@@@ Configuration file $CONFIG_FILE not found"
     echo "@@@@ Please create a configuration file in config/ with your username"
