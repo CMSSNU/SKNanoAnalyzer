@@ -381,18 +381,24 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
     return selected_electrons;
 }
 
-RVec<Gen> AnalyzerCore::GetAllGens() {
-    RVec<Gen> gens;
-    for (int i = 0; i < nGenPart; i++) {
+RVec<Gen> AnalyzerCore::GetAllGens(){
+
+    RVec<Gen> Gens;
+
+    for (int i = 0; i < nGenPart; i++){
+
         Gen gen;
+
+        gen.SetIsEmpty(false);
         gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
-        gen.SetPdgId(GenPart_pdgId[i]);
-        gen.SetMotherIdx(GenPart_genPartIdxMother[i]);
-        gen.SetStatus(GenPart_status[i]);
-        gen.SetStatusFlags(GenPart_statusFlags[i]);
-        gens.push_back(gen);
+        gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
+        gen.SetMother(GenPart_genPartIdxMother[i]);
+        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
+
+        Gens.push_back(gen);
     }
-    return gens;
+
+    return Gens;
 }
 
 RVec<LHE> AnalyzerCore::GetAllLHEs() {
@@ -635,26 +641,6 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     }
 
     return GenJets;
-}
-
-RVec<Gen> AnalyzerCore::GetGens() {
-
-    RVec<Gen> Gens;
-
-    for (int i = 0; i < nGenPart; i++) {
-
-        Gen gen;
-
-        gen.SetIsEmpty(false);
-        gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
-        gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
-        gen.SetMother(GenPart_genPartIdxMother[i]);
-        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
-
-        Gens.push_back(gen);
-    }
-
-    return Gens;
 }
 
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
