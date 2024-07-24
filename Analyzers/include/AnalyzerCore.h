@@ -8,13 +8,18 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
+#include "TTree.h"
+#include "TBranch.h"
 #include "TString.h"
 #include "TObjString.h"
+#include "TRandom3.h"
 
 #include "SKNanoLoader.h"
 #include "Event.h"
 #include "Particle.h"
 #include "Lepton.h"
+#include "Gen.h"
+#include "LHE.h"
 #include "Muon.h"
 #include "Electron.h"
 #include "Jet.h"
@@ -59,6 +64,8 @@ public:
     RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
     RVec<Jet> GetAllJets();
+    RVec<Gen> GetAllGens();
+    RVec<LHE> GetAllLHEs();
     RVec<Jet> GetJets(const TString id, const float ptmin, const float fetamax);
     RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
     RVec<Tau> GetAllTaus();
@@ -72,13 +79,21 @@ public:
     RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
     // Functions
+    float GetScaleVariation(const int &muF_syst, const int &muR_syst);
     inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetBTaggingWP(tagger, wp); }
     inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetCTaggingWP(tagger, wp); }
     inline float GetBTaggingWP(){ return mcCorr->GetBTaggingWP(); }
     inline pair<float, float> GetCTaggingWP(){ return mcCorr->GetCTaggingWP(); }
+
+    unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets);
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const int &syst, const TString &source = "");
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
+    inline void FillCutFlow(const int &val,const int &maxCutN=10){
+        FillHist("CutFlow", val, 1., maxCutN, 0, maxCutN);
+    }
     void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
     void FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins);
     void FillHist(const TString &histname, float value_x, float value_y, float weight, 
@@ -96,16 +111,27 @@ public:
                                           int n_biny, float *ybins,
                                           int n_binz, float *zbins);
 
-    // void FillTree(const TString &treename, const TString &branchname, auto value);
-
+    TTree* NewTree(const TString &treename, const RVec<TString> &keeps = {}, const RVec<TString> &drops = {});
+    TTree* GetTree(const TString &treename);
+    inline void SetBranch(const TString &treename, const TString &branchname, float val) { this_floats.push_back(val); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
+    inline void SetBranch(const TString &treename, const TString &branchname, double val) { this_floats.push_back(float(val)); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
+    inline void SetBranch(const TString &treename, const TString &branchname, int val) { this_ints.push_back(val); SetBranch(treename, branchname, (void*)(&this_ints.back()), branchname + "/I"); };
+    inline void SetBranch(const TString &treename, const TString &branchname, bool val) { SetBranch(treename, branchname, (void*)(&this_bools.back()), branchname + "/O"); };
+    
+    void FillTrees();
     virtual void WriteHist();
 
 private:
     unordered_map<string, TH1F*> histmap1d;
     unordered_map<string, TH2F*> histmap2d;
     unordered_map<string, TH3F*> histmap3d;
-    unordered_map<string, TTree *> treemap;
+    unordered_map<string, TTree*> treemap;
+    unordered_map<TTree*, unordered_map<string, TBranch*>> branchmaps; 
+    RVec<float> this_floats;
+    RVec<int> this_ints;
+    RVec<char> this_bools;
     TFile *outfile;
+    void SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist);
 };
 
 #endif

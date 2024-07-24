@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import requests
@@ -34,6 +35,17 @@ if __name__ == '__main__':
     
     
     master_dir = args.master_dir
+    #check job is done by condor_rm
+    with open(os.path.join(master_dir,'dags', 'finaldag.dag.dagman.out'), 'r') as f:
+        lines = f.readlines()[-100:]
+        for line in lines:
+            if 'DAG status: 4 (DAG_STATUS_RM)' in line:
+                sendingMessage = f'''Your Job is finished in the following directory: {master_dir} is finished\n'''
+                sendingMessage += f'''Your job is removed by condor_rm\n'''
+                requests.get(f'https://api.telegram.org/bot{args.TOKEN}/sendMessage?chat_id={args.chatID}&text={sendingMessage}')
+                exit(0)
+
+    #Job reporting
     sendingMessage = f'''Your Job is finished in the following directory: {master_dir} is finished\n'''
     sendingMessage += f'''Check All Jobs are finished without error....\n'''
 
@@ -50,12 +62,10 @@ if __name__ == '__main__':
         sendingMessage += f'''Total number of nodes: {nTotalNodes}\n'''
         sendingMessage += f'''Number of failed nodes: {nFailedNodes}\n'''
         for i,failedNode in enumerate(failedNodes):
-            if 'ENDLIST' in failedNodes:
+            if 'ENDLIST' in failedNode:
                     break
             sendingMessage += f'''Failed node: {failedNode}\n'''
             if i == 10:
-                
-                    
                 sendingMessage += f'''And more....\n'''
                 break
             

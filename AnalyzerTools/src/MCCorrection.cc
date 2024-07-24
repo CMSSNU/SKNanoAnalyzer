@@ -274,6 +274,33 @@ float MCCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
     }
 }
 
+float MCCorrection::GetJER(const float eta, const float pt, const float rho) const{
+    correction::Correction::Ref cset = nullptr;
+    if(DataEra == "2022") cset = cset_jerc->at("Summer22_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi");
+    else if(DataEra == "2022EE") cset = cset_jerc->at("Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi");
+    else cout << "[MCCorrection::GetJER] no JER for era " << GetEra() << endl;
+    return cset->evaluate({eta, pt, rho});
+}
+
+float MCCorrection::GetJERSF(const float eta, const float pt, const TString &sys) const{
+    correction::Correction::Ref cset = nullptr;
+    if(DataEra == "2022") cset = cset_jerc->at("Summer22_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi");
+    else if(DataEra == "2022EE") cset = cset_jerc->at("Summer22EE_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi");
+    else cout << "[MCCorrection::GetJERSF] no JERSF for era " << GetEra() << endl;
+    return cset->evaluate({eta, pt, sys.Data()});
+}
+
+float MCCorrection::GetJESUncertainty(const float eta, const float pt, const TString &source, const int &sys) const{
+    correction::Correction::Ref cset = nullptr;
+    string this_key;
+    if(DataEra == "2022") this_key = "Summer22_22Sep2023_V2_MC_" + source + "AK4PFPuppi";
+    else if(DataEra == "2022EE") this_key = "Summer22EE_22Sep2023_V2_MC_" + source + "AK4PFPuppi";
+    else cout << "[MCCorrection::GetJESUncertainty] no JESUncertainty for era " << GetEra() << endl;
+    float this_factor = 1.;
+    this_factor += sys * cset->evaluate({eta, pt});
+    return this_factor;
+}
+
 bool MCCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCategory) const{
     correction::Correction::Ref cset = nullptr;
     if(DataEra == "2022") cset = cset_jetvetomap->at("Summer22_23Sep2023_RunCD_V1");
