@@ -1,2 +1,2 @@
-[SYSTEM] redhat
-[PACKAGE] cvmfs
+[SYSTEM] redhat / osx 
+[PACKAGE] cvmfs / conda

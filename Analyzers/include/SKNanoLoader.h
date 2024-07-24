@@ -178,6 +178,24 @@ public:
     Float_t Electron_mvaNoIso[kMaxElectron];
     Float_t Electron_mvaTTH[kMaxElectron];
     Float_t Electron_r9[kMaxElectron];
+    // Photon
+    static constexpr int kMaxPhoton = 8;
+    Int_t nPhoton;
+    Float_t Photon_pt[kMaxPhoton];
+    Float_t Photon_eta[kMaxPhoton];
+    Float_t Photon_phi[kMaxPhoton];
+    Float_t Photon_energy[kMaxPhoton];
+    Float_t Photon_energyRaw[kMaxPhoton];
+    Float_t Photon_sceta[kMaxPhoton];
+    Float_t Photon_hoe[kMaxPhoton];
+    UChar_t Photon_cutBased[kMaxPhoton];
+    Float_t Photon_mvaID[kMaxPhoton];
+    Bool_t  Photon_mvaID_WP80[kMaxPhoton];
+    Bool_t  Photon_mvaID_WP90[kMaxPhoton];
+    Bool_t  Photon_pixelSeed[kMaxPhoton];
+    Float_t Photon_sieie[kMaxPhoton];
+    Bool_t  Photon_isScEtaEB[kMaxPhoton];
+    Bool_t  Photon_isScEtaEE[kMaxPhoton];
     // Jet
     // static constexpr int kMaxJet = 20;
     static constexpr int kMaxJet = 50;
