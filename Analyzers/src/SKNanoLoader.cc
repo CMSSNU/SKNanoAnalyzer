@@ -173,6 +173,22 @@ void SKNanoLoader::Init() {
     fChain->SetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso);
     fChain->SetBranchAddress("Electron_mvaTTH", Electron_mvaTTH);
     fChain->SetBranchAddress("Electron_r9", Electron_r9);
+    fChain->SetBranchAddress("nPhoton", &nPhoton);
+    fChain->SetBranchAddress("Photon_pt", Photon_pt);
+    fChain->SetBranchAddress("Photon_eta", Photon_eta);
+    fChain->SetBranchAddress("Photon_phi", Photon_phi);
+    fChain->SetBranchAddress("Photon_energy", Photon_energy);
+    fChain->SetBranchAddress("Photon_energyRaw", Photon_energyRaw);
+    fChain->SetBranchAddress("Photon_sceta", Photon_sceta);
+    fChain->SetBranchAddress("Photon_how", Photon_hoe);
+    fChain->SetBranchAddress("Photon_cutBased", Photon_cutBased);
+    fChain->SetBranchAddress("Photon_mvaID", Photon_mvaID);
+    fChain->SetBranchAddress("Photon_mvaID_WP80", Photon_mvaID_WP80);
+    fChain->SetBranchAddress("Photon_mvaID_WP90", Photon_mvaID_WP90);
+    fChain->SetBranchAddress("Photon_pixelSeed", Photon_pixelSeed);
+    fChain->SetBranchAddress("Photon_sieie", Photon_sieie);
+    fChain->SetBranchAddress("Photon_isScEtaEB", Photon_isScEtaEB);
+    fChain->SetBranchAddress("Photon_isScEtaEE", Photon_isScEtaEE);
     
     fChain->SetBranchAddress("nJet", &nJet);
     fChain->SetBranchAddress("Jet_PNetRegPtRawCorr", Jet_PNetRegPtRawCorr);

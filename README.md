@@ -1,12 +1,19 @@
 # SKNanoAnalyzer
 ---
 
-NOTE: THIS IS DEVELOPMENT VERSION!!
-
-VERSION 0.1.0
+## THIS IS DEVELOPMENT VERSION!!
 
 ## Project Updates
 [HedgeDoc](https://demo.hedgedoc.org/VrWRIlceTjO9SPOVLKUNVA?view)
+
+## Notes
+- ROOT v6.32.xx have memory leak issue while reading root files with <= v6.30.xx -> Avoid using ROOT >= v6.32.xx temporariliy
+
+## To do
+- Make ExampleRun runable -> done
+- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
+- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
+- external dependencies: ~~LHAPDF~~ / GEScaleSyst(?) / ~~CorrectionLib~~
 
 ## How to
 Recommend to fork the repo to your account.
@@ -77,11 +84,11 @@ It would be run automatically for the first time setup.
 In the config/config.$USER file, there is an option to choose bewteen conda and cvmfs. When configuring your environment with conda, at least ROOT and correctionlibs should be installed:
 ```bash
 # example
-conda env create -n nano python=3.11
+conda env create -n nano python=3.11 root=6.30.04 -c conda-forge
 conda activate nano
-conda install -c conda-forge root
 pip install correctionlib
 ```
+<<<<<<< HEAD
 
 ## To do
 - Make ExampleRun runable -> done
@@ -189,3 +196,5 @@ absl(from google), folly(from facebook) shows 3~5 times higher performance, it i
 - [CMS 13.6TeV SM cross sections](https://twiki.cern.ch/twiki/bin/viewauth/CMS/MATRIXCrossSectionsat13p6TeV)
 - [LHC ttbar NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO)
 - [LHC Single Top NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec)
+=======
+>>>>>>> d94e0a0c582272f6a8064e58f67cee2eb46ed36e
