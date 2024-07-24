@@ -1,4 +1,5 @@
 #!/bin/sh
+env
 echo -e "\033[31m##################### WARNING ########################\033[0m"
 echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
 echo -e "\033[31m######################################################\033[0m"
@@ -7,8 +8,10 @@ echo ""
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
 export SKNANO_HOME=`pwd`
-export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
-export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
+#export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
+#export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
+export SKNANO_RUNLOG="$SKNANO_HOME/../SKNanoRunlog"
+export SKNANO_OUTPUT="$SKNANO_HOME/../SKNanoOutput"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
@@ -16,19 +19,23 @@ if [ -f "${CONFIG_FILE}" ]; then
     echo "@@@@ Reading configuration from $CONFIG_FILE"
     SYSTEM=$(grep '\[SYSTEM\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    export TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    export USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
 else
     echo "@@@@ Configuration file $CONFIG_FILE not found"
     echo "@@@@ Please create a configuration file in config/ with your username"
 fi
 echo "@@@@ System:  $SYSTEM"
 echo "@@@@ Package: $PACKAGE"
+echo "@@@@ Telegram Bot Token: $TOKEN_TELEGRAMBOT"
+echo "@@@@ Telegram User Chat ID: $USER_CHATID"
 
 # root configuration
 # no cvmfs related configuration for conda
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
     source ~/.conda-activate
-    conda activate nano
+    /data6/Users/yeonjoon/conda/bin/mamba activate Nano 
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ Primary environment using cvmfs"
     RELEASE="`cat /etc/redhat-release`"
