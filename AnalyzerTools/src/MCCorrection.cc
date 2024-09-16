@@ -144,53 +144,60 @@ float MCCorrection::GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::
     return cset->evaluate({this_wpStr});
 }
 
-float MCCorrection::GetBTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys){
+float MCCorrection::GetBTaggingEff(const float eta, const float pt,const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys){
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     correction::Correction::Ref cset = cset_btagging_eff->at(this_taggerStr);
-    return cset->evaluate({sys.Data() ,this_wpStr, });
+    return cset->evaluate({sys.Data(),this_wpStr,flav,fabs(eta),pt });
 }
 
 float MCCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method, const TString &sys){
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     float weight = 1.;
-        // method is comb, mujets, or shape
-        if (method == "shape"){
-            auto cset = cset_btagging->at(this_taggerStr+"_shape");
-            for(auto &jet : jets){
-                weight *= cset->evaluate({
-                    sys.Data(),
-                    this_wpStr,
-                    jet.hadronFlavour(),
-                    jet.Pt(),
-                    jet.Eta()
-                });
-            } // TODO implement R correction
-            return weight;
-        }
-        else if(method == "comb" or method == "mujets"){
-            auto cset = cset_btagging->at(this_taggerStr+"_"+method.Data());
-            auto cset_light = cset_btagging->at(this_taggerStr+"_light");
-            float this_cut = GetBTaggingWP(tagger, wp);
-            for(auto &jet : jets){
-                float eff = GetBTaggingEff(jet.Eta(), jet.Pt(), tagger, wp, sys);
-                float sf = cset->evaluate({sys.Data(), this_wpStr, jet.hadronFlavour(), jet.Pt(), jet.Eta()});
-                float sf_light = cset_light->evaluate({sys.Data(), this_wpStr, 0, jet.Pt(), jet.Eta()});
-                if (jet.GetBTaggerResult(tagger) > this_cut){
-                    weight *= sf;
-                }
-                else{
-                    weight *= (1 - eff * sf) / (1 - eff);
-                }
+    // method is comb, mujets, or shape
+    if (method == "shape"){
+        auto cset = cset_btagging->at(this_taggerStr+"_shape");
+        for(const auto &jet : jets){
+            int this_flav = 0;
+            if (abs(jet.hadronFlavour()) == 5) this_flav = 5;
+            else if (abs(jet.hadronFlavour()) == 4) this_flav = 4;
+            weight *= cset->evaluate({
+                sys.Data(),
+                this_flav,
+                fabs(jet.Eta()),
+                jet.Pt(),
+                jet.GetBTaggerResult(tagger)
+            });
+        } // TODO implement R correction
+        return weight;
+    }
+    else if(method == "comb" or method == "mujets"){
+        auto cset = cset_btagging->at(this_taggerStr+"_"+method.Data());
+        auto cset_light = cset_btagging->at(this_taggerStr+"_light");
+        float this_cut = GetBTaggingWP(tagger, wp);
+        for(const auto &jet : jets){
+            int this_flav = 0;
+            if (abs(jet.hadronFlavour()) == 5) this_flav = 5;
+            else if (abs(jet.hadronFlavour()) == 4) this_flav = 4;
+            float eff = GetBTaggingEff(jet.Eta(), jet.Pt(), this_flav,tagger, wp, sys);
+            float sf;
+            if(this_flav == 0) sf = cset_light->evaluate({sys.Data(), this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
+            else sf = cset->evaluate({sys.Data(), this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
+            if (jet.GetBTaggerResult(tagger) > this_cut){
+                weight *= sf;
             }
-            return weight;
+            else{
+                weight *= (1. - eff * sf) / (1. - eff);
+            }
         }
+        return weight;
+    }
 
-        else{
-            cout << "[MCCorrection::GetBTaggingSF] no method " << method << endl;
-            return 1.;
-        }
+    else{
+        cout << "[MCCorrection::GetBTaggingSF] no method " << method << endl;
+        return 1.;
+    }
 }
 
 pair<float,float> MCCorrection::GetCTaggingWP() const{
@@ -213,7 +220,7 @@ pair<float,float> MCCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger, 
     return make_pair(cset->evaluate({this_wpStr ,"CvB"}), cset->evaluate({this_wpStr ,"CvL"}));
 }
 
-float MCCorrection::GetCTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys)
+float MCCorrection::GetCTaggingEff(const float eta, const float pt,const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys)
 {
     return 1.;
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
@@ -228,50 +235,6 @@ float MCCorrection::GetCTaggingEff(const float eta, const float pt, JetTagging::
 float MCCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method, const TString &sys)
 {
     return 1.;
-    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
-    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
-    float weight = 1.;
-    // method is comb, mujets, or shape
-    if (method == "shape")
-    {
-        auto cset = cset_btagging->at(this_taggerStr + "_shape");
-        for (auto &jet : jets)
-        {
-            weight *= cset->evaluate({sys.Data(),
-                                      this_wpStr,
-                                      jet.hadronFlavour(),
-                                      jet.Pt(),
-                                      jet.Eta()});
-        } // TODO implement R correction
-        return weight;
-    }
-    else if (method == "comb" or method == "mujets")
-    {
-        auto cset = cset_btagging->at(this_taggerStr + "_" + method.Data());
-        auto cset_light = cset_btagging->at(this_taggerStr + "_light");
-        float this_cut = GetBTaggingWP(tagger, wp);
-        for (auto &jet : jets)
-        {
-            float eff = GetBTaggingEff(jet.Eta(), jet.Pt(), tagger, wp, sys);
-            float sf = cset->evaluate({sys.Data(), this_wpStr, jet.hadronFlavour(), jet.Pt(), jet.Eta()});
-            float sf_light = cset_light->evaluate({sys.Data(), this_wpStr, 0, jet.Pt(), jet.Eta()});
-            if (jet.GetBTaggerResult(tagger) > this_cut)
-            {
-                weight *= sf;
-            }
-            else
-            {
-                weight *= (1 - eff * sf) / (1 - eff);
-            }
-        }
-        return weight;
-    }
-
-    else
-    {
-        cout << "[MCCorrection::GetBTaggingSF] no method " << method << endl;
-        return 1.;
-    }
 }
 
 float MCCorrection::GetJER(const float eta, const float pt, const float rho) const{
@@ -293,9 +256,10 @@ float MCCorrection::GetJERSF(const float eta, const float pt, const TString &sys
 float MCCorrection::GetJESUncertainty(const float eta, const float pt, const TString &source, const int &sys) const{
     correction::Correction::Ref cset = nullptr;
     string this_key;
-    if(DataEra == "2022") this_key = "Summer22_22Sep2023_V2_MC_" + source + "AK4PFPuppi";
-    else if(DataEra == "2022EE") this_key = "Summer22EE_22Sep2023_V2_MC_" + source + "AK4PFPuppi";
+    if(DataEra == "2022") this_key = "Summer22_22Sep2023_V2_MC_" + source + "_AK4PFPuppi";
+    else if(DataEra == "2022EE") this_key = "Summer22EE_22Sep2023_V2_MC_" + source + "_AK4PFPuppi";
     else cout << "[MCCorrection::GetJESUncertainty] no JESUncertainty for era " << GetEra() << endl;
+    cset = cset_jerc->at(this_key);
     float this_factor = 1.;
     this_factor += sys * cset->evaluate({eta, pt});
     return this_factor;

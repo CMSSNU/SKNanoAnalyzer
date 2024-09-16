@@ -61,6 +61,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
             float this_DeltaR = jets[i].DeltaR(genjets[j]);
             float this_pt_diff = fabs(jets[i].Pt() - genjets[j].Pt());
             float this_jer = mcCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
+            this_jer *= jets[i].Pt();
             if(jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut*this_jer){
                 possible_matches.emplace_back(i, j, this_DeltaR, this_pt_diff);
             }
@@ -85,7 +86,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     // assign -999 to unmatched jet
     for(size_t i = 0; i < jets.size(); i++){
         if(used_jet[i]) continue;
-        matched_genjet_idx[i] = -999;
+        else matched_genjet_idx[i] = -999;
     }
     return matched_genjet_idx;
 }
@@ -106,11 +107,15 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
             smeared_jets.push_back(this_jet);
             continue;
         }
-
-        float this_genjet_pt = genjets[matched_idx[i]].Pt();
-        this_corr += (this_sf-1.)+(this_genjet_pt - jets[i].Pt()) / jets[i].Pt();
-        this_jet *= this_corr;
-        smeared_jets.push_back(this_jet);
+        else{
+            float this_genjet_pt = genjets[matched_idx[i]].Pt();
+            this_corr += (this_sf - 1.) * (1. - this_genjet_pt / jets[i].Pt());
+            this_corr = max(this_corr, 0.f);
+            float this_unsmeared_pt = jets[i].Pt();
+            this_jet.SetUnsmearedPt(this_unsmeared_pt);
+            this_jet *= this_corr;
+            smeared_jets.push_back(this_jet);
+        }
     }
     return smeared_jets;
 }
@@ -220,14 +225,14 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 }
 
 // Objects
-Event AnalyzerCore::GetEvent(RVec<TString> HLT_List)
+Event AnalyzerCore::GetEvent()
 {
     Event ev;
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
     ev.SetnPVsGood(PV_npvsGood);
+    ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
-    ev.SetTrigger(HLT_List, TriggerMap);
     ev.SetMET(PuppiMET_pt, PuppiMET_phi);
     ev.setRho(fixedGridRhoFastjetAll);
     return ev;
@@ -384,6 +389,7 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
 RVec<Gen> AnalyzerCore::GetAllGens(){
 
     RVec<Gen> Gens;
+    if(IsDATA) return Gens;
 
     for (int i = 0; i < nGenPart; i++){
 
@@ -460,18 +466,26 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
-    for (int i = 0; i < nJet; i++) {
+    for (int i = 0; i < nJet; i++)
+    {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
-        jet.SetGenFlavours(Jet_hadronFlavour[i], Jet_partonFlavour[i]);
+        if(!IsDATA){
+            jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
+        }
         RVec<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
                            Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
                            Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
-        jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
+        if(!IsDATA){
+            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
+        }
+        else{
+            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
+        }
         jet.SetJetID(Jet_jetId[i]);
         RVec<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
         jet.SetCorrections(tvs2);
@@ -481,7 +495,6 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
 
     return Jets;
 }
-
 
 RVec<Photon> AnalyzerCore::GetAllPhotons() {
     RVec<Photon> Photons;
@@ -630,6 +643,7 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
 RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     
     RVec<GenJet> GenJets;
+    if(IsDATA) return GenJets;
 
     for (int i = 0; i < nGenJet; i++) {
 
@@ -747,6 +761,11 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             return newtree;
         }
         else{
+            //check tree is empty. 
+            if(fChain->GetEntries() == 0){
+                cout << "[AnalyzerCore::NewTree] fChain is empty." << endl;
+                exit(0);
+            }
             TTree *newtree = fChain->CloneTree(0);
             newtree->SetName(treekey.c_str());
             for (const auto &drop : drops)
@@ -805,9 +824,9 @@ void AnalyzerCore::FillTrees(){
         const string &treename = pair.first;
         TTree *tree = pair.second;
         tree->Fill();
-        RVec<float>().swap(this_floats);
-        RVec<int>().swap(this_ints);
-        RVec<char>().swap(this_bools);
+        this_floats.clear();
+        this_ints.clear();
+        this_bools.clear();
     }
 }
 void AnalyzerCore::WriteHist() {
@@ -833,7 +852,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: sorted_histograms1d) {
         const string &histname = pair.first;
         TH1F *hist = pair.second;
-        cout << "[AnalyzerCore::WriteHist] Writing 1D histogram" << histname << endl;
+        cout << "[AnalyzerCore::WriteHist] Writing 1D histogram: " << histname << endl;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -849,7 +868,7 @@ void AnalyzerCore::WriteHist() {
     }
     for (const auto &pair: sorted_histograms2d) {
         const string &histname = pair.first;
-        cout << "[AnalyzerCore::WriteHist] Writing 2D histogram" << histname << endl;
+        cout << "[AnalyzerCore::WriteHist] Writing 2D histogram: " << histname << endl;
         TH2F *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
@@ -866,7 +885,7 @@ void AnalyzerCore::WriteHist() {
     }
     for (const auto &pair: sorted_histograms3d) {
         const string &histname = pair.first;
-        cout << "[AnalyzerCore::WriteHist] Writing 3D histogram" << histname << endl;
+        cout << "[AnalyzerCore::WriteHist] Writing 3D histogram: " << histname << endl;
         TH3F *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
@@ -883,7 +902,7 @@ void AnalyzerCore::WriteHist() {
     }
     for (const auto &pair: treemap) {
         const string &treename = pair.first;
-        cout << "[AnalyzerCore::WriteHist] Writing tree" << treename << endl;
+        cout << "[AnalyzerCore::WriteHist] Writing tree: " << treename << endl;
         TTree *tree = pair.second;
 
         size_t last_slash = treename.find_last_of('/');

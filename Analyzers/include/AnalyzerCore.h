@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <deque>
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -42,6 +43,8 @@ public:
     virtual void initializeAnalyzer() {};
     virtual void executeEvent() {};
 
+    inline bool HasFlag(const TString &flag) { return std::find(Userflags.begin(), Userflags.end(), flag) != Userflags.end(); }
+
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
 
@@ -61,7 +64,7 @@ public:
     float MCweight(bool usesign = true, bool norm_1invpb = true) const;
 
     // Get objects
-    Event GetEvent(RVec<TString> HLT_List = {});
+    Event GetEvent();
     RVec<Muon> GetAllMuons();
     RVec<Muon> GetMuons(const TString ID, const float ptmin, const float fetamax);
     RVec<Electron> GetAllElectrons();
@@ -96,7 +99,8 @@ public:
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
     inline void FillCutFlow(const int &val,const int &maxCutN=10){
-        FillHist("CutFlow", val, 1., maxCutN, 0, maxCutN);
+        static int storedMaxCutN = maxCutN;
+        FillHist("CutFlow", val, 1., storedMaxCutN, 0, storedMaxCutN);
     }
     void FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max);
     void FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins);
@@ -131,9 +135,9 @@ private:
     unordered_map<string, TH3F*> histmap3d;
     unordered_map<string, TTree*> treemap;
     unordered_map<TTree*, unordered_map<string, TBranch*>> branchmaps; 
-    RVec<float> this_floats;
-    RVec<int> this_ints;
-    RVec<char> this_bools;
+    deque<float> this_floats;
+    deque<int> this_ints;
+    deque<char> this_bools;
     TFile *outfile;
     void SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist);
 };

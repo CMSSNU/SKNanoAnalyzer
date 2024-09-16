@@ -152,6 +152,7 @@ Correctionlib -> only python binding -> Youngwan will follow
     
 - Modify Muon WPID because only tightest wp was saved, i. e.) isMediumPfISo() return false for TightPfIso
 - I update the commonsampleinfo.json(not txt). cross section can be stored as formula under xsec_formula. if one runs python sampleManger --updateXsec, it will evaluate xsec expression.
+- bug check 쓸일있는사람이 체크
 - But due to the ambiguos description on SM xsec @ 13.6 TeV twiki pages, some of them need updates.
 - I update the GetEffLumi.cc, python sampleManager --updateMCinfo reads the root files from $SKNANO_OUTPUT directory and automatically updates the sumW, sumsign, etc.
 - python sampleManager --fillSamplePath reads the sample path and updates the json file under forSNU
@@ -164,7 +165,7 @@ Correctionlib -> only python binding -> Youngwan will follow
 -JetVetoMaps and GetCutValues are in MCCorrection class despite they are also needed in data. It is because if there are scattered parts of code that use jsonpog-integrated path, code maintanence will make headache. how about change mccorrection to just 'correction'?
 - B-tagging SF method are updated. c-tagging sf's not yet available.
 - add MeasureJetTaggingEff.cc, and automated json generating code
-- add MET Filters: But have to follow this issue: https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#ECal_BadCalibration_Filter_Flag
+- add MET Filters: But have to follow this issue: https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#ECal_BadCalibration_Filter_Flag(AnalyzerCore:;PassMetFilter())
 - modify kMax** -> https://github.com/cms-sw/cmssw/blob/CMSSW_13_0_X/PhysicsTools/NanoAOD/python/nanoDQM_cfi.py ?
 - add Gen, LHE
 - add puppimet
@@ -196,5 +197,6 @@ absl(from google), folly(from facebook) shows 3~5 times higher performance, it i
 - [CMS 13.6TeV SM cross sections](https://twiki.cern.ch/twiki/bin/viewauth/CMS/MATRIXCrossSectionsat13p6TeV)
 - [LHC ttbar NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO)
 - [LHC Single Top NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec)
+- [LHC Higgs Cross Section](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/HiggsXSBR)
 =======
 >>>>>>> d94e0a0c582272f6a8064e58f67cee2eb46ed36e

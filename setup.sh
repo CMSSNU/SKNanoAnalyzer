@@ -7,8 +7,8 @@ echo ""
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
 export SKNANO_HOME=`pwd`
-export SKNANO_RUNLOG="/home/$USER/workspace/SKNanoRunlog"
-export SKNANO_OUTPUT="/home/$USER/workspace/SKNanoOutput"
+export SKNANO_RUNLOG="$DATA6/SKNanoRunlog"
+export SKNANO_OUTPUT="$DATA6/SKNanoOutput"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
@@ -16,8 +16,9 @@ if [ -f "${CONFIG_FILE}" ]; then
     echo "@@@@ Reading configuration from $CONFIG_FILE"
     SYSTEM=$(grep '\[SYSTEM\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
-    TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
-    USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    export TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+    export USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
+
 else
     echo "@@@@ Configuration file $CONFIG_FILE not found"
     echo "@@@@ Please create a configuration file in config/ with your username"
@@ -29,8 +30,9 @@ echo "@@@@ Package: $PACKAGE"
 # no cvmfs related configuration for conda
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
-    source ~/.conda-activate
-    conda activate nano
+    #source ~/.conda-activate
+    #conda activate nano
+    mamba activate Nano
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ Primary environment using cvmfs"
     RELEASE="`cat /etc/redhat-release`"

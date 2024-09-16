@@ -33,13 +33,13 @@ public:
     // btaging
     float GetBTaggingWP() const;
     float GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
-    float GetBTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys = "central");
+    float GetBTaggingEff(const float eta, const float pt, const int flav,JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys = "central");
     float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method = "mujets",const TString &sys = "central");
     inline float GetBTaggingSF(const RVec<Jet> &jets, const TString &method = "mujets", const TString &sys = "central"){return GetBTaggingSF(jets, global_tagger, global_wp, method, sys);}
     // ctagging
     pair<float,float> GetCTaggingWP() const;
     pair<float,float> GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
-    float GetCTaggingEff(const float eta, const float pt, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys = "central");
+    float GetCTaggingEff(const float eta, const float pt, const int flav,JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const TString &sys = "central");
     float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const TString &method = "mujets", const TString &sys = "central");
     inline float GetCTaggingSF(const RVec<Jet> &jets, const TString &method = "mujets", const TString &sys = "central") { return GetBTaggingSF(jets, global_tagger, global_wp, method, sys); }
     // electron
