@@ -61,6 +61,7 @@ Jet::Jet() : Particle() {
   // j_hfsigmaEtaEta = -999.0;
   // j_hfsigmaPhiPhi = -999.0;
   j_m = -999.0;
+  j_unsmeardPt = -999.0;
 }
 
 Jet::~Jet() {}
@@ -110,3 +111,10 @@ pair<float,float> Jet::GetCTaggerResult(JetTagging::JetFlavTagger tagger) const{
   return make_pair(-999.0,-999.0);
 }
 
+float Jet::unsmearedPt() const{
+  if(j_unsmeardPt < 0.){
+    cerr << "[Jet::unsmearedPt] No unsmearedPt" << endl;
+    exit(ENODATA);
+  }
+  return j_unsmeardPt;
+}

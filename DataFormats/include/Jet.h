@@ -11,27 +11,29 @@ public:
   ~Jet();
   // setting functions
   inline void SetArea(double area) { j_area = area; };
-  inline void SetGenFlavours(int pf, int hf)
+  inline void SetJetFlavours(short pf, unsigned char hf)
   {
-    j_partonFlavour = short(pf);
-    j_hadronFlavour = short(hf);
+    j_partonFlavour = static_cast<short>(pf);
+    j_hadronFlavour = static_cast<short>(hf);
   };
 
   inline void SetTaggerResults(RVec<float> ds)
   {
-    j_btagDeepFlavB = ds[0];
-    j_btagDeepFlavCvB = ds[1];
-    j_btagDeepFlavCvL = ds[2];
-    j_btagDeepFlavQG = ds[3];
-    j_btagPNetB = ds[4];
-    j_btagPNetCvB = ds[5];
-    j_btagPNetCvL = ds[6];
-    j_btagPNetQvG = ds[7];
-    j_btagPNetTauVJet = ds[8];
-    j_btagRobustParTAK4B = ds[9];
-    j_btagRobustParTAK4CvB = ds[10];
-    j_btagRobustParTAK4CvL = ds[11];
-    j_btagRobustParTAK4QG = ds[12];
+    //TODO: It is weird but it seems some scores are saved in negative values. so I truncate them to 0. We need to check the reason.
+    //truncate to 0 if negative or larger than 1
+    j_btagDeepFlavB = std::clamp(ds[0], 0.0f, 1.0f);
+    j_btagDeepFlavCvB = std::clamp(ds[1], 0.0f, 1.0f);
+    j_btagDeepFlavCvL = std::clamp(ds[2], 0.0f, 1.0f);
+    j_btagDeepFlavQG = std::clamp(ds[3], 0.0f, 1.0f);
+    j_btagPNetB = std::clamp(ds[4], 0.0f, 1.0f);
+    j_btagPNetCvB = std::clamp(ds[5], 0.0f, 1.0f);
+    j_btagPNetCvL = std::clamp(ds[6], 0.0f, 1.0f);
+    j_btagPNetQvG = std::clamp(ds[7], 0.0f, 1.0f);
+    j_btagPNetTauVJet = std::clamp(ds[8], 0.0f, 1.0f);
+    j_btagRobustParTAK4B = std::clamp(ds[9], 0.0f, 1.0f);
+    j_btagRobustParTAK4CvB = std::clamp(ds[10], 0.0f, 1.0f);
+    j_btagRobustParTAK4CvL = std::clamp(ds[11], 0.0f, 1.0f);
+    j_btagRobustParTAK4QG = std::clamp(ds[12], 0.0f, 1.0f);
   };
   inline void SetEnergyFractions(float cH, float nH, float nEM, float cEM, float muE)
   {
@@ -61,6 +63,16 @@ public:
     j_genJetIdx = gj;
   };
 
+  inline void SetMatchingIndices(short e1, short e2, short m1, short m2, short sv1, short sv2)
+  {
+    j_electronIdx1 = e1;
+    j_electronIdx2 = e2;
+    j_muonIdx1 = m1;
+    j_muonIdx2 = m2;
+    j_svIdx1 = sv1;
+    j_svIdx2 = sv2;
+  };
+
   inline void SetJetID(unsigned char b)
   {
     // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
@@ -81,6 +93,10 @@ public:
   {
     j_m = jet_m;
   };
+  inline void SetUnsmearedPt(double unsmearedPt)
+  {
+    j_unsmeardPt = unsmearedPt;
+  };
   inline double GetM() { return j_m; }
   inline int partonFlavour() const { return j_partonFlavour; };
   inline int hadronFlavour() const { return j_hadronFlavour; };
@@ -93,6 +109,8 @@ public:
   inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
   float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
   pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
+  float unsmearedPt() const;
+
 
   bool PassID(TString ID) const;
 private:
@@ -149,7 +167,7 @@ private:
   // float j_hfsigmaEtaEta;
   // float j_hfsigmaPhiPhi;
   float j_m; // jet mass
-
+  float j_unsmeardPt;
   ClassDef(Jet, 1)
 };
 

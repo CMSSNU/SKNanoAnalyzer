@@ -12,14 +12,8 @@ Event::Event() {
 
 Event::~Event() {}
 
-void Event::SetTrigger(RVec<TString> HLT_TriggerName, std::map<TString, Bool_t*> TriggerMap) {
-    for(auto trig : HLT_TriggerName) {
-        j_HLT_PassTrigger[trig] = TriggerMap[trig];
-    }
-}
-
-void Event::SetTrigger(TString HLT_TriggerName, std::map<TString, Bool_t*> TriggerMap) {
-    j_HLT_PassTrigger[HLT_TriggerName] = TriggerMap[HLT_TriggerName];
+const void Event::SetTrigger(const std::map<TString, Bool_t*>& TriggerMap) {
+    j_HLT_TriggerMapPtr = &(TriggerMap);
 }
 /*bool Event::PassTrigger(TString trig) {
     RVec<TString> tmp_vec;
@@ -36,12 +30,13 @@ bool Event::PassTrigger(RVec<TString> trigs) {
     return false;
 }
 */
-bool Event::PassTrigger(TString trig) {
-    if (j_HLT_PassTrigger.find(trig) == j_HLT_PassTrigger.end()) {
+const bool Event::PassTrigger(TString trig) {
+
+    if (j_HLT_TriggerMapPtr->find(trig) == j_HLT_TriggerMapPtr->end()) {
         cerr << "[Event::PassTrigger] Trigger " << trig << " not found" << endl;
-        return false;
+        exit(ENODATA);
     }
-    return *j_HLT_PassTrigger[trig];
+    return *(j_HLT_TriggerMapPtr->at(trig));
 }
 
 

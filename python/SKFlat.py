@@ -16,6 +16,7 @@ import json
 from time import sleep
 from multiprocessing import Pool
 import requests
+import re
 
 ##############################
 #Global Variables
@@ -49,7 +50,7 @@ def isMCandGetPeriod(sample):
         return False, sample.split("_")[-1]
     else:
         return True, None
-    
+
 def getSkimmingOutBaseAndSuffix(sample, AnalyzerName):
     isMC, period = isMCandGetPeriod(sample)
     suffix = f"Temp_Skim_{AnalyzerName.replace('Skim_','')}_{sample if isMC else sample.replace(f'_{period}','')}"
@@ -66,15 +67,26 @@ def getEraList(eras):
             exit()
     return eras
 
-def addPeriodToSampleList(samplelist,era):
-    toBeAdded = []
+def makeSampleList(samplelist,era):
+    #add Period to data sample, and wildcard search
     copylist = []
     for sample in samplelist:
         if sample.startswith("Skim_"):
             if SKIMMING_MODE:
                 print('\033[91m'+f"Error: Skimmed sample {sample} is not allowed in skimming mode"+'\033[0m')
                 exit()
-            if sample not in skimInfoJsons[era]:
+            if '*' in sample:
+                #wildcard search using regex
+                sample = sample.replace('*','.*')
+                sample = re.compile(sample)
+                for sampleInfo in skimInfoJsons[era].keys():
+                    if sample.match(sampleInfo):
+                        if skimInfoJsons[era][sampleInfo]['isMC']:
+                            copylist.append(sampleInfo)
+                        else:
+                            copylist += [f"{sampleInfo}_{period}" for period in skimInfoJsons[era][sampleInfo]['periods']]
+                continue
+            elif sample not in skimInfoJsons[era]:
                 print('\033[93m'+f"Warning: {sample} is not exist in era {era}"+'\033[0m')
                 continue
             skimInfo = skimInfoJsons[era][sample]
@@ -84,7 +96,18 @@ def addPeriodToSampleList(samplelist,era):
             if not sampleInfo['isMC']:
                 copylist += [f"{sample}_{period}" for period in sampleInfo['periods']]
         else:
-            if sample not in sampleInfoJsons[era]:
+            if '*' in sample:
+                #wildcard search using regex
+                sample = sample.replace('*','.*')
+                sample = re.compile(sample)
+                for sampleInfo in sampleInfoJsons[era].keys():
+                    if sample.match(sampleInfo):
+                        if sampleInfoJsons[era][sampleInfo]['isMC']:
+                            copylist.append(sampleInfo)
+                        else:
+                            copylist += [f"{sampleInfo}_{period}" for period in sampleInfoJsons[era][sampleInfo]['periods']]
+                continue
+            elif sample not in sampleInfoJsons[era]:
                 print('\033[93m'+f"Warning: {sample} is not exist in era {era}"+'\033[0m')
                 continue
             sampleInfo = sampleInfoJsons[era][sample]
@@ -123,8 +146,10 @@ def setParser():
     parser.add_argument('--nmax', dest='NMax', default=300, type=int, help="maximum running jobs")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
     parser.add_argument('--memory', dest='Memory', default=2048, type=float)
+    parser.add_argument('--ncpu',dest='ncpu',default=1,type=int) 
     parser.add_argument('--batchname',dest='BatchName', default="")
     parser.add_argument('--skimming_mode',action='store_true',default=False,help="Enable this option when anlyzer is skimmer.")
+    
     #Note: this option will change the behavior of the script. output directory will be changed to Your GV0, hadd will be disabled, and will creat the info json of skimmed tree   
     return parser
 
@@ -189,12 +214,12 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
     reduction = argparse.Reduction
     
     if sample.startswith("Skim_"):
-        SkimInfo = skimInfoJsons[era][sample if isMC else sample.replace(f"_{period}","")]
+        SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
         sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim',sample+'.json')))['path']
         
     else:
-        sampleInfo = sampleInfoJsons[era][sample if isMC else sample.replace(f"_{period}","")]
+        sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','ForSNU',sample+'.json')))['path']
         
     samplePaths = jobFileDivider(samplePaths, njobs)
@@ -277,12 +302,13 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     nmax = argparse.NMax
     memory = argparse.Memory
     batchname = argparse.BatchName
+    ncpu = argparse.ncpu
     if batchname == "":
         batchname = argparse.Analyzer
     libpath = os.environ['LD_LIBRARY_PATH']
     libpath = libpath.split(":")
     libpath = [x for x in libpath if x != SKNANO_LIB]
-    libpath.append(abs_MasterDirectoryName+'/lib')
+    libpath = [os.path.join(abs_MasterDirectoryName,'lib')]+libpath
     libpath = ":".join(libpath)
     
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
@@ -303,25 +329,27 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
     job_dict['RequestMemory'] = f'ifthenelse(isUndefined(MemoryUsage),{memory},(MemoryUsage * 2))' # 2 times of memory usage
+    job_dict['RequestCpus'] = ncpu
     job_dict['arguments'] = "$(Process)"
     job_dict['output'] = os.path.join(working_dir,"job$(Process).out")
     job_dict['error'] = os.path.join(working_dir,"job$(Process).err")
     job_dict['should_transfer_files'] = "YES"
     job_dict['when_to_transfer_output'] = "ON_EXIT"
     job_dict['concurrency_limits'] = f"n{nmax}.{username}"
-    job_dict['periodic_release'] = '(NumJobStarts < 3) && (HoldReasonCode == 34) && (JobStatus == 5)' # periodic release for 3 times // Held reason is lack of memeory // JobStatus is Hold // https://research.cs.wisc.edu/htcondor/manual/v8.5/12_Appendix_A.html
+    job_dict['periodic_release'] = '(NumJobStarts < 3) && (HoldReasonCode == 34 || HoldReasonCode == 21) && (JobStatus == 5)' # periodic release for 3 times // Held reason is lack of memeory // JobStatus is Hold // https://research.cs.wisc.edu/htcondor/manual/v8.5/12_Appendix_A.html
 
     
     return job_dict
 
-def makeHaddJobs(working_dir,argparser):
+def makeHaddJobs(working_dir,argparser,sample):
     AnalyzerName = argparser.Analyzer
     if len(userflags) > 0:
         for flag in userflags:
             AnalyzerName += f"_{flag}"
-    hadd_target = os.path.join(SKNANO_OUTPUT,AnalyzerName,working_dir.split('/')[-2],working_dir.split('/')[-1]+'.root')
-    if not os.path.exists(os.path.join(SKNANO_OUTPUT,argparser.Analyzer,working_dir.split('/')[-2])):
-        os.makedirs(os.path.join(SKNANO_OUTPUT,argparser.Analyzer,working_dir.split('/')[-2]))
+    era = working_dir.split('/')[-2]
+    hadd_target = os.path.join(SKNANO_OUTPUT,AnalyzerName,era,sample+'.root')
+    if not os.path.exists(os.path.dirname(hadd_target)):
+        os.makedirs(os.path.dirname(hadd_target))
     
     with open(os.path.join(working_dir,"hadd.sh"),'w') as f:
         f.writelines("#!/bin/bash\n")
@@ -506,6 +534,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
     eras = getEraList(args.Era)
     SKIMMING_MODE = args.skimming_mode
+    if args.Analyzer.startswith("Skim_") and not SKIMMING_MODE:
+        print('\033[93m'+'''It seems like you want to skim the samples. If so, you need to enable skimming mode by passing the 
+--skimming_mode arguments to write the output file to gv0 and generate the *.json file of the skimmed sample.\n'''+'\033[0m')
+        #ask Y/N to continue, print in yellow color
+        while True:
+            answer = input('\033[93m'+"Do you want to enable the skimming mode? (Y/N): "+'\033[0m')
+            if answer == 'Y' or answer == 'y':
+                SKIMMING_MODE = True
+                break
+            elif answer == 'N' or answer == 'n':
+                SKIMMING_MODE = False
+                break
+            else:
+                print('\033[93m'+"Please enter Y or N"+'\033[0m')
+
+    
     userflags = getUserFlagsList(args.Userflags)
     timestamp, string_JobStartTime = getTimeStamp()
     _, abs_MasterDirectoryName= getMasterDirectoryName(timestamp, args.Analyzer, userflags)
@@ -516,7 +560,7 @@ if __name__ == '__main__':
     postproc_layers = []
 
     for era in eras:
-        InputSamplelist_era = addPeriodToSampleList(InputSamplelist, era)
+        InputSamplelist_era = makeSampleList(InputSamplelist, era)
         for sample in InputSamplelist_era:
             working_dir, totalNumberofJobs = pythonJobProducer(era, sample, args, abs_MasterDirectoryName, userflags)
             if totalNumberofJobs == None:
@@ -525,7 +569,7 @@ if __name__ == '__main__':
             if SKIMMING_MODE:
                 postproc_sub_dict = makeSkimPostProcsJobs(working_dir,sample,args)
             else:
-                hadd_sub_dict = makeHaddJobs(working_dir,args)
+                hadd_sub_dict = makeHaddJobs(working_dir,args,sample)
             
             if SKIMMING_MODE:
                 dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':postproc_sub_dict,'totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}"})

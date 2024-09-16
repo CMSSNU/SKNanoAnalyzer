@@ -8,6 +8,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../DataFormats/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include)
 include_directories(${LHAPDF_INCLUDE_DIR})
 include_directories(${CORRECTION_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../external/KinFitter/NanoGardenerModules/KinematicFitter/include)
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
@@ -32,6 +33,7 @@ target_include_directories(Analyzers PUBLIC
 target_link_libraries(Analyzers ${ROOT_LIBRARIES})
 target_link_libraries(Analyzers DataFormats)
 target_link_libraries(Analyzers AnalyzerTools)
+target_link_libraries(Analyzers KinFitter)
 
 # Specify where to install the library
 install(TARGETS Analyzers DESTINATION lib)
