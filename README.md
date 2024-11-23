@@ -88,7 +88,6 @@ conda env create -n nano python=3.11 root=6.30.04 -c conda-forge
 conda activate nano
 pip install correctionlib
 ```
-<<<<<<< HEAD
 
 ## To do
 - Make ExampleRun runable -> done
@@ -110,7 +109,7 @@ pip install correctionlib
 ## Object updates
 - Event(Trigger, MET): trigger list 조사 / json? 영완
 - DataStream 이름 조사 - 영완
-- Muon / Electron: 진 / 영완 (MCCorrection updated)
+- Muon / Electron: 진 / 영완 (Correction updated)
 - Tau / FatJet: 영완 믿습니다(brave student) (updated)
 - JetTaggingParameter (updating): 영완
 - Jet / GenJet: 연준 / 지훈 (updated)
@@ -161,8 +160,8 @@ Correctionlib -> only python binding -> Youngwan will follow
 - GetPUWeights() added. NOTE!: there are several vertex-related branch is stored in NanoAOD. PV_ means reconstructed vertices. nPileUp means the generator level vertices. thus this branch is not available in data. there is another branch, nTrueInt, which Out-of-time pu is not considered. PU Correction should be done by this value. useful link: https://opendata.cern.ch/docs/cms-guide-pileup-simulation
 - I modify the SKNanoLoader.cc to it respects the MC-only branches. 
 - for now, I made the json file of HLT branch and set there branch address using loop(famous nlohman-json included to our repo). my suggestion is keep this track and also managing trigger luminosity with same file. other ideas or suggestions will be appreciated.
-- and MCCorrection updates.
--JetVetoMaps and GetCutValues are in MCCorrection class despite they are also needed in data. It is because if there are scattered parts of code that use jsonpog-integrated path, code maintanence will make headache. how about change mccorrection to just 'correction'?
+- and Correction updates.
+-JetVetoMaps and GetCutValues are in Correction class despite they are also needed in data. It is because if there are scattered parts of code that use jsonpog-integrated path, code maintanence will make headache. how about change Correction to just 'correction'?
 - B-tagging SF method are updated. c-tagging sf's not yet available.
 - add MeasureJetTaggingEff.cc, and automated json generating code
 - add MET Filters: But have to follow this issue: https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#ECal_BadCalibration_Filter_Flag(AnalyzerCore:;PassMetFilter())
@@ -198,5 +197,3 @@ absl(from google), folly(from facebook) shows 3~5 times higher performance, it i
 - [LHC ttbar NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO)
 - [LHC Single Top NNLO+NNLL cross sections](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec)
 - [LHC Higgs Cross Section](https://twiki.cern.ch/twiki/bin/view/LHCPhysics/HiggsXSBR)
-=======
->>>>>>> d94e0a0c582272f6a8064e58f67cee2eb46ed36e
