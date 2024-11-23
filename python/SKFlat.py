@@ -25,8 +25,10 @@ SKNANO_RUNLOG = os.environ['SKNANO_RUNLOG']
 SKNANO_OUTPUT = os.environ['SKNANO_OUTPUT']
 SKNANO_DATA = os.environ['SKNANO_DATA']
 SKNANO_LIB = os.environ['SKNANO_LIB']
+SKNANO_RUN3_NANOAODPATH = os.environ['SKNANO_RUN3_NANOAODPATH']
+SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
-totalEras = ['2022','2022EE']
+Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3}
 TOKEN = os.environ['TOKEN_TELEGRAMBOT']
 chat_id = os.environ['USER_CHATID']
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}"
@@ -34,14 +36,15 @@ SKIMMING_MODE = False
 ##############################
 #Load commonSampleInfo.json at start
 sampleInfoJsons = {}
-sampleInfoJsons['2022'] = json.load(open(os.path.join(SKNANO_DATA,'2022','Sample','CommonSampleInfo.json')))
-sampleInfoJsons['2022EE'] = json.load(open(os.path.join(SKNANO_DATA,'2022EE','Sample','CommonSampleInfo.json')))
+for era in Run.keys():
+    sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
 skimInfoJsons = {}
-try:
-    skimInfoJsons['2022'] = json.load(open(os.path.join(SKNANO_DATA,'2022','Sample','Skim','skimTreeInfo.json')))
-    skimInfoJsons['2022EE'] = json.load(open(os.path.join(SKNANO_DATA,'2022EE','Sample','Skim','skimTreeInfo.json')))
-except:
-    print('\033[93m'+"Warning: Skimmed tree info is not exist"+'\033[0m')
+if SKIMMING_MODE:
+    try:
+        for era in Run.keys():
+            skimInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim','skimInfo.json')))
+    except:
+        print('\033[93m'+"Warning: Skimmed tree info is not exist"+'\033[0m')
 ##############################
 def isMCandGetPeriod(sample):
     #if sample is ends with _one capital letter, it is data
@@ -51,20 +54,34 @@ def isMCandGetPeriod(sample):
     else:
         return True, None
 
-def getSkimmingOutBaseAndSuffix(sample, AnalyzerName):
+def getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName):
     isMC, period = isMCandGetPeriod(sample)
     suffix = f"Temp_Skim_{AnalyzerName.replace('Skim_','')}_{sample if isMC else sample.replace(f'_{period}','')}"
-    out_base = os.path.join('/gv0/Users',username,'DATA/SKFlat/Run3NanoAODv12/',era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+    if Run[era] == 2:
+        out_base = os.path.join(SKNANO_RUN2_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+    elif Run[era] == 3:
+        out_base = os.path.join(SKNANO_RUN3_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+
     return out_base, suffix
 
-def getEraList(eras):
-    if eras == 'All':
-        return totalEras
-    eras = eras.split(",")
-    for era in eras:
-        if era not in totalEras:
-            print('\033[91m'+f"ERROR: {era} is not a valid era"+'\033[0m')
-            exit()
+def getEraList(eras, runs):
+    if runs == 'None':
+        if eras == 'All':
+            return Run.keys() 
+        eras = eras.split(",")
+        for era in eras:
+            if era not in Run.keys():
+                print('\033[91m'+f"ERROR: {era} is not a valid era"+'\033[0m')
+                exit()
+    else:
+        print('\033[93m'+"Warning: --era option will be ignored because --run option is given"+'\033[0m')
+        runs = runs.split(",")
+        runs = [run.replace(" ","") for run in runs]
+        eras = []
+        if 'Run2' in runs:
+            eras += [e for e, r in Run.items() if r == 2]
+        if 'Run3' in runs:
+            eras += [e for e, r in Run.items() if r == 3]
     return eras
 
 def makeSampleList(samplelist,era):
@@ -142,6 +159,7 @@ def setParser():
     #parser.add_argument('-o', dest='Outputdir', default="")
     #parser.add_argument('-q', dest='Queue', default="fastq")
     parser.add_argument('-e', dest='Era', default="All",help="2022, 2022EE. can be comma separated")
+    parser.add_argument('-r', dest='Run', default="None",help="Run2, Run3. can be comma separated. override era option")
     parser.add_argument('--userflags', dest='Userflags', default="")
     parser.add_argument('--nmax', dest='NMax', default=300, type=int, help="maximum running jobs")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
@@ -204,7 +222,7 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
     working_dir = os.path.join(masterJobDirectory,era,sample)
     os.makedirs(working_dir)
     if SKIMMING_MODE:
-        out_base, suffix = getSkimmingOutBaseAndSuffix(sample, AnalyzerName)
+        out_base, suffix = getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName)
         if not os.path.exists(os.path.dirname(out_base)):
             os.makedirs(os.path.dirname(out_base))
     else:
@@ -226,9 +244,9 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
 
     
     totalNumberOfJobs = len(samplePaths)
-    
+
     for i in range(totalNumberOfJobs):
-        output = out_base.replace('.root',f'_{i}.root')
+        output = out_base.replace('.root',f'_{i+1}.root')
         #python job is too hard to debug. I will use c++ job instead
         # with open(os.path.join(working_dir,f"job{i}.py"),'w') as f:
         #     f.writelines(f"from ROOT import {argparse.Analyzer}\n")
@@ -263,9 +281,9 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
         #     f.writelines(f"module.Loop()\n")
         #     f.writelines(f"module.WriteHist()\n")
         
-        with open(os.path.join(working_dir,f"job{i}.cpp"),'w') as f:
+        with open(os.path.join(working_dir,f"job{i+1}.cpp"),'w') as f:
             f.writelines(f"#include <algorithm>\n")
-            f.writelines(f"void job{i}"+"(){\n")
+            f.writelines(f"void job{i+1}"+"(){\n")
             f.writelines(f"\t{argparse.Analyzer} module;\n")
             f.writelines(f"\tmodule.SetTreeName(\"Events\");\n")
             f.writelines(f"\tmodule.LogEvery = 1000;\n")
@@ -424,7 +442,7 @@ def getEachAnalyzerToPostDag(kwarg):
     analyzer_layer = {
         'name' : f"Analyzer_{batchname}",
         'submit_description': htcondor.Submit(analyzer_sub_dict),
-        'vars' : [{"Process":str(i)} for i in range(totalNumberOfJobs)]
+        'vars' : [{"Process":str(i)} for i in range(1,totalNumberOfJobs+1)]
     }
     
     hadd_layer = {
@@ -532,7 +550,7 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
 if __name__ == '__main__':
     parser = setParser()
     args = parser.parse_args()
-    eras = getEraList(args.Era)
+    eras = getEraList(args.Era, args.Run)
     SKIMMING_MODE = args.skimming_mode
     if args.Analyzer.startswith("Skim_") and not SKIMMING_MODE:
         print('\033[93m'+'''It seems like you want to skim the samples. If so, you need to enable skimming mode by passing the 
