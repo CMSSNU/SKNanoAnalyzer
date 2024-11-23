@@ -7,8 +7,8 @@ echo ""
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
 export SKNANO_HOME=`pwd`
-export SKNANO_RUNLOG="$DATA6/SKNanoRunlog"
-export SKNANO_OUTPUT="$DATA6/SKNanoOutput"
+export SKNANO_RUNLOG="$GV0/SKNanoRunlog"
+export SKNANO_OUTPUT="$GV0/SKNanoOutput"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
@@ -53,14 +53,17 @@ fi
 echo "@@@@ ROOT path: $ROOTSYS"
 
 export SKNANO_LIB=$SKNANO_HOME/lib
-export SKNANO_VERSION="Run3UltraLegacy_v1"
+export SKNANO_VERSION="Run3_v12_Run2_v9"
 export SKNANO_DATA=$SKNANO_HOME/data/$SKNANO_VERSION
 mkdir -p $SKNANO_DATA
 
 export SKNANO_BIN=$SKNANO_HOME/bin
 export SKNANO_PYTHON=$SKNANO_HOME/python
+export SKNANO_BUILDDIR=$SKNANO_HOME/build
 export PATH=$SKNANO_PYTHON:$PATH
 export PYTHONPATH=$PYTHONPATH:$SKNANO_PYTHON
+export SKNANO_RUN3_NANOAODPATH="/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/"
+export SKNANO_RUN2_NANOAODPATH="/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/"
 
 export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
@@ -103,6 +106,18 @@ elif [ $PACKAGE = "cvmfs" ]; then
 else
     echo "@@@@ Correctionlib not found"
 fi
+
+#env for onnxruntime
+if [ "$PACKAGE" = "conda" ]; then
+    export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
+    export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
+elif [ "$PACKAGE" = "cvmfs" ]; then
+    export ONNXRUNTIME_INCLUDE_DIR=$(scram tool info onnxruntime | grep 'INCLUDE=' | awk -F= '{print $2}')
+    export ONNXRUNTIME_LIB_DIR=$(scram tool info onnxruntime | grep 'LIBDIR=' | awk -F= '{print $2}')
+else
+    echo "@@@@ Onnxruntime not found"
+fi
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 
