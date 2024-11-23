@@ -5,57 +5,118 @@ import argparse
 #This script is used to generate the path information for the sample data
 #Sample information is stored in the CommonSampleInfo.json
 #This script will generate the path information for the sample data
-basePath = '/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/' #currently my private directory  
+basePath = os.environ['SKNANO_RUN3_NANOAODPATH'] 
     
 def loadCommonSampleInfo(era):
     sampleInfoJson = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','CommonSampleInfo.json')
     sampleInfos = json.load(open(sampleInfoJson))
     return sampleInfos
 
+# def fillSamplePath(era):
+#     sampleInfos = loadCommonSampleInfo(era)
+#     for alias,sampleInfo in sampleInfos.items():
+        # if sampleInfo['isMC']:
+        #     path = os.path.join(basePath,era,'MC',sampleInfo['PD'])
+        #     filePaths = []
+        #     #Folder structure is not fixed yet, so let's do the recursive search until the .root file appears, and save all absolute paths
+        #     for root, dirs, files in os.walk(path):
+        #         for file in files:
+        #             if file.endswith('.root'):
+        #                 filePaths.append(os.path.join(root,file))
+        #     #sort filePaths by tree*.root
+        #     filePaths = sorted(filePaths,key=lambda x: int(x.split('tree_')[-1].split('.root')[0])) 
+        #     #now save the path information to another json file
+        #     newjsondict = {}
+        #     newjsondict['name'] = alias
+        #     for key in sampleInfo:
+        #         newjsondict[key] = sampleInfo[key]
+        #     fileJsonPath = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','ForSNU',alias+'.json')
+        #     newjsondict['path'] = filePaths
+        #     with open(fileJsonPath,'w') as f:
+        #         json.dump(newjsondict,f,indent=4)
+        # else:
+        #     for period in sampleInfo['periods']:
+        #         path = os.path.join(basePath,era,'DATA',alias,f"Period{period}")
+        #         filePaths = []
+        #         #Folder structure is not fixed yet, so let's do the recursive search until the .root file appears, and save all absolute paths
+        #         for root, dirs, files in os.walk(path):
+        #             for file in files:
+        #                 if file.endswith('.root'):
+        #                     filePaths.append(os.path.join(root,file))
+        #         #sort filePaths by tree*.root
+        #         filePaths = sorted(filePaths,key=lambda x: int(x.split('tree_')[-1].split('.root')[0]))
+        #         #now save the path information to another json file
+        #         newjsondict = {}
+        #         newjsondict['name'] = alias
+        #         for key in sampleInfo:
+        #             if key == 'periods':
+        #                 continue
+        #             newjsondict[key] = sampleInfo[key]
+        #         fileJsonPath = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','ForSNU',alias+f'_{period}.json')
+        #         newjsondict['path'] = filePaths
+        #         with open(fileJsonPath,'w') as f:
+        #             json.dump(newjsondict,f,indent=4)
+
+import os
+import json
+from multiprocessing import Pool
+
+# Top-level function to call either process_mc_sample or process_data_sample
+def process_sample(fn, alias, sampleInfo, era, basePath):
+    fn(alias, sampleInfo, era, basePath)
+
+def process_mc_sample(alias, sampleInfo, era, basePath):
+    path = os.path.join(basePath, era, 'MC', sampleInfo['PD'])
+    filePaths = []
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if file.endswith('.root'):
+                filePaths.append(os.path.join(root, file))
+    filePaths = sorted(filePaths, key=lambda x: int(x.split('tree_')[-1].split('.root')[0]))
+
+    newjsondict = {'name': alias}
+    newjsondict.update(sampleInfo)
+    fileJsonPath = os.path.join(os.environ['SKNANO_DATA'], era, 'Sample', 'ForSNU', alias + '.json')
+    newjsondict['path'] = filePaths
+    with open(fileJsonPath, 'w') as f:
+        json.dump(newjsondict, f, indent=4)
+
+def process_data_sample(alias, sampleInfo, era, basePath):
+    for period in sampleInfo['periods']:
+        path = os.path.join(basePath, era, 'DATA', alias, f"Period{period}")
+        filePaths = []
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if file.endswith('.root'):
+                    filePaths.append(os.path.join(root, file))
+        filePaths = sorted(filePaths, key=lambda x: int(x.split('tree_')[-1].split('.root')[0]))
+
+        newjsondict = {'name': alias}
+        for key in sampleInfo:
+            if key == 'periods':
+                continue
+            newjsondict[key] = sampleInfo[key]
+        fileJsonPath = os.path.join(os.environ['SKNANO_DATA'], era, 'Sample', 'ForSNU', alias + f'_{period}.json')
+        newjsondict['path'] = filePaths
+        with open(fileJsonPath, 'w') as f:
+            json.dump(newjsondict, f, indent=4)
+
 def fillSamplePath(era):
     sampleInfos = loadCommonSampleInfo(era)
-    for alias,sampleInfo in sampleInfos.items():
+    
+    # Create a list of tasks for multiprocessing
+    tasks = []
+    for alias, sampleInfo in sampleInfos.items():
         if sampleInfo['isMC']:
-            path = os.path.join(basePath,era,'MC',sampleInfo['PD'])
-            filePaths = []
-            #Folder structure is not fixed yet, so let's do the recursive search until the .root file appears, and save all absolute paths
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    if file.endswith('.root'):
-                        filePaths.append(os.path.join(root,file))
-            #sort filePaths by tree*.root
-            filePaths = sorted(filePaths,key=lambda x: int(x.split('tree_')[-1].split('.root')[0])) 
-            #now save the path information to another json file
-            newjsondict = {}
-            newjsondict['name'] = alias
-            for key in sampleInfo:
-                newjsondict[key] = sampleInfo[key]
-            fileJsonPath = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','ForSNU',alias+'.json')
-            newjsondict['path'] = filePaths
-            with open(fileJsonPath,'w') as f:
-                json.dump(newjsondict,f,indent=4)
+            tasks.append((process_mc_sample, alias, sampleInfo, era, basePath))
         else:
-            for period in sampleInfo['periods']:
-                path = os.path.join(basePath,era,'DATA',alias,f"Period{period}")
-                filePaths = []
-                #Folder structure is not fixed yet, so let's do the recursive search until the .root file appears, and save all absolute paths
-                for root, dirs, files in os.walk(path):
-                    for file in files:
-                        if file.endswith('.root'):
-                            filePaths.append(os.path.join(root,file))
-                #sort filePaths by tree*.root
-                filePaths = sorted(filePaths,key=lambda x: int(x.split('tree_')[-1].split('.root')[0]))
-                #now save the path information to another json file
-                newjsondict = {}
-                newjsondict['name'] = alias
-                for key in sampleInfo:
-                    if key == 'periods':
-                        continue
-                    newjsondict[key] = sampleInfo[key]
-                fileJsonPath = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','ForSNU',alias+f'_{period}.json')
-                newjsondict['path'] = filePaths
-                with open(fileJsonPath,'w') as f:
-                    json.dump(newjsondict,f,indent=4)
+            tasks.append((process_data_sample, alias, sampleInfo, era, basePath))
+
+    # Use multiprocessing to parallelize
+    with Pool(processes=16) as pool:
+        pool.starmap(process_sample, tasks)
+
+
 
 def updateXsec(era):
     sampleInfos = loadCommonSampleInfo(era)
@@ -187,9 +248,15 @@ if __name__ == '__main__':
     parser.add_argument('--skimTreeOrigPD', dest='skimTreeOrigPD',default='',help='Original PD of the skim tree')
     parser.add_argument('--era',dest='era',default='',help='Era of the sample')
     args = parser.parse_args()
-    eras = ['2022','2022EE']
+    run3eras = ['2022','2022EE']
+    run2eras = ['2016preVFP','2016postVFP','2017','2018']
+    eras = run3eras + run2eras
     if args.era == '':
         for era in eras:
+            if era in run3eras:
+                basePath = os.environ['SKNANO_RUN3_NANOAODPATH']
+            elif era in run2eras:
+                basePath = os.environ['SKNANO_RUN2_NANOAODPATH']
             if args.fillSamplePath:
                 fillSamplePath(era)
             if args.updateXsec:
@@ -201,6 +268,10 @@ if __name__ == '__main__':
 
     else:
         era = args.era
+        if era in run3eras:
+            basePath = os.environ['SKNANO_RUN3_NANOAODPATH']
+        elif era in run2eras:
+            basePath = os.environ['SKNANO_RUN2_NANOAODPATH']
         if args.fillSamplePath:
             fillSamplePath(era)
         if args.updateXsec:
