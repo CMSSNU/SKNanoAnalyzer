@@ -12,7 +12,7 @@ Event::Event() {
 
 Event::~Event() {}
 
-const void Event::SetTrigger(const std::map<TString, Bool_t*>& TriggerMap) {
+const void Event::SetTrigger(const std::map<TString, pair<Bool_t*,float>>& TriggerMap) {
     j_HLT_TriggerMapPtr = &(TriggerMap);
 }
 /*bool Event::PassTrigger(TString trig) {
@@ -36,7 +36,7 @@ const bool Event::PassTrigger(TString trig) {
         cerr << "[Event::PassTrigger] Trigger " << trig << " not found" << endl;
         exit(ENODATA);
     }
-    return *(j_HLT_TriggerMapPtr->at(trig));
+    return *((j_HLT_TriggerMapPtr->at(trig)).first);
 }
 
 
@@ -47,20 +47,13 @@ const bool Event::PassTrigger(TString trig) {
 //               --hltpath "HLT_IsoMu24_v*"
 // /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json for 2022, normtag_BRIL.json for 2023 (2024.07.11)
 float Event::GetTriggerLumi(TString trig) {
-    if (GetEra() == "2022") {
-        if (trig=="Full") return 8077.009684657;
-        else return -999.;
-    } else if (GetEra() == "2022EE") {
-        if (trig == "Full") return 26671.609707229;
-        else return -999.;
-    } else if (GetEra() == "2023") {
-        if (trig == "Full") return 30000.;
-        else return -999.;
-    }
-    else {
-        cerr << "[Event::GetTriggerLumi] No era " << GetEra() << "for Run3" << endl;
+    if(j_HLT_TriggerMapPtr->find(trig) == j_HLT_TriggerMapPtr->end()) {
+        cerr << "[Event::GetTriggerLumi] Trigger " << trig << " not found" << endl;
         return -999.;
     }
+    return (j_HLT_TriggerMapPtr->at(trig)).second;
+    // I put full trigger luminosity in HLT_Path.json
+    // If you are using prescaled one, you have to modify 
 }
 
 bool Event::IsPDForTrigger(TString trig, TString PD) {

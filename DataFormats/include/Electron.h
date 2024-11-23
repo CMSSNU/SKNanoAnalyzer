@@ -24,6 +24,19 @@ public:
         else if (fabs(scEta()) < 1.566) return ETAREGION::GAP;
         else return ETAREGION::EC;
     }
+
+    enum class ElectronID {
+        NOCUT,
+        POG_VETO,
+        POG_LOOSE,
+        POG_MEDIUM,
+        POG_TIGHT,
+        POG_HEEP,
+        POG_MVAISO_WP80,
+        POG_MVAISO_WP90,
+        POG_MVANOISO_WP80,
+        POG_MVANOISO_WP90,
+    };
     
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
     inline bool ConvVeto() const { return j_convVeto; }
@@ -95,6 +108,7 @@ public:
 
     // ID helper functions
     bool PassID(const TString ID) const;
+    bool PassID(ElectronID ID) const;
 
 private:
     // uncertainties

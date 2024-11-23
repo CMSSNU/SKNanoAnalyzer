@@ -62,7 +62,6 @@ public:
 
 private:
     float j_scEta;
-    float j_energyRaw;
     float j_sieie;
     float j_hoe;
     unsigned char j_cutBased;
@@ -70,6 +69,7 @@ private:
     bool j_mvaID_WP90;
     float j_mvaID;
     float j_energy;
+    float j_energyRaw;
     float j_pixelSeed;
     bool j_isScEtaEB;
     bool j_isScEtaEE;

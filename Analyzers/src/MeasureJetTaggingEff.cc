@@ -23,7 +23,7 @@ void MeasureJetTaggingEff::initializeAnalyzer()
     fChain->SetBranchStatus("PV_*", 1);
     fChain->SetBranchStatus("genWeight", 1);
 
-    mcCorr = new MCCorrection(DataEra);
+    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
     TString datapath = getenv("DATA_DIR");
     TString btagpath = datapath + "/" + DataEra + "/BTag/";
 
@@ -74,7 +74,7 @@ void MeasureJetTaggingEff::executeEvent()
     float weight = 1.;
     float w_Gen = MCweight();
     float w_Norm = ev.GetTriggerLumi("Full");
-    float w_PU = mcCorr->GetPUWeight(ev.nTrueInt(), "nominal"); 
+    float w_PU = myCorr->GetPUWeight(ev.nTrueInt()); 
     weight *= w_Gen * w_Norm * w_PU;
     // tagging performance depends on PU, so it is better reweight to proper PU profile
 
@@ -100,15 +100,15 @@ void MeasureJetTaggingEff::executeEvent()
             JetTagging::JetFlavTagger this_tagger = Taggers.at(i_tag);
             for(unsigned int i_wp=0; i_wp < WPs.size(); i_wp++){
                 JetTagging::JetFlavTaggerWP this_wp = WPs.at(i_wp);
-                mcCorr->SetTaggingParam(this_tagger, this_wp);
-                float this_bTaggingCut = mcCorr->GetBTaggingWP();
+                myCorr->SetTaggingParam(this_tagger, this_wp);
+                float this_bTaggingCut = myCorr->GetBTaggingWP();
                 if (jets.at(ij).GetBTaggerResult(this_tagger) > this_bTaggingCut)
                     FillHist(string("tagging#b") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
                 //No XT and XXT for c-tagging
                 if(this_wp == JetTagging::JetFlavTaggerWP::VeryTight) continue;
                 if(this_wp == JetTagging::JetFlavTaggerWP::SuperTight) continue;
-                float this_CvBCut = mcCorr->GetCTaggingWP().first;
-                float this_CvLCut = mcCorr->GetCTaggingWP().second;
+                float this_CvBCut = myCorr->GetCTaggingWP().first;
+                float this_CvLCut = myCorr->GetCTaggingWP().second;
                 if (jets.at(ij).GetCTaggerResult(this_tagger).first > this_CvBCut && jets.at(ij).GetCTaggerResult(this_tagger).second > this_CvLCut)
                     FillHist(string("tagging#c") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
             }

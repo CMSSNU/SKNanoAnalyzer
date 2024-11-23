@@ -20,9 +20,9 @@ public:
     inline float nTrueInt() const { return j_nTrueInt; }
     void SetnPVsGood(int nPVsGood) { j_nPVsGood = nPVsGood;}
     inline int nPVsGood() const { return j_nPVsGood; }
-    const void SetTrigger(const std::map<TString, Bool_t *>& TriggerMap);
+    const void SetTrigger(const std::map<TString, pair<Bool_t *, float>>& TriggerMap);
     void setRho(float rho) { j_fixedGridRhoFastjetAll = rho; }
-    inline float getRho() const { return j_fixedGridRhoFastjetAll; }
+    inline float GetRho() const { return j_fixedGridRhoFastjetAll; }
     //void SetTrigger(RVec<TString> HLT_TriggerName) { j_HLT_TriggerName = HLT_TriggerName; }
     //void SetTrigger(TString HLT_TriggerName) { j_HLT_TriggerName = {HLT_TriggerName}; }
 
@@ -42,7 +42,7 @@ public:
     int GetYear() const { return j_DataYear; }
 
 private:
-    const std::map<TString, Bool_t*>* j_HLT_TriggerMapPtr;
+    const std::map<TString, pair<Bool_t*, float>>* j_HLT_TriggerMapPtr;
     int j_nPV;
     int j_nPVsGood;
     float j_nTrueInt;

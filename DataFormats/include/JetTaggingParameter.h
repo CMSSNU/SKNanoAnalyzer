@@ -24,6 +24,32 @@ namespace JetTagging
         VeryTight,
         SuperTight
     };
+    enum class JetTaggingSFMethod
+    {
+        comb,
+        mujets,
+        shape,
+        wp
+    };
+    //string version of JetTaggingSFMethod
+    inline TString GetJetTaggingSFMethodStr(JetTaggingSFMethod method)
+    {
+        switch (method)
+        {
+        case JetTaggingSFMethod::comb:
+            return "comb";
+        case JetTaggingSFMethod::mujets:
+            return "mujets";
+        case JetTaggingSFMethod::shape:
+            return "shape";
+        case JetTaggingSFMethod::wp:
+            return "wp";
+        default:
+            cerr << "[JetTagging::GetJetTaggingSFMethodStr] No such method" << endl;
+            exit(ENODATA);
+        }
+    };
+
     inline TString GetTaggerCorrectionLibStr(JetFlavTagger tagger)
     {
         switch (tagger)

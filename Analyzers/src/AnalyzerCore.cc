@@ -10,7 +10,7 @@ AnalyzerCore::~AnalyzerCore() {
     for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
     for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
     if (outfile) delete outfile;
-    if (mcCorr) delete mcCorr;
+    if (myCorr) delete myCorr;
     // if (pdfReweight) delete pdfReweight;
 }
 
@@ -19,9 +19,9 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
     MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
     //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
     if(!MetFilter) return false;
-
+    if(Run == 2) return MetFilter;
     // Temporarily remove the ecalBadCalibFilter, Instead,
-    if(!(Run <= 367144 && Run >= 362433)) return MetFilter;
+    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
     if (ev.GetMETVector().Pt() <= 100.) return MetFilter;
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
@@ -35,20 +35,73 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
     return true;
 }
 
-float AnalyzerCore::GetScaleVariation(const int &muF_syst, const int &muR_syst) {
-    if(muF_syst == -1 && muR_syst == -1) return LHEScaleWeight[0];
-    else if(muF_syst == 0 && muR_syst == -1) return LHEScaleWeight[1];
-    else if(muF_syst == 1 && muR_syst == -1) return LHEScaleWeight[2];
-    else if(muF_syst == -1 && muR_syst == 0) return LHEScaleWeight[3];
-    else if(muF_syst == 1 && muR_syst == 0) return LHEScaleWeight[4];
-    else if(muF_syst == -1 && muR_syst == 1) return LHEScaleWeight[5];
-    else if(muF_syst == 0 && muR_syst == 1) return LHEScaleWeight[6];
-    else if(muF_syst == 1 && muR_syst == 1) return LHEScaleWeight[7];
-    else if(muF_syst == 0 && muR_syst == 0) return 1.;
+float AnalyzerCore::GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst) {
+    if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::down) return LHEScaleWeight[0];
+    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::down) return LHEScaleWeight[1];
+    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::down) return LHEScaleWeight[2];
+    else if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::nom) return LHEScaleWeight[3];
+    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::nom) return LHEScaleWeight[4];
+    else if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::up) return LHEScaleWeight[5];
+    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::up) return LHEScaleWeight[6];
+    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::up) return LHEScaleWeight[7];
+    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::nom) return 1.f;
     else{
-        cout << "[AnalyzerCore::GetScaleVariation] muF_syst = " << muF_syst << " and muR_syst = " << muR_syst << " is not implemented" << endl;
+        cout << "[AnalyzerCore::GetScaleVariation] muF_syst = " << int(muF_syst) << " and muR_syst = " << int(muR_syst) << " is not implemented" << endl;
         exit(ENODATA);
     }
+}
+
+float AnalyzerCore::GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst){
+    //[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;
+    if(ISR_syst == Correction::variation::up && FSR_syst == Correction::variation::nom) return PSWeight[0];
+    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::up) return PSWeight[1];
+    else if(ISR_syst == Correction::variation::down && FSR_syst == Correction::variation::nom) return PSWeight[2];
+    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::down) return PSWeight[3];
+    else{
+        cout << "[AnalyzerCore::GetPSWeight] ISR_syst = " << int(ISR_syst) << " and FSR_syst = " << int(FSR_syst) << " is not implemented" << endl;
+        exit(ENODATA);
+    }
+}
+
+float AnalyzerCore::GetHT(const RVec<Jet> &jets){
+    float HT = 0.;
+    for(const auto &jet: jets){
+        HT += jet.Pt();
+    }
+    return HT;
+}
+
+void AnalyzerCore::METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects){
+   Particle Typle1Correction;
+   Typle1Correction.SetPtEtaPhiM(0., 0., 0., 0.);
+   for(const auto &obj: original_objects){
+       Typle1Correction += obj;
+   }
+   for(const auto &obj: corrected_objects){
+       Typle1Correction -= obj;
+   }
+    MET += Typle1Correction;
+}
+
+float AnalyzerCore::GetL1PrefireWeight(Correction::variation syst){
+    if(Run == 3) return 1.;
+    if (IsDATA)
+        return 1.;
+    float weight = 1.;
+    switch(syst){
+        case Correction::variation::nom:
+            weight = L1PreFiringWeight_Nom;
+            break;
+        case Correction::variation::up:
+            weight = L1PreFiringWeight_Up;
+            break;
+        case Correction::variation::down:
+            weight = L1PreFiringWeight_Dn;
+            break;
+        default:
+            exit(ENODATA);
+    }
+    return weight;
 }
 
 unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR, const float pTJerCut){
@@ -60,7 +113,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
         for(size_t j = 0; j < genjets.size(); j++){
             float this_DeltaR = jets[i].DeltaR(genjets[j]);
             float this_pt_diff = fabs(jets[i].Pt() - genjets[j].Pt());
-            float this_jer = mcCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
+            float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
             this_jer *= jets[i].Pt();
             if(jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut*this_jer){
                 possible_matches.emplace_back(i, j, this_DeltaR, this_pt_diff);
@@ -73,12 +126,15 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
         return get<2>(a) < get<2>(b);
     });
     //greeedy matching
+
     RVec<bool> used_jet(jets.size(), false);
     RVec<bool> used_genjet(genjets.size(), false);
     for(const auto &match: possible_matches){
         int jet_idx = get<0>(match);
         int genjet_idx = get<1>(match);
-        if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
+        //if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
+        //temporary modification to consistency with SKFlat
+        if(used_jet[jet_idx]) continue;
         matched_genjet_idx[jet_idx] = genjet_idx;
         used_jet[jet_idx] = true;
         used_genjet[genjet_idx] = true;
@@ -91,26 +147,74 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     return matched_genjet_idx;
 }
 
+unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR)
+{
+    RVec<tuple<size_t, size_t, float>> possible_matches;
+    RVec<bool> used_obj1(objs1.size(), false);
+    RVec<bool> used_obj2(objs2.size(), false);
+    for(size_t i = 0; i < objs1.size(); i++){
+        for(size_t j = 0; j < objs2.size(); j++){
+            float this_dR = objs1[i].DeltaR(objs2[j]);
+            if(this_dR < dR){
+                possible_matches.emplace_back(i, j, this_dR);
+            }
+        }
+    }
+    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<size_t, size_t, float> &a, const tuple<size_t, size_t, float> &b){
+        return get<2>(a) < get<2>(b);
+    });
+    unordered_map<int, int> matched_idx;
+    //print all
+    for(size_t i = 0; i < possible_matches.size(); i++){
+        int obj1_idx = get<0>(possible_matches[i]);
+        int obj2_idx = get<1>(possible_matches[i]);
+        if(used_obj1[obj1_idx] || used_obj2[obj2_idx]) continue;
+        matched_idx[obj1_idx] = obj2_idx;
+        used_obj1[obj1_idx] = true;
+        used_obj2[obj2_idx] = true;
+    }
+
+    for(size_t i = 0; i < objs1.size(); i++){
+        if(used_obj1[i]) continue;
+        matched_idx[i] = -999;
+    }
+
+    return matched_idx;
+}
+
 RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets){
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
     for(size_t i = 0; i < jets.size(); i++){
         Jet this_jet = jets.at(i);
         float this_corr = 1.;
-        float this_jer = mcCorr->GetJER(jets[i].Eta(), jets[i].Pt(), fixedGridRhoFastjetAll);
-        float this_sf = mcCorr->GetJERSF(jets[i].Eta(), jets[i].Pt());
+        float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), fixedGridRhoFastjetAll);
+        float this_sf = myCorr->GetJERSF(jets[i].Eta(), jets[i].Pt());
+        float MIN_JET_ENERGY = 1e-2;
 
         if(matched_idx[i] < 0){
             // if the jet is not matched to any genjet, do stochastic smearing
-            this_corr += (gRandom -> Gaus(0,this_jer))*sqrt(max(this_sf * this_sf - 1., 0.0));
-            this_jet *= this_corr;
-            smeared_jets.push_back(this_jet);
-            continue;
+            if(this_sf < 1.){
+                float this_corr = MIN_JET_ENERGY / this_jet.E();
+                this_jet *= this_corr;
+                smeared_jets.push_back(this_jet);
+                continue;
+            }
+            else{
+                this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
+                float new_corr = MIN_JET_ENERGY / this_jet.E();
+                this_corr = max(this_corr, new_corr);
+                this_jet *= this_corr;
+                smeared_jets.push_back(this_jet);
+                continue;
+            }
         }
         else{
             float this_genjet_pt = genjets[matched_idx[i]].Pt();
             this_corr += (this_sf - 1.) * (1. - this_genjet_pt / jets[i].Pt());
             this_corr = max(this_corr, 0.f);
+            float new_corr = MIN_JET_ENERGY / this_jet.E();
+            this_corr = max(this_corr, new_corr);
             float this_unsmeared_pt = jets[i].Pt();
             this_jet.SetUnsmearedPt(this_unsmeared_pt);
             this_jet *= this_corr;
@@ -120,7 +224,7 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
     return smeared_jets;
 }
 
-RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const int &syst, const TString &source)
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst, const TString &source)
 {
     RVec<Jet> scaled_jets;
     RVec<TString> syst_sources = { "AbsoluteMPFBias",
@@ -151,28 +255,19 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const int &syst, const 
                                    "SinglePionECAL",
                                    "SinglePionHCAL",
                                    "TimePtEta" };
-    switch (syst)
-    {
-    case 0:
-        return jets;
-    case 1:
-        break;
-    case -1:
-        break;
-    default:
-        cout << "[AnalyzerCore::ScaleJets] scale = " << syst << " is not implemented" << endl;
-        exit(ENODATA);
-    }
+                                   
+    if(syst == Correction::variation::up) return jets;
+
     for(const auto &jet: jets){
         Jet this_jet = jet;
         if(source == ""){
             for(const auto &it: syst_sources){
-                this_jet *= mcCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), it, syst);
+                this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), it, syst);
             }
             scaled_jets.push_back(this_jet);
         }
         else{
-            this_jet *= mcCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), source, syst);
+            this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), source, syst);
             scaled_jets.push_back(this_jet);
         }
     }
@@ -230,7 +325,13 @@ Event AnalyzerCore::GetEvent()
     Event ev;
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
-    ev.SetnPVsGood(PV_npvsGood);
+    if(Run == 3){
+        ev.SetnPVsGood(PV_npvsGood);
+    }
+    else if(Run == 2){
+        ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
+    }
+
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
     ev.SetMET(PuppiMET_pt, PuppiMET_phi);
@@ -240,7 +341,7 @@ Event AnalyzerCore::GetEvent()
 
 RVec<Muon> AnalyzerCore::GetAllMuons() {
     RVec<Muon> muons;
-    for (int i = 0; i < nMuon; i++) {
+    for (int i = 0; i < *(nMuon); i++) {
         Muon muon;
         muon.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
         muon.SetCharge(Muon_charge[i]);
@@ -261,7 +362,12 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetWIDBit(Muon::WorkingPointID::HIGHPT, Muon_highPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::MINIISO, Muon_miniIsoId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
-        muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuId[i]);
+        if(Run == 3){
+            muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
+        }
+        else if(Run == 2){
+            muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaId[i]);
+        }
         //muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PFISO, Muon_pfIsoId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PUPPIISO, Muon_puppiIsoId[i]);
@@ -321,9 +427,26 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, 
     return selected_muons;
 }
 
+RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID ID, const float ptmin, const float fetamax)
+{
+    RVec<Muon> selected_muons;
+
+    for (const auto &muon : muons)
+    {
+        if (!(muon.Pt() > ptmin))
+            continue;
+        if (!(fabs(muon.Eta()) < fetamax))
+            continue;
+        if (!muon.PassID(ID))
+            continue;
+        selected_muons.push_back(muon);
+    }
+    return selected_muons;
+}
+
 RVec<Electron> AnalyzerCore::GetAllElectrons(){
     RVec<Electron> electrons;
-    for (int i = 0; i < nElectron; i++){
+    for (int i = 0; i < *(nElectron); i++){
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
@@ -345,12 +468,16 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
         electron.SetDr03TkSumPt(Electron_dr03TkSumPt[i]);
         electron.SetDr03TkSumPtHEEP(Electron_dr03TkSumPtHEEP[i]);
         electron.SetR9(Electron_r9[i]);
+        if(Run == 3){
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+
+        }
         electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
         electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
         electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
         electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
         electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
-        electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+        
         electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
@@ -386,20 +513,42 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
     return selected_electrons;
 }
 
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax)
+{
+    RVec<Electron> selected_electrons;
+    for (const auto &electron : electrons)
+    {
+        if (!(electron.Pt() > ptmin))
+            continue;
+        if (!(fabs(electron.Eta()) < fetamax))
+            continue;
+        if (!electron.PassID(ID))
+            continue;
+        selected_electrons.push_back(electron);
+    }
+    return selected_electrons;
+}
+
 RVec<Gen> AnalyzerCore::GetAllGens(){
 
     RVec<Gen> Gens;
     if(IsDATA) return Gens;
 
-    for (int i = 0; i < nGenPart; i++){
+    for (int i = 0; i < *(nGenPart); i++){
 
         Gen gen;
 
         gen.SetIsEmpty(false);
         gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
         gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
-        gen.SetMother(GenPart_genPartIdxMother[i]);
-        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
+        if(Run == 3){
+            gen.SetMother(GenPart_genPartIdxMother[i]);
+            gen.SetGenStatusFlags(GenPart_statusFlags[i]);
+        }
+        else if(Run == 2){
+            gen.SetMother(static_cast<short>(GenPart_genPartIdxMother_RunII[i]));
+            gen.SetGenStatusFlags(static_cast<unsigned short>(GenPart_statusFlags_RunII[i])); 
+        }
 
         Gens.push_back(gen);
     }
@@ -409,7 +558,7 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
 
 RVec<LHE> AnalyzerCore::GetAllLHEs() {
     RVec<LHE> lhes;
-    for (int i = 0; i < nLHEPart; i++) {
+    for (int i = 0; i < *(nLHEPart); i++) {
         LHE lhe;
         lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
         lhe.SetStatus(LHEPart_status[i]);
@@ -425,19 +574,29 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
 
     RVec<Tau> taus;
     
-    for (int i = 0; i < nTau; i++) {
+    for (int i = 0; i < *(nTau); i++) {
 
         Tau tau;
         tau.SetPtEtaPhiM(Tau_pt[i], Tau_eta[i], Tau_phi[i], Tau_mass[i]);
-        tau.SetCharge(Tau_charge[i]);
-        tau.SetDecayMode(Tau_decayMode[i]);
         tau.SetdXY(Tau_dxy[i]);
         tau.SetdZ(Tau_dz[i]);
         tau.SetGenPartFlav(Tau_genPartFlav[i]);
-        tau.SetGenPartIdx(Tau_genPartIdx[i]);
-        tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
-        tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
-        tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
+        if(Run == 3){
+            tau.SetCharge(Tau_charge[i]);
+            tau.SetDecayMode(Tau_decayMode[i]);
+            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
+            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
+            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
+            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx[i]);
+        }
+        else if(Run == 2){
+            tau.SetCharge(Tau_charge_RunII[i]);
+            tau.SetDecayMode(Tau_decayMode_RunII[i]);
+            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2017v2p1VSjet[i]);
+            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2017v2p1VSmu[i]);
+            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2017v2p1VSe[i]);
+            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx_RunII[i]);
+        }
         tau.SetIdDecayModeNewDMs(Tau_idDecayModeNewDMs[i]);
         taus.push_back(tau);
 
@@ -466,29 +625,68 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
-    for (int i = 0; i < nJet; i++)
+    for (int i = 0; i < *(nJet); i++)
     {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
         if(!IsDATA){
+            if(Run == 3)
             jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
+            else if(Run == 2)
+            jet.SetJetFlavours(static_cast<short>(Jet_partonFlavour_RunII[i]) , static_cast<unsigned char>(Jet_hadronFlavour_RunII[i]));
         }
-        RVec<float> tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
+        RVec<float> tvs;
+        RVec<float> tvs2;
+        if(Run == 3){
+            tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
                            Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
                            Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
+            jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
+            if(!IsDATA){
+                jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
+            }
+            else{
+                jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
+            }
+            jet.SetJetID(Jet_jetId[i]);
+            jet.SetJetPuID(0b111);
+            tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
+        }
+        //for Run 2 DeepJet is only option
+        else if(Run == 2){
+            tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
+                   -999., -999., -999., -999.,
+                   -999., -999., -999., -999., -999.};
+            jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons_RunII[i], Jet_nMuons_RunII[i], 0);
+            if(!IsDATA){
+                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9, Jet_genJetIdx_RunII[i]);
+            }
+            else{
+                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
+            }
+            jet.SetJetID(Jet_jetId_RunII[i]);
+            if (DataYear == 2016)
+            {
+                // due to the bug in the NanoAODv9, the puId is stored in a wrong way
+                int InterChanged = 0;
+                InterChanged = Jet_puId[i] >> 2 | ((Jet_puId[i] & 0b001) << 2) | (Jet_puId[i] & 0b010);
+                jet.SetJetPuID(InterChanged);
+            }
+            else
+            {
+                jet.SetJetPuID(Jet_puId[i]);
+            }
+            tvs2 = {-999.0, -999.0, -999.0, -999.0, Jet_rawFactor[i], Jet_bRegCorr[i], Jet_bRegRes[i], Jet_cRegCorr[i], Jet_cRegRes[i]};
+
+        }
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
-        jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
-        if(!IsDATA){
-            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
-        }
-        else{
-            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
-        }
-        jet.SetJetID(Jet_jetId[i]);
-        RVec<float> tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i]};
         jet.SetCorrections(tvs2);
+
+        
+        
+        
 
         Jets.push_back(jet);
     }
@@ -498,7 +696,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
 
 RVec<Photon> AnalyzerCore::GetAllPhotons() {
     RVec<Photon> Photons;
-    for (int i = 0; i< nPhoton; i++) {
+    for (int i = 0; i< *(nPhoton); i++) {
         Photon photon;
         photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
         float photon_theta = photon.Theta();
@@ -507,7 +705,9 @@ RVec<Photon> AnalyzerCore::GetAllPhotons() {
         photon.SetEnergy(photon_E);
         photon.SetSigmaIetaIeta(Photon_sieie[i]);
         photon.SetHoe(Photon_hoe[i]);
-        photon.SetEnergyRaw(Photon_energyRaw[i]);
+        if(Run == 3){
+            photon.SetEnergyRaw(Photon_energyRaw[i]);
+        }
         photon.SetPixelSeed(Photon_pixelSeed[i]);
         photon.SetisScEtaEB(Photon_isScEtaEB[i]);
         photon.SetisScEtaEE(Photon_isScEtaEE[i]);
@@ -516,8 +716,12 @@ RVec<Photon> AnalyzerCore::GetAllPhotons() {
         photon.SetSCEta(Photon_eta[i], Photon_phi[i], 0, 0, 0, false, false); 
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP80, Photon_mvaID_WP80[i]);
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP90, Photon_mvaID_WP90[i]);
-        photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
-        photon.SetMVA(Photon::MVATYPE::MVAID, Photon_mvaID[i]);
+        if(Run == 3){
+            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
+        }
+        else if(Run == 2){
+            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased_RunII[i]);
+        }
 
 
         Photons.push_back(photon);
@@ -566,6 +770,22 @@ RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, cons
     return selected_jets;
 }
 
+RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const Jet::JetID ID, const float ptmin, const float fetamax)
+{
+    RVec<Jet> selected_jets;
+    for (const auto &jet : jets)
+    {
+        if (jet.Pt() < ptmin)
+            continue;
+        if (fabs(jet.Eta()) > fetamax)
+            continue;
+        if (!jet.PassID(ID))
+            continue;
+        selected_jets.push_back(jet);
+    }
+    return selected_jets;
+}
+
 RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR){
     RVec<Jet> selected_jets;
     for(const auto &jet: jets){
@@ -590,7 +810,8 @@ RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<E
 }
 
 bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory){
-    RVec<Jet> this_jet = SelectJets(AllJets, "tight", 15., 5.0);
+    RVec<Jet> this_jet = SelectJets(AllJets, Jet::JetID::TIGHT, 15., 5.0);
+    this_jet = SelectJets(AllJets, Jet::JetID::PUID_TIGHT, 15., 5.0);
     RVec<Jet> selected_jets;
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
@@ -598,7 +819,7 @@ bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &Al
         if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
     }
     for(const auto &jet: selected_jets){
-        if(mcCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;
+        if(myCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;
     }
     return true;
 }
@@ -607,27 +828,46 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
     
     RVec<FatJet> FatJets;
 
-    for (int i = 0; i < nFatJet; i++) {
+    for (int i = 0; i < *(nFatJet); i++) {
 
         FatJet fatjet;
 
-        RVec<float> pnet_m = { FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
-                                      FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i], 
-                                      FatJet_particleNetWithMass_TvsQCD[i]  , FatJet_particleNetWithMass_WvsQCD[i],
-                                      FatJet_particleNetWithMass_ZvsQCD[i] };
+        RVec<float> pnet_m;
+        RVec<float> pnet;
 
-        RVec<float> pnet   = { FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
-                                      FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
-                                      FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
-                                      FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
-                                      FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i],
-                                      FatJet_particleNet_XttVsQCD[i], FatJet_particleNet_massCorr[i] };
+        if(Run == 3){
+            pnet_m = {FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
+               FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i],
+               FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i],
+               FatJet_particleNetWithMass_ZvsQCD[i]};
+
+            pnet = {FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
+                    FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
+                    FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
+                    FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
+                    FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i],
+                    FatJet_particleNet_XttVsQCD[i], FatJet_particleNet_massCorr[i]};
+
+            fatjet.SetJetID(FatJet_jetId[i]);
+            if(!IsDATA) fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
+        }
+        else if(Run == 2){
+            pnet_m = {FatJet_particleNet_H4qvsQCD[i], FatJet_particleNet_HccvsQCD[i],
+               FatJet_particleNet_HbbvsQCD[i], FatJet_particleNet_QCD[i],
+               FatJet_particleNet_TvsQCD[i], FatJet_particleNet_WvsQCD[i],
+               FatJet_particleNet_ZvsQCD[i]};
+            
+            pnet = {FatJet_particleNetMD_QCD[i], -999., -999., -999.,
+                    FatJet_particleNetMD_Xbb[i], FatJet_particleNetMD_Xcc[i],
+                    FatJet_particleNetMD_Xqq[i], -999., -999., -999., -999., -999.};
+            fatjet.SetJetID(static_cast<unsigned char>(FatJet_jetId_RunII[i]));
+            if(!IsDATA) fatjet.SetGenMatchIDs(static_cast<short>(FatJet_genJetAK8Idx_RunII[i]), static_cast<short>(FatJet_subJetIdx1_RunII[i]), static_cast<short>(FatJet_subJetIdx2_RunII[i]));
+        }
 
         fatjet.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
         fatjet.SetArea(FatJet_area[i]);
         fatjet.SetSDMass(FatJet_msoftdrop[i]);
         fatjet.SetLSF3(FatJet_lsf3[i]);
-        fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
         fatjet.SetConstituents(FatJet_nBHadrons[i], FatJet_nCHadrons[i], FatJet_nConstituents[i]);
         fatjet.SetBTaggingInfo(FatJet_btagDDBvLV2[i], FatJet_btagDDCvBV2[i], FatJet_btagDDCvLV2[i], FatJet_btagDeepB[i], FatJet_btagHbb[i]);
         fatjet.SetPNetwithMassResults(pnet_m);
@@ -645,12 +885,15 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     RVec<GenJet> GenJets;
     if(IsDATA) return GenJets;
 
-    for (int i = 0; i < nGenJet; i++) {
+    for (int i = 0; i < *(nGenJet); i++) {
 
         GenJet genjet;
 
         genjet.SetPtEtaPhiM(GenJet_pt[i], GenJet_eta[i], GenJet_phi[i], GenJet_mass[i]);
+        if(Run == 3)
         genjet.SetGenFlavours(GenJet_partonFlavour[i], GenJet_hadronFlavour[i]);
+        else if(Run == 2)
+        genjet.SetGenFlavours(static_cast<short>(GenJet_partonFlavour_RunII[i]), GenJet_hadronFlavour[i]); 
         GenJets.push_back(genjet);
     }
 
@@ -827,6 +1070,9 @@ void AnalyzerCore::FillTrees(){
         this_floats.clear();
         this_ints.clear();
         this_bools.clear();
+        this_floats.shrink_to_fit();
+        this_ints.shrink_to_fit();
+        this_bools.shrink_to_fit(); //Mandatory;
     }
 }
 void AnalyzerCore::WriteHist() {
