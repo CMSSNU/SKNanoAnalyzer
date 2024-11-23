@@ -1,0 +1,22 @@
+{
+    "suffix": "SingleLep",
+    "PD": "EGamma",
+    "isMC": 0,
+    "name": "Skim_SingleLep_EGamma",
+    "path": [
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_0.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_1.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_2.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_3.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_4.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_5.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_6.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_7.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_8.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_9.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_10.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_11.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_12.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/2022/DATA/Skim/Skim_SingleLep_EGamma/PeriodB/tree_13.root"
+    ]
+}

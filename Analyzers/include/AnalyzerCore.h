@@ -32,7 +32,7 @@
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
-#include "MCCorrection.h"
+#include "Correction.h"
 #include "JetTaggingParameter.h"
 
 class AnalyzerCore: public SKNanoLoader {
@@ -55,8 +55,8 @@ public:
     float GetPDFWeight(LHAPDF::PDF *pdf_);
     float GetPDFReweight();
     float GetPDFReweight(int member);    
-    // MCCorrection
-    MCCorrection *mcCorr;
+    // Correction
+    Correction *myCorr;
     //unique_ptr<CorrectionSet> csetMuon;
     //unique_ptr<CorrectionSet> csetElectron;;
 
@@ -81,20 +81,34 @@ public:
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
+    RVec<Muon> SelectMuons(const RVec<Muon> &muons, Muon::MuonID ID, const float ptmin, const float absetamax);
     RVec<Jet> SelectJets(const RVec<Jet> &jets, const TString id, const float ptmin, const float fetamax);
-    RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.4);
+    RVec<Jet> SelectJets(const RVec<Jet> &jets, const Jet::JetID, const float ptmin, const float fetamax);
+    RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.3);
     RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax);
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
     // Functions
-    float GetScaleVariation(const int &muF_syst, const int &muR_syst);
-    inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetBTaggingWP(tagger, wp); }
-    inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return mcCorr->GetCTaggingWP(tagger, wp); }
-    inline float GetBTaggingWP(){ return mcCorr->GetBTaggingWP(); }
-    inline pair<float, float> GetCTaggingWP(){ return mcCorr->GetCTaggingWP(); }
+    float GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst);
+    float GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst);
+    inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetBTaggingWP(tagger, wp); }
+    inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetCTaggingWP(tagger, wp); }
+    inline float GetBTaggingWP(){ return myCorr->GetBTaggingWP(); }
+    inline pair<float, float> GetCTaggingWP(){ return myCorr->GetCTaggingWP(); }
 
+    float GetHT(const RVec<Jet> &jets);
+
+    void METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects);
+
+    float GetL1PrefireWeight(Correction::variation syst = Correction::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
+    unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
+    RVec<Muon> SmearMuons(const RVec<Muon> &muons);
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons);
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst);
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst);
     RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets);
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const int &syst, const TString &source = "");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst, const TString &source = "");
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
@@ -118,14 +132,22 @@ public:
                                           int n_binx, float *xbins,
                                           int n_biny, float *ybins,
                                           int n_binz, float *zbins);
+    inline void FillHist(const TString &histname, float value, float weight, const vector<float> &xbins) { FillHist(histname, value, weight, xbins.size()-1, const_cast<float*>(xbins.data())); } 
+    inline void FillHist(const TString &histname, float value_x, float value_y, float weight, const vector<float> &xbins, const vector<float> &ybins) {FillHist(histname, value_x, value_y, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data())); }
+    inline void FillHist(const TString &histname, float value_x, float value_y, float value_z, float weight, const vector<float> &xbins, const vector<float> &ybins, const vector<float> &zbins) {FillHist(histname, value_x, value_y, value_z, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data()), zbins.size() - 1, const_cast<float *>(zbins.data())); }
+
 
     TTree* NewTree(const TString &treename, const RVec<TString> &keeps = {}, const RVec<TString> &drops = {});
     TTree* GetTree(const TString &treename);
     inline void SetBranch(const TString &treename, const TString &branchname, float val) { this_floats.push_back(val); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, double val) { this_floats.push_back(float(val)); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, int val) { this_ints.push_back(val); SetBranch(treename, branchname, (void*)(&this_ints.back()), branchname + "/I"); };
-    inline void SetBranch(const TString &treename, const TString &branchname, bool val) { SetBranch(treename, branchname, (void*)(&this_bools.back()), branchname + "/O"); };
-    
+    inline void SetBranch(const TString &treename, const TString &branchname, bool val)
+    {
+        this_bools.emplace_back(val);
+        SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O");
+    }
+
     void FillTrees();
     virtual void WriteHist();
 
