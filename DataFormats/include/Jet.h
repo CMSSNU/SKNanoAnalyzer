@@ -9,6 +9,17 @@ class Jet : public Particle
 public:
   Jet();
   ~Jet();
+
+  enum class JetID
+  {
+    NOCUT,
+    LOOSE,
+    TIGHT,
+    TIGHTLEPVETO,
+    PUID_LOOSE,
+    PUID_MEDIUM,
+    PUID_TIGHT,
+  };
   // setting functions
   inline void SetArea(double area) { j_area = area; };
   inline void SetJetFlavours(short pf, unsigned char hf)
@@ -19,21 +30,19 @@ public:
 
   inline void SetTaggerResults(RVec<float> ds)
   {
-    //TODO: It is weird but it seems some scores are saved in negative values. so I truncate them to 0. We need to check the reason.
-    //truncate to 0 if negative or larger than 1
-    j_btagDeepFlavB = std::clamp(ds[0], 0.0f, 1.0f);
-    j_btagDeepFlavCvB = std::clamp(ds[1], 0.0f, 1.0f);
-    j_btagDeepFlavCvL = std::clamp(ds[2], 0.0f, 1.0f);
-    j_btagDeepFlavQG = std::clamp(ds[3], 0.0f, 1.0f);
-    j_btagPNetB = std::clamp(ds[4], 0.0f, 1.0f);
-    j_btagPNetCvB = std::clamp(ds[5], 0.0f, 1.0f);
-    j_btagPNetCvL = std::clamp(ds[6], 0.0f, 1.0f);
-    j_btagPNetQvG = std::clamp(ds[7], 0.0f, 1.0f);
-    j_btagPNetTauVJet = std::clamp(ds[8], 0.0f, 1.0f);
-    j_btagRobustParTAK4B = std::clamp(ds[9], 0.0f, 1.0f);
-    j_btagRobustParTAK4CvB = std::clamp(ds[10], 0.0f, 1.0f);
-    j_btagRobustParTAK4CvL = std::clamp(ds[11], 0.0f, 1.0f);
-    j_btagRobustParTAK4QG = std::clamp(ds[12], 0.0f, 1.0f);
+    j_btagDeepFlavB = ds[0];
+    j_btagDeepFlavCvB = ds[1];
+    j_btagDeepFlavCvL = ds[2];
+    j_btagDeepFlavQG = ds[3];
+    j_btagPNetB = ds[4];
+    j_btagPNetCvB = ds[5];
+    j_btagPNetCvL = ds[6];
+    j_btagPNetQvG = ds[7];
+    j_btagPNetTauVJet = ds[8];
+    j_btagRobustParTAK4B = ds[9];
+    j_btagRobustParTAK4CvB = ds[10];
+    j_btagRobustParTAK4CvL = ds[11];
+    j_btagRobustParTAK4QG = ds[12];
   };
   inline void SetEnergyFractions(float cH, float nH, float nEM, float cEM, float muE)
   {
@@ -80,13 +89,22 @@ public:
     j_tightJetID = (b & 2);
     j_tightLepVetoJetID = (b & 4);
   };
-
+  inline void SetJetPuID(int puIDBit)
+  {
+    j_loosePuId = (puIDBit & 1);
+    j_mediumPuId = (puIDBit & 2);
+    j_tightPuId = (puIDBit & 4);
+  };
   inline void SetCorrections(RVec<float> corrs)
   {
     j_PNetRegPtRawCorr = corrs[0];
     j_PNetRegPtRawCorrNeutrino = corrs[1];
     j_PNetRegPtRawRes = corrs[2];
     j_rawFactor = corrs[3];
+    j_bRegCorr = corrs[4];
+    j_bRegRes = corrs[5];
+    j_cRegCorr = corrs[6];
+    j_cRegRes = corrs[7];
   };
 
   inline void SetM(double jet_m)
@@ -109,20 +127,30 @@ public:
   inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
   float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
   pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
+  float GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const;
   float unsmearedPt() const;
 
 
   bool PassID(TString ID) const;
+  bool PassID(JetID id) const; 
 private:
   // jetID
   bool j_looseJetId;
   bool j_tightJetID;
   bool j_tightLepVetoJetID;
+  // jetPuID
+  bool j_loosePuId;
+  bool j_mediumPuId;
+  bool j_tightPuId;
   // corrections
   float j_PNetRegPtRawCorr;
   float j_PNetRegPtRawCorrNeutrino;
   float j_PNetRegPtRawRes;
   float j_rawFactor;
+  float j_bRegCorr;
+  float j_bRegRes;
+  float j_cRegCorr;
+  float j_cRegRes;
   // flav. tagging scores
   float j_btagDeepFlavB;
   float j_btagDeepFlavCvB;

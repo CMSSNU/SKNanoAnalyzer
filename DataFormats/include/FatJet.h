@@ -10,6 +10,13 @@ public:
     FatJet();
     ~FatJet();
 
+    inline void SetJetID(unsigned char b)
+    {
+        // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
+        j_looseJetId = (b & 1);
+        j_tightJetID = (b & 2);
+        j_tightLepVetoJetID = (b & 4);
+    };
     void SetArea(float area) { j_area = area; };
     inline float Area() const { return j_area; };
 
@@ -80,7 +87,9 @@ public:
     // TODO  double GetTaggerResult(JetTagging::Tagger tg) const;
 
 private:
-
+    bool j_looseJetId;
+    bool j_tightJetID;
+    bool j_tightLepVetoJetID;
     float j_msoftdrop;
     float j_area;
     float j_lsf3;

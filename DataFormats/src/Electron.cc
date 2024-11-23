@@ -87,6 +87,21 @@ bool Electron::PassID(const TString ID) const {
     return false;
 }
 
+bool Electron::PassID(ElectronID ID) const {
+    switch (ID) {
+        case ElectronID::POG_VETO:         return PassID("POGVeto");
+        case ElectronID::POG_LOOSE:        return PassID("POGLoose");
+        case ElectronID::POG_MEDIUM:       return PassID("POGMedium");
+        case ElectronID::POG_TIGHT:        return PassID("POGTight");
+        case ElectronID::POG_HEEP:         return PassID("POGHEEP");
+        case ElectronID::POG_MVAISO_WP80:      return PassID("POGMVAIsoWP80");
+        case ElectronID::POG_MVAISO_WP90:      return PassID("POGMVAIsoWP90");
+        case ElectronID::POG_MVANOISO_WP80:    return PassID("POGMVANoIsoWP80");
+        case ElectronID::POG_MVANOISO_WP90:    return PassID("POGMVANoIsoWP90");
+        default: break;
+    }
+return false;
+}
 
 
 

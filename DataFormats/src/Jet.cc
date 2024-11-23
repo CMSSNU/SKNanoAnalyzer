@@ -13,6 +13,10 @@ Jet::Jet() : Particle() {
   j_PNetRegPtRawCorrNeutrino = -999.0;
   j_PNetRegPtRawRes = -999.0;
   j_rawFactor = -999.0;
+  j_bRegCorr = -999.0;
+  j_bRegRes = -999.0;
+  j_cRegCorr = -999.0;
+  j_cRegRes = -999.0;
 
   // Flavour Tagging Scores
   j_btagDeepFlavB = -999.0;
@@ -75,12 +79,41 @@ bool Jet::PassID(TString ID) const {
     return j_tightJetID;
   else if (ID == "tightLepVeto")
     return j_tightLepVetoJetID;
-  else if (ID == "NOCUT")
+  else if (ID == "loosePuId")
+    return j_loosePuId;
+  else if (ID == "mediumPuId")
+    return j_mediumPuId;
+  else if (ID == "tightPuId")
+    return j_tightPuId;
+  else if (ID == "NOCUT") 
     return true;
   else
     cout << "[Jet::PassID] No id : " << ID << endl;
 
   exit(ENODATA);
+
+  return false;
+}
+
+bool Jet::PassID(JetID id) const {
+  switch(id){
+    case JetID::LOOSE:
+      return j_looseJetId;
+    case JetID::TIGHT:
+      return j_tightJetID;
+    case JetID::TIGHTLEPVETO:
+      return j_tightLepVetoJetID;
+    case JetID::PUID_LOOSE:
+      return j_loosePuId;
+    case JetID::PUID_MEDIUM:
+      return j_mediumPuId;
+    case JetID::PUID_TIGHT:
+      return j_tightPuId;
+    case JetID::NOCUT:
+      return true;
+    default:
+      break;
+  }
 
   return false;
 }
@@ -109,6 +142,19 @@ pair<float,float> Jet::GetCTaggerResult(JetTagging::JetFlavTagger tagger) const{
     cout << "[Jet::GetCTaggerResult] No tagger" << endl;
     exit(ENODATA);
   return make_pair(-999.0,-999.0);
+}
+
+float Jet::GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const{
+  if(tagger == JetTagging::JetFlavTagger::DeepJet)
+    return j_btagDeepFlavQG;
+  else if(tagger == JetTagging::JetFlavTagger::ParticleNet)
+    return j_btagPNetQvG;
+  else if(tagger == JetTagging::JetFlavTagger::ParT)
+    return j_btagRobustParTAK4QG;
+  else
+    cout << "[Jet::GetQvGTaggerResult] No tagger" << endl;
+    exit(ENODATA);
+  return -999.0;
 }
 
 float Jet::unsmearedPt() const{
