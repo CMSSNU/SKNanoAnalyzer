@@ -10,6 +10,7 @@ set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE_DIR})
 set(LHAPDF_LIBRARY $ENV{LHAPDF_LIB_DIR}/libLHAPDF.${LIB_EXT})
 set(CORRECTION_INCLUDE_DIR $ENV{CORRECTION_INCLUDE_DIR})
 set(CORRECTION_LIBRARY $ENV{CORRECTION_LIB_DIR}/libcorrectionlib.${LIB_EXT})
+set(ONNXRUNTIME_LIBRARY $ENV{ONNXRUNTIME_LIB_DIR}/libonnxruntime.${LIB_EXT})
 
 # include ROOT, LHAPDF, and correctionlib
 include_directories(${ROOT_INCLUDE_DIRS})
@@ -34,13 +35,26 @@ add_library(AnalyzerTools SHARED
 target_include_directories(AnalyzerTools PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+include(FetchContent)
+
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG 0.8.0 # Can be a tag (yaml-cpp-x.x.x), a commit hash, or a branch name (master)
+)
+FetchContent_MakeAvailable(yaml-cpp)
+
+
 
 # Link ROOT and lhapdf libraries
 target_link_libraries(AnalyzerTools ${ROOT_LIBRARIES})
 target_link_libraries(AnalyzerTools ${LHAPDF_LIBRARY})
 target_link_libraries(AnalyzerTools ${CORRECTION_LIBRARY})
-target_link_libraries(AnalyzerTools DataFormats)
+# Link onnxruntime library
+target_link_libraries(AnalyzerTools ${ONNXRUNTIME_LIBRARY})
 
+target_link_libraries(AnalyzerTools DataFormats)
+target_link_libraries(AnalyzerTools yaml-cpp::yaml-cpp) # The library or executable that require yaml-cpp library
 # Specify where to install the library
 install(TARGETS AnalyzerTools DESTINATION lib)
 
