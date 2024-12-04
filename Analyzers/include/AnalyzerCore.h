@@ -34,6 +34,8 @@
 #include "PDFReweight.h"
 #include "Correction.h"
 #include "JetTaggingParameter.h"
+#include "PhysicalConstants.h"
+
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -47,6 +49,7 @@ public:
 
     inline static bool PtComparing(const Particle& p1, const Particle& p2) { return p1.Pt() > p2.Pt();}
     inline static bool PtComparingPtr(const Particle* p1, const Particle* p2) { return p1->Pt() > p2->Pt();}
+
 
     //MetFilter
     bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev);
@@ -105,10 +108,10 @@ public:
     unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
     RVec<Muon> SmearMuons(const RVec<Muon> &muons);
     RVec<Electron> SmearElectrons(const RVec<Electron> &electrons);
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst);
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst);
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets);
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst, const TString &source = "");
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom);
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom);
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");

@@ -9,13 +9,9 @@
 #pragma link C++ class GetEffLumi+;
 //#pragma link C++ class TestAnalyzer+;
 //#pragma link C++ class TestAnalyzer2+;
-#pragma link C++ class DYValidation+;
 #pragma link C++ class MeasureJetTaggingEff+;
 #pragma link C++ class MeasureJetTaggingR+;
-#pragma link C++ class MuonTree+;
 #pragma link C++ class Vcb_FH+;
-#pragma link C++ class Skim_SingleLep+;
-#pragma link C++ class Skim_tt+;
 #pragma link C++ class Vcb_SL+;
 #pragma link C++ class FullHadronicTriggerTnP+;
 #pragma link C++ class Vcb_DL+;

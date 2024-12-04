@@ -182,14 +182,14 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets){
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst, const TString &source){
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
     for(size_t i = 0; i < jets.size(); i++){
         Jet this_jet = jets.at(i);
         float this_corr = 1.;
         float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), fixedGridRhoFastjetAll);
-        float this_sf = myCorr->GetJERSF(jets[i].Eta(), jets[i].Pt());
+        float this_sf = myCorr->GetJERSF(jets[i].Eta(), jets[i].Pt(), syst, source);
         float MIN_JET_ENERGY = 1e-2;
 
         if(matched_idx[i] < 0){
@@ -260,14 +260,14 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const Correction::varia
 
     for(const auto &jet: jets){
         Jet this_jet = jet;
-        if(source == ""){
+        if(source == "total"){
             for(const auto &it: syst_sources){
-                this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), it, syst);
+                this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), syst, it);
             }
             scaled_jets.push_back(this_jet);
         }
         else{
-            this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), source, syst);
+            this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), syst, source);
             scaled_jets.push_back(this_jet);
         }
     }
@@ -683,14 +683,9 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetCorrections(tvs2);
-
-        
-        
-        
-
         Jets.push_back(jet);
     }
-
+    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets());
     return Jets;
 }
 
