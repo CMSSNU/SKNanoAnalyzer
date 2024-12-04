@@ -55,38 +55,38 @@ public:
 
 
     // Muon
-    inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const float abseta, const float pt, const variation sys = variation::nom) { return GetMuonIDSF(Muon_ISO_SF_Key, abseta, pt, sys); }
-    inline float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const float abseta, const float pt, const variation sys = variation::nom){ return GetMuonIDSF(Muon_Trigger_SF_Key, abseta, pt, sys); };
-    float GetMuonIDSF(const TString &Muon_ID_SF_Key, const float abseta, const float pt, const variation sys = variation::nom) const;
-    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool eff_for_data, const variation sys = variation::nom) const;
-    float GetMuonTriggerWeight(const TString &Muon_Trigger_Eff_Key, const RVec<Muon> &muons, const variation sys = variation::nom) const;
+    inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, abseta, pt, syst, source); }
+    inline float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_Trigger_SF_Key, abseta, pt, syst, source); };
+    float GetMuonIDSF(const TString &Muon_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") const;
+    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool eff_for_data, const variation syst = variation::nom, const TString &source = "") const;
+    float GetMuonTriggerWeight(const TString &Muon_Trigger_Eff_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") const;
     // PUWeights
-    float GetPUWeight(const float nTrueInt, const variation sys = variation::nom) const;
+    float GetPUWeight(const float nTrueInt, const variation syst = variation::nom, const TString &source = "") const;
     // taggingparam
     void SetTaggingParam(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp);
     // btaging
     float GetBTaggingWP() const;
     float GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
-    float GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation sys = variation::nom);
-    float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation sys = variation::nom, const TString &sys_source = "total");
-    float GetBTaggingR(const int njets, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation sys = variation::nom, const TString &sys_source = "total") const;
-    inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation sys = variation::nom, const TString &sys_source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, sys, sys_source); }
+    float GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
+    float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total");
+    float GetBTaggingR(const int njets, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation syst = variation::nom, const TString &source = "total") const;
+    inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
     // ctagging
     pair<float, float> GetCTaggingWP() const;
     pair<float, float> GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
-    float GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation sys = variation::nom);
-    float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation sys, const TString &sys_source = "total");
-    float GetCTaggingR(const float npvs, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation sys = variation::nom, const TString &sys_source = "total") const;
-    inline float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation sys = variation::nom, const TString &sys_source = "total") { return GetCTaggingSF(jets, global_tagger, global_wp, method, sys); }
+    float GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
+    float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source = "total");
+    float GetCTaggingR(const float npvs, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation syst = variation::nom, const TString &source = "total") const;
+    inline float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetCTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
     // electron
-    float GetElectronRECOSF(const float abseta, const float pt, const variation sys = variation::nom) const;
-    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const variation sys = variation::nom) const;
-    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float abseta, const float pt, const variation sys = variation::nom) const;
+    float GetElectronRECOSF(const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     // photon
     // jerc
     float GetJER(const float eta, const float pt, const float rho) const;
-    float GetJERSF(const float eta, const float pt, const variation sys = variation::nom) const;
-    float GetJESUncertainty(const float eta, const float pt, const TString &source, const variation sys = variation::nom) const;
+    float GetJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetJESUncertainty(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     // jerc_fatjet
     // jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, TString mapCategory) const;
@@ -129,10 +129,10 @@ private:
     // All POG choose different string for the systematics, so we need to convert the enum to the string....
     // Here I implement every single function instead of a general one, because heavy use of switch-case might be slow.
     inline string
-    getSystString_MUO(const variation sys) const
+    getSystString_MUO(const variation syst) const
     {
         string sys_string = "nominal";
-        switch (sys)
+        switch (syst)
         {
         case variation::nom:
             sys_string = "nominal";
@@ -147,10 +147,10 @@ private:
         return sys_string;
     };
 
-    inline string getSystString_LUM(const variation sys) const
+    inline string getSystString_LUM(const variation syst) const
     {
         string sys_string = "nominal";
-        switch (sys)
+        switch (syst)
         {
         case variation::nom:
             sys_string = "nominal";
@@ -165,10 +165,10 @@ private:
         return sys_string;
     };
 
-    inline string getSystString_BTV(const variation sys) const
+    inline string getSystString_BTV(const variation syst) const
     {
         string sys_string = "central";
-        switch (sys)
+        switch (syst)
         {
         case variation::nom:
             sys_string = "central";
@@ -183,10 +183,10 @@ private:
         return sys_string;
     };
 
-    inline string getSystString_EGM(const variation sys) const
+    inline string getSystString_EGM(const variation syst) const
     {
         string sys_string = "sf";
-        switch (sys)
+        switch (syst)
         {
         case variation::nom:
             sys_string = "sf";
@@ -201,10 +201,10 @@ private:
         return sys_string;
     };
 
-    inline string getSystString_JME(const variation sys) const
+    inline string getSystString_JME(const variation syst) const
     {
         string sys_string = "nom";
-        switch (sys)
+        switch (syst)
         {
         case variation::nom:
             sys_string = "nom";
