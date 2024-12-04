@@ -26,6 +26,7 @@ public :
   virtual TMatrixD* transform(const TLorentzVector& vec);
   virtual void setIni4Vec(const TLorentzVector* pini);
   virtual TLorentzVector* calc4Vec( const TMatrixD* params );
+  ClassDef(TFitParticleSpher, 1);
 
 protected :
 
