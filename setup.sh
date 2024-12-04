@@ -91,6 +91,14 @@ echo "@@@@ LHAPDF include: $LHAPDF_INCLUDE_DIR"
 echo "@@@@ LHAPDF lib: $LHAPDF_LIB_DIR"
 echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 
+# setting up libtorch
+if [[ ! -d "external/libtorch" ]]; then
+    echo "@@@@ Installing LibTorch"
+    ./scripts/install_libtorch.sh
+fi
+export LIBTORCH_INCLUDE_DIR=$SKNANO_HOME/external/libtorch/include
+export LIBTORCH_LIB_DIR=$SKNANO_HOME/external/libtorch/lib
+
 # env for correctionlibs
 if [ $PACKAGE = "conda" ]; then
     export CORRECTION_INCLUDE_DIR=`correction config --incdir`
