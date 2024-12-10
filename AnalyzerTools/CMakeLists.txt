@@ -85,10 +85,10 @@ target_link_libraries(MLHelper PUBLIC
     ${ONNXRUNTIME_LIBRARY}
 )
 
+
+
 # Installation
-install(TARGETS AnalyzerTools MLHelper 
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+install(TARGETS AnalyzerTools MLHelper DESTINATION lib
 )
 
 # Install ROOT dictionary files if they exist

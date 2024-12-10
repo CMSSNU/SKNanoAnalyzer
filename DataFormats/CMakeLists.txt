@@ -5,10 +5,14 @@ add_library(DataFormats SHARED
     #${CMAKE_CURRENT_BINARY_DIR}/G__DataFormats.cxx
 )
 
+find_library(CORRECTION_LIBRARY NAMES correctionlib PATHS $ENV{CORRECTION_LIB_DIR})
+
 # Specify where the library should look for header files
 target_include_directories(DataFormats PRIVATE
     $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include>
+    $<BUILD_INTERFACE:$ENV{CORRECTION_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -23,6 +27,7 @@ ROOT_GENERATE_DICTIONARY(G__DataFormats
 
 # Link ROOT libraries
 target_link_libraries(DataFormats ${ROOT_LIBRARIES})
+target_link_libraries(DataFormats ${CORRECTION_LIBRARY})
 
 # Specify where to install the library
 install(TARGETS DataFormats DESTINATION lib)
