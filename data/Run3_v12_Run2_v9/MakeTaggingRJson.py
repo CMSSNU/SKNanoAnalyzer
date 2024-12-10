@@ -6,7 +6,11 @@ import argparse
 import os
 import itertools
 import copy
-
+import multiprocessing as mp
+from tqdm import tqdm
+from functools import partial
+from copy import deepcopy
+r_hist = None
 def histParser(f):
     numerator_dicts = []
     denominator_dicts = []
@@ -26,8 +30,10 @@ def histParser(f):
                 continue
             if '#' not in info:
                 continue
+                
             k, value = info.split("#")
             this_info[k] = value
+
         this_info['hist_key']=key
         if isNumerator:
             numerator_dicts.append(this_info)
@@ -38,27 +44,45 @@ def histParser(f):
 def makeTempEffHist(folder):
     dict_per_file = {}
     ratio_hists = []
-    for file in os.listdir(folder):
-        if not file.endswith('.root'):
-            continue
-        print(f'Processing {file}')
-        f = ROOT.TFile(os.path.join(folder,file),"READ")
-        numerator_dicts, denominator_dicts = histParser(f)
-        
-        for numerator_dict in numerator_dicts:
-            key = numerator_dict['hist_key']
-            ratio_hist = f.Get(key).Clone()
-            name = "process#" + file.replace('.root','') + "##" +key.replace("num","r")
-            ratio_hist.SetNameTitle(name,name)
-            ratio_hist.Divide(f.Get(key.replace("num","den")))
-            ratio_hist.SetDirectory(0)
-            ratio_hists.append(ratio_hist)
 
+    
+    #hadd all the files
+    os.chdir(folder)
+    #save current directory
+    current_dir = os.getcwd()
+    if not os.path.exists('temp'):
+        os.mkdir('temp')
+    os.system('rm output.root')
+    os.system(f'hadd -f temp/output.root *.root')
+    
+    
+    f = ROOT.TFile("temp/output.root","READ")
+    
+    numerator_dicts, denominator_dicts = histParser(f)
+            
+
+    for info in numerator_dicts:
+        key = info['hist_key']
+        ratio_hist = f.Get(key).Clone()
+        name = key.replace("num","r")
+        ratio_hist.SetNameTitle(name,name)
+        ratio_hist.Divide(f.Get(key.replace("num","den")))
+        ratio_hist.SetDirectory(0)
+        ratio_hists.append(ratio_hist.Clone())
+
+    
     f2 = ROOT.TFile("output.root","RECREATE")
     f2.cd()
     for ratio_hist in ratio_hists:
         ratio_hist.Write()
     f2.Close()
+    f.Close()
+    #get absolute path of f2
+    global r_hist
+    r_hist = os.path.abspath("output.root")
+    
+    
+    
 
 def makingJson(era, taggingmode):
     main_json = {"schema_version": 2,
@@ -79,22 +103,26 @@ def makingJson(era, taggingmode):
     systematics = set()
     taggers = ["deepJet","particleNet","robustParticleTransformer"]
     
-    f = ROOT.TFile("output.root","READ")
+    print(f"open file {r_hist}")
+    f = ROOT.TFile(r_hist,"READ")
     keys = f.GetListOfKeys()
     keys = [key.GetName() for key in keys]
+    keys = [key for key in keys if f'tagging#{taggingmode}' in key]
+    print(f"currentely in {os.getcwd()}")
     for key in keys:
        infos = key.split("##")
        for info in infos:
-            if 'process' in info:
+            if 'sample' in info:
                 process_list.add(info.split("#")[1])
             if 'category' in info:
                 process_category.add(info.split("#")[1])
             if 'systematic' in info:
                 systematics.add(info.split("#")[1])
-                
+    
     process_list = list(process_list)
     process_category = list(process_category)
     systematics = list(systematics)
+    
     
     categorys['systematic']['content'] = systematics
     categorys['category']['content'] = process_category
@@ -121,47 +149,76 @@ def makingJson(era, taggingmode):
                     data_dict['content'][-1]['value']['content'].append({"key":category,"value":{}})
 
             main_json['corrections'].append(tagger_eff_dict)
-        
-    for process, tagger, systematic, category in itertools.product(process_list, taggers,categorys['systematic']['content'],categorys['category']['content']):
-        exist = True
-        this_data = {}
-        try:
-            c1 = convert.from_uproot_THx(f'output.root:process#{process}##tagging#{taggingmode}##era#{era}##systematic#{systematic}##Hist#2D##tagger#{tagger}##r##category#{category}')
-            this_data = c1.dict()['data']  
-        except:
-            exist = False
-            this_data = { "nodetype": "formula",
-                                  "expression": "1.",
-                                  "parser": "TFormula",
-                                  "variables": [
-                                ],
-                                  "parameters": []
-                                }
-            
-        
-        
-        this_data['inputs'] = ['nTrueInt','HT'] if taggingmode == 'c' else ['njet','HT']
-        this_data['flow'] = 'clamp'
-        #now find the appropriate location in main_json put this data
+
+                #iterates over all root files and get the R factor
+    f = ROOT.TFile("output.root","READ")
+    keys = f.GetListOfKeys()
+    keys = [key.GetName() for key in keys]
+    keys = [key for key in keys if f'tagging#{taggingmode}' in key]
+    keys = [key for key in keys if "2D" in key]
+    f.Close()
+    # Use multiprocessing pool
+    with mp.Pool(32) as pool:
+        process_func = partial(process_key, taggingmode=taggingmode)
+        results = list(tqdm(pool.imap(process_func, keys), total=len(keys)))
+
+    # Update main_json with results
+    for process, tagger, systematic, category, this_data in results:
         for tagger_dict in main_json['corrections']:
-            if tagger_dict['name'] == tagger + "_" + process:
+            if tagger_dict['name'] == f"{tagger}_{process}":
                 for systematic_dict in tagger_dict['data']['content']:
                     if systematic_dict['key'] == systematic:
                         for category_dict in systematic_dict['value']['content']:
                             if category_dict['key'] == category:
-                                category_dict['value'] = this_data
+
+                                category_dict['value'] = copy.deepcopy(this_data)
                                 break
                         break
                 break
         
+        
+    # for process, tagger, systematic, category in itertools.product(process_list, taggers,categorys['systematic']['content'],categorys['category']['content']):
+    #     exist = True
+    #     this_data = {}
+    #     try:
+    #         c1 = convert.from_uproot_THx(f'output.root:tagging#{taggingmode}##era#{era}##systematic#{systematic}##Hist#2D##tagger#{tagger}##r##category#{category}##sample#{process}')
+    #         this_data = c1.dict()['data']  
+    #     except:
+    #         exist = False
+    #         this_data = { "nodetype": "formula",
+    #                               "expression": "1.",
+    #                               "parser": "TFormula",
+    #                               "variables": [
+    #                             ],
+    #                               "parameters": []
+    #                             }
+    
+
     return main_json
                     
-                
-        
- 
+def process_key(key, taggingmode):
+    # Parse key information
+    info_pre = key.split("##")
+    infos = {}
+    for info in info_pre:
+        if '#' in info:
+            k, value = info.split("#")
+            infos[k] = value
+    
+    # Process data
+    process = infos['sample']
+    tagger = infos['tagger']
+    systematic = infos['systematic']
+    category = infos['category']
 
-
-
+    # Convert data from ROOT
+    c1 = convert.from_uproot_THx(f'output.root:{key}')
+    #do deep copy
+    this_data = copy.deepcopy(c1.dict()['data'])
+    this_data['inputs'] = ['nTrueInt', 'HT'] if taggingmode == 'c' else ['njet', 'HT']
+    this_data['flow'] = 'clamp'
+    
+    return (process, tagger, systematic, category, this_data)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create JSON file for b-tagging efficiency')
@@ -172,7 +229,7 @@ if __name__ == "__main__":
 
     totalEras = ['2022','2022EE']
     totalEras = ['2017','2018','2016preVFP','2016postVFP']
-    totalEras = ['2016preVFP']
+    totalEras = ['2022EE']
     for era in totalEras:
         out_dir = os.path.join(os.environ['SKNANO_DATA'],era,'BTV')
         if not os.path.exists(out_dir):
@@ -181,10 +238,11 @@ if __name__ == "__main__":
         folder = os.path.join(args.input_folder, era)
         makeTempEffHist(folder)
         main_json_btagging = makingJson(era,'b')
-        main_json_ctagging = makingJson(era,'c')
-        with open(os.path.join(out_dir,out_name_str+'btaggingR.json'), 'w') as f:
+        
+        with open(os.path.join(out_dir,out_name_str+'_btaggingR.json'), 'w') as f:
              json.dump(main_json_btagging, f, indent=4)
-        with open(os.path.join(out_dir,out_name_str+'ctaggingR.json'), 'w') as f:
+        main_json_ctagging = makingJson(era,'c') 
+        with open(os.path.join(out_dir,out_name_str+'_ctaggingR.json'), 'w') as f:
             json.dump(main_json_ctagging, f, indent=4)
 
 

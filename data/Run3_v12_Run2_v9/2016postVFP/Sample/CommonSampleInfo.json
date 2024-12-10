@@ -228,121 +228,121 @@
         "isMC": 1,
         "PD": "QCD_Pt_15to30_TuneCP5_13TeV_pythia8",
         "xsec": 1245000000,
-        "nmc": 19143000,
-        "sumsign": 19143000.0,
-        "sumW": 19143000.0
+        "nmc": 49466000.0,
+        "sumsign": 49466000.0,
+        "sumW": 49466000.0
     },
     "QCD_Pt_30to50": {
         "isMC": 1,
         "PD": "QCD_Pt_30to50_TuneCP5_13TeV_pythia8",
         "xsec": 106900000,
-        "nmc": 18944000,
-        "sumsign": 18944000.0,
-        "sumW": 18944000.0
+        "nmc": 50896000.0,
+        "sumsign": 50896000.0,
+        "sumW": 50896000.0
     },
     "QCD_Pt_50to80": {
         "isMC": 1,
         "PD": "QCD_Pt_50to80_TuneCP5_13TeV_pythia8",
         "xsec": 15700000,
-        "nmc": 19928000,
-        "sumsign": 19928000.0,
-        "sumW": 19928000.0
+        "nmc": 50748000.0,
+        "sumsign": 50748000.0,
+        "sumW": 50748000.0
     },
     "QCD_Pt_80to120": {
         "isMC": 1,
         "PD": "QCD_Pt_80to120_TuneCP5_13TeV_pythia8",
         "xsec": 2339000,
-        "nmc": 29743000,
-        "sumsign": 29743000.0,
-        "sumW": 29746349.59823
+        "nmc": 73284000.0,
+        "sumsign": 73284000.0,
+        "sumW": 73289856.0
     },
     "QCD_Pt_120to170": {
         "isMC": 1,
         "PD": "QCD_Pt_120to170_TuneCP5_13TeV_pythia8",
         "xsec": 407700,
-        "nmc": 28652000,
-        "sumsign": 28652000.0,
-        "sumW": 28652336.89692
+        "nmc": 54668000.0,
+        "sumsign": 54668000.0,
+        "sumW": 54668500.0
     },
     "QCD_Pt_170to300": {
         "isMC": 1,
         "PD": "QCD_Pt_170to300_TuneCP5_13TeV_pythia8",
         "xsec": 103600,
-        "nmc": 27953000,
-        "sumsign": 27953000.0,
-        "sumW": 27953000.0
+        "nmc": 63970000.0,
+        "sumsign": 63970000.0,
+        "sumW": 63970000.0
     },
     "QCD_Pt_300to470": {
         "isMC": 1,
         "PD": "QCD_Pt_300to470_TuneCP5_13TeV_pythia8",
         "xsec": 6831,
-        "nmc": 54096000,
-        "sumsign": 54096000.0,
-        "sumW": 54096008.70315
+        "nmc": 125642000.0,
+        "sumsign": 125642000.0,
+        "sumW": 125642000.0
     },
     "QCD_Pt_470to600": {
         "isMC": 1,
         "PD": "QCD_Pt_470to600_TuneCP5_13TeV_pythia8",
         "xsec": 552.2,
-        "nmc": 50782000,
-        "sumsign": 50782000.0,
-        "sumW": 50782170.07763
+        "nmc": 112224000.0,
+        "sumsign": 112224000.0,
+        "sumW": 112224096.0
     },
     "QCD_Pt_600to800": {
         "isMC": 1,
         "PD": "QCD_Pt_600to800_TuneCP5_13TeV_pythia8",
         "xsec": 156.5,
-        "nmc": 61972000,
-        "sumsign": 61972000.0,
-        "sumW": 61972001.37391
+        "nmc": 123258000.0,
+        "sumsign": 123258000.0,
+        "sumW": 123258000.0
     },
     "QCD_Pt_800to1000": {
         "isMC": 1,
         "PD": "QCD_Pt_800to1000_TuneCP5_13TeV_pythia8",
         "xsec": 26.27,
-        "nmc": 35527000,
-        "sumsign": 35527000.0,
-        "sumW": 35527000.0
+        "nmc": 82516000.0,
+        "sumsign": 82516000.0,
+        "sumW": 82516000.0
     },
     "QCD_Pt_1000to1400": {
         "isMC": 1,
         "PD": "QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8",
         "xsec": 7.478,
-        "nmc": 19077000,
-        "sumsign": 19077000.0,
-        "sumW": 19077000.0
+        "nmc": 35526000.0,
+        "sumsign": 35526000.0,
+        "sumW": 35526000.0
     },
     "QCD_Pt_1400to1800": {
         "isMC": 1,
         "PD": "QCD_Pt_1400to1800_TuneCP5_13TeV_pythia8",
         "xsec": 0.6486,
-        "nmc": 11000000,
-        "sumsign": 11000000.0,
-        "sumW": 11000000.0
+        "nmc": 16044000.0,
+        "sumsign": 16044000.0,
+        "sumW": 16044000.0
     },
     "QCD_Pt_1800to2400": {
         "isMC": 1,
         "PD": "QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8",
         "xsec": 0.08745,
-        "nmc": 5262000,
-        "sumsign": 5262000.0,
-        "sumW": 5262000.0
+        "nmc": 7638000.0,
+        "sumsign": 7638000.0,
+        "sumW": 7638000.0
     },
     "QCD_Pt_2400to3200": {
         "isMC": 1,
         "PD": "QCD_Pt_2400to3200_TuneCP5_13TeV_pythia8",
         "xsec": 0.005235,
-        "nmc": 2999000,
-        "sumsign": 2999000.0,
-        "sumW": 2999000.0
+        "nmc": 2848000.0,
+        "sumsign": 2848000.0,
+        "sumW": 2848000.0
     },
     "QCD_Pt_3200toInf": {
         "isMC": 1,
         "PD": "QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8",
         "xsec": 0.0001352,
-        "nmc": 1000000,
-        "sumsign": 1000000.0,
-        "sumW": 1000000.0
+        "nmc": 996000.0,
+        "sumsign": 996000.0,
+        "sumW": 996000.0
     },
     "SingleElectron": {
         "isMC": 0,
