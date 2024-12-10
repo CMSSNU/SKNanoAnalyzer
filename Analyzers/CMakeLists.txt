@@ -19,7 +19,7 @@ target_include_directories(Analyzers PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../DataFormats/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../external/KinFitter/NanoGardenerModules/KinematicFitter/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../external/KinematicFitter/include>
     $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
     $<INSTALL_INTERFACE:include>
 )

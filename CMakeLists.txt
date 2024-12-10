@@ -16,20 +16,25 @@ add_subdirectory(AnalyzerTools)
 add_subdirectory(Analyzers)
 
 #External
-add_subdirectory(external/KinFitter)
+add_subdirectory(external/KinematicFitter)
 
 # Fetch external dependencies
 include(FetchContent)
 FetchContent_Declare(
     yaml-cpp
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_PROGRESS TRUE
+    GIT_SHALLOW TRUE
     GIT_TAG 0.8.0
 )
 FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_PROGRESS TRUE
+    GIT_SHALLOW TRUE
     GIT_TAG v3.11.3)
 
 FetchContent_MakeAvailable(yaml-cpp json)
+
 
 
