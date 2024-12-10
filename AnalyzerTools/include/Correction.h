@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_set>
 using namespace std;
 
 #include "TString.h"
@@ -13,6 +14,7 @@ using namespace std;
 #include "JetTaggingParameter.h"
 #include "Gen.h"
 #include "Muon.h"
+#include "Electron.h"
 using correction::CorrectionSet;
 
 class Correction
@@ -57,7 +59,10 @@ public:
     // Muon
     inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, abseta, pt, syst, source); }
     inline float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_Trigger_SF_Key, abseta, pt, syst, source); };
+    inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, muons, syst, source); }
+    //float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "");
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") const;
+    float GetMuonIDSF(const TString &Muon_ID_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") const;
     float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool eff_for_data, const variation syst = variation::nom, const TString &source = "") const;
     float GetMuonTriggerWeight(const TString &Muon_Trigger_Eff_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") const;
     // PUWeights
@@ -71,6 +76,7 @@ public:
     float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total");
     float GetBTaggingR(const int njets, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation syst = variation::nom, const TString &source = "total") const;
     inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
+
     // ctagging
     pair<float, float> GetCTaggingWP() const;
     pair<float, float> GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
@@ -81,7 +87,17 @@ public:
     // electron
     float GetElectronRECOSF(const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
-    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, bool ofDATA, const variation syst = variation::nom, const TString &source = "total") const;
+    inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total"){
+        return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, true, syst, source);
+    };
+    inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total"){
+        return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, false, syst, source);
+    };
+
+    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVec<Electron> &electrons, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronRECOSF(const RVec<Electron> &electrons, const variation syst = variation::nom, const TString &source = "total") const;
     // photon
     // jerc
     float GetJER(const float eta, const float pt, const float rho) const;
@@ -104,6 +120,7 @@ private:
     int Run;
     TString Sample;
     bool IsDATA;
+    
     unique_ptr<CorrectionSet> cset_muon;
     unique_ptr<CorrectionSet> cset_muon_trig_eff;
     unique_ptr<CorrectionSet> cset_puWeights;
@@ -114,16 +131,19 @@ private:
     unique_ptr<CorrectionSet> cset_btagging_R;
     unique_ptr<CorrectionSet> cset_ctagging_R;
     unique_ptr<CorrectionSet> cset_electron;
+    unique_ptr<CorrectionSet> cset_electron_hlt;
     unique_ptr<CorrectionSet> cset_photon;
     unique_ptr<CorrectionSet> cset_jerc;
     unique_ptr<CorrectionSet> cset_jerc_fatjet;
     unique_ptr<CorrectionSet> cset_jetvetomap;
     unique_ptr<CorrectionSet> cset_met;
+
     unordered_map<string, string> MUO_keys;
     unordered_map<string, string> LUM_keys;
     unordered_map<string, string> BTV_keys;
     unordered_map<string, string> EGM_keys;
-    unordered_map<string, string> JME_keys;
+    unordered_map<string, string> JME_JER_GT;
+    unordered_map<string, string> JME_JES_GT;
     unordered_map<string, string> JME_vetomap_keys;
     unordered_map<string, string> JME_MET_keys;
     // All POG choose different string for the systematics, so we need to convert the enum to the string....

@@ -7,110 +7,140 @@
 #include <functional>
 #include "ROOT/RVec.hxx"
 #include "Correction.h"
+#include <variant>
 
 using namespace ROOT::VecOps;
 using namespace std;
-struct SYST
-{
-    std::string syst;
-    std::string variation_target = "";
-    std::string source = "total";
-    bool evtLoopAgain = false;
-    bool oneSided = false;
-    bool hasDedicatedSample = false;
-    std::string dedicatedSampleKey_up = "";
-    std::string dedicatedSampleKey_down = "";
-};
 
-struct CORRELATION
-{
-    std::string type;
-    std::string rep_name;
-    RVec<SYST *> sources;
-    unordered_set<std::string> child_syst_names;
-};
-
-struct Iter_obj
-{
-    std::string name;
-    unordered_map<std::string, std::pair<std::string, Correction::variation>> variation_target_sources_variations;
-};
+typedef std::unordered_map<std::string, std::variant<std::function<float(Correction::variation, std::string)>, std::function<float()>>> weight_function_map;
 
 class SystematicHelper
 {
 public:
-    SystematicHelper(std::string yaml_path);
-    ~SystematicHelper();
-    SYST *findSystematic(std::string syst_name);
-    /*class SystIterator
+    struct SYST
     {
-    public:
-        // Nested Iterator for range-based for compatibility
-        class Iterator
-        {
-        public:
-            Iterator(RVec<Iter_obj> &evtLoop, RVec<Iter_obj> &weight, size_t evtIdx, size_t weightIdx)
-                : evtLoop_(evtLoop), weight_(weight), evtIdx_(evtIdx), weightIdx_(weightIdx) {}
-
-            bool operator!=(const Iterator &other) const
-            {
-                return evtIdx_ != other.evtIdx_;
-            }
-
-            // Advance evtLoop_ and weight_ conditionally
-            Iterator &operator++()
-            {
-                if (evtIdx_ < evtLoop_.size() && evtLoop_[evtIdx_].syst == "central" && weightIdx_ < weight_.size())
-                {
-                    ++weightIdx_;
-                }
-                ++evtIdx_;
-                return *this;
-            }
-
-            // Dereference returns a pair of current items
-            std::pair<Iter_obj *, Iter_obj *> operator*() const
-            {
-                Iter_obj *evtLoopCurrent = (evtIdx_ < evtLoop_.size()) ? &evtLoop_[evtIdx_] : nullptr;
-                Iter_obj *weightCurrent = (weightIdx_ < weight_.size()) ? &weight_[weightIdx_] : nullptr;
-                return {evtLoopCurrent, weightCurrent};
-            }
-
-        private:
-            RVec<Iter_obj> &evtLoop_;
-            RVec<Iter_obj> &weight_;
-            size_t evtIdx_;
-            size_t weightIdx_;
-        };
-
-        SystIterator(RVec<Iter_obj> &evtLoop, RVec<Iter_obj> &weight)
-            : evtLoop_(evtLoop), weight_(weight) {}
-
-        // Begin and End methods for range-based for loop
-        Iterator begin() { return Iterator(evtLoop_, weight_, 0, 0); }
-        Iterator end() { return Iterator(evtLoop_, weight_, evtLoop_.size(), weight_.size()); }
-
-    private:
-        RVec<Iter_obj> &evtLoop_;
-        RVec<Iter_obj> &weight_;
+        std::string syst;
+        std::string source = "total";
+        std::string target = "";
+        bool evtLoopAgain = false;
+        bool oneSided = false;
+        bool hasDedicatedSample = false;
+        std::string dedicatedSampleKey_up = "";
+        std::string dedicatedSampleKey_down = "";
     };
 
-    SystIterator getIterator()
+    struct CORRELATION
     {
-        return SystIterator(systematics_evtLoopAgain, systematics_weight);
+        std::string name;
+        std::string rep_name;                        // the first one in the sources
+        unordered_set<std::string> child_syst_names; // the rest of the sources
+        RVec<SYST *> sources;
+    };
+
+    struct Iter_obj
+    {
+        std::string iter_name;
+        std::string syst_name;
+        Correction::variation variation;
+    };
+
+
+    struct Internal_Iter_obj
+    {
+        std::string iter_name;
+        std::string syst_name;
+        Correction::variation variation;
+        void clone(Iter_obj &obj)
+        {
+            iter_name = obj.iter_name;
+            syst_name = obj.syst_name;
+            variation = obj.variation;
+        }
+    };
+
+    SystematicHelper(std::string yaml_path, TString sample);
+    ~SystematicHelper();
+    SYST* findSystematic(std::string syst_name);
+    void assignWeightFunctionMap(const unordered_map < std::string, std::variant<std::function<float(Correction::variation, TString)>, std::function<float()>>> &weight_functions);
+    class EventLoopIterator
+    {
+    public:
+        using Iterator = std::vector<Iter_obj>::iterator;
+
+        EventLoopIterator(Iterator it, SystematicHelper* parent) : iter(it), parent(parent) {
+            if(iter != parent->systematics_evtLoopAgain.end()){
+                parent->current_Iter_obj.clone(*iter);
+            }
+        }
+
+        EventLoopIterator& operator++()
+        {
+            ++iter;
+            if(iter != parent->systematics_evtLoopAgain.end()){
+                parent->current_Iter_obj.clone(*iter);
+            }
+            return *this;
+        }
+
+        bool operator!=(const EventLoopIterator &other) const
+        {
+            return iter != other.iter;
+        }
+
+        const Iter_obj& operator*() const
+        {
+            return *iter;
+        }
+
+    private:
+        Iterator iter;
+        SystematicHelper* parent;
+ 
+    };
+    
+
+    EventLoopIterator begin()
+    {
+        return EventLoopIterator(systematics_evtLoopAgain.begin(), this);
     }
-*/
+
+    // Method to return the end iterator
+    EventLoopIterator end()
+    {
+        return EventLoopIterator(systematics_evtLoopAgain.end(), this);
+    }
+
+    inline std::string getCurrentSysName() const { return current_Iter_obj.iter_name; }
+    inline std::string getCurrentSysSource() const { return current_Iter_obj.syst_name; }
+    inline Correction::variation getCurrentVariation() const { return current_Iter_obj.variation; }
+    std::unordered_map<std::string, float> calculateWeight();
 
 private:
     void checkBadSystematics();
     void make_Iter_obj_EvtLoopAgain();
-    void make_Iter_obj_weight();
-    bool IsDedicatedSample(TString sample);
-    RVec<SYST> systematics;
-    unordered_map<std::string, CORRELATION> correlations;
-    RVec<Iter_obj> systematics_evtLoopAgain;
-    RVec<Iter_obj> systematics_weight;
-    RVec<Iter_obj> systematics_dedicatedSample;
+    void make_map_dedicatedSample();
+    bool IsDedicatedSample();
+    
+    std::unordered_map<std::string, float> calculateWeight_central_case();
+    std::unordered_map<std::string, float> calculateWeight_non_central_case();
+
+    std::vector<SYST> systematics;
+    std::unordered_map<std::string, CORRELATION> correlations;
+    std::unordered_map<std::string, std::function<float(Correction::variation, TString)>> weight_functions;
+    std::unordered_map<std::string, std::function<float()>> weight_functions_onesided;
+
+    std::vector<Iter_obj> systematics_evtLoopAgain;
+    unordered_map<std::string, std::string> map_dedicatesamplekey_systname;
+    
+    std::unordered_map<std::string, float> weight_map_nominal;
+    std::unordered_map<std::string, float> weight_map_up;
+    std::unordered_map<std::string, float> weight_map_down;
+    std::unordered_map<Correction::variation, std::string> variation_prefix; 
+
+    bool isDedicatedSample;
+    bool weight_functions_assigned;
+    std::string sample;
+    Internal_Iter_obj current_Iter_obj;
 };
 
 #endif
