@@ -1,6 +1,21 @@
 {
-    "Skim_SingleLep_Muon": {
-        "suffix": "SingleLep",
+    "Skim_Vcb_SL_ttWtoQQ": {
+        "suffix": "Vcb_SL",
+        "PD": "ttWtoQQ",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ttWtoQQ": {
+        "suffix": "Vcb_DL",
+        "PD": "ttWtoQQ",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ttZtoQQ": {
+        "suffix": "Vcb_SL",
+        "PD": "ttZtoQQ",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_Muon": {
+        "suffix": "Vcb_DL",
         "PD": "Muon",
         "isMC": 0,
         "periods": [
@@ -9,9 +24,34 @@
             "E"
         ]
     },
-    "Skim_SingleLep_EGamma": {
-        "suffix": "SingleLep",
-        "PD": "EGamma",
+    "Skim_Vcb_DL_ttZtoQQ": {
+        "suffix": "Vcb_DL",
+        "PD": "ttZtoQQ",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ttHtoNonbb_M125": {
+        "suffix": "Vcb_SL",
+        "PD": "ttHtoNonbb_M125",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ttHtobb_M125": {
+        "suffix": "Vcb_SL",
+        "PD": "ttHtobb_M125",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ttHtoNonbb_M125": {
+        "suffix": "Vcb_DL",
+        "PD": "ttHtoNonbb_M125",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_WWto4Q": {
+        "suffix": "Vcb_SL",
+        "PD": "WWto4Q",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_Muon": {
+        "suffix": "Vcb_SL",
+        "PD": "Muon",
         "isMC": 0,
         "periods": [
             "G",
@@ -19,63 +59,403 @@
             "E"
         ]
     },
-    "Skim_SingleLep_WJets_MG": {
-        "suffix": "SingleLep",
-        "PD": "WJets_MG",
+    "Skim_Vcb_DL_TTLL_powheg_CP5Down": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg_CP5Down",
         "isMC": 1
     },
-    "Skim_SingleLep_WJets": {
-        "suffix": "SingleLep",
-        "PD": "WJets",
+    "Skim_Vcb_DL_TTLL_powheg_CP5Up": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg_CP5Up",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT1500to2000": {
-        "suffix": "tt",
-        "PD": "QCDB_HT1500to2000",
+    "Skim_Vcb_DL_TTLL_powheg_hDampDown": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg_hDampDown",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT1000to1500": {
-        "suffix": "tt",
-        "PD": "QCDB_HT1000to1500",
+    "Skim_Vcb_DL_TTLL_powheg_hDampUp": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg_hDampUp",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT800to1000": {
-        "suffix": "tt",
-        "PD": "QCDB_HT800to1000",
+    "Skim_Vcb_SL_WZtoLNu2Q": {
+        "suffix": "Vcb_SL",
+        "PD": "WZtoLNu2Q",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT600to800": {
-        "suffix": "tt",
-        "PD": "QCDB_HT600to800",
+    "Skim_Vcb_DL_WWto2L2Nu": {
+        "suffix": "Vcb_DL",
+        "PD": "WWto2L2Nu",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT400to600": {
-        "suffix": "tt",
-        "PD": "QCDB_HT400to600",
+    "Skim_Vcb_DL_TTLL_powheg_mTop173p5": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg_mTop173p5",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT200to400": {
-        "suffix": "tt",
-        "PD": "QCDB_HT200to400",
+    "Skim_Vcb_SL_WZto2L2Q": {
+        "suffix": "Vcb_SL",
+        "PD": "WZto2L2Q",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT100to200": {
-        "suffix": "tt",
-        "PD": "QCDB_HT100to200",
+    "Skim_Vcb_DL_WZtoLNu2Q": {
+        "suffix": "Vcb_DL",
+        "PD": "WZtoLNu2Q",
         "isMC": 1
     },
-    "Skim_tt_QCDB_HT40to100": {
-        "suffix": "tt",
-        "PD": "QCDB_HT40to100",
+    "Skim_Vcb_SL_TTLJ_powheg_CP5Up": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLJ_powheg_CP5Up",
         "isMC": 1
     },
-    "Skim_tt_TTJJ_powheg": {
-        "suffix": "tt",
+    "Skim_Vcb_SL_WZto3LNu": {
+        "suffix": "Vcb_SL",
+        "PD": "WZto3LNu",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLL_powheg": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLL_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ZZto2L2Nu": {
+        "suffix": "Vcb_DL",
+        "PD": "ZZto2L2Nu",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLJ_powheg_mTop173p5": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLJ_powheg_mTop173p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ZZto2Nu2Q": {
+        "suffix": "Vcb_SL",
+        "PD": "ZZto2Nu2Q",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLJ_powheg_mTop171p5": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLJ_powheg_mTop171p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLJ_powheg": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLJ_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLJ_Vcb_powheg": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLJ_Vcb_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_DYJets": {
+        "suffix": "Vcb_SL",
+        "PD": "DYJets",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_DYJets": {
+        "suffix": "Vcb_DL",
+        "PD": "DYJets",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT1500to2000": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT1500to2000",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT1200to1500": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT1200to1500",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT1000to1200": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT1000to1200",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_QCD_HT1200to1500": {
+        "suffix": "Vcb_DL",
+        "PD": "QCD_HT1200to1500",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT800to1000": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT800to1000",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT600to800": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT600to800",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_QCD_HT800to1000": {
+        "suffix": "Vcb_DL",
+        "PD": "QCD_HT800to1000",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT400to600": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT400to600",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_QCD_HT600to800": {
+        "suffix": "Vcb_DL",
+        "PD": "QCD_HT600to800",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT200to400": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT200to400",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_QCD_HT200to400": {
+        "suffix": "Vcb_DL",
+        "PD": "QCD_HT200to400",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_QCD_HT70to100": {
+        "suffix": "Vcb_SL",
+        "PD": "QCD_HT70to100",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tch_antitop": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tch_antitop",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tch_top": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tch_top",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tch_antitop": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tch_antitop",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tch_top": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tch_top",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tW_antitop_Fullyhad": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tW_antitop_Fullyhad",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_antitop_Fullyhad": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_antitop_Fullyhad",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tW_top_Fullyhad": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tW_top_Fullyhad",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_top_Fullyhad": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_top_Fullyhad",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_antitop_Lep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_antitop_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tW_top_Lep": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tW_top_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_top_Lep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_top_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tW_antitop_Semilep": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tW_antitop_Semilep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_tW_top_Semilep": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_tW_top_Semilep",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_antitop_Semilep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_antitop_Semilep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_sch_antitop_Lep": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_sch_antitop_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_tW_top_Semilep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_tW_top_Semilep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_ST_sch_top_Lep": {
+        "suffix": "Vcb_SL",
+        "PD": "ST_sch_top_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_sch_antitop_Lep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_sch_antitop_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg_CP5Down": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg_CP5Down",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_ST_sch_top_Lep": {
+        "suffix": "Vcb_DL",
+        "PD": "ST_sch_top_Lep",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg_CP5Up": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg_CP5Up",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLJ_Vcb_powheg": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLJ_Vcb_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg_hDampDown": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg_hDampDown",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLJ_powheg_CP5Down": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLJ_powheg_CP5Down",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg_hDampUp": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg_hDampUp",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg_mTop173p5": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg_mTop173p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_CP5Down": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_CP5Down",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLJ_powheg_hDampUp": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLJ_powheg_hDampUp",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_CP5Up": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_CP5Up",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_hDampDown": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_hDampDown",
+        "isMC": 1
+    },
+    "Skim_Vcb_SL_TTLL_powheg": {
+        "suffix": "Vcb_SL",
+        "PD": "TTLL_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_hDampUp": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_hDampUp",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLJ_powheg_mTop171p5": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLJ_powheg_mTop171p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_mTop173p5": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_mTop173p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_DL_TTLJ_powheg": {
+        "suffix": "Vcb_DL",
+        "PD": "TTLJ_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg_mTop171p5": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_powheg_mTop171p5",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_Vcb_powheg": {
+        "suffix": "Vcb_FH",
+        "PD": "TTJJ_Vcb_powheg",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_TTJJ_powheg": {
+        "suffix": "Vcb_FH",
         "PD": "TTJJ_powheg",
         "isMC": 1
     },
-    "Skim_tt_JetMET": {
-        "suffix": "tt",
+    "Skim_Vcb_FH_QCD_HT1500to2000": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT1500to2000",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT1200to1500": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT1200to1500",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT1000to1200": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT1000to1200",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT800to1000": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT800to1000",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT600to800": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT600to800",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT400to600": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT400to600",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT200to400": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT200to400",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT100to200": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT100to200",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_QCD_HT70to100": {
+        "suffix": "Vcb_FH",
+        "PD": "QCD_HT70to100",
+        "isMC": 1
+    },
+    "Skim_Vcb_FH_JetMET": {
+        "suffix": "Vcb_FH",
         "PD": "JetMET",
         "isMC": 0,
         "periods": [
@@ -83,115 +463,5 @@
             "F",
             "E"
         ]
-    },
-    "Skim_tt_TTLJ_powheg": {
-        "suffix": "tt",
-        "PD": "TTLJ_powheg",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ZZto2L2Q": {
-        "suffix": "SingleLep",
-        "PD": "ZZto2L2Q",
-        "isMC": 1
-    },
-    "Skim_SingleLep_WZtoLNu2Q": {
-        "suffix": "SingleLep",
-        "PD": "WZtoLNu2Q",
-        "isMC": 1
-    },
-    "Skim_SingleLep_WWtoLNu2Q": {
-        "suffix": "SingleLep",
-        "PD": "WWtoLNu2Q",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tch_antitop": {
-        "suffix": "SingleLep",
-        "PD": "ST_tch_antitop",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tch_top": {
-        "suffix": "SingleLep",
-        "PD": "ST_tch_top",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tW_antitop_Semilep": {
-        "suffix": "SingleLep",
-        "PD": "ST_tW_antitop_Semilep",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tW_top_Semilep": {
-        "suffix": "SingleLep",
-        "PD": "ST_tW_top_Semilep",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tW_antitop_Lep": {
-        "suffix": "SingleLep",
-        "PD": "ST_tW_antitop_Lep",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_tW_top_Lep": {
-        "suffix": "SingleLep",
-        "PD": "ST_tW_top_Lep",
-        "isMC": 1
-    },
-    "Skim_SingleLep_ST_sch_top_Lep": {
-        "suffix": "SingleLep",
-        "PD": "ST_sch_top_Lep",
-        "isMC": 1
-    },
-    "Skim_SingleLep_TTLJ_powheg": {
-        "suffix": "SingleLep",
-        "PD": "TTLJ_powheg",
-        "isMC": 1
-    },
-    "Skim_SingleLep_DYJets": {
-        "suffix": "SingleLep",
-        "PD": "DYJets",
-        "isMC": 1
-    },
-    "Skim_SingleLep_TTLL_powheg": {
-        "suffix": "SingleLep",
-        "PD": "TTLL_powheg",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT1500to2000": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT1500to2000",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT1000to1500": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT1000to1500",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT800to1000": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT800to1000",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT600to800": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT600to800",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT400to600": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT400to600",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT200to400": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT200to400",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT100to200": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT100to200",
-        "isMC": 1
-    },
-    "Skim_SingleLep_QCDB_HT40to100": {
-        "suffix": "SingleLep",
-        "PD": "QCDB_HT40to100",
-        "isMC": 1
     }
 }

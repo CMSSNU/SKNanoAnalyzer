@@ -301,17 +301,17 @@
         "isMC": 1,
         "PD": "QCD_Pt_600to800_TuneCP5_13TeV_pythia8",
         "xsec": 156.5,
-        "nmc": 61972000,
-        "sumsign": 61972000.0,
-        "sumW": 61972001.37391
+        "nmc": 117329000.0,
+        "sumsign": 117329000.0,
+        "sumW": 117329000.0
     },
     "QCD_Pt_800to1000": {
         "isMC": 1,
         "PD": "QCD_Pt_800to1000_TuneCP5_13TeV_pythia8",
         "xsec": 26.27,
-        "nmc": 35527000,
-        "sumsign": 35527000.0,
-        "sumW": 35527000.0
+        "nmc": 66529000.0,
+        "sumsign": 66529000.0,
+        "sumW": 66529000.0
     },
     "QCD_Pt_1000to1400": {
         "isMC": 1,

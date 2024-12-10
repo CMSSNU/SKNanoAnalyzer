@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TTToHadronic_Vcb_TuneCP5_13TeV-powheg-pythia8",
     "xsec_formula": "377.96 * 0.04183 * 0.04183 / 2 * 2",
-    "nmc": 97260000.0,
-    "sumsign": 96474592.0,
-    "sumW": 30805882880.0,
+    "nmc": 13954500.0,
+    "sumsign": 13841792.0,
+    "sumW": 4376356352.0,
     "xsec": 0.6613350942439999,
     "path": [
         "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016preVFP/MC/TTToHadronic_Vcb_TuneCP5_13TeV-powheg-pythia8/241117_160900/0000/new/tree_1.root",

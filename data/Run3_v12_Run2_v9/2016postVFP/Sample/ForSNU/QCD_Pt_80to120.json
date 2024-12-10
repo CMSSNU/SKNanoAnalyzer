@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "QCD_Pt_80to120_TuneCP5_13TeV_pythia8",
     "xsec": 2339000,
-    "nmc": 29743000,
-    "sumsign": 29743000.0,
-    "sumW": 29746349.59823,
+    "nmc": 73284000.0,
+    "sumsign": 73284000.0,
+    "sumW": 73289856.0,
     "path": [
         "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016postVFP/MC/QCD_Pt_80to120_TuneCP5_13TeV_pythia8/241105_084006/0000/tree_1.root",
         "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016postVFP/MC/QCD_Pt_80to120_TuneCP5_13TeV_pythia8/241105_084006/0000/tree_2.root",
