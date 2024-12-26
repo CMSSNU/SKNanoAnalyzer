@@ -401,7 +401,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     inclpath = inclpath.split(":")
     inclpath = [x for x in inclpath if SKNANO_INSTALLDIR.split("/")[-1] not in x]
     inclpath = inclpath + [os.path.join(abs_MasterDirectoryName,'install/include')]
-    inclpath = :.join(inclpath)
+    inclpath = ":".join(inclpath)
     
     
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
