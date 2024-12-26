@@ -1,7 +1,9 @@
 build/*
-lib/*
+install/*
 test/*
 test.root
 CMakeFiles/*
 external/lhapdf/*
-config/config.choij
+config/config.*
+**/Skim*.json
+external/** 
