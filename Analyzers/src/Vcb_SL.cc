@@ -1143,10 +1143,7 @@ void Vcb_SL::InferONNX()
     {
         
         class_score[i] = (std::exp((output_data.at("EVENT/signal").at(i))));
-        cout << "std::exp((output_data.at(\"EVENT/signal\").at(" << i << ")) = " << std::exp((output_data.at("EVENT/signal").at(i))) << endl;
-        cout << "class_score[" << i << "] = " << class_score[i] << endl;
     }
-    cout << "check the filled value of class_score[0] = " << class_score[0] << endl;
 
     // find the assignment from output_data["t_assignment_log_probability"], output_data["ht_assignment_log_probability"]
     int l_assignment = -999;
@@ -1214,8 +1211,10 @@ void Vcb_SL::InferONNX()
 
     if(class_score[0] > 0.6)
         class_label = Vcb_SL::classCategory::Signal;
-    else
+    else if(class_score[0] <= 0.6 && class_score[0] > 0.4)
         class_label = Vcb_SL::classCategory::Control0;
+    else
+        class_label = Vcb_SL::classCategory::Disposal;
 }
 
 void Vcb_SL::FillONNXRecoInfo(const TString &histPrefix, float weight)
@@ -1246,4 +1245,5 @@ void Vcb_SL::FillONNXRecoInfo(const TString &histPrefix, float weight)
     FillHist(histPrefix + "/" + "EnergyFrac0p5VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 0.5), weight, 10, 0., 1., 50, 0. ,1.);
     FillHist(histPrefix + "/" + "EnergyFrac0p8VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 0.8), weight, 10, 0., 1., 50, 0. ,1.);
     FillHist(histPrefix + "/" + "EnergyFrac1p2VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 1.2), weight, 10, 0., 1., 50, 0. ,1.);
+    FillHist(histPrefix + "/" + "nConstituentsVsBvsC", W2_BvsC, Jets[assignment[3]].nConstituents(), weight, 10, 0., 1., 50, 0., 50.);
 }
