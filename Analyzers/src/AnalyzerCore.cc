@@ -14,7 +14,7 @@ AnalyzerCore::~AnalyzerCore() {
     // if (pdfReweight) delete pdfReweight;
 }
 
-bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
+bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
     bool MetFilter = true;
     MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
     //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
@@ -22,12 +22,12 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev) {
     if(Run == 2) return MetFilter;
     // Temporarily remove the ecalBadCalibFilter, Instead,
     if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
-    if (ev.GetMETVector().Pt() <= 100.) return MetFilter;
+    if (ev.GetMETVector(met_type).Pt() <= 100.) return MetFilter;
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
         bool badEcal = (jet.Pt() > 50.);
         badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
-        badEcal = badEcal && jet.DeltaR(ev.GetMETVector()) < 0.3;
+        badEcal = badEcal && jet.DeltaR(ev.GetMETVector(met_type)) < 0.3;
         badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
         badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
         if(badEcal) return false;
@@ -183,43 +183,49 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
 }
 
 RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst, const TString &source){
+    gRandom->SetSeed(0);
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
     for(size_t i = 0; i < jets.size(); i++){
         Jet this_jet = jets.at(i);
+
+        // backward smearing for systematic variation
+
+        if (this_jet.GetUnsmearedP4().E() < 0) // never smeared yet
+        {
+            this_jet.SetUnsmearedP4(this_jet);
+        }
+        else
+        {
+            // already smeared
+            float backward_factor = this_jet.GetUnsmearedP4().Pt() / this_jet.Pt();
+            this_jet *= backward_factor;
+        }
+
         float this_corr = 1.;
-        float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), fixedGridRhoFastjetAll);
-        float this_sf = myCorr->GetJERSF(jets[i].Eta(), jets[i].Pt(), syst, source);
+        float this_jer = myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), fixedGridRhoFastjetAll);
+        float this_sf = myCorr->GetJERSF(this_jet.Eta(), this_jet.Pt(), syst, source);
         float MIN_JET_ENERGY = 1e-2;
 
         if(matched_idx[i] < 0){
             // if the jet is not matched to any genjet, do stochastic smearing
             if(this_sf < 1.){
-                float this_corr = MIN_JET_ENERGY / this_jet.E();
-                this_jet *= this_corr;
-                smeared_jets.push_back(this_jet);
-                continue;
+                this_corr = MIN_JET_ENERGY / this_jet.E();
             }
             else{
                 this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
                 float new_corr = MIN_JET_ENERGY / this_jet.E();
                 this_corr = max(this_corr, new_corr);
-                this_jet *= this_corr;
-                smeared_jets.push_back(this_jet);
-                continue;
             }
         }
         else{
             float this_genjet_pt = genjets[matched_idx[i]].Pt();
-            this_corr += (this_sf - 1.) * (1. - this_genjet_pt / jets[i].Pt());
-            this_corr = max(this_corr, 0.f);
+            this_corr += (this_sf - 1.) * (1. - this_genjet_pt / this_jet.Pt());
             float new_corr = MIN_JET_ENERGY / this_jet.E();
             this_corr = max(this_corr, new_corr);
-            float this_unsmeared_pt = jets[i].Pt();
-            this_jet.SetUnsmearedPt(this_unsmeared_pt);
-            this_jet *= this_corr;
-            smeared_jets.push_back(this_jet);
         }
+        this_jet *= this_corr;
+        smeared_jets.push_back(this_jet);
     }
     return smeared_jets;
 }
@@ -227,47 +233,59 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
 RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst, const TString &source)
 {
     RVec<Jet> scaled_jets;
-    RVec<TString> syst_sources = { "AbsoluteMPFBias",
-                                   "AbsoluteScale",
-                                   "AbsoluteStat",
-                                   "FlavorQCD",
-                                   "Fragmentation",
-                                   //"PileUpDataMC",
-                                   //"PileUpPtBB",
-                                   //"PileUpPtEC1",
-                                   //"PileUpPtEC2",
-                                   //"PileUpPtHF",
-                                   //"PileUpPtRef",
-                                   "PileUpEnvelope",
-                                   "RelativeFSR",
-                                   "RelativeJEREC1",
-                                   "RelativeJEREC2",
-                                   "RelativeJERHF",
-                                   "RelativePtBB",
-                                   "RelativePtEC1",
-                                   "RelativePtEC2",
-                                   "RelativePtHF",
-                                   "RelativeBal",
-                                   "RelativeSample",
-                                   "RelativeStatEC",
-                                   "RelativeStatFSR",
-                                   "RelativeStatHF",
-                                   "SinglePionECAL",
-                                   "SinglePionHCAL",
-                                   "TimePtEta" };
-                                   
-    if(syst == Correction::variation::up) return jets;
+    RVec<TString> syst_sources = {"AbsoluteMPFBias",
+                                  "AbsoluteScale",
+                                  "AbsoluteStat",
+                                  "FlavorQCD",
+                                  "Fragmentation",
+                                  //"PileUpDataMC",
+                                  //"PileUpPtBB",
+                                  //"PileUpPtEC1",
+                                  //"PileUpPtEC2",
+                                  //"PileUpPtHF",
+                                  //"PileUpPtRef",
+                                  "PileUpEnvelope",
+                                  "RelativeFSR",
+                                  "RelativeJEREC1",
+                                  "RelativeJEREC2",
+                                  "RelativeJERHF",
+                                  "RelativePtBB",
+                                  "RelativePtEC1",
+                                  "RelativePtEC2",
+                                  "RelativePtHF",
+                                  "RelativeBal",
+                                  "RelativeSample",
+                                  "RelativeFSR",
+                                  "RelativeStatFSR",
+                                  "RelativeStatEC",
+                                  "RelativeStatHF",
+                                  "SinglePionECAL",
+                                  "SinglePionHCAL",
+                                  "TimePtEta"};
+
+    if(syst == Correction::variation::nom) return jets;
+
 
     for(const auto &jet: jets){
         Jet this_jet = jet;
+
+        TLorentzVector this_unsmearedP4 = jet.GetUnsmearedP4();
+        if(this_unsmearedP4.E() < 0){
+            cerr << "[AnalyzerCore::ScaleJets] It seems the attribute UnsmearedP4 has never been set for this Jet." << endl;
+            cerr << "[AnalyzerCore::ScaleJets] Since all jets in MC are smeared when calling GetAllJets(), UnsmearedP4 should have been set by AnalyzerCore::SmearJets at the same time." << endl;
+            cerr << "[AnalyzerCore::ScaleJets] This may indicate spurious behavior in your code. For now, Jet.pt() is used for scaling, but I recommend inspecting your code." << endl;
+
+            this_unsmearedP4 = jet;
+        }
+
         if(source == "total"){
             for(const auto &it: syst_sources){
-                this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), syst, it);
+                this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, it);
             }
             scaled_jets.push_back(this_jet);
         }
         else{
-            this_jet *= myCorr->GetJESUncertainty(jet.Eta(), jet.Pt(), syst, source);
+            this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, source);
             scaled_jets.push_back(this_jet);
         }
     }
@@ -334,7 +352,9 @@ Event AnalyzerCore::GetEvent()
 
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
-    ev.SetMET(PuppiMET_pt, PuppiMET_phi);
+    RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown, PuppiMET_ptJERUp, PuppiMET_ptJERDown, PuppiMET_ptJESUp, PuppiMET_ptJESDown};
+    RVec<float> MET_phis = {PuppiMET_phi, PuppiMET_phiUnclusteredUp, PuppiMET_phiUnclusteredDown, PuppiMET_phiJERUp, PuppiMET_phiJERDown, PuppiMET_phiJESUp, PuppiMET_phiJESDown};
+    ev.SetMET(MET_pts, MET_phis);
     ev.setRho(fixedGridRhoFastjetAll);
     return ev;
 }
@@ -394,7 +414,7 @@ RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const flo
     return selected_muons;
 }
 
-RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) {
+RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) const {
     RVec<Muon> selected_muons;
 
     for (const auto &muon: muons) {
@@ -427,7 +447,7 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, 
     return selected_muons;
 }
 
-RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID ID, const float ptmin, const float fetamax)
+RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID ID, const float ptmin, const float fetamax) const
 {
     RVec<Muon> selected_muons;
 
@@ -502,7 +522,7 @@ RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, c
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax) {
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax) const {
     RVec<Electron> selected_electrons;
     for (const auto &electron: electrons) {
         if (! (electron.Pt() > ptmin)) continue;
@@ -513,7 +533,7 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax)
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax) const
 {
     RVec<Electron> selected_electrons;
     for (const auto &electron : electrons)
@@ -606,7 +626,7 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
 
 }
 
-RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax){
+RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const{
     
     RVec<Tau> selected_taus;
     
@@ -754,7 +774,7 @@ RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float
     return selected_jets;
 }
 
-RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, const float ptmin, const float fetamax){
+RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, const float ptmin, const float fetamax) const{
     RVec<Jet> selected_jets;
     for (const auto &jet: jets) {
         if (jet.Pt() < ptmin) continue;
@@ -765,7 +785,7 @@ RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, cons
     return selected_jets;
 }
 
-RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const Jet::JetID ID, const float ptmin, const float fetamax)
+RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const Jet::JetID ID, const float ptmin, const float fetamax) const
 {
     RVec<Jet> selected_jets;
     for (const auto &jet : jets)
@@ -781,7 +801,7 @@ RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const Jet::JetID ID, c
     return selected_jets;
 }
 
-RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR){
+RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR) const{
     RVec<Jet> selected_jets;
     for(const auto &jet: jets){
         bool isLeptonInside = false;
@@ -1042,6 +1062,7 @@ void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname,
         
         unordered_map<string, TBranch*>* this_branchmap = &branchmaps[tree];
         auto it = this_branchmap->find(string(branchname));
+
         if (it == this_branchmap->end()){
             auto br = tree->Branch(branchname, this_address, leaflist);
             this_branchmap->insert({string(branchname), br});
@@ -1049,6 +1070,7 @@ void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname,
         else{
             it->second->SetAddress(this_address);
         }
+        
     }
     catch(int e){
         cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
@@ -1056,7 +1078,13 @@ void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname,
     }
 }
 
-void AnalyzerCore::FillTrees(){
+template void AnalyzerCore::SetBranch_Vector<int>(const TString &, const TString &, std::vector<int> &);
+template void AnalyzerCore::SetBranch_Vector<float>(const TString &, const TString &, std::vector<float> &);
+template void AnalyzerCore::SetBranch_Vector<double>(const TString &, const TString &, std::vector<double> &);
+template void AnalyzerCore::SetBranch_Vector<bool>(const TString &, const TString &, std::vector<bool> &);
+
+void AnalyzerCore::FillTrees()
+{
     for (const auto &pair : treemap)
     {
         const string &treename = pair.first;

@@ -44,19 +44,40 @@ SKNanoLoader::~SKNanoLoader() {
     if (!fChain) return;
     if (fChain->GetCurrentFile()) fChain->GetCurrentFile()->Close();
 }
-void SKNanoLoader::Loop() {
+void SKNanoLoader::Loop()
+{
     long nentries = fChain->GetEntries();
     if (MaxEvent > 0)
-        nentries = min(nentries, MaxEvent);
+        nentries = std::min(nentries, MaxEvent);
 
-    cout << "[SKNanoLoader::Loop] Event Loop Started" << endl;
-    for (long jentry=0; jentry<nentries; jentry++) {
-        if (jentry < NSkipEvent) continue;
-        if (jentry % LogEvery == 0) cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries << endl;
-        if (fChain->GetEntry(jentry) < 0) exit(EIO);
+    std::cout << "[SKNanoLoader::Loop] Event Loop Started" << std::endl;
+
+    auto startTime = std::chrono::steady_clock::now(); // Start timing
+
+    for (long jentry = 0; jentry < nentries; jentry++)
+    {
+        if (jentry < NSkipEvent)
+            continue;
+
+        // Log progress for every LogEvery events
+        if (jentry % LogEvery == 0)
+        {
+            auto currentTime = std::chrono::steady_clock::now();
+            std::chrono::duration<double> elapsedTime = currentTime - startTime;
+            double timePerEvent = elapsedTime.count() / (jentry + 1);
+            double estimatedRemaining = (nentries - jentry) * timePerEvent;
+
+            std::cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries
+                      << " | Elapsed: " << std::fixed << std::setprecision(2) << elapsedTime.count() << "s"
+                      << ", Remaining: " << estimatedRemaining << "s" << std::endl;
+        }
+
+        if (fChain->GetEntry(jentry) < 0)
+            exit(EIO);
         executeEvent();
     }
-    cout << "[SKNanoLoader::Loop] Event Loop Finished" << endl;
+
+    std::cout << "[SKNanoLoader::Loop] Event Loop Finished" << std::endl;
 }
 void SKNanoLoader::SetMaxLeafSize(){
     //check how much time it takes to read the tree
@@ -566,7 +587,6 @@ void SKNanoLoader::SetMaxLeafSize(){
 void SKNanoLoader::Init() {
     
     cout << "[SKNanoLoader::Init] Initializing. Era = " << DataEra << " Run =  " << Run << endl;
-
     if(fChain->GetEntries() == 0){
         cout << "[SKNanoLoader::Init] No Entries in the Tree" << endl;
         cout << "[SKNanoLoader::Init] Exiting without make output..." << endl;
