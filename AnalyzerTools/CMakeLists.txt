@@ -18,9 +18,10 @@ find_library(ONNXRUNTIME_LIBRARY NAMES onnxruntime PATHS $ENV{ONNXRUNTIME_LIB_DI
 
 # MLHelper library
 add_library(MLHelper SHARED 
-    src/MLHelper.cc 
-    include/MLHelper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MLHelper.cc 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/MLHelper.h
 )
+
 
 target_include_directories(MLHelper PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -48,17 +49,18 @@ set(PCM "libMLHelper_rdict.pcm")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
 install(FILES include/MLHelper.h DESTINATION include/AnalyzerTools)
 # Prepare headers for ROOT dictionary
-file(GLOB HEADERS include/*.h)
+file(GLOB HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/*.h)
+list(FILTER DICTIONARY_HEADERS EXCLUDE REGEX "MLHelper.h")
 
 # Attempt to resolve header conflicts more elegantly
 # This is a placeholder - you may need a more sophisticated approach
 set(DICTIONARY_HEADERS ${HEADERS})
 #install(FILES ${HEADERS} DESTINATION include/AnalyzerTools)
-list(FILTER DICTIONARY_HEADERS EXCLUDE REGEX "MLHelper.h")
+
 
 
 # Prepare source files
-file(GLOB SOURCES src/*.cc)
+file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cc)
 list(FILTER SOURCES EXCLUDE REGEX "MLHelper.cc")
 
 # Main library target
