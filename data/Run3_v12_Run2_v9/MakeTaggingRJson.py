@@ -6,11 +6,14 @@ import argparse
 import os
 import itertools
 import copy
-import multiprocessing as mp
+import multiprocessing 
 from tqdm import tqdm
 from functools import partial
 from copy import deepcopy
 r_hist = None
+import concurrent.futures
+
+
 def histParser(f):
     numerator_dicts = []
     denominator_dicts = []
@@ -40,7 +43,7 @@ def histParser(f):
         else:
             denominator_dicts.append(this_info)
     return numerator_dicts, denominator_dicts
-        
+
 def makeTempEffHist(folder):
     dict_per_file = {}
     ratio_hists = []
@@ -53,7 +56,7 @@ def makeTempEffHist(folder):
     if not os.path.exists('temp'):
         os.mkdir('temp')
     os.system('rm output.root')
-    os.system(f'hadd -f temp/output.root *.root')
+    os.system(f'hadd -f9 -j 8 temp/output.root *.root')
     
     
     f = ROOT.TFile("temp/output.root","READ")
@@ -81,144 +84,145 @@ def makeTempEffHist(folder):
     global r_hist
     r_hist = os.path.abspath("output.root")
     
+
+def key_parser(key):
+    infos = key.split("##")
+    this_info = {}
+    for info in infos:
+        if '#' not in info:
+            continue
+        k, value = info.split("#")
+        this_info[k] = value
+    this_info['hist_key'] = key
+    return this_info
     
-    
+def process_correction(tagger, process, key_dicts, r_hist):
+        """
+        Worker function to process a single (tagger, process) pair.
+
+        Returns:
+        - dict: The correction dictionary for the given tagger and process.
+        """
+        this_correction_dict = {
+            'name': f"{tagger}_{process}",
+            'version': 0,
+            'inputs': [
+                {"type": "string", "name": "syst"},
+                {"type": "int", "name": "flav"},
+                {"type": "real", "name": "pt"},
+                {"type": "real", "name": "abseta"}
+            ],
+            'output': {"name": "weight", "type": "real"},
+            'data': {"nodetype": "category", "input": "syst", "content": []}
+        }
+
+        # Open the ROOT file inside the worker to ensure thread safety
+        try:
+            with ROOT.TFile(r_hist, "READ") as f:
+                for key_dict in key_dicts:
+                    sample = key_dict.get('sample')
+                    tagger_key = key_dict.get('tagger')
+                    syst = key_dict.get('variation')
+                    syst_name = key_dict.get('systematic')
+                    flav = key_dict.get('parton_flav')
+
+                    if not all([sample, tagger_key, syst, syst_name, flav]):
+                        continue  # Skip invalid key_dict
+
+                    if sample != process or tagger_key != tagger:
+                        continue
+
+                    if syst == 'central' and syst_name != 'Central':
+                        continue  # Not b-tag related
+
+                    # Initialize systematic entry if necessary
+                    syst_entry = next((item for item in this_correction_dict['data']['content'] if item['key'] == syst), None)
+                    if not syst_entry:
+                        syst_entry = {"key": syst, "value": {"nodetype": "category", "input": "flav", "content": []}}
+                        this_correction_dict['data']['content'].append(syst_entry)
+
+                    # Initialize flav entry within systematic
+                    flav_entry = next((item for item in syst_entry['value']['content'] if item['key'] == flav), None)
+                    if not flav_entry:
+                        flav_entry = {"key": int(flav), "value": {}}
+                        syst_entry['value']['content'].append(flav_entry)
+                    # Load histogram data and update correction dictionary
+                    try:
+                        hist_path = f'output.root:{key_dict["hist_key"]}'
+                        c1 = convert.from_uproot_THx(hist_path)
+                        c1 = c1.dict()['data']
+                        c1['inputs'] = ['pt', 'abseta']
+                        c1['flow'] = 'clamp'
+                        flav_entry['value'] = c1
+                    except Exception as e:
+                        raise RuntimeError(f"Failed to process histogram for key {key_dict}: {e}")
+
+        except Exception as e:
+            raise RuntimeError(f"Error processing tagger '{tagger}' and process '{process}': {e}")
+
+        return this_correction_dict
 
 def makingJson(era, taggingmode):
-    main_json = {"schema_version": 2,
-            "description": "This json file contains the R factor for the deepJet, particleNet, robustParticleTransformer AK4 jet taggers",
-            "corrections": []}
-    categorys={
-    "systematic":{"type":"string", "content":[]}, 
-    "category":{"type":"string", "description":"category of the process. TTBB, TTBJ, TTCC, TTJJ for TTbar, total for other processes.", "content":[]},
+    main_json = {
+        "schema_version": 2,
+        "description": "This json file contains the R factor for the deepJet, particleNet, robustParticleTransformer AK4 jet taggers",
+        "corrections": []
     }
-    if taggingmode == 'c':
-        categorys['nTrueInt'] = {"type":"real","description":"number of true interactions"}
-        categorys['HT'] = {"type":"real","description":"HT"}
-    else:
-        categorys['njet'] = {"type":"int","description":"number of jets"}
-        categorys['HT'] = {"type":"real","description":"HT"}
-    process_list = set()
-    process_category = set()
-    systematics = set()
-    taggers = ["deepJet","particleNet","robustParticleTransformer"]
-    
-    print(f"open file {r_hist}")
-    f = ROOT.TFile(r_hist,"READ")
-    keys = f.GetListOfKeys()
-    keys = [key.GetName() for key in keys]
-    keys = [key for key in keys if f'tagging#{taggingmode}' in key]
-    print(f"currentely in {os.getcwd()}")
-    for key in keys:
-       infos = key.split("##")
-       for info in infos:
-            if 'sample' in info:
-                process_list.add(info.split("#")[1])
-            if 'category' in info:
-                process_category.add(info.split("#")[1])
-            if 'systematic' in info:
-                systematics.add(info.split("#")[1])
-    
-    process_list = list(process_list)
-    process_category = list(process_category)
-    systematics = list(systematics)
-    
-    
-    categorys['systematic']['content'] = systematics
-    categorys['category']['content'] = process_category
 
-    for tagger in taggers:
-        for process in process_list:
-            print(f'Creating json for {tagger} {process}')
-            tagger_eff_dict={}
-            tagger_eff_dict['name'] = tagger + "_" + process
-            tagger_eff_dict['version'] = 0
-            tagger_eff_dict['inputs'] = []
-            tagger_eff_dict['output'] = {"name":"weight","type":"real"}
-            for name, cat in categorys.items():
-                tagger_eff_dict['inputs'].append(copy.deepcopy(cat))
-                tagger_eff_dict['inputs'][-1]['name'] = name
-                if 'content' in tagger_eff_dict['inputs'][-1].keys():
-                    del tagger_eff_dict['inputs'][-1]['content']
-                    
-            data_dict = {"nodetype":"category","input":"systematic","content":[]}
-            tagger_eff_dict['data']=data_dict
-            for systematic in categorys['systematic']['content']:
-                data_dict['content'].append({"key":systematic,"value":{'nodetype':"category","input":"category","content":[]}})
-                for category in categorys['category']['content']:
-                    data_dict['content'][-1]['value']['content'].append({"key":category,"value":{}})
+    categorys = {
+        "systematic": {"type": "string", "content": []},
+        "category": {
+            "type": "string",
+            "description": "category of the process. TTBB, TTBJ, TTCC, TTJJ for TTbar, total for other processes.",
+            "content": []
+        },
+        "pt": {"type": "real", "description": "pt of the jet"},
+        "abseta": {"type": "real", "description": "abseta of the jet"}
+    }
 
-            main_json['corrections'].append(tagger_eff_dict)
+    taggers = ["deepJet", "particleNet", "robustParticleTransformer"]
 
-                #iterates over all root files and get the R factor
-    f = ROOT.TFile("output.root","READ")
-    keys = f.GetListOfKeys()
-    keys = [key.GetName() for key in keys]
-    keys = [key for key in keys if f'tagging#{taggingmode}' in key]
-    keys = [key for key in keys if "2D" in key]
-    f.Close()
-    # Use multiprocessing pool
-    with mp.Pool(32) as pool:
-        process_func = partial(process_key, taggingmode=taggingmode)
-        results = list(tqdm(pool.imap(process_func, keys), total=len(keys)))
+    try:
+        # Open the ROOT file once to extract key_dicts
+        with ROOT.TFile(r_hist, "READ") as f:
+            keys = f.GetListOfKeys()
+            keys = [key.GetName() for key in keys]
+            key_dicts = [key_parser(key) for key in keys]
+    except Exception as e:
+        raise RuntimeError(f"Failed to open or parse ROOT file {r_hist}: {e}")
 
-    # Update main_json with results
-    for process, tagger, systematic, category, this_data in results:
-        for tagger_dict in main_json['corrections']:
-            if tagger_dict['name'] == f"{tagger}_{process}":
-                for systematic_dict in tagger_dict['data']['content']:
-                    if systematic_dict['key'] == systematic:
-                        for category_dict in systematic_dict['value']['content']:
-                            if category_dict['key'] == category:
+    # Filtering with tagging mode
+    key_dicts = [key_dict for key_dict in key_dicts if key_dict.get('tagging') == taggingmode]
 
-                                category_dict['value'] = copy.deepcopy(this_data)
-                                break
-                        break
-                break
-        
-        
-    # for process, tagger, systematic, category in itertools.product(process_list, taggers,categorys['systematic']['content'],categorys['category']['content']):
-    #     exist = True
-    #     this_data = {}
-    #     try:
-    #         c1 = convert.from_uproot_THx(f'output.root:tagging#{taggingmode}##era#{era}##systematic#{systematic}##Hist#2D##tagger#{tagger}##r##category#{category}##sample#{process}')
-    #         this_data = c1.dict()['data']  
-    #     except:
-    #         exist = False
-    #         this_data = { "nodetype": "formula",
-    #                               "expression": "1.",
-    #                               "parser": "TFormula",
-    #                               "variables": [
-    #                             ],
-    #                               "parameters": []
-    #                             }
-    
+    all_processes = sorted(set([key_dict['sample'] for key_dict in key_dicts]))
+
+    # Prepare arguments for multiprocessing
+    tasks = [(tagger, process, key_dicts, r_hist) for tagger in taggers for process in all_processes]
+
+    # Determine the number of workers based on CPU cores
+    num_workers = min(multiprocessing.cpu_count(), len(tasks))
+    print(f"Starting multiprocessing with {num_workers} workers...")
+
+    corrections = []
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+        # Initialize tqdm progress bar
+        with tqdm(total=len(tasks), desc="Processing", position=0) as pbar:
+            # Start the load operations and mark each future with its (tagger, process)
+            future_to_task = {executor.submit(process_correction, *task): task for task in tasks}
+            for future in concurrent.futures.as_completed(future_to_task):
+                task = future_to_task[future]
+                try:
+                    correction = future.result()
+                    corrections.append(correction)
+                except Exception as exc:
+                    print(f"Task {task} generated an exception: {exc}")
+                finally:
+                    pbar.update(1)
+
+    # Append all corrections to the main JSON
+    main_json['corrections'] = corrections
 
     return main_json
-                    
-def process_key(key, taggingmode):
-    # Parse key information
-    info_pre = key.split("##")
-    infos = {}
-    for info in info_pre:
-        if '#' in info:
-            k, value = info.split("#")
-            infos[k] = value
-    
-    # Process data
-    process = infos['sample']
-    tagger = infos['tagger']
-    systematic = infos['systematic']
-    category = infos['category']
-
-    # Convert data from ROOT
-    c1 = convert.from_uproot_THx(f'output.root:{key}')
-    #do deep copy
-    this_data = copy.deepcopy(c1.dict()['data'])
-    this_data['inputs'] = ['nTrueInt', 'HT'] if taggingmode == 'c' else ['njet', 'HT']
-    this_data['flow'] = 'clamp'
-    
-    return (process, tagger, systematic, category, this_data)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create JSON file for b-tagging efficiency')
