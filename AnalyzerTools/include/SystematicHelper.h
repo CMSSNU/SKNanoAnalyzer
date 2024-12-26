@@ -111,11 +111,16 @@ public:
     }
 
     inline std::string getCurrentSysName() const { return current_Iter_obj.iter_name; }
-    inline std::string getCurrentSysSource() const { return current_Iter_obj.syst_name; }
-    inline Correction::variation getCurrentVariation() const { return current_Iter_obj.variation; }
+    inline std::string getCurrentIterSysSource() const { return current_Iter_obj.syst_name; }
+    inline Correction::variation getCurrentIterVariation() const { return current_Iter_obj.variation; }
+
+    std::vector<std::string> get_targets_from_name(const std::string &syst_name);
+    std::vector<std::string> get_sources_from_name(const std::string &syst_name);
+    Correction::variation get_variation_from_name(const std::string &syst_name);
     std::unordered_map<std::string, float> calculateWeight();
 
 private:
+    std::string central_name = "Central";
     void checkBadSystematics();
     void make_Iter_obj_EvtLoopAgain();
     void make_map_dedicatedSample();

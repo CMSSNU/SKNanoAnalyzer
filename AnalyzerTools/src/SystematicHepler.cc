@@ -78,7 +78,7 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
     checkBadSystematics();
     make_Iter_obj_EvtLoopAgain();
     current_Iter_obj.clone(systematics_evtLoopAgain[0]); // Central
-    std::cout << "[SystematicHelper::SystematicHelper] SystematicHelper is created" << std::endl;
+    std::cout << "[SystematicHelper::SystematicHelper] SystematicHelper is created for " <<  sample << std::endl;
     std::cout << "[SystematicHelper::SystematicHelper] Iterator has " << systematics_evtLoopAgain.size() << " elements" << std::endl;
     for (const auto &syst : systematics_evtLoopAgain)
     {
@@ -153,9 +153,10 @@ void SystematicHelper::checkBadSystematics()
 
 void SystematicHelper::make_Iter_obj_EvtLoopAgain()
 {
+
     SystematicHelper::Iter_obj obj_central;
-    obj_central.iter_name = "Central";
-    obj_central.syst_name = "Central";
+    obj_central.iter_name = central_name;
+    obj_central.syst_name = central_name;
     obj_central.variation = Correction::variation::nom;
     systematics_evtLoopAgain.push_back(obj_central);
 
@@ -324,7 +325,7 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_central_case
         all_weight_systs.push_back(syst.syst);
     }
 
-    weights["Central"] = nominal_weight;
+    weights[central_name] = nominal_weight;
 
     for (const auto &correlation : correlations)
     {
@@ -387,7 +388,7 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_central_case
             // Check if sample is found as a substring of this_sample
             if (sample.find(this_key) != std::string::npos)
             {
-                float central_weight = weights["Central"];
+                float central_weight = weights[central_name];
                 weights.clear();
                 weights[dedicatedSample.second] = central_weight; // Use value from "Central"
                 return weights;
@@ -473,4 +474,93 @@ bool SystematicHelper::IsDedicatedSample()
         }
     }
     return false;
+}
+
+std::vector<std::string> SystematicHelper::get_targets_from_name(const std::string &syst_name){
+    // remove variation prefix
+    std::vector<std::string> targets;
+    if(syst_name == central_name){
+        targets.push_back(central_name);
+        return targets;
+    }
+    std::string syst_name_no_variation = syst_name;
+    for (const auto &prefix : variation_prefix)
+    {
+        size_t found = syst_name.find(prefix.second);
+        if (found != std::string::npos)
+        {
+            syst_name_no_variation = syst_name.substr(0, found);
+            break;
+        }
+    }
+    SYST *syst = findSystematic(syst_name_no_variation);
+    
+    //check if syst is in correlation table
+    for (const auto &correlation : correlations)
+    {
+        if (correlation.second.rep_name == syst_name_no_variation)
+        {
+            targets.push_back(findSystematic(correlation.second.rep_name)->target);
+            for (const auto &child_syst : correlation.second.child_syst_names)
+            {
+                targets.push_back(findSystematic(child_syst)->target);
+            }
+            return targets;
+        }
+    }
+    targets.push_back(syst->target);
+    return targets;
+}
+
+std::vector<std::string> SystematicHelper::get_sources_from_name(const std::string &syst_name){
+    // remove variation prefix
+    std::vector<std::string> sources;
+    if (syst_name == central_name){
+        sources.push_back(central_name);
+        return sources;
+    }
+    std::string syst_name_no_variation = syst_name;
+    for (const auto &prefix : variation_prefix)
+    {
+        size_t found = syst_name.find(prefix.second);
+        if (found != std::string::npos)
+        {
+            syst_name_no_variation = syst_name.substr(0, found);
+            break;
+        }
+    }
+
+    SYST *syst = findSystematic(syst_name_no_variation);
+    
+    //check if syst is in correlation table
+    for (const auto &correlation : correlations)
+    {
+        if (correlation.second.rep_name == syst_name_no_variation)
+        {
+            sources.push_back(findSystematic(correlation.second.rep_name)->source);
+            for (const auto &child_syst : correlation.second.child_syst_names)
+            {
+                sources.push_back(findSystematic(child_syst)->source);
+            }
+            return sources;
+        }
+    }
+    sources.push_back(syst->source);
+    return sources;
+}
+
+Correction::variation SystematicHelper::get_variation_from_name(const std::string &syst_name){
+    //find which prefix is in the syst_name
+    if (syst_name == central_name){
+        return Correction::variation::nom;
+    }
+    for (const auto &prefix : variation_prefix)
+    {
+        size_t found = syst_name.find(prefix.second);
+        if (found != std::string::npos)
+        {
+            return prefix.first;
+        }
+    }
+    throw std::runtime_error("[SystematicHelper::get_variation_from_name] weird syst_name");
 }
