@@ -18,6 +18,8 @@ target_include_directories(DataFormats PRIVATE
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
+#install(FILES ${HEADERS} DESTINATION include/DataFormats)
+
 ROOT_GENERATE_DICTIONARY(G__DataFormats
     ${HEADERS}
     MODULE DataFormats
@@ -38,3 +40,4 @@ set(PCM "libDataFormats_rdict.pcm")
 message(STATUS "ROOTMAP: ${ROOTMAP}")
 message(STATUS "PCM: ${PCM}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/DataFormats)

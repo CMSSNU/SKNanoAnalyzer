@@ -1,8 +1,6 @@
 # find LHAPDF and CorrectionLib
 set(CORRECTION_INCLUDE_DIR $ENV{CORRECTION_INCLUDE_DIR})
 set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE_DIR})
-set(LIBTORCH_INCLUDE_DIR $ENV{LIBTORCH_INCLUDE_DIR})
-set(ONNXRUNTIME_INCLUDE_DIR $ENV{ONNXRUNTIME_INCLUDE_DIR})
 
 # Define the library with source files and the generated dictionary
 file(GLOB SOURCES src/*.cc)
@@ -14,8 +12,6 @@ add_library(Analyzers SHARED
 target_include_directories(Analyzers PRIVATE
     $<BUILD_INTERFACE:${LHAPDF_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CORRECTION_INCLUDE_DIR}>
-    $<BUILD_INTERFACE:${LIBTORCH_INCLUDE_DIR}>
-    $<BUILD_INTERFACE:${ONNXRUNTIME_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../DataFormats/include>
@@ -26,6 +22,8 @@ target_include_directories(Analyzers PRIVATE
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
+#install(FILES ${HEADERS} DESTINATION include/Analyzers)
+
 ROOT_GENERATE_DICTIONARY(G__Analyzers 
     ${HEADERS}
     MODULE Analyzers
@@ -33,16 +31,18 @@ ROOT_GENERATE_DICTIONARY(G__Analyzers
 )
 
 
+
 # Link ROOT libraries
 target_link_libraries(Analyzers PUBLIC ${ROOT_LIBRARIES})
 target_link_libraries(Analyzers PUBLIC DataFormats)
 target_link_libraries(Analyzers PUBLIC AnalyzerTools)
 target_link_libraries(Analyzers PUBLIC KinFitter)
-target_link_libraries(Analyzers PUBLIC MLHelper)
+#target_link_libraries(Analyzers PUBLIC MLHelper)
 target_link_libraries(Analyzers PUBLIC nlohmann_json::nlohmann_json)
 
 # Specify where to install the library
 install(TARGETS Analyzers DESTINATION lib)
+
 
 # Iinstall .rootmap and .pcm files to the lib
 set(ROOTMAP "libAnalyzers.rootmap")
@@ -50,3 +50,4 @@ set(PCM "libAnalyzers_rdict.pcm")
 message(STATUS "ROOTMAP: ${ROOTMAP}")
 message(STATUS "PCM: ${PCM}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/Analyzers)
