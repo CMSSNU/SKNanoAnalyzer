@@ -17,6 +17,8 @@ from time import sleep
 from multiprocessing import Pool
 import requests
 import re
+from tqdm import tqdm
+
 
 ##############################
 #Global Variables
@@ -25,6 +27,7 @@ SKNANO_RUNLOG = os.environ['SKNANO_RUNLOG']
 SKNANO_OUTPUT = os.environ['SKNANO_OUTPUT']
 SKNANO_DATA = os.environ['SKNANO_DATA']
 SKNANO_LIB = os.environ['SKNANO_LIB']
+SKNANO_INSTALLDIR = os.environ['SKNANO_INSTALLDIR']
 SKNANO_RUN3_NANOAODPATH = os.environ['SKNANO_RUN3_NANOAODPATH']
 SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
@@ -39,12 +42,14 @@ sampleInfoJsons = {}
 for era in Run.keys():
     sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
 skimInfoJsons = {}
-if SKIMMING_MODE:
+
+
+for era in Run.keys():
     try:
-        for era in Run.keys():
-            skimInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim','skimInfo.json')))
+        skimInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim','skimTreeInfo.json')))
     except:
-        print('\033[93m'+"Warning: Skimmed tree info is not exist"+'\033[0m')
+        print(f"\033[93mWarning: {era} skimTreeInfo.json is not exist\033[0m")
+
 ##############################
 def isMCandGetPeriod(sample):
     #if sample is ends with _one capital letter, it is data
@@ -180,7 +185,7 @@ def getMasterDirectoryName(timeStamp, Analyzer, Userflags):
     abs_MasterDirectoryName = os.path.join(SKNANO_RUNLOG,MasterDirectoryName)
     print(f"Copy library files to {MasterDirectoryName.split('/')}")
     os.makedirs(abs_MasterDirectoryName)
-    os.system(f"cp -r {SKNANO_LIB} {abs_MasterDirectoryName}")
+    os.system(f"cp -r {SKNANO_INSTALLDIR} {abs_MasterDirectoryName}")
     print("...Done")
     return MasterDirectoryName, abs_MasterDirectoryName
 
@@ -213,6 +218,73 @@ def jobFileDivider(files,ngroup):
     else:
         print('\033[91m'+"ERROR: ngroup should be positive or negative integer"+'\033[0m')
     return filegroups
+
+def create_cpp_job(i, out_base, sample, argparse_module, sampleInfo, isMC, era, userflags, samplePaths, reduction, working_dir):
+    """
+    Worker function to create a single C++ job file.
+    """
+    output = out_base.replace('.root', f'_{i+1}.root')
+    
+    cpp_lines = [
+        "#include <algorithm>",
+        f"void job{i+1}() {{",
+        f"    {argparse_module.Analyzer} module;",
+        '    module.SetTreeName("Events");',
+        '    module.LogEvery = 1000;',
+    ]
+
+    if isMC:
+        cpp_lines += [
+            '    module.IsDATA = false;',
+            f'    module.MCSample = "{sample}";',
+            f'    module.xsec = {sampleInfo["xsec"]};',
+            f'    module.sumW = {sampleInfo["sumW"]};',
+            f'    module.sumSign = {sampleInfo["sumsign"]};',
+        ]
+    else:
+        cpp_lines += [
+            '    module.IsDATA = true;',
+            f'    module.DataStream = "{sample.split("_")[0]}";',
+        ]
+
+    cpp_lines += [
+        f'    module.SetEra("{era}");',
+    ]
+
+    if userflags:
+        cpp_lines.append("    module.Userflags = {")
+        cpp_lines += [f'        "{flag}",' for flag in userflags]
+        cpp_lines.append("    };")
+
+    for path in samplePaths[i]:
+        cpp_lines.append(f'    module.AddFile("{path}");')
+
+    cpp_lines += [
+        f'    module.SetOutfilePath("{output}");',
+    ]
+
+    if reduction > 1:
+        cpp_lines.append(
+            f'    module.MaxEvent = std::max(1, static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));'
+        )
+
+    cpp_lines += [
+        "    module.Init();",
+        "    module.initializeAnalyzer();",
+        "    module.Loop();",
+        "    module.WriteHist();",
+        "}",
+    ]
+
+    cpp_content = "\n".join(cpp_lines)
+    job_filename = os.path.join(working_dir, f"job{i+1}.cpp")
+    
+    try:
+        with open(job_filename, 'w') as f:
+            f.write(cpp_content)
+    except Exception as e:
+        print(f"Error writing {job_filename}: {e}")
+
  
 def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
     isMC, period = isMCandGetPeriod(sample)
@@ -220,6 +292,7 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
 
         
     working_dir = os.path.join(masterJobDirectory,era,sample)
+        
     os.makedirs(working_dir)
     if SKIMMING_MODE:
         out_base, suffix = getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName)
@@ -235,6 +308,7 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
         SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
         sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim',sample+'.json')))['path']
+        sample = SkimInfo['PD']
         
     else:
         sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
@@ -245,74 +319,65 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
     
     totalNumberOfJobs = len(samplePaths)
 
-    for i in range(totalNumberOfJobs):
+    for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}", smoothing=1.):
         output = out_base.replace('.root',f'_{i+1}.root')
-        #python job is too hard to debug. I will use c++ job instead
-        # with open(os.path.join(working_dir,f"job{i}.py"),'w') as f:
-        #     f.writelines(f"from ROOT import {argparse.Analyzer}\n")
-        #     f.writelines(f"module = {argparse.Analyzer}()\n")
-        #     f.writelines(f"module.SetTreeName('Events')\n")
-            
-        #     if isMC:
-        #         f.writelines(f"module.IsDATA = False\n")
-        #         f.writelines(f"module.MCSample = '{sample}'\n")
-        #         f.writelines(f"module.xsec = {sampleInfo['xsec']}\n")
-        #         f.writelines(f"module.sumW = {sampleInfo['sumW']}\n")
-        #         f.writelines(f"module.sumSign = {sampleInfo['sumsign']}\n")
-        #     else:
-        #         f.writelines(f"module.IsDATA = True\n")
-        #         f.writelines(f"module.DataStream = '{sample.split('_')[0]}'\n")
-        #     f.writelines(f"module.SetEra('{era}')\n")
-            
-        #     if len(userflags) > 0:
-        #         for flag in userflags:
-        #             f.writelines("module.Userflags = {\n")
-        #             f.writelines(f"\t'{flag}',\n")
-        #             f.writelines("}\n")
-        #     for path in samplePaths[i]:
-        #         f.writelines(f"module.AddFile('{path}')\n")
-                
-        #     f.writelines(f"module.SetOutfilePath('output/hists_{i}.root')\n")
-        #     if reduction > 1:
-        #         f.writelines(f"from math import ceil\n")
-        #         f.writelines(f"module.MaxEvent = ceil(int(module.fChain.GetEntries())/{int(reduction)})\n")
-        #     f.writelines(f"module.Init()\n")
-        #     f.writelines(f"module.initializeAnalyzer()\n")
-        #     f.writelines(f"module.Loop()\n")
-        #     f.writelines(f"module.WriteHist()\n")
+        cpp_lines = [
+            "#include <algorithm>",
+            f"void job{i+1}() {{",
+            f"    {argparse.Analyzer} module;",
+            '    module.SetTreeName("Events");',
+            '    module.LogEvery = 1000;',
+        ]
+
+        if isMC:
+            cpp_lines += [
+                '    module.IsDATA = false;',
+                f'    module.MCSample = "{sample}";',
+                f'    module.xsec = {sampleInfo["xsec"]};',
+                f'    module.sumW = {sampleInfo["sumW"]};',
+                f'    module.sumSign = {sampleInfo["sumsign"]};',
+            ]
+        else:
+            cpp_lines += [
+                '    module.IsDATA = true;',
+                f'    module.DataStream = "{sample.split("_")[0]}";',
+            ]
+
+        cpp_lines += [
+            f'    module.SetEra("{era}");',
+        ]
+
+        if userflags:
+            cpp_lines.append("    module.Userflags = {")
+            cpp_lines += [f'        "{flag}",' for flag in userflags]
+            cpp_lines.append("    };")
+
+        for path in samplePaths[i]:
+            cpp_lines.append(f'    module.AddFile("{path}");')
+
+        cpp_lines += [
+            f'    module.SetOutfilePath("{output}");',
+        ]
+
+        if reduction > 1:
+            cpp_lines.append(
+                f'    module.MaxEvent = std::max(1, static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));'
+            )
+
+        cpp_lines += [
+            "    module.Init();",
+            "    module.initializeAnalyzer();",
+            "    module.Loop();",
+            "    module.WriteHist();",
+            "}",
+        ]
+
+        cpp_content = "\n".join(cpp_lines)
+        job_filename = os.path.join(working_dir, f"job{i+1}.cpp")
+        with open(job_filename, 'w') as f:
+            f.write(cpp_content)
+
         
-        with open(os.path.join(working_dir,f"job{i+1}.cpp"),'w') as f:
-            f.writelines(f"#include <algorithm>\n")
-            f.writelines(f"void job{i+1}"+"(){\n")
-            f.writelines(f"\t{argparse.Analyzer} module;\n")
-            f.writelines(f"\tmodule.SetTreeName(\"Events\");\n")
-            f.writelines(f"\tmodule.LogEvery = 1000;\n")
-            if isMC:
-                f.writelines(f"\tmodule.IsDATA = false;\n")
-                f.writelines(f"\tmodule.MCSample = \"{sample}\";\n")
-                f.writelines(f"\tmodule.xsec = {sampleInfo['xsec']};\n")
-                f.writelines(f"\tmodule.sumW = {sampleInfo['sumW']};\n")
-                f.writelines(f"\tmodule.sumSign = {sampleInfo['sumsign']};\n")
-            else:
-                f.writelines(f"\tmodule.IsDATA = true;\n")
-                f.writelines(f"\tmodule.DataStream = \"{sample.split('_')[0]}\";\n")
-            f.writelines(f"\tmodule.SetEra(\"{era}\");\n")
-            if len(userflags) > 0:
-                for flag in userflags:
-                    f.writelines("\tmodule.Userflags = {\n")
-                    f.writelines(f"\t\t\"{flag}\",\n")
-                    f.writelines("\t};\n")
-            for path in samplePaths[i]:
-                f.writelines(f"\tmodule.AddFile(\"{path}\");\n")
-                
-            f.writelines(f"\tmodule.SetOutfilePath(\"{output}\");\n")
-            if reduction > 1:
-                f.writelines(f"\tmodule.MaxEvent = std::max(1,static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));\n")
-            f.writelines(f"\tmodule.Init();\n")
-            f.writelines(f"\tmodule.initializeAnalyzer();\n")
-            f.writelines(f"\tmodule.Loop();\n")
-            f.writelines(f"\tmodule.WriteHist();\n")
-            f.writelines("}")
             
     return working_dir, totalNumberOfJobs
             
@@ -320,22 +385,34 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     nmax = argparse.NMax
     memory = argparse.Memory
     batchname = argparse.BatchName
+    userflags = getUserFlagsList(argparse.Userflags)
     ncpu = argparse.ncpu
     if batchname == "":
         batchname = argparse.Analyzer
+        if len(userflags) > 0:
+            for flag in userflags:
+                batchname += f"_{flag}"
     libpath = os.environ['LD_LIBRARY_PATH']
     libpath = libpath.split(":")
     libpath = [x for x in libpath if x != SKNANO_LIB]
-    libpath = [os.path.join(abs_MasterDirectoryName,'lib')]+libpath
+    libpath = [os.path.join(abs_MasterDirectoryName,'install/lib')]+libpath
     libpath = ":".join(libpath)
+    inclpath = os.environ['ROOT_INCLUDE_PATH']
+    inclpath = inclpath.split(":")
+    inclpath = [x for x in inclpath if SKNANO_INSTALLDIR.split("/")[-1] not in x]
+    inclpath = inclpath + [os.path.join(abs_MasterDirectoryName,'install/include')]
+    inclpath = :.join(inclpath)
+    
     
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
         f.writelines("#!/bin/sh\n")
         f.writelines(f"cd {working_dir}\n") 
         f.writelines(f"export SKNANO_LIB=""\n")
-        
+        f.writelines(f"export ROOT_HIST=0\n") 
         f.writelines(f"export LD_LIBRARY_PATH=""\n")
         f.writelines(f"export LD_LIBRARY_PATH={libpath}\n")
+        f.writelines(f"export ROOT_INCLUDE_PATH={libpath}\n")
+        f.writelines(f"export ROOT_INCLUDE_PATH={inclpath}\n")
         #f.writelines(f"python3 job$1.py\n")
         f.writelines(f"root -l -b -q job$1.cpp\n")
         f.writelines(f"exit $?\n")
@@ -354,7 +431,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     job_dict['should_transfer_files'] = "YES"
     job_dict['when_to_transfer_output'] = "ON_EXIT"
     job_dict['concurrency_limits'] = f"n{nmax}.{username}"
-    job_dict['periodic_release'] = '(NumJobStarts < 3) && (HoldReasonCode == 34 || HoldReasonCode == 21) && (JobStatus == 5)' # periodic release for 3 times // Held reason is lack of memeory // JobStatus is Hold // https://research.cs.wisc.edu/htcondor/manual/v8.5/12_Appendix_A.html
+    job_dict['periodic_release'] = '(NumJobStarts < 5) && (HoldReasonCode == 34 || HoldReasonCode == 21) && (JobStatus == 5)' # periodic release for 3 times // Held reason is lack of memeory // JobStatus is Hold // https://research.cs.wisc.edu/htcondor/manual/v8.5/12_Appendix_A.html
 
     
     return job_dict
@@ -372,25 +449,27 @@ def makeHaddJobs(working_dir,argparser,sample):
     with open(os.path.join(working_dir,"hadd.sh"),'w') as f:
         f.writelines("#!/bin/bash\n")
         f.writelines(f"cd {working_dir}\n")
-        f.writelines(f"hadd -f {hadd_target} output/hists_*.root\n")
+        f.writelines(f"hadd -f9 -j 8 {hadd_target} output/hists_*.root\n")
         
     job_dict = {}
     job_dict['executable'] = os.path.join(working_dir,"hadd.sh")
     job_dict['JobBatchName'] = f"Hadd_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
+    job_dict['RequestCpus'] = 8
     job_dict['RequestMemory'] = 2048
     job_dict['output'] = os.path.join(working_dir,"hadd.out")
     job_dict['error'] = os.path.join(working_dir,"hadd.err")
     job_dict['should_transfer_files'] = "YES"
     job_dict['when_to_transfer_output'] = "ON_EXIT"
+    job_dict['periodic_release'] = '(NumJobStarts < 3) && (HoldReasonCode == 34 || HoldReasonCode == 21) && (JobStatus == 5)' # periodic release for 3 times // Held reason is lack of memeory // JobStatus is Hold // https://research.cs.wisc.edu/htcondor/manual/v8.5/12_Appendix_A.html
 
     return job_dict
 
-def makeSkimPostProcsJobs(working_dir,sample, argparser):
+def makeSkimPostProcsJobs(working_dir,sample, argparser,era):
     AnalyzerName = argparser.Analyzer
     isMC, period = isMCandGetPeriod(sample)
-    out_base, suffix = getSkimmingOutBaseAndSuffix(sample, AnalyzerName) 
+    out_base, suffix = getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName) 
     out_base = os.path.dirname(out_base)
     if isMC:
         with open(os.path.join(working_dir,"postproc.sh"),'w') as f:
@@ -454,8 +533,13 @@ def getEachAnalyzerToPostDag(kwarg):
         
 def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
     batchname = argparser.BatchName
+    userflags = getUserFlagsList(args.Userflags)
     if batchname == "":
         batchname = argparser.Analyzer
+        if len(userflags) > 0:
+            for flag in userflags:
+                batchname += f"_{flag}"
+                
     dag_dir = os.path.join(master_dir,"dags")
     os.makedirs(dag_dir)
 
@@ -579,13 +663,13 @@ if __name__ == '__main__':
 
     for era in eras:
         InputSamplelist_era = makeSampleList(InputSamplelist, era)
-        for sample in InputSamplelist_era:
+        for sample in tqdm(InputSamplelist_era, position=0, desc=f"Processing for {era}"):
             working_dir, totalNumberofJobs = pythonJobProducer(era, sample, args, abs_MasterDirectoryName, userflags)
             if totalNumberofJobs == None:
                 continue
             analyzer_sub_dict = makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberofJobs,args)
             if SKIMMING_MODE:
-                postproc_sub_dict = makeSkimPostProcsJobs(working_dir,sample,args)
+                postproc_sub_dict = makeSkimPostProcsJobs(working_dir,sample,args,era)
             else:
                 hadd_sub_dict = makeHaddJobs(working_dir,args,sample)
             
