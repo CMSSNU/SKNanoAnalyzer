@@ -65,7 +65,7 @@ Jet::Jet() : Particle() {
   // j_hfsigmaEtaEta = -999.0;
   // j_hfsigmaPhiPhi = -999.0;
   j_m = -999.0;
-  j_unsmeardPt = -999.0;
+  j_unsmearedP4.SetPxPyPzE(-999., -999., -999., -999.);
 }
 
 Jet::~Jet() {}
@@ -157,10 +157,6 @@ float Jet::GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const{
   return -999.0;
 }
 
-float Jet::unsmearedPt() const{
-  if(j_unsmeardPt < 0.){
-    cerr << "[Jet::unsmearedPt] No unsmearedPt" << endl;
-    exit(ENODATA);
-  }
-  return j_unsmeardPt;
+TLorentzVector Jet::GetUnsmearedP4() const{
+  return j_unsmearedP4;
 }
