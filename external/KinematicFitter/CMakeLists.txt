@@ -2,7 +2,7 @@
 file(GLOB HEADERS include/*.h)
 
 # Define the library with source files and the generated dictionary
-file(GLOB SOURCES NanoGardenerModules/KinematicFitter/src/*.C)
+file(GLOB SOURCES src/*.C)
 add_library(KinFitter SHARED
     ${SOURCES}
 )
@@ -26,8 +26,8 @@ ROOT_GENERATE_DICTIONARY(G__KinFitter
 install(TARGETS KinFitter DESTINATION lib)
 
 # Iinstall .rootmap and .pcm files to the lib
-set(ROOTMAP "${CMAKE_CURRENT_BINARY_DIR}/libKinFitter.rootmap")
-set(PCM "${CMAKE_CURRENT_BINARY_DIR}/libKinFitter_rdict.pcm")
+set(ROOTMAP "libKinFitter.rootmap")
+set(PCM "libKinFitter_rdict.pcm")
 message(STATUS "ROOTMAP: ${ROOTMAP}")
 message(STATUS "PCM: ${PCM}")
-install(FILES ${ROOTMAP} ${PCM} DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP} ${CMAKE_CURRENT_BINARY_DIR}/${PCM} DESTINATION lib)
