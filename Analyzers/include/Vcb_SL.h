@@ -1,25 +1,9 @@
 #ifndef Vcb_SL_h
 #define Vcb_SL_h
 
-#include "AnalyzerCore.h"
-#include "TKinFitter.h"
-#include "TFitParticlePt.h"
-#include "TFitParticleEtEtaPhi.h"
-#include "TFitParticleMCCart.h"
-#include "TFitConstraintMGaus.h"
-#include "TFitConstraintM.h"
-#include "TFitConstraintEp.h"
-#include "TMatrixD.h"
-#include "VcbParameters.h"
-#include <future>
-#include <tuple>
-#include <memory>
-#include <set>
-#include "correction.h"
-#include <variant>
-using correction::CorrectionSet;
+#include "Vcb.h"
 
-class Vcb_SL : public AnalyzerCore
+class Vcb_SL : public Vcb 
 {
 public:
     struct KinematicFitterResult
@@ -38,70 +22,102 @@ public:
         TLorentzVector fitted_neu;
         float best_neu_pz;
     };
-    inline bool isPIDUpTypeQuark(int pdg) { return (abs(pdg) == 2 || abs(pdg) == 4 || abs(pdg) == 6); }
-    inline bool isPIDDownTypeQuark(int pdg) { return (abs(pdg) == 1 || abs(pdg) == 3 || abs(pdg) == 5); }
-    inline bool isPIDLepton(int pdg) { return (abs(pdg) == 11 || abs(pdg) == 13 || abs(pdg) == 15); }
-    void initializeAnalyzer();
-    void executeEvent();
-    void executeEventFromParameter(TString syst);
-    bool PassBaseLineSelection(bool remove_flavtagging_cut = true, TString syst = "nominal");
-    void FillHistogramsAtThisPoint(const TString &histPrefix, float weight = 1.f);
-    void FillKinematicFitterResult(const TString &histPrefix, float weight);
-    float CalculateEventWeight(bool include_tagging_weight=true);
+
+    inline bool CheckChannel() override
+    {
+        if (channel!=Channel::El && channel!=Channel::Mu) return false;
+        return true;
+    };
+    inline float MCNormalization() override { 
+        if(channel == Channel::El) return MCweight()*ev.GetTriggerLumi(El_Trigger[DataEra.Data()]);
+        else if(channel == Channel::Mu) return MCweight()*ev.GetTriggerLumi(Mu_Trigger[DataEra.Data()]);
+        else throw std::runtime_error("Invalid channel");
+    }
+    bool PassBaseLineSelection(bool remove_flavtagging_cut = false) override;
+    void FillKinematicFitterResult(const TString &histPrefix, float weight) override;
     std::variant<float, std::pair<float, float>> SolveNeutrinoPz(const Lepton &lepton, const Particle &met);
     void GetKineMaticFitterResult(const RVec<Jet> &jets, Particle &MET, Lepton &lepton);
-    short GetPassedBTaggingWP(const Jet &jet);
-    short GetPassedCTaggingWP(const Jet &jet);
-    RVec<int> FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> &genjets);
+    RVec<int> FindTTbarJetIndices() override;
     tuple<int, float, RVec<unsigned int>, RVec<TLorentzVector>> FitKinFitter(const RVec<Jet> &jets, const RVec<unsigned int> &permutation, Particle &neutrino, Lepton &lepton);
-    void FillTrainingTree();
-    float gofFromChi2(float chi2, int ndf);
-    RVec<RVec<unsigned int>> GetPermutations(const RVec<Jet> &jets);
-    RVec<Jet> GetObjects;
+    void FillTrainingTree() override;
+    void virtual CreateTrainingTree() override;
+    RVec<RVec<unsigned int>> GetPermutations(const RVec<Jet> &jets) override;
+    void virtual InferONNX() override;
+    void virtual FillONNXRecoInfo(const TString &histPrefix, float weight) override;
+
+    inline std::string GetRegionString() override
+    {
+        if(class_label == classCategory::Signal) return "SR";
+        else if(class_label == classCategory::Control0) return "CR";
+        else if(class_label == classCategory::Disposal) return "Disposal";
+        else throw std::runtime_error("Invalid class label");
+    }
 
     Vcb_SL();
-    ~Vcb_SL();
+    ~Vcb_SL() override = default;
 
-    unique_ptr<CorrectionSet> cset_TriggerSF;
 
-    enum class Channel{
-        El, Mu
-    };
     std::unordered_map<std::string, std::string> SL_Trigger;
 
-    Channel channel;
-
-    // Objects
-    RVec<Muon> AllMuons;
-    RVec<Electron> AllElectrons;
-    RVec<Jet> AllJets;
-    RVec<Gen> AllGens;
-    RVec<LHE> AllLHEs;
-    RVec<GenJet> AllGenJets;
-    // Selected Objects
-    RVec<Jet> Jets;
-    RVec<Electron> Electrons_Veto;
-    RVec<Electron> Electrons;
-    RVec<Muon> Muons_Veto;
-    RVec<Muon> Muons;
-    Lepton lepton;
-    Event ev;
-    Particle MET;
-    RVec<int> ttbar_jet_indices;
-    // event info
-    float HT;
-    short n_jets;
-    short n_b_tagged_jets;
-    short n_c_tagged_jets;
-    short n_partonFlav_b_jets;
-    short n_partonFlav_c_jets;
-    bool find_all_jets;
-    int tt_decay_code;
-    bool ttbj;
-    bool ttbb;
-    bool ttcc;
-    bool ttLF;
     KinematicFitterResult best_KF_result;
+
+    //Training Tree
+    std::vector<float> Jet_Px;
+    std::vector<float> Jet_Py;
+    std::vector<float> Jet_Pz;
+    std::vector<float> Jet_E;
+    std::vector<float> Jet_M;
+    std::vector<float> Jet_BvsC;
+    std::vector<float> Jet_CvsB;
+    std::vector<float> Jet_CvsL;
+    std::vector<float> Jet_QvsG;
+    std::vector<int> Jet_B_WP;
+    std::vector<int> Jet_C_WP;
+    std::vector<int> Jet_isTTbarJet;
+    std::vector<int> Jet_ttbarJet_idx;
+    std::vector<float> Jet_Pt;
+    std::vector<float> Jet_Eta;
+    std::vector<float> Jet_Phi;
+
+    std::vector<int> edge_index_jet_jet0;
+    std::vector<int> edge_index_jet_jet1;
+    std::vector<float> deltaR_jet_jet;
+    std::vector<float> invM_jet_jet;
+    std::vector<float> cosTheta_jet_jet;
+
+    std::vector<int> edge_index_jet_lepton0;
+    std::vector<int> edge_index_jet_lepton1;
+    std::vector<float> deltaR_jet_lepton;
+    std::vector<float> invM_jet_lepton;
+    std::vector<float> cosTheta_jet_lepton;
+
+    std::vector<int> edge_index_jet_neutrino0;
+    std::vector<int> edge_index_jet_neutrino1;
+    std::vector<float> deltaR_jet_neutrino;
+    std::vector<float> invM_jet_neutrino;
+    std::vector<float> cosTheta_jet_neutrino;
+
+    std::vector<int> edge_index_lepton_neutrino0;
+    std::vector<int> edge_index_lepton_neutrino1;
+    std::vector<float> deltaR_lepton_neutrino;
+    std::vector<float> invM_lepton_neutrino;
+    std::vector<float> cosTheta_lepton_neutrino;
+
+    std::vector<int> parton_jet_assignment;
+
+    Particle gen_neutrino;
+
+    //infering ONNX
+    enum class classCategory
+    {
+        Signal,
+        Control0,
+        Disposal
+    };
+
+    std::array<int,4> assignment;
+    std::array<float, 3> class_score;
+    classCategory class_label;
 };
 
 #endif

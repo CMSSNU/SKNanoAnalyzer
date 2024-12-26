@@ -1,24 +1,35 @@
 #include "Vcb_FH.h"
-#include "MLHelper.h"
+//#include "MLHelper.h"
 
 Vcb_FH::Vcb_FH() {}
-Vcb_FH::~Vcb_FH() {}
 
-void Vcb_FH::initializeAnalyzer()
-{
-    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
-    myCorr->SetTaggingParam(FlavTagger[DataEra.Data()], FH_BTag_WP);
-    //cset_TriggerSF = CorrectionSet::from_file("/data6/Users/yeonjoon/SKNanoOutput/FullHadronicTriggerTnP/2022EE/SF.json");
+void Vcb_FH::CreateTrainingTree(){
+    Clear();
+    RVec<TString> keeps = {};
+    RVec<TString> drops = {"*"};
+    NewTree("Training_Tree", keeps, drops);
+    GetTree("Training_Tree")->Branch("Jet_Px", &Jet_Px);
+    GetTree("Training_Tree")->Branch("Jet_Py", &Jet_Py);
+    GetTree("Training_Tree")->Branch("Jet_Pz", &Jet_Pz);
+    GetTree("Training_Tree")->Branch("Jet_E", &Jet_E);
+    GetTree("Training_Tree")->Branch("Jet_M", &Jet_M);
+    GetTree("Training_Tree")->Branch("Jet_BvsC", &Jet_BvsC);
+    GetTree("Training_Tree")->Branch("Jet_CvsB", &Jet_CvsB);
+    GetTree("Training_Tree")->Branch("Jet_CvsL", &Jet_CvsL);
+    GetTree("Training_Tree")->Branch("Jet_QvsG", &Jet_QvsG);
+    GetTree("Training_Tree")->Branch("Jet_B_WP", &Jet_B_WP);
+    GetTree("Training_Tree")->Branch("Jet_C_WP", &Jet_C_WP);
+    GetTree("Training_Tree")->Branch("Jet_isTTbarJet", &Jet_isTTbarJet);
+    GetTree("Training_Tree")->Branch("Jet_ttbarJet_idx", &Jet_ttbarJet_idx);
+    GetTree("Training_Tree")->Branch("Jet_Pt", &Jet_Pt);
+    GetTree("Training_Tree")->Branch("Jet_Eta", &Jet_Eta);
+    GetTree("Training_Tree")->Branch("Jet_Phi", &Jet_Phi);
+    GetTree("Training_Tree")->Branch("edge_index_0", &edge_index0);
+    GetTree("Training_Tree")->Branch("edge_index_1", &edge_index1);
+    GetTree("Training_Tree")->Branch("deltaR", &deltaR);
+    GetTree("Training_Tree")->Branch("invM", &invM);
+    GetTree("Training_Tree")->Branch("cosTheta", &cosTheta);
 }
-
-float Vcb_FH::gofFromChi2(float chi2, int ndf)
-{
-    float prob;
-    prob = static_cast<float>(TMath::Prob(chi2, ndf));
-    return prob;
-}
-
-
 
 RVec<RVec<unsigned int>> Vcb_FH::GetPermutations(const RVec<Jet> &jets)
 {
@@ -88,37 +99,39 @@ RVec<RVec<unsigned int>> Vcb_FH::GetPermutations(const RVec<Jet> &jets)
     return permutations;
 }
 
-float Vcb_FH::CalculateEventWeight(bool include_tagging_weight)
+bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut)
 {
-    float weight = 1.;
-    if (!IsDATA)
-    {
-        float puWeight = myCorr->GetPUWeight(ev.nTrueInt());
-        float mcWeight = MCweight();
-        float BTagShapeWeight = myCorr->GetBTaggingSF(Jets, JetTagging::JetTaggingSFMethod::shape);
-        float LumiWeight = ev.GetTriggerLumi(FH_Trigger[DataEra.Data()]);
-        float TriggerWeight = 1.;
-        weight *= puWeight * mcWeight * LumiWeight * TriggerWeight;
-        if(include_tagging_weight) weight *= BTagShapeWeight;
-    }
-    return weight;
-}
-
-bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut, TString syst)
-{
+    Clear();
     if (!ev.PassTrigger(FH_Trigger_DoubleBTag[DataEra.Data()])) return false;
     if(!PassJetVetoMap(AllJets, AllMuons)) return false; 
     if(!PassMetFilter(AllJets, ev)) return false;
 
     //Set Objects
     Jets = SelectJets(AllJets, Jet_ID, FH_Jet_Pt_cut[DataEra.Data()], Jet_Eta_cut);
+    if (systHelper->getCurrentIterSysSource() == "Jet_En")
+    {
+        Jets = ScaleJets(AllJets, systHelper->getCurrentIterVariation());
+        MET = ev.GetMETVector(Event::MET_Type::PUPPI, systHelper->getCurrentIterVariation(), Event::MET_Syst::JES);
+    }
+    if (systHelper->getCurrentIterSysSource() == "Jet_Res")
+    {
+        Jets = SmearJets(AllJets, AllGenJets, systHelper->getCurrentIterVariation());
+        MET = ev.GetMETVector(Event::MET_Type::PUPPI, systHelper->getCurrentIterVariation(), Event::MET_Syst::JER);
+    }
+    if (systHelper->getCurrentIterSysSource() == "UE")
+    {
+        MET = ev.GetMETVector(Event::MET_Type::PUPPI, systHelper->getCurrentIterVariation(), Event::MET_Syst::UE);
+    }
+    Jets = SelectJets(Jets, Jet_ID, FH_Jet_Pt_cut[DataEra.Data()], Jet_Eta_cut);
+
+    MET = ev.GetMETVector(Event::MET_Type::PUPPI);
     Muons_Veto = SelectMuons(AllMuons, Muon_Veto_ID, Muon_Veto_Pt, Muon_Veto_Eta);
     Muons_Veto = SelectMuons(Muons_Veto, Muon_Veto_Iso, Muon_Veto_Pt, Muon_Veto_Eta);
     Electrons_Veto = SelectElectrons(AllElectrons, Electron_Veto_ID, Electron_Veto_Pt, Electron_Veto_Eta);
     Muons = SelectMuons(AllMuons, Muon_Tight_ID, Muon_Tight_Pt[DataEra.Data()], Muon_Tight_Eta);
     Muons = SelectMuons(Muons, Muon_Tight_Iso, Muon_Tight_Pt[DataEra.Data()], Muon_Tight_Eta);
     Electrons = SelectElectrons(AllElectrons, Electron_Tight_ID, Electron_Tight_Pt[DataEra.Data()], Electron_Tight_Eta);
-    Jets = JetsVetoLeptonInside(Jets, Electrons, Muons, 0.4);
+    Jets = JetsVetoLeptonInside(Jets, Electrons_Veto, Muons_Veto, Jet_Veto_DR);
     HT = GetHT(Jets);
     n_jets = Jets.size();
 
@@ -136,40 +149,14 @@ bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut, TString syst)
             if(abs(jet.partonFlavour()) == 4) n_partonFlav_c_jets++;
         }
     }
-    if (n_b_tagged_jets < 2 && remove_flavtagging_cut) return false;
+    if (n_b_tagged_jets < 2 && !remove_flavtagging_cut) return false;
     if(Muons_Veto.size() != 0 || Electrons_Veto.size() != 0) return false;
     if (HT < FH_HT_cut[DataEra.Data()]) return false;
-    if (!IsDATA)
-    {
-        ttbj = (genTtbarId % 100 == 51 || genTtbarId % 100 == 52);
-        ttbb = (genTtbarId % 100 >= 53 && genTtbarId % 100 <= 55);
-        ttcc = (genTtbarId % 100 >= 41 && genTtbarId % 100 <= 45);
-        ttLF = !(ttbj || ttbb || ttcc);
-    }
+    
+    SetSystematicLambda();
+    SetTTbarId();
 
     return true;
-}
-
-void Vcb_FH::FillHistogramsAtThisPoint(const TString &histPrefix, float weight)
-{
-    FillHist(histPrefix + "/" + "MET", MET.Pt(), weight, 100, 0., 200.);
-    FillHist(histPrefix + "/" + "HT", HT, weight, 200, 450., 2000.);
-    FillHist(histPrefix + "/" + "n_jets", n_jets, weight, 10, 6., 16.);
-    FillHist(histPrefix + "/" + "n_b_tagged_jets", n_b_tagged_jets, weight, 6, 2., 8.);
-    FillHist(histPrefix + "/" + "n_c_tagged_jets", n_c_tagged_jets, weight, 6, 2., 8.);
-    FillHist(histPrefix + "/" + "n_partonFlav_b_jets", n_partonFlav_b_jets, weight, 6, 2., 8.);
-    FillHist(histPrefix + "/" + "n_partonFlav_c_jets", n_partonFlav_c_jets, weight, 8, 0., 8.);
-    FillHist(histPrefix + "/" + "real_b_vs_tagged_b", n_partonFlav_b_jets, n_b_tagged_jets, weight, 8, 0., 8., 6, 2., 8.);
-    FillHist(histPrefix + "/" + "real_c_vs_tagged_c", n_partonFlav_c_jets, n_c_tagged_jets, weight, 8, 0., 8., 6, 2., 8.);
-    for(size_t i = 0; i < Jets.size(); i++){
-        FillHist(histPrefix + "/" + "Jet_Pt_" + std::to_string(i), Jets[i].Pt(), weight, 100, 0., 500.);
-        FillHist(histPrefix + "/" + "Jet_Eta_" + std::to_string(i), Jets[i].Eta(), weight, 100, -2.5, 2.5);
-        FillHist(histPrefix + "/" + "Jet_Phi_" + std::to_string(i), Jets[i].Phi(), weight, 100, -3.14, 3.14);
-        FillHist(histPrefix + "/" + "Jet_BvsC_" + std::to_string(i), Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
-        FillHist(histPrefix + "/" + "Jet_CvsB_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).first, weight, 100, 0., 1.);
-        FillHist(histPrefix + "/" + "Jet_CvsL_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).second, weight, 100, 0., 1.);
-        FillHist(histPrefix + "/" + "Jet_QvsG_" + std::to_string(i), Jets[i].GetQvGTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
-    } 
 }
 
 void Vcb_FH::FillKinematicFitterResult(const TString &histPrefix, float weight)
@@ -196,15 +183,12 @@ void Vcb_FH::FillKinematicFitterResult(const TString &histPrefix, float weight)
 }
 
 void Vcb_FH::FillTrainingTree(){
-    RVec<TString> keeps = {};
-    RVec<TString> drops = {"*"};
-    NewTree("Training_Tree", keeps, drops);
+
     SetBranch("Training_Tree", "MET", MET.Pt());
     SetBranch("Training_Tree", "HT", HT);
     SetBranch("Training_Tree", "n_jets", n_jets);
     SetBranch("Training_Tree", "n_b_tagged_jets", n_b_tagged_jets);
     SetBranch("Training_Tree", "n_c_tagged_jets", n_c_tagged_jets);
-    SetBranch("Training_Tree", "weight", CalculateEventWeight());
     SetBranch("Training_Tree", "find_all_jets", find_all_jets);
     if(find_all_jets){
         Particle W1Cand = Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
@@ -256,49 +240,118 @@ void Vcb_FH::FillTrainingTree(){
         SetBranch("Training_Tree", "ttbarPhi", -999.);
     }
 
-
-
-        for (size_t i = 0; i <= 10; i++)
-    {
-        if(i < n_jets){
-            SetBranch("Training_Tree", "Jet_Pt_" + std::to_string(i), Jets[i].Pt());
-            SetBranch("Training_Tree", "Jet_Eta_" + std::to_string(i), Jets[i].Eta());
-            SetBranch("Training_Tree", "Jet_Phi_" + std::to_string(i), Jets[i].Phi());
-            SetBranch("Training_Tree", "Jet_M_" + std::to_string(i), Jets[i].M());
-            SetBranch("Training_Tree", "Jet_BvsC_" + std::to_string(i), Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]));
-            SetBranch("Training_Tree", "Jet_CvsB_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).first);
-            SetBranch("Training_Tree", "Jet_CvsL_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).second);
-            SetBranch("Training_Tree", "Jet_QvsG_" + std::to_string(i), Jets[i].GetQvGTaggerResult(FlavTagger[DataEra.Data()]));
-            //Tagging WP
-            SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), GetPassedBTaggingWP(Jets[i]));
-            SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), GetPassedCTaggingWP(Jets[i]));
+    // for (size_t i = 0; i <= 10; i++)
+    // {
+    //     if(i < n_jets){
+    //         SetBranch("Training_Tree", "Jet_Pt_" + std::to_string(i), Jets[i].Pt());
+    //         SetBranch("Training_Tree", "Jet_Eta_" + std::to_string(i), Jets[i].Eta());
+    //         SetBranch("Training_Tree", "Jet_Phi_" + std::to_string(i), Jets[i].Phi());
+    //         SetBranch("Training_Tree", "Jet_M_" + std::to_string(i), Jets[i].M());
+    //         SetBranch("Training_Tree", "Jet_BvsC_" + std::to_string(i), Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]));
+    //         SetBranch("Training_Tree", "Jet_CvsB_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).first);
+    //         SetBranch("Training_Tree", "Jet_CvsL_" + std::to_string(i), Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).second);
+    //         SetBranch("Training_Tree", "Jet_QvsG_" + std::to_string(i), Jets[i].GetQvGTaggerResult(FlavTagger[DataEra.Data()]));
+    //         //Tagging WP
+    //         SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), GetPassedBTaggingWP(Jets[i]));
+    //         SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), GetPassedCTaggingWP(Jets[i]));
             
-            auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
-            if(it != ttbar_jet_indices.end()){
-                SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(1));
-                SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(it - ttbar_jet_indices.begin()));
-            }
-            else{
-                SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(0));
-                SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
-            }
+    //         auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
+    //         if(it != ttbar_jet_indices.end()){
+    //             SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(1));
+    //             SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(it - ttbar_jet_indices.begin()));
+    //         }
+    //         else{
+    //             SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(0));
+    //             SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
+    //         }
 
+    //     }
+    //     else{
+    //         SetBranch("Training_Tree", "Jet_Pt_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_Eta_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_Phi_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_M_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_BvsC_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_CvsB_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_CvsL_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_QvsG_" + std::to_string(i), -999.);
+    //         SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(-999));
+    //         SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
+    //         SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), -999); 
+    //         SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), -999);
+    //     }
+    // }
+
+    Jet_Px.clear();
+    Jet_Py.clear();
+    Jet_Pz.clear();
+    Jet_E.clear();
+    Jet_M.clear();
+    Jet_BvsC.clear();
+    Jet_CvsB.clear();
+    Jet_CvsL.clear();
+    Jet_QvsG.clear();
+    Jet_B_WP.clear();
+    Jet_C_WP.clear();
+    Jet_isTTbarJet.clear();
+    Jet_ttbarJet_idx.clear();
+    Jet_Pt.clear();
+    Jet_Eta.clear();
+    Jet_Phi.clear();
+    edge_index0.clear();
+    edge_index1.clear();
+    deltaR.clear();
+    invM.clear();
+    cosTheta.clear();
+
+    float max_jets = 10;
+    if(Jets.size() < max_jets) max_jets = Jets.size();
+
+
+    for(size_t i = 0; i < max_jets; i++){
+        Jet_Px.push_back(Jets[i].Px());
+        Jet_Py.push_back(Jets[i].Py());
+        Jet_Pz.push_back(Jets[i].Pz());
+        Jet_E.push_back(Jets[i].E());
+        Jet_M.push_back(Jets[i].M());
+        Jet_BvsC.push_back(Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]));
+        Jet_CvsB.push_back(Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).first);
+        Jet_CvsL.push_back(Jets[i].GetCTaggerResult(FlavTagger[DataEra.Data()]).second);
+        Jet_QvsG.push_back(Jets[i].GetQvGTaggerResult(FlavTagger[DataEra.Data()]));
+        Jet_B_WP.push_back(GetPassedBTaggingWP(Jets[i]));
+        Jet_C_WP.push_back(GetPassedCTaggingWP(Jets[i]));
+        Jet_Pt.push_back(Jets[i].Pt());
+        Jet_Eta.push_back(Jets[i].Eta());
+        Jet_Phi.push_back(Jets[i].Phi());
+        auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
+        if(it != ttbar_jet_indices.end()){
+            Jet_isTTbarJet.push_back(1);
+            Jet_ttbarJet_idx.push_back(it - ttbar_jet_indices.begin());
         }
         else{
-            SetBranch("Training_Tree", "Jet_Pt_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_Eta_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_Phi_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_M_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_BvsC_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_CvsB_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_CvsL_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_QvsG_" + std::to_string(i), -999.);
-            SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(-999));
-            SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
-            SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), -999); 
-            SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), -999);
+            Jet_isTTbarJet.push_back(0);
+            Jet_ttbarJet_idx.push_back(-999);
         }
     }
+
+    for(int i = 0; i < max_jets; i++){
+        for(int j = i + 1; j < max_jets; j++){
+            edge_index0.push_back(i);
+            edge_index1.push_back(j);
+            //undirected graph
+            float this_deltaR = Jets[i].DeltaR(Jets[j]);
+            float this_invM = (Jets[i] + Jets[j]).M();
+            TVector3 v1 = Jets[i].Vect();
+            TVector3 v2 = Jets[j].Vect();
+            float this_cosTheta = TMath::Cos(v1.Angle(v2));
+            for(size_t k = 0; k < 2; k++){
+                deltaR.push_back(this_deltaR);
+                invM.push_back(this_invM);
+                cosTheta.push_back(this_cosTheta);
+            }
+        }
+    }
+
     SetBranch("Training_Tree", "KF_b1_idx", best_KF_result.best_b1_idx);
     SetBranch("Training_Tree", "KF_b2_idx", best_KF_result.best_b2_idx);
     SetBranch("Training_Tree", "KF_w11_idx", best_KF_result.best_w11_idx);
@@ -307,44 +360,27 @@ void Vcb_FH::FillTrainingTree(){
     SetBranch("Training_Tree", "KF_w22_idx", best_KF_result.best_w22_idx);
     SetBranch("Training_Tree", "KF_chi2", best_KF_result.chi2);
 
+    int answer;
+    if (IsDATA)
+        answer = -999;
+    // check TT is in MCSample string
+    if (MCSample.Contains("TT"))
+    {
+        if (MCSample.Contains("Vcb"))
+            answer = category_for_training_FH["Vcb"];
+        else if (ttLF)
+            answer = category_for_training_FH["TT"];
+        else
+            answer = category_for_training_FH["TT_tthf"];
+    }
+    else
+        answer = category_for_training_SL["Others"];
+    SetBranch("Training_Tree", "y", answer);
+
     FillTrees();
 }
 
-short Vcb_FH::GetPassedBTaggingWP(const Jet &jet)
-{
-    float TightWP = myCorr->GetBTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Tight);
-    float MediumWP = myCorr->GetBTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Medium);
-    float LooseWP = myCorr->GetBTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Loose);
-    if (jet.GetBTaggerResult(FlavTagger[DataEra.Data()]) > TightWP)
-        return 4;
-    else if (jet.GetBTaggerResult(FlavTagger[DataEra.Data()]) > MediumWP)
-        return 2;
-    else if (jet.GetBTaggerResult(FlavTagger[DataEra.Data()]) > LooseWP)
-        return 1;
-    else
-        return 0;
-}
-
-short Vcb_FH::GetPassedCTaggingWP(const Jet &jet)
-{
-    float CvsB_TightWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Tight).first;
-    float CvsL_TightWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Tight).second;
-    float CvsB_MediumWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Medium).first;
-    float CvsL_MediumWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Medium).second;
-    float CvsB_LooseWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Loose).first;
-    float CvsL_LooseWP = myCorr->GetCTaggingWP(FlavTagger[DataEra.Data()], JetTagging::JetFlavTaggerWP::Loose).second;
-
-    if(jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).first > CvsB_TightWP && jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).second > CvsL_TightWP)
-        return 4;
-    else if(jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).first > CvsB_MediumWP && jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).second > CvsL_MediumWP)
-        return 2;
-    else if(jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).first > CvsB_LooseWP && jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).second > CvsL_LooseWP)
-        return 1;
-    else
-        return 0;
-}
-
-RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> &genjets){
+RVec<int> Vcb_FH::FindTTbarJetIndices(){
     RVec<int> ttbar_jet_indices = {-1, -1, -1, -1, -1, -1};
     int w_plus_idx = -1;
     int w_minus_idx = -1;
@@ -363,21 +399,21 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
     tt_decay_code = -9999;
     find_all_jets = false;
     // find last t+/- and W+/- in gens
-    for(int i = gens.size() - 1; i >=0; i--){
+    for(int i = AllGens.size() - 1; i >=0; i--){
 
-        if(gens[i].PID() == 24 && !find_w_plus){
+        if(AllGens[i].PID() == 24 && !find_w_plus){
             w_plus_idx = i;
             find_w_plus = true;
         }
-        if(gens[i].PID() == -24 && !find_w_minus){
+        if(AllGens[i].PID() == -24 && !find_w_minus){
             w_minus_idx = i;
             find_w_minus = true;
         }
-        if(gens[i].PID() == 6 && !find_t_plus){
+        if(AllGens[i].PID() == 6 && !find_t_plus){
             t_plus_idx = i;
             find_t_plus = true;
         }
-        if(gens[i].PID() == -6 && !find_t_minus){
+        if(AllGens[i].PID() == -6 && !find_t_minus){
             t_minus_idx = i;
             find_t_minus = true;
         }
@@ -390,24 +426,24 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
     int w_minus_down_idx = -1;
 
     // find W+/- daughters
-    for(int i = gens.size() - 1; i >=0; i--){
+    for(int i = AllGens.size() - 1; i >=0; i--){
 
-        if (gens[i].MotherIndex() == w_plus_idx && isPIDUpTypeQuark(gens[i].PID()) && gens[i].PID() > 0 && !find_w_plus_up)
+        if (AllGens[i].MotherIndex() == w_plus_idx && isPIDUpTypeQuark(AllGens[i].PID()) && AllGens[i].PID() > 0 && !find_w_plus_up)
         {
             w_plus_up_idx = i;
             find_w_plus_up = true;
         }
-        if (gens[i].MotherIndex() == w_plus_idx && isPIDDownTypeQuark(gens[i].PID()) && gens[i].PID() < 0 && !find_w_plus_down)
+        if (AllGens[i].MotherIndex() == w_plus_idx && isPIDDownTypeQuark(AllGens[i].PID()) && AllGens[i].PID() < 0 && !find_w_plus_down)
         {
             w_plus_down_idx = i;
             find_w_plus_down = true;
         }
-        if (gens[i].MotherIndex() == w_minus_idx && isPIDUpTypeQuark(gens[i].PID()) && gens[i].PID() < 0 && !find_w_minus_up)
+        if (AllGens[i].MotherIndex() == w_minus_idx && isPIDUpTypeQuark(AllGens[i].PID()) && AllGens[i].PID() < 0 && !find_w_minus_up)
         {
             w_minus_up_idx = i;
             find_w_minus_up = true;
         }
-        if (gens[i].MotherIndex() == w_minus_idx && isPIDDownTypeQuark(gens[i].PID()) && gens[i].PID() > 0 && !find_w_minus_down)
+        if (AllGens[i].MotherIndex() == w_minus_idx && isPIDDownTypeQuark(AllGens[i].PID()) && AllGens[i].PID() > 0 && !find_w_minus_down)
         {
             w_minus_down_idx = i;
             find_w_minus_down = true;
@@ -417,25 +453,25 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
     int b_from_t_plus_idx = -1;
     int b_from_t_minus_idx = -1;
 
-    for(int i = gens.size() - 1; i >=0; i--){
+    for(int i = AllGens.size() - 1; i >=0; i--){
 
-        if(gens[i].MotherIndex() == t_plus_idx && gens[i].PID() == 5 && !find_b_from_t_plus){
+        if(AllGens[i].MotherIndex() == t_plus_idx && AllGens[i].PID() == 5 && !find_b_from_t_plus){
             b_from_t_plus_idx = i;
             find_b_from_t_plus = true;
         }
-        if(gens[i].MotherIndex() == t_minus_idx && gens[i].PID() == -5 && !find_b_from_t_minus){
+        if(AllGens[i].MotherIndex() == t_minus_idx && AllGens[i].PID() == -5 && !find_b_from_t_minus){
             b_from_t_minus_idx = i;
             find_b_from_t_minus = true;
         }
         if(find_b_from_t_plus && find_b_from_t_minus) break;
     }
     //print all gen that we found
-    cout << "w plus up PID:" << gens[w_plus_up_idx].PID() << " w plus down PID:" << gens[w_plus_down_idx].PID() << " w minus up PID:" << gens[w_minus_up_idx].PID() << " w minus down PID:" << gens[w_minus_down_idx].PID() << " b from t plus PID:" << gens[b_from_t_plus_idx].PID() << " b from t minus PID:" << gens[b_from_t_minus_idx].PID() << endl; 
+    cout << "w plus up PID:" << AllGens[w_plus_up_idx].PID() << " w plus down PID:" << AllGens[w_plus_down_idx].PID() << " w minus up PID:" << AllGens[w_minus_up_idx].PID() << " w minus down PID:" << AllGens[w_minus_down_idx].PID() << " b from t plus PID:" << AllGens[b_from_t_plus_idx].PID() << " b from t minus PID:" << AllGens[b_from_t_minus_idx].PID() << endl; 
 
     bool findall_gen = (w_plus_up_idx >= 0 && w_plus_down_idx >= 0 && w_minus_up_idx >= 0 && w_minus_down_idx >= 0 && b_from_t_plus_idx >= 0 && b_from_t_minus_idx >= 0);
     if(!findall_gen) return ttbar_jet_indices;
-    tt_decay_code = 1000 * abs(gens[w_plus_up_idx].PID()) + 100 * abs(gens[w_plus_down_idx].PID()) + 10 * abs(gens[w_minus_up_idx].PID()) + abs(gens[w_minus_down_idx].PID());
-    RVec<Gen> this_gens = {gens[b_from_t_plus_idx], gens[b_from_t_minus_idx], gens[w_plus_up_idx], gens[w_plus_down_idx], gens[w_minus_up_idx], gens[w_minus_down_idx]};
+    tt_decay_code = 1000 * abs(AllGens[w_plus_up_idx].PID()) + 100 * abs(AllGens[w_plus_down_idx].PID()) + 10 * abs(AllGens[w_minus_up_idx].PID()) + abs(AllGens[w_minus_down_idx].PID());
+    RVec<Gen> this_gens = {AllGens[b_from_t_plus_idx], AllGens[b_from_t_minus_idx], AllGens[w_plus_up_idx], AllGens[w_plus_down_idx], AllGens[w_minus_up_idx], AllGens[w_minus_down_idx]};
     unordered_map<int,RVec<pair<size_t, Gen>>> gen_by_PID;
 
     for(size_t i = 0; i < this_gens.size(); i++){
@@ -445,8 +481,8 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
     RVec<int> this_gens_PID = {this_gens[0].PID(), this_gens[1].PID(), this_gens[2].PID(), this_gens[3].PID(), this_gens[4].PID(), this_gens[5].PID()};
     RVec<int> this_genjet_PID;
 
-    for(size_t i = 0; i < Jets.size(); i++){
-        this_genjet_PID.push_back(genjets[i].partonFlavour());
+    for(size_t i = 0; i < AllGenJets.size(); i++){
+        this_genjet_PID.push_back(AllGenJets[i].partonFlavour());
     }
 
     unordered_map<int, int> gen_genjet_matching_result;
@@ -462,7 +498,7 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
         {
             if (this_genjet_PID[genjet_idx] == current_PID)
             {
-                filtered_genjets.push_back(genjets[genjet_idx]);
+                filtered_genjets.push_back(AllGenJets[genjet_idx]);
                 filtered_genjet_indices.push_back(genjet_idx);
             }
         }
@@ -498,7 +534,7 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
     for(size_t i = 0; i < gen_genjet_matching_result.size(); i++){
         if (gen_genjet_matching_result[i] >= 0)
         {
-            gen_matched_genjet.push_back(genjets[gen_genjet_matching_result[i]]);
+            gen_matched_genjet.push_back(AllGenJets[gen_genjet_matching_result[i]]);
             gen_matched_genjet_indices.push_back(i);
         }
     }
@@ -540,66 +576,6 @@ RVec<int> Vcb_FH::FindTTbarJetIndices(const RVec<Gen> &gens, const RVec<GenJet> 
         }
     }
     return ttbar_jet_indices;
-}
-
-void Vcb_FH::executeEvent()
-{
-    //if(HasFlag("dataDriven")) dataDrivenMode = true;
-    //else dataDrivenMode = false;
-    AllMuons = GetAllMuons();
-    AllElectrons = GetAllElectrons();
-    AllJets = GetAllJets();
-    AllGens = GetAllGens();
-    AllGenJets = GetAllGenJets();
-    ev = GetEvent();
-    MET = ev.GetMETVector();
-    executeEventFromParameter("nominal");
-    n_b_tagged_jets = 0;
-    n_c_tagged_jets = 0;
-    n_partonFlav_b_jets = 0;
-    n_partonFlav_c_jets = 0;
-}
-
-void Vcb_FH::executeEventFromParameter(TString syst)
-{    
-    
-    if(!IsDATA){
-        try
-        {
-            myCorr->METXYCorrection(MET, RunNumber, ev.nPVsGood(), Correction::XYCorrection_MetType::Type1PuppiMET);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-        }
-    }
-
-    if (!PassBaseLineSelection()) return;
-    float weight = CalculateEventWeight();
-    FillHistogramsAtThisPoint("BaseLine", weight);
-    //GetKineMaticFitterResult(Jets);
-    //FillKinematicFitterResult("Nominal", weight);
-    if(!IsDATA) ttbar_jet_indices = FindTTbarJetIndices(AllGens, AllGenJets);
-    else ttbar_jet_indices = {-999, -999, -999, -999, -999, -999};
-    if(find_all_jets){
-        Particle genRecoTop1 = Jets[ttbar_jet_indices[0]] + Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
-        Particle genRecoTop2 = Jets[ttbar_jet_indices[1]] + Jets[ttbar_jet_indices[4]] + Jets[ttbar_jet_indices[5]];
-        FillHist("dR_b1_w11", Jets[ttbar_jet_indices[0]].DeltaR(Jets[ttbar_jet_indices[2]]), weight, 100, 0., 5.);
-        FillHist("dR_b1_w12", Jets[ttbar_jet_indices[0]].DeltaR(Jets[ttbar_jet_indices[3]]), weight, 100, 0., 5.);
-        FillHist("dR_b2_w21", Jets[ttbar_jet_indices[1]].DeltaR(Jets[ttbar_jet_indices[4]]), weight, 100, 0., 5.);
-        FillHist("dR_b2_w22", Jets[ttbar_jet_indices[1]].DeltaR(Jets[ttbar_jet_indices[5]]), weight, 100, 0., 5.);
-        FillHist("dR_w11_w12", Jets[ttbar_jet_indices[2]].DeltaR(Jets[ttbar_jet_indices[3]]), weight, 100, 0., 5.);
-        FillHist("dR_w21_w22", Jets[ttbar_jet_indices[4]].DeltaR(Jets[ttbar_jet_indices[5]]), weight, 100, 0., 5.);
-        FillHist("GenRecoTop1Mass", genRecoTop1.M(), weight, 100, 0., 500.);
-        FillHist("GenRecoTop2Mass", genRecoTop2.M(), weight, 100, 0., 500.);
-        FillHist("GenRecoTop1Pt", genRecoTop1.Pt(), weight, 100, 0., 500.);
-        Particle genRecoW1 = Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
-        Particle genRecoW2 = Jets[ttbar_jet_indices[4]] + Jets[ttbar_jet_indices[5]];
-        FillHist("GenRecoW1Mass", genRecoW1.M(), weight, 100, 50., 150.);
-        FillHist("GenRecoW2Mass", genRecoW2.M(), weight, 100, 50., 150.);
-
-    }
-    FillTrainingTree();
 }
 
 void Vcb_FH::GetKineMaticFitterResult(const RVec<Jet> &jets){

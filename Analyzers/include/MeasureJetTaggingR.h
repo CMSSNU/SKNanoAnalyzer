@@ -13,8 +13,10 @@ public:
     void initializeAnalyzer();
     void SetAnalyzer(std::variant<Vcb_DL*, Vcb_FH*, Vcb_SL*> analyzer);
     void executeEvent();
-    void executeEventFromParameter(TString syst);
-    void SetAnalyzerChannel(TString channel);
+    void executeEventFromParameter();
+
+    void makeIteratingChannels();
+    RVec<Vcb::Channel> iterating_channels;
 
     MeasureJetTaggingR();
     ~MeasureJetTaggingR();
@@ -29,6 +31,9 @@ protected:
     vector<float> vec_htbins;
     vector<float> vec_nTrueIntbin;
     vector<float> vec_njetbin;
+    vector<float> vec_jet_ptbin;
+    vector<float> vec_jet_etabin;
+    
     int n_vec_htbins;
     int n_vec_nTrueIntbin;
     int n_vec_njetbin;
@@ -45,7 +50,7 @@ protected:
     RVec<JetTagging::JetFlavTaggerWP> WPs;
 
     std::variant<Vcb_DL*, Vcb_FH*, Vcb_SL*> current_analyzer;
-
+    
     TString current_channel;
 };
 
