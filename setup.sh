@@ -32,7 +32,7 @@ if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
     #source ~/.conda-activate
     #conda activate nano
-    mamba activate Nano
+    micromamba activate Nano
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ Primary environment using cvmfs"
     RELEASE="`cat /etc/redhat-release`"
@@ -52,7 +52,7 @@ else
 fi
 echo "@@@@ ROOT path: $ROOTSYS"
 
-export SKNANO_LIB=$SKNANO_HOME/lib
+
 export SKNANO_VERSION="Run3_v12_Run2_v9"
 export SKNANO_DATA=$SKNANO_HOME/data/$SKNANO_VERSION
 mkdir -p $SKNANO_DATA
@@ -60,12 +60,13 @@ mkdir -p $SKNANO_DATA
 export SKNANO_BIN=$SKNANO_HOME/bin
 export SKNANO_PYTHON=$SKNANO_HOME/python
 export SKNANO_BUILDDIR=$SKNANO_HOME/build
+export SKNANO_INSTALLDIR=$SKNANO_HOME/install
 export PATH=$SKNANO_PYTHON:$PATH
 export PYTHONPATH=$PYTHONPATH:$SKNANO_PYTHON
+export SKNANO_LIB=$SKNANO_INSTALLDIR/lib
 export SKNANO_RUN3_NANOAODPATH="/gv0/Users/yeonjoon/DATA/SKFlat/Run3NanoAODv12/"
 export SKNANO_RUN2_NANOAODPATH="/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/"
 
-export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKNANO_HOME/DataFormats/include
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
@@ -98,6 +99,7 @@ if [[ ! -d "external/libtorch" ]]; then
 fi
 export LIBTORCH_INCLUDE_DIR=$SKNANO_HOME/external/libtorch/include
 export LIBTORCH_LIB_DIR=$SKNANO_HOME/external/libtorch/lib
+export LIBTORCH_INSTALL_DIR=$SKNANO_HOME/external/libtorch
 
 # env for correctionlibs
 if [ $PACKAGE = "conda" ]; then

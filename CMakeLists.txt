@@ -3,12 +3,12 @@ project(SKNanoAnalyzer VERSION 0.1.0)
 
 # Find ROOT packages
 find_package(ROOT REQUIRED COMPONENTS)
+find_package(Torch REQUIRED)
+
 include(${ROOT_USE_FILE})
 
 # correctionlibs
 find_package(correctionlib REQUIRED)
-find_package(Torch REQUIRED)
-
 
 # Add subdirectories
 add_subdirectory(DataFormats)
@@ -36,5 +36,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(yaml-cpp json)
 
+#set cxx standard
+set(CMAKE_CXX_STANDARD ROOT_CXX_STANDARD)
 
 
