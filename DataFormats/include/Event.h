@@ -4,6 +4,7 @@
 #include "Particle.h"
 #include "TString.h"
 #include "TObject.h"
+#include "Correction.h"
 using namespace std;
 #include <map>
 
@@ -11,6 +12,18 @@ class Event: public TObject {
 public:
     Event();
     ~Event();
+    
+    enum class MET_Syst{
+        CENTRAL,
+        UE,
+        JER,
+        JES
+    };
+
+    enum class MET_Type{
+        PUPPI,
+        PF
+    };
 
     void SetnPV(int nPV) { j_nPV = nPV;}
     inline int nPV() const { return j_nPV; }
@@ -31,8 +44,8 @@ public:
     float GetTriggerLumi(TString trig);
     bool IsPDForTrigger(TString trig, TString PD);
 
-    void SetMET(float pt, float phi);
-    inline Particle GetMETVector() const {return j_METVector;}
+    void SetMET(RVec<float> MET_pt, RVec<float> MET_phi);
+    Particle GetMETVector(Event::MET_Type MET_type, Correction::variation syst = Correction::variation::nom, Event::MET_Syst source = MET_Syst::CENTRAL) const;
 
     void SetEra(TString era) {
         j_DataEra = era;
@@ -47,7 +60,15 @@ private:
     int j_nPVsGood;
     float j_nTrueInt;
     RVec<TString> j_HLT_TriggerName;
-    Particle j_METVector;
+    Particle j_METVector_PUPPI;
+    Particle j_METVector_PUPPI_UE_UP;
+    Particle j_METVector_PUPPI_UE_Down;
+    Particle j_METVector_PUPPI_JER_UP;
+    Particle j_METVector_PUPPI_JER_Down;
+    Particle j_METVector_PUPPI_JES_UP;
+    Particle j_METVector_PUPPI_JES_Down;
+
+
     int j_DataYear;
     TString j_DataEra;
     float j_fixedGridRhoFastjetAll;

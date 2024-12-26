@@ -61,6 +61,62 @@ bool Event::IsPDForTrigger(TString trig, TString PD) {
     return false;
 }
 
-void Event::SetMET(float pt, float phi) {
-    j_METVector.SetPtEtaPhiM(pt, 0, phi, 0);
+void Event::SetMET(RVec<float> MET_pt, RVec<float> MET_phi) {
+    j_METVector_PUPPI.SetPtEtaPhiM(MET_pt[0], 0, MET_phi[0], 0);
+    j_METVector_PUPPI_UE_UP.SetPtEtaPhiM(MET_pt[1], 0, MET_phi[1], 0);
+    j_METVector_PUPPI_UE_Down.SetPtEtaPhiM(MET_pt[2], 0, MET_phi[2], 0);
+    j_METVector_PUPPI_JER_UP.SetPtEtaPhiM(MET_pt[3], 0, MET_phi[3], 0);
+    j_METVector_PUPPI_JER_Down.SetPtEtaPhiM(MET_pt[4], 0, MET_phi[4], 0);
+    j_METVector_PUPPI_JES_UP.SetPtEtaPhiM(MET_pt[5], 0, MET_phi[5], 0);
+    j_METVector_PUPPI_JES_Down.SetPtEtaPhiM(MET_pt[6], 0, MET_phi[6], 0);
+}
+
+Particle Event::GetMETVector(Event::MET_Type MET_type, Correction::variation syst, Event::MET_Syst source) const
+{
+    if(MET_type!=MET_Type::PUPPI) {
+        cerr << "[Event::GetMETVector] Only PUPPI MET is implemented" << endl;
+        exit(ENODATA);
+    }
+    // switch (syst) {
+    //     case MET_Syst::CENTRAL:
+    //         return j_METVector_PUPPI;
+    //     case MET_Syst::UE_UP:
+    //         return j_METVector_PUPPI_UE_UP;
+    //     case MET_Syst::UE_DOWN:
+    //         return j_METVector_PUPPI_UE_Down;
+    //     case MET_Syst::JER_UP:
+    //         return j_METVector_PUPPI_JER_UP;
+    //     case MET_Syst::JER_DOWN:
+    //         return j_METVector_PUPPI_JER_Down;
+    //     case MET_Syst::JES_UP:
+    //         return j_METVector_PUPPI_JES_UP;
+    //     case MET_Syst::JES_DOWN:
+    //         return j_METVector_PUPPI_JES_Down;
+    // }
+    switch (syst) {
+        case Correction::variation::nom:
+            if (source != MET_Syst::CENTRAL){
+                    std::cerr << "[Event::GetMETVector] Source is not MET_Syst::CENTRAL but variation is nominal" << std::endl;
+            }
+            return j_METVector_PUPPI;
+        case Correction::variation::up:
+            switch (source) {
+                case MET_Syst::UE:
+                    return j_METVector_PUPPI_UE_UP;
+                case MET_Syst::JER:
+                    return j_METVector_PUPPI_JER_UP;
+                case MET_Syst::JES:
+                    return j_METVector_PUPPI_JES_UP;
+            }
+        case Correction::variation::down:
+            switch (source) {
+                case MET_Syst::UE:
+                    return j_METVector_PUPPI_UE_Down;
+                case MET_Syst::JER:
+                    return j_METVector_PUPPI_JER_Down;
+                case MET_Syst::JES:
+                    return j_METVector_PUPPI_JES_Down;
+            }
+    }
+    return j_METVector_PUPPI;
 }
