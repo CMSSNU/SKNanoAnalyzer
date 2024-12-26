@@ -74,15 +74,16 @@ public:
     float GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
     float GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
     float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total");
-    float GetBTaggingR(const int njets, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation syst = variation::nom, const TString &source = "total") const;
+    float GetBTaggingR(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, std::string &processName, const variation syst = variation::nom, const TString &source = "total") const;
     inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
+    inline float GetBTaggingR(const RVec<Jet> &jets, std::string &processName, const variation syst = variation::nom, const TString &source = "total") const { return GetBTaggingR(jets, global_tagger, processName, syst, source); }
 
     // ctagging
     pair<float, float> GetCTaggingWP() const;
     pair<float, float> GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
     float GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
     float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source = "total");
-    float GetCTaggingR(const float npvs, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const variation syst = variation::nom, const TString &source = "total") const;
+    float GetCTaggingR(const float npvs, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const TString &syst_str = "") const;
     inline float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetCTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
     // electron
     float GetElectronRECOSF(const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
