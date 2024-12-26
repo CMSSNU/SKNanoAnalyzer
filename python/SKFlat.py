@@ -397,7 +397,10 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     libpath = [x for x in libpath if x != SKNANO_LIB]
     libpath = [os.path.join(abs_MasterDirectoryName,'install/lib')]+libpath
     libpath = ":".join(libpath)
-    inclpath = os.environ['ROOT_INCLUDE_PATH']
+    if 'ROOT_INCLUDE_PATH' not in os.environ:
+        inclpath = []
+    else:
+        inclpath = os.environ['ROOT_INCLUDE_PATH']
     inclpath = inclpath.split(":")
     inclpath = [x for x in inclpath if SKNANO_INSTALLDIR.split("/")[-1] not in x]
     inclpath = inclpath + [os.path.join(abs_MasterDirectoryName,'install/include')]
