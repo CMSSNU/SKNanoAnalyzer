@@ -52,7 +52,7 @@ public:
 
 
     //MetFilter
-    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev);
+    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
@@ -83,14 +83,14 @@ public:
     RVec<Photon> GetPhotons(TString id, double ptmin, double fetamax);
 
     // Select objects
-    RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax);
-    RVec<Muon> SelectMuons(const RVec<Muon> &muons, Muon::MuonID ID, const float ptmin, const float absetamax);
-    RVec<Jet> SelectJets(const RVec<Jet> &jets, const TString id, const float ptmin, const float fetamax);
-    RVec<Jet> SelectJets(const RVec<Jet> &jets, const Jet::JetID, const float ptmin, const float fetamax);
-    RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.3);
-    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax);
-    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax);
-    RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax);
+    RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax) const;
+    RVec<Muon> SelectMuons(const RVec<Muon> &muons, Muon::MuonID ID, const float ptmin, const float absetamax) const;
+    RVec<Jet> SelectJets(const RVec<Jet> &jets, const TString id, const float ptmin, const float fetamax) const;
+    RVec<Jet> SelectJets(const RVec<Jet> &jets, const Jet::JetID, const float ptmin, const float fetamax) const;
+    RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.3) const;
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax) const;
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax) const;
+    RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const;
     // Functions
     float GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst);
     float GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst);
@@ -106,10 +106,10 @@ public:
     float GetL1PrefireWeight(Correction::variation syst = Correction::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
     unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
-    RVec<Muon> SmearMuons(const RVec<Muon> &muons);
-    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons);
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom);
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom);
+    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
     RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
     void SetOutfilePath(TString outpath);
@@ -147,9 +147,12 @@ public:
     inline void SetBranch(const TString &treename, const TString &branchname, int val) { this_ints.push_back(val); SetBranch(treename, branchname, (void*)(&this_ints.back()), branchname + "/I"); };
     inline void SetBranch(const TString &treename, const TString &branchname, bool val)
     {
-        this_bools.emplace_back(val);
+        this_bools.push_back(val);
         SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O");
     }
+    //fill RVec to branch -> Not work do not use
+    //template <typename T>
+    //inline void SetBranch(const TString &treename, const TString &branchname, std::vector<T> &val) {SetBranch_Vector(treename, branchname, val);};
 
     void FillTrees();
     virtual void WriteHist();
@@ -165,6 +168,35 @@ private:
     deque<char> this_bools;
     TFile *outfile;
     void SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist);
+    template <typename T>
+    void SetBranch_Vector(const TString &treename, const TString &branchname, std::vector<T> &address)
+    {
+        //Not work do not use
+        try
+        {
+            TTree *tree = GetTree(treename);
+
+            unordered_map<string, TBranch *> *this_branchmap = &branchmaps[tree];
+            auto it = this_branchmap->find(string(branchname));
+
+            if (it == this_branchmap->end())
+            {
+                //template <typename T, std::size_t N> TBranch *Branch(const char* name, std::array<T, N> *obj, Int_t bufsize = 32000, Int_t splitlevel = 99)
+                auto br = tree->Branch(branchname, &address);
+                this_branchmap->insert({string(branchname), br});
+            }
+            else
+            {
+                //void TBranch::SetAddress(void *add)
+                it -> second->SetAddress(&address);
+            }
+        }
+        catch (int e)
+        {
+            cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
+            exit(e);
+        }
+    }
 };
 
 #endif
