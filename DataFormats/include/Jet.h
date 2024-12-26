@@ -30,6 +30,12 @@ public:
 
   inline void SetTaggerResults(RVec<float> ds)
   {
+    //check nan. change to -1
+    for (auto &d : ds)
+    {
+      if (std::isnan(d))
+        d = -1;
+    }
     j_btagDeepFlavB = ds[0];
     j_btagDeepFlavCvB = ds[1];
     j_btagDeepFlavCvL = ds[2];
@@ -111,9 +117,9 @@ public:
   {
     j_m = jet_m;
   };
-  inline void SetUnsmearedPt(double unsmearedPt)
+  inline void SetUnsmearedP4(Jet jet)
   {
-    j_unsmeardPt = unsmearedPt;
+    j_unsmearedP4 = jet;
   };
   inline double GetM() { return j_m; }
   inline int partonFlavour() const { return j_partonFlavour; };
@@ -125,11 +131,11 @@ public:
   inline float neutralEMFraction() const { return j_neEmEF; }
   inline float neutralHadronFraction() const { return j_neHEF; }
   inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
+  inline float nConstituents() const { return j_nConstituents; }
   float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
   pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
   float GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const;
-  float unsmearedPt() const;
-
+  TLorentzVector GetUnsmearedP4() const;
 
   bool PassID(TString ID) const;
   bool PassID(JetID id) const; 
@@ -195,7 +201,7 @@ private:
   // float j_hfsigmaEtaEta;
   // float j_hfsigmaPhiPhi;
   float j_m; // jet mass
-  float j_unsmeardPt;
+  TLorentzVector j_unsmearedP4; 
   ClassDef(Jet, 1)
 };
 
