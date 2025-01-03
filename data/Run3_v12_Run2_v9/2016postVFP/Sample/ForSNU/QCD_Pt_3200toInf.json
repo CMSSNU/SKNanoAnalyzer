@@ -1,0 +1,14 @@
+{
+    "name": "QCD_Pt_3200toInf",
+    "isMC": 1,
+    "PD": "QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8",
+    "xsec": 0.0001352,
+    "nmc": 996000.0,
+    "sumsign": 996000.0,
+    "sumW": 996000.0,
+    "path": [
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016postVFP/MC/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/241105_072003/0000/tree_1.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016postVFP/MC/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/241105_072003/0000/tree_2.root",
+        "/gv0/Users/yeonjoon/DATA/SKFlat/Run2NanoAODv9/2016postVFP/MC/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/241105_072003/0000/tree_3.root"
+    ]
+}

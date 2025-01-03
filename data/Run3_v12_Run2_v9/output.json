@@ -1,0 +1,1405 @@
+{
+    "title": "Documentation for TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1.root ",
+    "runs_content": [
+        {
+            "Collection": "Collection",
+            "Description": "Description"
+        }
+    ],
+    "runs_details": [
+        {
+            "section": "LHEPdfSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEScaleSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventCount [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventSumw2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "run [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "CaloMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "ChsMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "CorrT1METJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "DeepMETResolutionTune [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "DeepMETResponseTune [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Electron [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "FatJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Flag [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "FsrPhoton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenDressedLepton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenIsolatedPhoton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenJetAK8 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenPart [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenVisTau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenVtx [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Generator [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLT [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLTriggerFinalPath [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLTriggerFirstPath [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HTXS [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "IsoTrack [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Jet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1PreFiringWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1Reco [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1simulation [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHE [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEPart [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEPdfWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEReweightingWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEScaleWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LowPtElectron [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "MET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Muon [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "OtherPV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PSWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Photon [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Pileup [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PuppiMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "RawMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "RawPuppiMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT10 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT5 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets10 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets5 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SubGenJetAK8 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SubJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Tau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "TkMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "TrigObj [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "boostedTau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "btagWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "event [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetAll [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentral [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralCalo [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralChargedPileUp [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralNeutral [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genTtbarId [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "luminosityBlock [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "run [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        }
+    ],
+    "events_content": [
+        {
+            "Collection": "Collection",
+            "Description": "Description"
+        }
+    ],
+    "events_details": [
+        {
+            "section": "LHEPdfSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEScaleSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventCount [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventSumw [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genEventSumw2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "run [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "CaloMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "ChsMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "CorrT1METJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "DeepMETResolutionTune [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "DeepMETResponseTune [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Electron [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "FatJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Flag [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "FsrPhoton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenDressedLepton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenIsolatedPhoton [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenJetAK8 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenPart [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenVisTau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "GenVtx [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Generator [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLT [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLTriggerFinalPath [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HLTriggerFirstPath [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "HTXS [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "IsoTrack [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Jet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1PreFiringWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1Reco [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "L1simulation [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHE [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEPart [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEPdfWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEReweightingWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEScaleWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LHEWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "LowPtElectron [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "MET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Muon [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "OtherPV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PSWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Photon [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Pileup [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "PuppiMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "RawMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "RawPuppiMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SV [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT10 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetHT5 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets10 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets2 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SoftActivityJetNjets5 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SubGenJetAK8 [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "SubJet [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "Tau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "TkMET [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "TrigObj [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "boostedTau [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "btagWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "event [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetAll [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentral [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralCalo [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralChargedPileUp [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "fixedGridRhoFastjetCentralNeutral [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genTtbarId [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "genWeight [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "luminosityBlock [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        },
+        {
+            "section": "run [back to top]",
+            "properties": [
+                {
+                    "Collection": "Object property",
+                    "Description": "Type"
+                }
+            ]
+        }
+    ]
+}

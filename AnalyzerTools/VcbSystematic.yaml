@@ -1,0 +1,135 @@
+systematics:
+  - syst: Central
+    source: "total"
+
+  - syst: Jet_En
+    source: "total"
+    evtLoopAgain: true
+
+  - syst: Jet_Res
+    source: "total"
+    evtLoopAgain: true
+
+  - syst: UE
+    source: "total"
+    evtLoopAgain: true
+
+  - syst: Mu_En
+    source: "total"
+    evtLoopAgain: true
+
+  - syst: Mu_Res
+    source: "total"
+    evtLoopAgain: true
+
+  - syst: Mu_ID
+
+  - syst: Mu_Iso
+
+  - syst: Mu_Trig
+
+  - syst: El_En
+    evtLoopAgain: true
+
+  - syst: El_Res
+    evtLoopAgain: true
+
+  - syst: El_ID
+
+  - syst: El_Reco
+
+  - syst: El_Trig
+
+  - syst: Pileup
+
+  - syst: Prefire
+
+  - syst: MuF
+
+  - syst: MuR
+
+  - syst: FSR
+
+  - syst: ISR
+
+  - syst: Top_Pt_Reweight
+    oneSided: true
+
+  - syst: C_Tag_Extrap
+    source: "Extrap"
+
+  - syst: C_Tag_Interp
+    source: "Interp"
+
+  - syst: C_Tag_LHE_Scale_MuF
+    source: "LHEScaleWeight_muF"
+
+  - syst: C_Tag_LHE_Scale_MuR
+    source: "LHEScaleWeight_muR"
+
+  - syst: C_Tag_PS_FSR_Fixed
+    source: "PSWeightFSR"
+
+  - syst: C_Tag_PS_ISR
+    source: "PSWeightISR"
+
+  - syst: C_Tag_PU
+    source: "PUWeight"
+
+  - syst: C_Tag_Stat
+    source: "Stat"
+
+  - syst: C_Tag_XSec_Br_Unc_DYJets_B
+    source: "XSec_BRUnc_DYJets_b"
+
+  - syst: C_Tag_XSec_Br_Unc_DYJets_C
+    source: "XSec_BRUnc_DYJets_c"
+
+  - syst: C_Tag_XSec_Br_Unc_WJets_C
+    source: "XSec_BRUnc_WJets_c"
+
+  - syst: C_Tag_JER
+    source: "jer"
+
+  - syst: C_Tag_JES
+    source: "jesTotal"
+
+  - syst: CP5
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "CP5Up"
+    dedicatedSampleKey_down: "CP5Down"
+
+  - syst: hdamp
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "hDampUP"
+    dedicatedSampleKey_down: "hDampDOWN"
+
+  - syst: mtop
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "mtop171p5"
+    dedicatedSampleKey_down: "mtop173p5"
+
+
+
+# first source represent the whole correlation
+correlations:
+  - correlation: MuF_corr
+    sources: ["MuF", "C_Tag_LHE_Scale_MuF"]
+
+  - correlation: MuR_corr
+    sources: ["MuR", "C_Tag_LHE_Scale_MuR"]
+
+  - correlation: FSR_corr
+    sources: ["FSR", "C_Tag_PS_FSR_Fixed"]
+
+  - correlation: ISR_corr
+    sources: ["ISR", "C_Tag_PS_ISR"]
+
+  - correlation: Pileup_corr
+    sources: ["Pileup", "C_Tag_PU"]
+
+  - correlation: JES_corr
+    sources: ["Jet_En", "C_Tag_JES"]
+
+  - correlation: JER_corr
+    sources: ["Jet_Res","C_Tag_JER"]

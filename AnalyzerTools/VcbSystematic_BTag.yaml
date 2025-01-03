@@ -1,0 +1,95 @@
+systematics:
+  - syst: Jet_En
+    evtLoopAgain: true
+
+  - syst: Jet_Res
+    evtLoopAgain: true
+
+  - syst: UE
+    evtLoopAgain: true
+
+  - syst: Mu_ID
+
+  - syst: Mu_Iso
+
+  - syst: Mu_Trig
+
+  - syst: El_ID
+
+  - syst: El_Reco
+
+  - syst: El_Trig
+
+  - syst: Pileup
+
+  #- syst: Prefire
+
+  - syst: MuF
+
+  - syst: MuR
+
+  - syst: FSR
+
+  - syst: ISR
+
+  #- syst: Top_Pt_Reweight
+  #  oneSided: true
+
+  - syst: B_Tag_JES
+    source: jes
+    target: btag
+
+  - syst: B_Tag_CFErr1
+    source: cferr1
+    target: btag
+
+  - syst: B_Tag_CFErr2
+    source: cferr2
+    target: btag
+
+  - syst: B_Tag_HF
+    source: hf
+    target: btag
+
+  - syst: B_Tag_HFStats1
+    source: hfstats1
+    target: btag
+
+  - syst: B_Tag_HFStats2
+    source: hfstats2
+    target: btag
+
+  - syst: B_Tag_LF
+    source: lf
+    target: btag
+
+  - syst: B_Tag_LFStats1
+    source: lfstats1
+    target: btag
+
+  - syst: B_Tag_LFStats2
+    source: lfstats2
+    target: btag
+
+  - syst: CP5
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "CP5Up"
+    dedicatedSampleKey_down: "CP5Down"
+
+  - syst: hdamp
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "hDampUp"
+    dedicatedSampleKey_down: "hDampDown"
+
+  - syst: mtop
+    hasDedicatedSample: true
+    dedicatedSampleKey_up: "mTop173p5"
+    dedicatedSampleKey_down: "mTop171p5"
+
+
+
+# first source represent the whole correlation
+correlations:
+  - correlation: JES_corr
+    sources: ["Jet_En", "B_Tag_JES"]
+

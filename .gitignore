@@ -1,7 +1,16 @@
 build/*
-lib/*
+install/*
 test/*
 test.root
 CMakeFiles/*
 external/lhapdf/*
-config/config.choij
+config/config.*
+**/Skim*.json
+external/** 
+*.onnx
+!external/KinematicFitter
+
+#Temporary Added to my personal temp files
+DataCOPY/** 
+MCCOPY/**
+.vscode/**

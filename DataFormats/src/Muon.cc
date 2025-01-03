@@ -78,23 +78,23 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGTriggerLoose")  return isPOGTriggerIdLoose();
     if (ID == "POGTrackerHighPt") return (int)HighPtId() == 1;
     if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 2;
-    if (ID == "POGMiniIsoLoose")  return MiniIsoId() == WorkingPoint::LOOSE;
-    if (ID == "POGMiniIsoMedium") return MiniIsoId() == WorkingPoint::MEDIUM;
-    if (ID == "POGMiniIsoTight")  return MiniIsoId() == WorkingPoint::TIGHT;
-    if (ID == "POGMiniIsoVTight") return MiniIsoId() == WorkingPoint::VTIGHT;
-    if (ID == "POGMultiIsoLoose") return MultiIsoId() == WorkingPoint::LOOSE;
-    if (ID == "POGMultiIsoMedium")return MultiIsoId() == WorkingPoint::MEDIUM;
-    if (ID == "POGMvaMuMedium")   return MvaMuId() == WorkingPoint::MEDIUM;
-    if (ID == "POGMvaMuTight")    return MvaMuId() == WorkingPoint::TIGHT;
-    if (ID == "POGPfIsoVLoose")   return PfIsoId() == WorkingPoint::VLOOSE;
-    if (ID == "POGPfIsoLoose")    return PfIsoId() == WorkingPoint::LOOSE;
-    if (ID == "POGPfIsoMedium")   return PfIsoId() == WorkingPoint::MEDIUM;
-    if (ID == "POGPfIsoTight")    return PfIsoId() == WorkingPoint::TIGHT;
-    if (ID == "POGPfIsoVTight")   return PfIsoId() == WorkingPoint::VTIGHT;
-    if (ID == "POGPfIsoVVTight")  return PfIsoId() == WorkingPoint::VVTIGHT;
-    if (ID == "POGPuppiIsoLoose") return PuppiIsoId() == WorkingPoint::LOOSE;
-    if (ID == "POGPuppiIsoMedium")return PuppiIsoId() == WorkingPoint::MEDIUM;
-    if (ID == "POGPuppiIsoTight") return PuppiIsoId() == WorkingPoint::TIGHT;
+    if (ID == "POGMiniIsoLoose")  return (int)MiniIsoId() >= (int)(WorkingPoint::LOOSE);
+    if (ID == "POGMiniIsoMedium") return (int)MiniIsoId() >= (int)(WorkingPoint::MEDIUM);
+    if (ID == "POGMiniIsoTight")  return (int)MiniIsoId() >= (int)(WorkingPoint::TIGHT);
+    if (ID == "POGMiniIsoVTight") return (int)MiniIsoId() >= (int)(WorkingPoint::VTIGHT);
+    if (ID == "POGMultiIsoLoose") return (int)MultiIsoId() >= (int)(WorkingPoint::LOOSE);
+    if (ID == "POGMultiIsoMedium")return (int)MultiIsoId() >= (int)(WorkingPoint::MEDIUM);
+    if (ID == "POGMvaMuMedium")   return (int)MvaMuId() >= (int)(WorkingPoint::MEDIUM);
+    if (ID == "POGMvaMuTight")    return (int)MvaMuId() >= (int)(WorkingPoint::TIGHT);
+    if (ID == "POGPfIsoVLoose")   return (int)PfIsoId() >= (int)(WorkingPoint::VLOOSE);
+    if (ID == "POGPfIsoLoose")    return (int)PfIsoId() >= (int)(WorkingPoint::LOOSE);
+    if (ID == "POGPfIsoMedium")   return (int)PfIsoId() >= (int)(WorkingPoint::MEDIUM);
+    if (ID == "POGPfIsoTight")    return (int)PfIsoId() >= (int)(WorkingPoint::TIGHT);
+    if (ID == "POGPfIsoVTight")   return (int)PfIsoId() >= (int)(WorkingPoint::VTIGHT);
+    if (ID == "POGPfIsoVVTight")  return (int)PfIsoId() >= (int)(WorkingPoint::VVTIGHT);
+    if (ID == "POGPuppiIsoLoose") return (int)PuppiIsoId() >= (int)(WorkingPoint::LOOSE);
+    if (ID == "POGPuppiIsoMedium")return (int)PuppiIsoId() >= (int)(WorkingPoint::MEDIUM);
+    if (ID == "POGPuppiIsoTight") return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
     if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 1;
     if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 2;
     cerr << "[Muon::PassID] " << ID << " is not implemented." << endl;
@@ -103,23 +103,69 @@ bool Muon::PassID(const TString ID) const {
     return false;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+bool Muon::PassID(const MuonID ID) const
+{
+    switch(ID){
+        case MuonID::NOCUT:
+            return true;
+        case MuonID::POG_TIGHT:
+            return isPOGTightId();
+        case MuonID::POG_MEDIUM:
+            return isPOGMediumId();
+        case MuonID::POG_MEDIUM_PROMPT:
+            return isPOGMediumPromptId();
+        case MuonID::POG_LOOSE:
+            return isPOGLooseId();
+        case MuonID::POG_SOFT:
+            return isPOGSoftId();
+        case MuonID::POG_SOFT_MVA:
+            return isPOGSoftMvaId();
+        case MuonID::POG_TRIGGER_LOOSE:
+            return isPOGTriggerIdLoose();
+        case MuonID::POG_TRACKER_HIGH_PT:
+            return (int)HighPtId() == 1;
+        case MuonID::POG_GLOBAL_HIGH_PT:
+            return (int)HighPtId() == 2;
+        case MuonID::POG_MINISO_LOOSE:
+            return (int)MiniIsoId() >= (int)(WorkingPoint::LOOSE);
+        case MuonID::POG_MINISO_MEDIUM:
+            return (int)MiniIsoId() >= (int)(WorkingPoint::MEDIUM);
+        case MuonID::POG_MINISO_TIGHT:
+            return (int)MiniIsoId() >= (int)(WorkingPoint::TIGHT);
+        case MuonID::POG_MINISO_VTIGHT:
+            return (int)MiniIsoId() >= (int)(WorkingPoint::VTIGHT);
+        case MuonID::POG_MULTISO_LOOSE:
+            return (int)MultiIsoId() >= (int)(WorkingPoint::LOOSE);
+        case MuonID::POG_MULTISO_MEDIUM:
+            return (int)MultiIsoId() >= (int)(WorkingPoint::MEDIUM);
+        case MuonID::POG_MVA_MU_MEDIUM:
+            return (int)MvaMuId() >= (int)(WorkingPoint::MEDIUM);
+        case MuonID::POG_MVA_MU_TIGHT:
+            return (int)MvaMuId() >= (int)(WorkingPoint::TIGHT);
+        case MuonID::POG_PFISO_VLOOSE:
+            return (int)PfIsoId() >= (int)(WorkingPoint::VLOOSE);
+        case MuonID::POG_PFISO_LOOSE:
+            return (int)PfIsoId() >= (int)(WorkingPoint::LOOSE);
+        case MuonID::POG_PFISO_MEDIUM:
+            return (int)PfIsoId() >= (int)(WorkingPoint::MEDIUM);
+        case MuonID::POG_PFISO_TIGHT:
+            return (int)PfIsoId() >= (int)(WorkingPoint::TIGHT);
+        case MuonID::POG_PFISO_VTIGHT:
+            return (int)PfIsoId() >= (int)(WorkingPoint::VTIGHT);
+        case MuonID::POG_PFISO_VVTIGHT:
+            return (int)PfIsoId() >= (int)(WorkingPoint::VVTIGHT);
+        case MuonID::POG_PUPPIISO_LOOSE:
+            return (int)PuppiIsoId() >= (int)(WorkingPoint::LOOSE);
+        case MuonID::POG_PUPPIISO_MEDIUM:
+            return (int)PuppiIsoId() >= (int)(WorkingPoint::MEDIUM);
+        case MuonID::POG_PUPPIISO_TIGHT:
+            return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
+        case MuonID::POG_TKISO_LOOSE:
+            return (int)TkIsoId() == 1;
+        case MuonID::POG_TKISO_TIGHT:
+            return (int)TkIsoId() == 2;
+        default:
+            break;
+    }
+    return false;
+}

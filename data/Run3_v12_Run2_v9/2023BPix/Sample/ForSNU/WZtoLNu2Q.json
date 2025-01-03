@@ -1,0 +1,12 @@
+{
+    "name": "WZtoLNu2Q",
+    "isMC": 1,
+    "PD": "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
+    "xsec_formula": "(0.3459+0.2366)*3/(0.033658*0.69911)",
+    "nmc": 8774784.0,
+    "sumsign": 8771020.0,
+    "sumW": 139361184.0,
+    "note": "need check the xsec",
+    "xsec": 74.26485954992789,
+    "path": []
+}

@@ -24,6 +24,19 @@ public:
         else if (fabs(scEta()) < 1.566) return ETAREGION::GAP;
         else return ETAREGION::EC;
     }
+
+    enum class ElectronID {
+        NOCUT,
+        POG_VETO,
+        POG_LOOSE,
+        POG_MEDIUM,
+        POG_TIGHT,
+        POG_HEEP,
+        POG_MVAISO_WP80,
+        POG_MVAISO_WP90,
+        POG_MVANOISO_WP80,
+        POG_MVANOISO_WP90,
+    };
     
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
     inline bool ConvVeto() const { return j_convVeto; }
@@ -64,6 +77,12 @@ public:
     void SetR9(float r9) { j_r9 = r9; }
     inline float r9() const { return j_r9; }
 
+    void SetGenPartFlav(unsigned char genPartFlav) { j_genPartFlav = genPartFlav; }
+    inline unsigned char GenPartFlav() const { return j_genPartFlav; }
+
+    void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
+    inline short GenPartIdx() const { return j_genPartIdx; }
+
     // Boolean IDs
     enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVANOISOWP80, MVANOISOWP90, CUTBASEDHEEP};
     void SetBIDBit(BooleanID id, bool idbit);
@@ -89,6 +108,7 @@ public:
 
     // ID helper functions
     bool PassID(const TString ID) const;
+    bool PassID(ElectronID ID) const;
 
 private:
     // uncertainties
@@ -110,6 +130,8 @@ private:
 
     // others
     float j_r9;
+    unsigned char j_genPartFlav;
+    short j_genPartIdx;
     ClassDef(Electron, 1);
 };
 
