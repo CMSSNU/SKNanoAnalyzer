@@ -418,7 +418,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
         f.writelines(f"export ROOT_HIST=0\n") 
         f.writelines(f"export LD_LIBRARY_PATH=""\n")
         f.writelines(f"export LD_LIBRARY_PATH={libpath}\n")
-        f.writelines(f"export ROOT_INCLUDE_PATH={libpath}\n")
+        f.writelines(f"export ROOT_INCLUDE_PATH=\n")
         f.writelines(f"export ROOT_INCLUDE_PATH={inclpath}\n")
         #f.writelines(f"python3 job$1.py\n")
         f.writelines(f"root -l -b -q job$1.cpp\n")
