@@ -118,6 +118,14 @@ public:
     std::vector<std::string> get_sources_from_name(const std::string &syst_name);
     Correction::variation get_variation_from_name(const std::string &syst_name);
     std::unordered_map<std::string, float> calculateWeight();
+    inline float safe_divide(float numerator, float denominator)
+    {
+        if (abs(denominator) < 1e-8)
+        {
+            return numerator;
+        }
+        return numerator / denominator;
+    }
 
 private:
     std::string central_name = "Central";

@@ -42,6 +42,7 @@ static inline std::unordered_map<std::string, float> Electron_Tight_Pt = {
 static constexpr float Jet_Veto_DR = 0.4;
 
 static constexpr Jet::JetID Jet_ID = Jet::JetID::TIGHTLEPVETO;
+static constexpr Jet::JetID Jet_PUID = Jet::JetID::PUID_MEDIUM;
 static constexpr float Jet_Eta_cut = 2.4;
 
 static inline std::unordered_map<std::string, JetTagging::JetFlavTagger> FlavTagger = {
@@ -159,12 +160,12 @@ static inline std::unordered_map<std::string, TString> El_ID_SF_Key = {
 
 static constexpr JetTagging::JetFlavTaggerWP SL_BTag_WP = JetTagging::JetFlavTaggerWP::Medium;
 
-static constexpr float SL_Jet_Pt_cut = 25.f;
+static constexpr float SL_Jet_Pt_cut = 30.f;
 
 // DL part
 static constexpr JetTagging::JetFlavTaggerWP DL_BTag_WP = JetTagging::JetFlavTaggerWP::Medium;
 
-static constexpr float DL_Jet_Pt_cut = 25.f;
+static constexpr float DL_Jet_Pt_cut = 30.f;
 
 static inline std::unordered_map<std::string, std::string> Sample_Shorthand = {
     {"TTJJ_powheg", "TTJJ"},
@@ -191,8 +192,8 @@ static inline std::unordered_map<std::string, std::string> Sample_Shorthand = {
     {"TTLL_powheg_hDampDown", "TTLL"},
     {"TTLL_powheg_CP5Up", "TTLL"},
     {"TTLL_powheg_CP5Down", "TTLL"},
-    {"DYJets", "DY"},
-    {"WJets", "W"},
+    {"DYJets", "VJets"},
+    {"WJets", "VJets"},
     {"ST_tW_top_Semilep", "ST"},
     {"ST_tW_antitop_Semilep", "ST"},
     {"ST_tW_top_Lep", "ST"},
@@ -203,21 +204,21 @@ static inline std::unordered_map<std::string, std::string> Sample_Shorthand = {
     {"ST_tch_antitop", "ST"},
     {"ST_sch_antitop_Lep", "ST"},
     {"ST_sch_top_Lep", "ST"},
-    {"ttHtobb_M125", "ttH"},
-    {"ttHtoNonbb_M125", "ttH"},
-    {"ttWtoQQ", "ttW"},
-    {"ttZtoQQ", "ttZ"},
-    {"WWtoLNuQQ", "WW"},
-    {"WWto2L2Nu", "WW"},
-    {"WWtoLNu2Q", "WW"},
-    {"WWto4Q", "WW"},
-    {"WZto3LNu", "WZ"},
-    {"WZto2L2Q", "WZ"},
-    {"WZtoLNu2Q", "WZ"},
-    {"ZZto4L", "ZZ"},
-    {"ZZto2Nu2Q", "ZZ"},
-    {"ZZto2L2Nu", "ZZ"},
-    {"ZZto2L2Q", "ZZ"},
+    {"ttHtobb_M125", "ttV"},
+    {"ttHtoNonbb_M125", "ttV"},
+    {"ttWtoQQ", "ttV"},
+    {"ttZtoQQ", "ttV"},
+    {"WWtoLNuQQ", "VV"},
+    {"WWto2L2Nu", "VV"},
+    {"WWtoLNu2Q", "VV"},
+    {"WWto4Q", "VV"},
+    {"WZto3LNu", "VV"},
+    {"WZto2L2Q", "VV"},
+    {"WZtoLNu2Q", "VV"},
+    {"ZZto4L", "VV"},
+    {"ZZto2Nu2Q", "VV"},
+    {"ZZto2L2Nu", "VV"},
+    {"ZZto2L2Q", "VV"},
     {"QCDB_HT40to100", "QCDB"},
     {"QCDB_HT100to200", "QCDB"},
     {"QCDB_HT200to400", "QCDB"},

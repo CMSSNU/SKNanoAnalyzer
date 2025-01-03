@@ -48,8 +48,8 @@ public:
     inline std::string GetRegionString() override
     {
         if(class_label == classCategory::Signal) return "SR";
-        else if(class_label == classCategory::Control0) return "CR";
-        else if(class_label == classCategory::Disposal) return "Disposal";
+        else if(class_label == classCategory::tt) return "tt";
+        else if(class_label == classCategory::ttHF) return "ttHF";
         else throw std::runtime_error("Invalid class label");
     }
 
@@ -111,8 +111,8 @@ public:
     enum class classCategory
     {
         Signal,
-        Control0,
-        Disposal
+        tt,
+        ttHF
     };
 
     std::array<int,4> assignment;

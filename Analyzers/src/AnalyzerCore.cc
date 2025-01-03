@@ -132,9 +132,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     for(const auto &match: possible_matches){
         int jet_idx = get<0>(match);
         int genjet_idx = get<1>(match);
-        //if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
-        //temporary modification to consistency with SKFlat
-        if(used_jet[jet_idx]) continue;
+        if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
         matched_genjet_idx[jet_idx] = genjet_idx;
         used_jet[jet_idx] = true;
         used_genjet[genjet_idx] = true;

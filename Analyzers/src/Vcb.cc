@@ -15,6 +15,7 @@ void Vcb::initializeAnalyzer()
         ctagging_R_file = "Vcb_FH_ctaggingR.json";
         myCorr = new Correction(DataEra, IsDATA ? DataStream : MCSample, IsDATA, btagging_eff_file, ctagging_eff_file, btagging_R_file, ctagging_R_file);
         myCorr->SetTaggingParam(FlavTagger[DataEra.Data()], FH_BTag_WP);
+        myMLHelper = std::make_unique<MLHelper>("/data6/Users/yeonjoon/SKNanoAnalyzer/data/Run3_v12_Run2_v9/2022EE/spanet_FH_2022EE.onnx", MLHelper::ModelType::ONNX);
     }
     else if(channel == Channel::Mu || channel == Channel::El){
         std::cout << "Initialize Correction for SL" << std::endl;
@@ -37,6 +38,7 @@ void Vcb::initializeAnalyzer()
         ctagging_R_file = "Vcb_FH_ctaggingR.json";
         myCorr = new Correction(DataEra, IsDATA ? DataStream : MCSample, IsDATA, btagging_eff_file, ctagging_eff_file, btagging_R_file, ctagging_R_file);
         myCorr->SetTaggingParam(FlavTagger[DataEra.Data()], FH_BTag_WP);
+        myMLHelper = std::make_unique<MLHelper>("/data6/Users/yeonjoon/SKNanoAnalyzer/data/Run3_v12_Run2_v9/2022EE/spanet_FH_2022EE.onnx", MLHelper::ModelType::ONNX);
     }
 
     
@@ -104,9 +106,9 @@ void Vcb::FillHistogramsAtThisPoint(const TString &histPrefix, float weight)
 {
     FillHist(histPrefix + "/" + "MET", MET.Pt(), weight, 100, 0., 200.);
     FillHist(histPrefix + "/" + "HT", HT, weight, 200, 450., 2000.);
-    FillHist(histPrefix + "/" + "n_jets", n_jets, weight, 10, 4., 14.);
-    FillHist(histPrefix + "/" + "n_b_tagged_jets", n_b_tagged_jets, weight, 6, 2., 8.);
-    FillHist(histPrefix + "/" + "n_c_tagged_jets", n_c_tagged_jets, weight, 6, 2., 8.);
+    FillHist(histPrefix + "/" + "n_jets", n_jets, weight, 12, 0., 12.);
+    FillHist(histPrefix + "/" + "n_b_tagged_jets", n_b_tagged_jets, weight, 8, 0., 8.);
+    FillHist(histPrefix + "/" + "n_c_tagged_jets", n_c_tagged_jets, weight, 8, 0., 8.);
     FillHist(histPrefix + "/" + "n_partonFlav_b_jets", n_partonFlav_b_jets, weight, 6, 2., 8.);
     FillHist(histPrefix + "/" + "n_partonFlav_c_jets", n_partonFlav_c_jets, weight, 8, 0., 8.);
     FillHist(histPrefix + "/" + "real_b_vs_tagged_b", n_partonFlav_b_jets, n_b_tagged_jets, weight, 8, 0., 8., 6, 2., 8.);
