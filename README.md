@@ -16,6 +16,21 @@
 - external dependencies: ~~LHAPDF~~ / GEScaleSyst(?) / ~~CorrectionLib~~
 
 ## How to
+### Preliminary Setup
+Here is an example to setup the environment using conda.
+```bash
+# create conda environment
+conda create -n nano python=3.11 root=6.30.04 -c conda-forge
+conda activate nano
+
+# Install onnxruntime-cpp
+conda install onnxruntime-cpp
+
+# Install correctionlib
+pip install correctionlib
+```
+
+### Installation
 Recommend to fork the repo to your account.
 ```bash
 # Clone the repository
@@ -34,8 +49,25 @@ cp config/config.default config/config.$USER
 source setup.sh    # you have to do this every new session
 ```
 
+### Testing PRs
+Here is a recommended way to test PRs.
+```bash
+# Always start from the clean state
+git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
+cd SKNanoAnalyzer
+git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
+
+# fetch the PR
+git fetch upstream pull/$PRNUMBER/head:pr$PRNUMBER
+git checkout pr$PRNUMBER
+
+# for example, fetching PR 16
+git fetch upstream pull/16/head:pr16
+git checkout pr16
+```
+
 ### Compilation
-Now using cmake for the default compiling management.
+We are using cmake for the default compiling management.
 Use scripts/build.sh for clean compilation.
 ```bash
 ./scripts/build.sh
