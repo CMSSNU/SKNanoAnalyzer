@@ -4,6 +4,8 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class Particle+;
+#pragma link C++ class Gen+;
+#pragma link C++ class LHE+;
 #pragma link C++ class Lepton+;
 #pragma link C++ class Muon+;
 #pragma link C++ class Electron+;
@@ -14,4 +16,4 @@
 #pragma link C++ class Photon+;
 #pragma link C++ class GenJet+;
 #pragma link C++ class FatJet+;
-#pragma link C++ class Gen+;
+#pragma link C++ class JetTaggingParameter+;

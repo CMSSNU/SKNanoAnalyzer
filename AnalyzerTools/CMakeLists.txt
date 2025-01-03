@@ -1,52 +1,112 @@
+cmake_minimum_required(VERSION 3.12)
+
 # Determine library extension based on OS
-if (APPLE)
+if(APPLE)
     set(LIB_EXT "dylib")
-else()
+elseif(UNIX)
     set(LIB_EXT "so")
+else()
+    message(FATAL_ERROR "Unsupported platform")
 endif()
 
-# find LHAPDF
-set(LHAPDF_INCLUDE_DIR $ENV{LHAPDF_INCLUDE_DIR})
-set(LHAPDF_LIBRARY $ENV{LHAPDF_LIB_DIR}/libLHAPDF.${LIB_EXT})
-set(CORRECTION_INCLUDE_DIR $ENV{CORRECTION_INCLUDE_DIR})
-set(CORRECTION_LIBRARY $ENV{CORRECTION_LIB_DIR}/libcorrectionlib.${LIB_EXT})
+# Find packages
+find_package(ROOT REQUIRED)
+# Find libraries with more robust method
+find_library(LHAPDF_LIBRARY NAMES LHAPDF PATHS $ENV{LHAPDF_LIB_DIR})
+find_library(CORRECTION_LIBRARY NAMES correctionlib PATHS $ENV{CORRECTION_LIB_DIR})
+find_library(ONNXRUNTIME_LIBRARY NAMES onnxruntime PATHS $ENV{ONNXRUNTIME_LIB_DIR})
 
-# include ROOT, LHAPDF, and correctionlib
-include_directories(${ROOT_INCLUDE_DIRS})
-include_directories(${LHAPDF_INCLUDE_DIR})
-include_directories(${CORRECTION_INCLUDE_DIR})
-
-# Generate the ROOT dictionary before defining the library
-file(GLOB HEADERS include/*.h)
-ROOT_GENERATE_DICTIONARY(G__AnalyzerTools
-    ${HEADERS}
-    LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/include/AnalyzerToolsLinkDef.hpp
+# MLHelper library
+add_library(MLHelper SHARED 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MLHelper.cc 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/MLHelper.h
 )
 
-# Define the library with source files and the generated dictionary
+
+target_include_directories(MLHelper PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:$ENV{ONNXRUNTIME_INCLUDE_DIR}>
+    #${TORCH_INCLUDE_DIRS}
+    $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(MLHelper PUBLIC 
+    #${TORCH_LIBRARIES}
+    ${ONNXRUNTIME_LIBRARY}
+)
+
+
+#install(FILES include/MLHelper.h DESTINATION include)
+ROOT_GENERATE_DICTIONARY(G__MLHelper
+    include/MLHelper.h
+    MODULE MLHelper
+    LINKDEF include/MLHelperLinkDef.hpp
+)
+
+install(TARGETS MLHelper DESTINATION lib)
+set(ROOTMAP "libMLHelper.rootmap")
+set(PCM "libMLHelper_rdict.pcm")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
+install(FILES include/MLHelper.h DESTINATION include/AnalyzerTools)
+# Prepare headers for ROOT dictionary
+file(GLOB HEADERS include/*.h)
+list(FILTER DICTIONARY_HEADERS EXCLUDE REGEX "MLHelper.h")
+
+# Attempt to resolve header conflicts more elegantly
+# This is a placeholder - you may need a more sophisticated approach
+set(DICTIONARY_HEADERS ${HEADERS})
+#install(FILES ${HEADERS} DESTINATION include/AnalyzerTools)
+
+
+
+# Prepare source files
 file(GLOB SOURCES src/*.cc)
+list(FILTER SOURCES EXCLUDE REGEX "MLHelper.cc")
+
+# Main library target
 add_library(AnalyzerTools SHARED
     ${SOURCES}
-    G__AnalyzerTools.cxx
+    #${CMAKE_CURRENT_BINARY_DIR}/G__AnalyzerTools.cxx
 )
 
-# Specify where the library should look for header files
+# Include directories
 target_include_directories(AnalyzerTools PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../DataFormats/include>
+    $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:$ENV{LHAPDF_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:$ENV{CORRECTION_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
-# Link ROOT and lhapdf libraries
-target_link_libraries(AnalyzerTools ${ROOT_LIBRARIES})
-target_link_libraries(AnalyzerTools ${LHAPDF_LIBRARY})
-target_link_libraries(AnalyzerTools ${CORRECTION_LIBRARY})
-target_link_libraries(AnalyzerTools DataFormats)
+# Link libraries
+target_link_libraries(AnalyzerTools PUBLIC 
+    ${ROOT_LIBRARIES}
+    ${LHAPDF_LIBRARY}
+    ${CORRECTION_LIBRARY}
+    DataFormats
+    yaml-cpp::yaml-cpp
+    MLHelper
+)
 
-# Specify where to install the library
+# Generate ROOT dictionary
+ROOT_GENERATE_DICTIONARY(G__AnalyzerTools
+    ${DICTIONARY_HEADERS}
+    MODULE AnalyzerTools
+    LINKDEF include/AnalyzerToolsLinkDef.hpp
+)
+
+
+
+# Installation
 install(TARGETS AnalyzerTools DESTINATION lib)
+install(DIRECTORY include/ DESTINATION include/AnalyzerTools)
 
-# Iinstall .rootmap and .pcm files to the lib
-set(ROOTMAP "${CMAKE_CURRENT_BINARY_DIR}/libAnalyzerTools.rootmap")
-set(PCM "${CMAKE_CURRENT_BINARY_DIR}/libAnalyzerTools_rdict.pcm")
-message(STATUS "ROOTMAP: ${ROOTMAP}")
-message(STATUS "PCM: ${PCM}")
-install(FILES ${ROOTMAP} ${PCM} DESTINATION lib)
+
+
+# Install ROOT dictionary files if they exist
+set(ROOTMAP "libAnalyzerTools.rootmap")
+set(PCM "libAnalyzerTools_rdict.pcm")
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/AnalyzerTools)

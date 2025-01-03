@@ -11,6 +11,8 @@ using namespace std;
 #include "TFile.h"
 #include "TString.h"
 #include "ROOT/RVec.hxx"
+#include "ROOT/RDataFrame.hxx"
+#include <nlohmann/json.hpp>
 using namespace ROOT::VecOps;
 
 class SKNanoLoader {
@@ -30,10 +32,12 @@ public:
     //bool IsFastSim;
     int DataYear;
     TString DataEra;
+    int Run;
     float xsec, sumW, sumSign;
     RVec<TString> Userflags;
 
     virtual void Init();
+    virtual void SetMaxLeafSize();
     virtual void Loop();
 
     //virtual void beginEvent(){};
@@ -43,12 +47,17 @@ public:
     virtual void SetEra(TString era) {
         DataEra=era;
         DataYear=TString(era(0,4)).Atoi();
+        //2016, 2017, 2018 are Run2
+        if(DataYear == 2016 or DataYear == 2017 or DataYear == 2018) Run = 2;
+        else if(DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025) Run = 3;
     }
+    
     virtual TString GetEra() const { return DataEra; }
     //virtual TString GetEraShort() const;
     virtual int GetYear() const { return DataYear; }
 
     TChain *fChain=nullptr;
+    ROOT::RDataFrame *df=nullptr;
 
     // Declaration of leaf types
     // PDFs
@@ -69,239 +78,432 @@ public:
     Float_t LHEPdfWeight[nLHEPdfWeight];
     Float_t LHEScaleWeight[nLHEScaleWeight];
     Float_t PSWeight[nPSWeight];
-    // Event
+    //L1Prefire-------------------------
+    Float_t L1PreFiringWeight_Nom;
+    Float_t L1PreFiringWeight_Dn;
+    Float_t L1PreFiringWeight_Up;
+    // Event-------------------------
     Int_t Pileup_nPU;
-    // Muon
-    static constexpr int kMaxMuon = 8;
-    Int_t  nMuon;
-    Float_t Muon_pt[kMaxMuon];
-    Float_t Muon_eta[kMaxMuon];
-    Float_t Muon_phi[kMaxMuon];
-    Float_t Muon_mass[kMaxMuon];
-    Int_t   Muon_charge[kMaxMuon];
-    Float_t Muon_dxy[kMaxMuon];
-    Float_t Muon_dxyErr[kMaxMuon];
-    Float_t Muon_dz[kMaxMuon];
-    Float_t Muon_dzErr[kMaxMuon];
-    Float_t Muon_ip3d[kMaxMuon];
-    Float_t Muon_sip3d[kMaxMuon];
-    Float_t Muon_pfRelIso03_all[kMaxMuon];
-    Float_t Muon_pfRelIso04_all[kMaxMuon];
-    Float_t Muon_miniPFRelIso_all[kMaxMuon];
-    Float_t Muon_tkRelIso[kMaxMuon];
-    Bool_t  Muon_isTracker[kMaxMuon];
-    Bool_t  Muon_isStandalone[kMaxMuon];
-    Bool_t  Muon_isGlobal[kMaxMuon];
-    Bool_t  Muon_looseId[kMaxMuon];
-    Bool_t  Muon_mediumId[kMaxMuon];
-    Bool_t  Muon_mediumPromptId[kMaxMuon];
-    Bool_t  Muon_tightId[kMaxMuon];
-    Bool_t  Muon_softId[kMaxMuon];
-    Bool_t  Muon_softMvaId[kMaxMuon];
-    Bool_t  Muon_triggerIdLoose[kMaxMuon];
-    UChar_t Muon_highPtId[kMaxMuon];
-    UChar_t Muon_miniIsoId[kMaxMuon];
-    UChar_t Muon_multiIsoId[kMaxMuon];
-    UChar_t Muon_mvaMuId[kMaxMuon];
-    //UChar_t Muon_mvaLowPtId[kMaxMuon];
-    UChar_t Muon_pfIsoId[kMaxMuon];
-    UChar_t Muon_puppiIsoId[kMaxMuon];
-    UChar_t Muon_tkIsoId[kMaxMuon];
-    Float_t Muon_softMva[kMaxMuon];
-    Float_t Muon_mvaLowPt[kMaxMuon];
-    Float_t Muon_mvaTTH[kMaxMuon];
-    // Electron
-    static constexpr int kMaxElectron = 8;
-    Int_t nElectron;
-    Float_t Electron_pt[kMaxElectron];
-    Float_t Electron_eta[kMaxElectron];
-    Float_t Electron_phi[kMaxElectron];
-    Float_t Electron_mass[kMaxElectron];
-    Int_t   Electron_charge[kMaxElectron];
-    Float_t Electron_dxy[kMaxElectron];
-    Float_t Electron_dxyErr[kMaxElectron];
-    Float_t Electron_dz[kMaxElectron];
-    Float_t Electron_dzErr[kMaxElectron];
-    Float_t Electron_ip3d[kMaxElectron];
-    Float_t Electron_sip3d[kMaxElectron];
-    Float_t Electron_pfRelIso03_all[kMaxElectron];
-    Float_t Electron_miniPFRelIso_all[kMaxElectron];
-    Float_t Electron_energyErr[kMaxElectron];
-    Bool_t  Electron_convVeto[kMaxElectron];
-    UChar_t Electron_lostHits[kMaxElectron];
-    UChar_t Electron_seedGain[kMaxElectron];
-    UChar_t Electron_tightCharge[kMaxElectron];
-    Float_t Electron_sieie[kMaxElectron];
-    Float_t Electron_hoe[kMaxElectron];
-    Float_t Electron_eInvMinusPInv[kMaxElectron];
-    Float_t Electron_dr03EcalRecHitSumEt[kMaxElectron];
-    Float_t Electron_dr03HcalDepth1TowerSumEt[kMaxElectron];
-    Float_t Electron_dr03TkSumPt[kMaxElectron];
-    Float_t Electron_dr03TkSumPtHEEP[kMaxElectron];
-    Float_t Electron_deltaEtaSC[kMaxElectron];
-    Bool_t  Electron_mvaIso_WP80[kMaxElectron];
-    Bool_t  Electron_mvaIso_WP90[kMaxElectron];
-    Bool_t  Electron_mvaNoIso_WP80[kMaxElectron];
-    Bool_t  Electron_mvaNoIso_WP90[kMaxElectron];
-    Bool_t  Electron_cutBased_HEEP[kMaxElectron];
-    UChar_t Electron_cutBased[kMaxElectron];
-    Float_t Electron_mvaIso[kMaxElectron];
-    Float_t Electron_mvaNoIso[kMaxElectron];
-    Float_t Electron_mvaTTH[kMaxElectron];
-    Float_t Electron_r9[kMaxElectron];
-    // Photon
-    static constexpr int kMaxPhoton = 8;
-    Int_t nPhoton;
-    Float_t Photon_pt[kMaxPhoton];
-    Float_t Photon_eta[kMaxPhoton];
-    Float_t Photon_phi[kMaxPhoton];
-    Float_t Photon_energy[kMaxPhoton];
-    Float_t Photon_energyRaw[kMaxPhoton];
-    Float_t Photon_sceta[kMaxPhoton];
-    Float_t Photon_hoe[kMaxPhoton];
-    UChar_t Photon_cutBased[kMaxPhoton];
-    Float_t Photon_mvaID[kMaxPhoton];
-    Bool_t  Photon_mvaID_WP80[kMaxPhoton];
-    Bool_t  Photon_mvaID_WP90[kMaxPhoton];
-    Bool_t  Photon_pixelSeed[kMaxPhoton];
-    Float_t Photon_sieie[kMaxPhoton];
-    Bool_t  Photon_isScEtaEB[kMaxPhoton];
-    Bool_t  Photon_isScEtaEE[kMaxPhoton];
-    // Jet
-    static constexpr int kMaxJet = 20;
-    Int_t nJet; 
-    Float_t Jet_PNetRegPtRawCorr[kMaxJet];
-    Float_t Jet_PNetRegPtRawCorrNeutrino[kMaxJet];
-    Float_t Jet_PNetRegPtRawRes[kMaxJet];
-    Float_t Jet_area[kMaxJet];
-    Float_t Jet_btagDeepFlavB[kMaxJet];
-    Float_t Jet_btagDeepFlavCvB[kMaxJet];
-    Float_t Jet_btagDeepFlavCvL[kMaxJet];
-    Float_t Jet_btagDeepFlavQG[kMaxJet];
-    Float_t Jet_btagPNetB[kMaxJet];
-    Float_t Jet_btagPNetCvB[kMaxJet];
-    Float_t Jet_btagPNetCvL[kMaxJet];
-    Float_t Jet_btagPNetQvG[kMaxJet];
-    Float_t Jet_btagPNetTauVJet[kMaxJet];
-    Float_t Jet_btagRobustParTAK4B[kMaxJet];
-    Float_t Jet_btagRobustParTAK4CvB[kMaxJet];
-    Float_t Jet_btagRobustParTAK4CvL[kMaxJet];
-    Float_t Jet_btagRobustParTAK4QG[kMaxJet];
-    Float_t Jet_chEmEF[kMaxJet];
-    Float_t Jet_chHEF[kMaxJet];
-    Short_t Jet_electronIdx1[kMaxJet];
-    Short_t Jet_electronIdx2[kMaxJet];
-    Float_t Jet_eta[kMaxJet];
-    Short_t Jet_genJetIdx[kMaxJet];
-    UChar_t Jet_hadronFlavour[kMaxJet];
-    Int_t Jet_hfadjacentEtaStripsSize[kMaxJet];
-    Int_t Jet_hfcentralEtaStripSize[kMaxJet];
-    Float_t Jet_hfsigmaEtaEta[kMaxJet];
-    Float_t Jet_hfsigmaPhiPhi[kMaxJet];
-    UChar_t Jet_jetId[kMaxJet];
-    Float_t Jet_mass[kMaxJet];
-    Float_t Jet_muEF[kMaxJet];
-    Short_t Jet_muonIdx1[kMaxJet];
-    Short_t Jet_muonIdx2[kMaxJet];
-    Float_t Jet_muonSubtrFactor[kMaxJet];
-    UChar_t Jet_nConstituents[kMaxJet];
-    UChar_t Jet_nElectrons[kMaxJet];
-    UChar_t Jet_nMuons[kMaxJet];
-    UChar_t Jet_nSVs[kMaxJet];
-    Float_t Jet_neEmEF[kMaxJet];
-    Float_t Jet_neHEF[kMaxJet];
-    Short_t Jet_partonFlavour[kMaxJet];
-    Float_t Jet_phi[kMaxJet];
-    Float_t Jet_pt[kMaxJet];
-    Float_t Jet_rawFactor[kMaxJet];
-    Short_t Jet_svIdx1[kMaxJet];
-    Short_t Jet_svIdx2[kMaxJet];
-    //Tau
-    static constexpr int kMaxTau = 15;
-    Int_t nTau;
-    Float_t Tau_pt[kMaxTau];
-    Float_t Tau_eta[kMaxTau];
-    Float_t Tau_phi[kMaxTau];
-    Float_t Tau_mass[kMaxTau];
-    Short_t Tau_charge[kMaxTau];
-    Float_t Tau_dxy[kMaxTau];
-    Float_t Tau_dz[kMaxTau];
-    UChar_t Tau_idDeepTau2018v2p5VSe[kMaxTau];
-    UChar_t Tau_idDeepTau2018v2p5VSjet[kMaxTau];
-    UChar_t Tau_idDeepTau2018v2p5VSmu[kMaxTau];
-    UChar_t Tau_decayMode[kMaxTau];
-    Bool_t  Tau_idDecayModeNewDMs[kMaxTau];
-    UChar_t Tau_genPartFlav[kMaxTau];
-    Short_t Tau_genPartIdx[kMaxTau];
-    // FatJet
-    static constexpr int kMaxFatJet = 10;
-    Int_t nFatJet;
-    Float_t FatJet_pt[kMaxFatJet];
-    Float_t FatJet_eta[kMaxFatJet];
-    Float_t FatJet_phi[kMaxFatJet];
-    Float_t FatJet_mass[kMaxFatJet];
-    Float_t FatJet_msoftdrop[kMaxFatJet];
-    Float_t FatJet_area[kMaxFatJet];
-    Short_t FatJet_genJetAK8Idx[kMaxFatJet];
-    UChar_t FatJet_jetId[kMaxFatJet];
-    Float_t FatJet_lsf3[kMaxFatJet];
-    UChar_t FatJet_nBHadrons[kMaxFatJet];
-    UChar_t FatJet_nCHadrons[kMaxFatJet];
-    UChar_t FatJet_nConstituents[kMaxFatJet];
-    Float_t FatJet_btagDDBvLV2[kMaxFatJet];
-    Float_t FatJet_btagDDCvBV2[kMaxFatJet];
-    Float_t FatJet_btagDDCvLV2[kMaxFatJet];
-    Float_t FatJet_btagDeepB[kMaxFatJet];
-    Float_t FatJet_btagHbb[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_H4qvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_HccvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_HbbvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_QCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_TvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_WvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNetWithMass_ZvsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_QCD[kMaxFatJet];
-    Float_t FatJet_particleNet_QCD0HF[kMaxFatJet];
-    Float_t FatJet_particleNet_QCD1HF[kMaxFatJet];
-    Float_t FatJet_particleNet_QCD2HF[kMaxFatJet];
-    Float_t FatJet_particleNet_XbbVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XccVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XqqVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XggVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XteVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XtmVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_XttVsQCD[kMaxFatJet];
-    Float_t FatJet_particleNet_massCorr[kMaxFatJet];
-    Float_t FatJet_tau1[kMaxFatJet];
-    Float_t FatJet_tau2[kMaxFatJet];
-    Float_t FatJet_tau3[kMaxFatJet];
-    Float_t FatJet_tau4[kMaxFatJet];
-    Short_t FatJet_subJetIdx1[kMaxFatJet];
-    Short_t FatJet_subJetIdx2[kMaxFatJet];
+    Float_t Pileup_nTrueInt;
+    Int_t genTtbarId;
 
-    // GenJet
-    static constexpr int kMaxGenJet = 20;
-    Int_t nGenJet;
-    Float_t GenJet_eta[kMaxGenJet];
-    Float_t GenJet_mass[kMaxGenJet];
-    Float_t GenJet_phi[kMaxGenJet];
-    Float_t GenJet_pt[kMaxGenJet];
-    Short_t GenJet_partonFlavour[kMaxGenJet];
-    UChar_t GenJet_hadronFlavour[kMaxGenJet];
+    // PV----------------------------
+    Float_t PV_chi2;
+    Float_t PV_ndof;
+    Float_t PV_score;
+    Float_t PV_x;
+    Float_t PV_y;
+    Float_t PV_z;
+    // Run3
+    UChar_t PV_npvs;
+    UChar_t PV_npvsGood;
+    // Run2
+    Int_t PV_npvs_RunII;
+    Int_t PV_npvsGood_RunII;
 
-    // Gen
-    static constexpr int kMaxGenPart = 200;
-    Float_t GenPart_eta[kMaxGenPart];
-    Short_t GenPart_genPartIdxMother[kMaxGenPart];
-    Float_t GenPart_mass[kMaxGenPart];
-    Int_t   GenPart_pdgId[kMaxGenPart];
-    Float_t GenPart_phi[kMaxGenPart];
-    Float_t GenPart_pt[kMaxGenPart];
-    Int_t   GenPart_status[kMaxGenPart];
-    UShort_t    GenPart_statusFlags[kMaxGenPart];
-    Int_t   nGenPart;
+    //GenPart----------------------------
+    Int_t* nGenPart = new Int_t;
+    UInt_t* nGenPart_RunII = new UInt_t;
+    RVec<Float_t> GenPart_eta;
+    RVec<Float_t> GenPart_mass;
+    RVec<Int_t> GenPart_pdgId;
+    RVec<Float_t> GenPart_phi;
+    RVec<Float_t> GenPart_pt;
+    RVec<Int_t> GenPart_status;
+    //Run3
+    RVec<Short_t> GenPart_genPartIdxMother;
+    RVec<UShort_t> GenPart_statusFlags;
+    //Run2
+    RVec<Int_t> GenPart_genPartIdxMother_RunII;
+    RVec<Int_t> GenPart_statusFlags_RunII;
 
+    //LHEPart-----------------
+    Int_t* nLHEPart = new Int_t;
+    UInt_t* nLHEPart_RunII = new UInt_t;
+    RVec<Float_t> LHEPart_pt;
+    RVec<Float_t> LHEPart_eta;
+    RVec<Float_t> LHEPart_phi;
+    RVec<Float_t> LHEPart_mass;
+    RVec<Float_t> LHEPart_incomingpz;
+    RVec<Int_t> LHEPart_pdgId;
+    RVec<Int_t> LHEPart_status;
+    RVec<Int_t> LHEPart_spin;
 
+    // Muon----------------------------
+    Int_t* nMuon = new Int_t;
+    UInt_t* nMuon_RunII = new UInt_t;
+    RVec<Int_t> Muon_charge;
+    RVec<Float_t> Muon_dxy;
+    RVec<Float_t> Muon_dxyErr;
+    RVec<Float_t> Muon_dxybs;
+    RVec<Float_t> Muon_dz;
+    RVec<Float_t> Muon_dzErr;
+    RVec<Float_t> Muon_eta;
+    RVec<UChar_t> Muon_highPtId;
+    RVec<Float_t> Muon_ip3d;
+    RVec<Bool_t> Muon_isGlobal;
+    RVec<Bool_t> Muon_isStandalone;
+    RVec<Bool_t> Muon_isTracker;
+    RVec<Bool_t> Muon_looseId;
+    RVec<Float_t> Muon_mass;
+    RVec<Bool_t> Muon_mediumId;
+    RVec<Bool_t> Muon_mediumPromptId;
+    RVec<UChar_t> Muon_miniIsoId;
+    RVec<Float_t> Muon_miniPFRelIso_all;
+    RVec<UChar_t> Muon_multiIsoId;
+    RVec<Float_t> Muon_mvaLowPt;
+    RVec<Float_t> Muon_mvaTTH;
+    RVec<UChar_t> Muon_pfIsoId;
+    RVec<Float_t> Muon_pfRelIso03_all;
+    RVec<Float_t> Muon_pfRelIso04_all;
+    RVec<Float_t> Muon_phi;
+    RVec<Float_t> Muon_pt;
+    RVec<UChar_t> Muon_puppiIsoId;
+    RVec<Float_t> Muon_sip3d;
+    RVec<Bool_t> Muon_softId;
+    RVec<Float_t> Muon_softMva;
+    RVec<Bool_t> Muon_softMvaId;
+    RVec<Bool_t> Muon_tightId;
+    RVec<UChar_t> Muon_tkIsoId;
+    RVec<Float_t> Muon_tkRelIso;
+    RVec<Bool_t> Muon_triggerIdLoose;
+    // Run3
+    RVec<UChar_t> Muon_mvaMuID_WP;
+    // Run2
+    RVec<UChar_t> Muon_mvaId; //this is in fact wp
+
+    //Electron----------------------------
+    Int_t* nElectron = new Int_t;
+    UInt_t* nElectron_RunII = new UInt_t;
+    RVec<Int_t> Electron_charge;
+    RVec<Bool_t> Electron_convVeto;
+    RVec<Bool_t> Electron_cutBased_HEEP;
+    RVec<Float_t> Electron_deltaEtaSC;
+    RVec<Float_t> Electron_dr03EcalRecHitSumEt;
+    RVec<Float_t> Electron_dr03HcalDepth1TowerSumEt;
+    RVec<Float_t> Electron_dr03TkSumPt;
+    RVec<Float_t> Electron_dr03TkSumPtHEEP;
+    RVec<Float_t> Electron_dxy;
+    RVec<Float_t> Electron_dxyErr;
+    RVec<Float_t> Electron_dz;
+    RVec<Float_t> Electron_dzErr;
+    RVec<Float_t> Electron_eInvMinusPInv;
+    RVec<Float_t> Electron_energyErr;
+    RVec<Float_t> Electron_eta;
+    RVec<UChar_t> Electron_genPartFlav;
+    RVec<Float_t> Electron_hoe;
+    RVec<Float_t> Electron_ip3d;
+    RVec<Bool_t> Electron_isPFcand;
+    RVec<UChar_t> Electron_jetNDauCharged;
+    RVec<Float_t> Electron_jetPtRelv2;
+    RVec<Float_t> Electron_jetRelIso;
+    RVec<UChar_t> Electron_lostHits;
+    RVec<Float_t> Electron_mass;
+    RVec<Float_t> Electron_miniPFRelIso_all;
+    RVec<Float_t> Electron_miniPFRelIso_chg;
+    RVec<Float_t> Electron_mvaTTH;
+    RVec<Int_t> Electron_pdgId;
+    RVec<Float_t> Electron_pfRelIso03_all;
+    RVec<Float_t> Electron_pfRelIso03_chg;
+    RVec<Float_t> Electron_phi;
+    RVec<Float_t> Electron_pt;
+    RVec<Float_t> Electron_r9;
+    RVec<Float_t> Electron_scEtOverPt;
+    RVec<UChar_t> Electron_seedGain;
+    RVec<Float_t> Electron_sieie;
+    RVec<Float_t> Electron_sip3d;
+    //Run3
+    RVec<UChar_t> Electron_cutBased;
+    RVec<Short_t> Electron_fsrPhotonIdx;
+    RVec<Short_t> Electron_genPartIdx;
+    RVec<Short_t> Electron_jetIdx;
+    RVec<Float_t> Electron_mvaHZZIso;
+    RVec<Float_t> Electron_mvaIso;
+    RVec<Bool_t> Electron_mvaIso_WP80;
+    RVec<Bool_t> Electron_mvaIso_WP90;
+    RVec<Float_t> Electron_mvaNoIso;
+    RVec<Bool_t> Electron_mvaNoIso_WP80;
+    RVec<Bool_t> Electron_mvaNoIso_WP90;
+    RVec<Short_t> Electron_photonIdx;
+    RVec<Char_t> Electron_seediEtaOriX;
+    RVec<Int_t> Electron_seediPhiOriY;
+    RVec<Short_t> Electron_svIdx;
+    RVec<UChar_t> Electron_tightCharge;
+    //Run2
+    RVec<UChar_t> Electron_cleanmask;
+    RVec<Int_t> Electron_cutBased_RunII;
+    RVec<Int_t> Electron_genPartIdx_RunII;
+    RVec<Int_t> Electron_jetIdx_RunII;
+    RVec<Float_t> Electron_mvaFall17V2Iso;
+    RVec<Bool_t> Electron_mvaFall17V2Iso_WP80;
+    RVec<Bool_t> Electron_mvaFall17V2Iso_WP90;
+    RVec<Float_t> Electron_mvaFall17V2noIso;
+    RVec<Bool_t> Electron_mvaFall17V2noIso_WP80;
+    RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
+
+    //Photon----------------------------
+    Int_t* nPhoton = new Int_t;
+    UInt_t* nPhoton_RunII = new UInt_t;
+    RVec<Float_t> Photon_energyErr;
+    RVec<Float_t> Photon_eta;
+    RVec<UChar_t> Photon_genPartFlav;
+    RVec<Float_t> Photon_hoe;
+    RVec<Bool_t> Photon_isScEtaEB;
+    RVec<Bool_t> Photon_isScEtaEE;
+    RVec<Float_t> Photon_mvaID;
+    RVec<Bool_t> Photon_mvaID_WP80;
+    RVec<Bool_t> Photon_mvaID_WP90;
+    RVec<Float_t> Photon_phi;
+    RVec<Bool_t> Photon_pixelSeed;
+    RVec<Float_t> Photon_pt;
+    RVec<Float_t> Photon_energyRaw;
+    RVec<Float_t> Photon_sieie;
+    //Run3
+    RVec<UChar_t> Photon_cutBased;
+    //Run2
+    RVec<Int_t> Photon_cutBased_RunII;
+
+    //Jet----------------------------
+    Int_t* nJet = new Int_t;
+    UInt_t* nJet_RunII = new UInt_t;
+    RVec<Float_t> Jet_area;
+    RVec<Float_t> Jet_btagDeepFlavB;
+    RVec<Float_t> Jet_btagDeepFlavCvB;
+    RVec<Float_t> Jet_btagDeepFlavCvL;
+    RVec<Float_t> Jet_btagDeepFlavQG;
+    RVec<Float_t> Jet_chEmEF;
+    RVec<Float_t> Jet_chHEF;
+    RVec<Float_t> Jet_eta;
+    RVec<Int_t> Jet_hfadjacentEtaStripsSize;
+    RVec<Int_t> Jet_hfcentralEtaStripSize;
+    RVec<Float_t> Jet_hfsigmaEtaEta;
+    RVec<Float_t> Jet_hfsigmaPhiPhi;
+    RVec<Float_t> Jet_mass;
+    RVec<Float_t> Jet_muEF;
+    RVec<Float_t> Jet_muonSubtrFactor;
+    RVec<UChar_t> Jet_nConstituents;
+    RVec<Float_t> Jet_neEmEF;
+    RVec<Float_t> Jet_neHEF;
+    RVec<Float_t> Jet_phi;
+    RVec<Float_t> Jet_pt;
+    RVec<Float_t> Jet_rawFactor;
+    //Run3
+    RVec<Float_t> Jet_PNetRegPtRawCorr;
+    RVec<Float_t> Jet_PNetRegPtRawCorrNeutrino;
+    RVec<Float_t> Jet_PNetRegPtRawRes;
+    RVec<Float_t> Jet_btagPNetB;
+    RVec<Float_t> Jet_btagPNetCvB;
+    RVec<Float_t> Jet_btagPNetCvL;
+    RVec<Float_t> Jet_btagPNetQvG;
+    RVec<Float_t> Jet_btagPNetTauVJet;
+    RVec<Float_t> Jet_btagRobustParTAK4B;
+    RVec<Float_t> Jet_btagRobustParTAK4CvB;
+    RVec<Float_t> Jet_btagRobustParTAK4CvL;
+    RVec<Float_t> Jet_btagRobustParTAK4QG;
+    RVec<Short_t> Jet_electronIdx1;
+    RVec<Short_t> Jet_electronIdx2;
+    RVec<Short_t> Jet_genJetIdx;
+    RVec<UChar_t> Jet_hadronFlavour;
+    RVec<UChar_t> Jet_jetId;
+    RVec<Short_t> Jet_muonIdx1;
+    RVec<Short_t> Jet_muonIdx2;
+    RVec<UChar_t> Jet_nElectrons;
+    RVec<UChar_t> Jet_nMuons;
+    RVec<UChar_t> Jet_nSVs;
+    RVec<Short_t> Jet_partonFlavour;
+    RVec<Short_t> Jet_svIdx1;
+    RVec<Short_t> Jet_svIdx2;
+    //Run2
+    RVec<Float_t> Jet_bRegCorr;
+    RVec<Float_t> Jet_bRegRes;
+    RVec<Float_t> Jet_btagCSVV2;
+    //RVec<Float_t> Jet_btagDeepB;
+    //RVec<Float_t> Jet_btagDeepCvB;
+    //RVec<Float_t> Jet_btagDeepCvL;
+    RVec<Float_t> Jet_cRegCorr;
+    RVec<Float_t> Jet_cRegRes;
+    RVec<Float_t> Jet_chFPV0EF;
+    RVec<UChar_t> Jet_cleanmask;
+    RVec<Int_t> Jet_electronIdx1_RunII;
+    RVec<Int_t> Jet_electronIdx2_RunII;
+    RVec<Int_t> Jet_genJetIdx_RunII;
+    RVec<Int_t> Jet_hadronFlavour_RunII;
+    RVec<Int_t> Jet_jetId_RunII;
+    RVec<Int_t> Jet_muonIdx1_RunII;
+    RVec<Int_t> Jet_muonIdx2_RunII;
+    RVec<Int_t> Jet_nElectrons_RunII;
+    RVec<Int_t> Jet_nMuons_RunII;
+    RVec<Int_t> Jet_partonFlavour_RunII;
+    RVec<Int_t> Jet_puId;
+    RVec<Float_t> Jet_puIdDisc;
+    RVec<Float_t> Jet_qgl;
+
+    //Tau---------------------------------------
+    Int_t* nTau = new Int_t;
+    UInt_t* nTau_RunII = new UInt_t;
+    RVec<Float_t> Tau_dxy;
+    RVec<Float_t> Tau_dz;
+    RVec<Float_t> Tau_eta;
+    RVec<UChar_t> Tau_genPartFlav;
+    RVec<UChar_t> Tau_idDeepTau2017v2p1VSe;
+    RVec<UChar_t> Tau_idDeepTau2017v2p1VSjet;
+    RVec<UChar_t> Tau_idDeepTau2017v2p1VSmu;
+    RVec<Float_t> Tau_mass;
+    RVec<Float_t> Tau_phi;
+    RVec<Float_t> Tau_pt;
+    // Run3
+    RVec<Short_t> Tau_charge;
+    RVec<UChar_t> Tau_decayMode;
+    RVec<Short_t> Tau_genPartIdx;
+    RVec<Bool_t> Tau_idDecayModeNewDMs;
+    RVec<UChar_t> Tau_idDeepTau2018v2p5VSe;
+    RVec<UChar_t> Tau_idDeepTau2018v2p5VSjet;
+    RVec<UChar_t> Tau_idDeepTau2018v2p5VSmu;
+    // Run2
+    RVec<Int_t> Tau_charge_RunII;
+    RVec<Int_t> Tau_decayMode_RunII;
+    RVec<Int_t> Tau_genPartIdx_RunII;
+
+    // FatJet----------------------------
+    Int_t* nFatJet = new Int_t;
+    UInt_t* nFatJet_RunII = new UInt_t;
+    RVec<Float_t> FatJet_area;
+    RVec<Float_t> FatJet_btagDDBvLV2;
+    RVec<Float_t> FatJet_btagDDCvBV2;
+    RVec<Float_t> FatJet_btagDDCvLV2;
+    RVec<Float_t> FatJet_btagDeepB;
+    RVec<Float_t> FatJet_btagHbb;
+    RVec<Float_t> FatJet_eta;
+    RVec<Float_t> FatJet_lsf3;
+    RVec<Float_t> FatJet_mass;
+    RVec<Float_t> FatJet_msoftdrop;
+    RVec<UChar_t> FatJet_nBHadrons;
+    RVec<UChar_t> FatJet_nCHadrons;
+    RVec<UChar_t> FatJet_nConstituents;
+    RVec<Float_t> FatJet_particleNet_QCD;
+    RVec<Float_t> FatJet_phi;
+    RVec<Float_t> FatJet_pt;
+    RVec<Float_t> FatJet_tau1;
+    RVec<Float_t> FatJet_tau2;
+    RVec<Float_t> FatJet_tau3;
+    RVec<Float_t> FatJet_tau4;
+    // Run3
+    RVec<Short_t> FatJet_genJetAK8Idx;
+    RVec<UChar_t> FatJet_jetId;
+    RVec<Float_t> FatJet_particleNetWithMass_H4qvsQCD;
+    RVec<Float_t> FatJet_particleNetWithMass_HbbvsQCD;
+    RVec<Float_t> FatJet_particleNetWithMass_HccvsQCD;
+    RVec<Float_t> FatJet_particleNetWithMass_QCD;
+    RVec<Float_t> FatJet_particleNetWithMass_TvsQCD;
+    RVec<Float_t> FatJet_particleNetWithMass_WvsQCD;
+    RVec<Float_t> FatJet_particleNetWithMass_ZvsQCD;
+    RVec<Float_t> FatJet_particleNet_QCD0HF;
+    RVec<Float_t> FatJet_particleNet_QCD1HF;
+    RVec<Float_t> FatJet_particleNet_QCD2HF;
+    RVec<Float_t> FatJet_particleNet_XbbVsQCD;
+    RVec<Float_t> FatJet_particleNet_XccVsQCD;
+    RVec<Float_t> FatJet_particleNet_XggVsQCD;
+    RVec<Float_t> FatJet_particleNet_XqqVsQCD;
+    RVec<Float_t> FatJet_particleNet_XteVsQCD;
+    RVec<Float_t> FatJet_particleNet_XtmVsQCD;
+    RVec<Float_t> FatJet_particleNet_XttVsQCD;
+    RVec<Float_t> FatJet_particleNet_massCorr;
+    RVec<Short_t> FatJet_subJetIdx1;
+    RVec<Short_t> FatJet_subJetIdx2;
+    // Run2
+    // I'll pass deepTag scores
+    // RVec<Float_t> FatJet_btagCSVV2;
+    // RVec<Float_t> FatJet_deepTagMD_H4qvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_HbbvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_TvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_WvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_ZHbbvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_ZHccvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_ZbbvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_ZvsQCD;
+    // RVec<Float_t> FatJet_deepTagMD_bbvsLight;
+    // RVec<Float_t> FatJet_deepTagMD_ccvsLight;
+    // RVec<Float_t> FatJet_deepTag_H;
+    // RVec<Float_t> FatJet_deepTag_QCD;
+    // RVec<Float_t> FatJet_deepTag_QCDothers;
+    // RVec<Float_t> FatJet_deepTag_TvsQCD;
+    // RVec<Float_t> FatJet_deepTag_WvsQCD;
+    // RVec<Float_t> FatJet_deepTag_ZvsQCD;
+    RVec<Int_t> FatJet_genJetAK8Idx_RunII;
+    RVec<Int_t> FatJet_jetId_RunII;
+    RVec<Float_t> FatJet_particleNetMD_QCD;
+    RVec<Float_t> FatJet_particleNetMD_Xbb;
+    RVec<Float_t> FatJet_particleNetMD_Xcc;
+    RVec<Float_t> FatJet_particleNetMD_Xqq;
+    RVec<Float_t> FatJet_particleNet_H4qvsQCD;
+    RVec<Float_t> FatJet_particleNet_HbbvsQCD;
+    RVec<Float_t> FatJet_particleNet_HccvsQCD;
+    RVec<Float_t> FatJet_particleNet_TvsQCD;
+    RVec<Float_t> FatJet_particleNet_WvsQCD;
+    RVec<Float_t> FatJet_particleNet_ZvsQCD;
+    RVec<Float_t> FatJet_particleNet_mass;
+    RVec<Int_t> FatJet_subJetIdx1_RunII;
+    RVec<Int_t> FatJet_subJetIdx2_RunII;
+
+    //GenJet----------------------------
+    Int_t* nGenJet = new Int_t;
+    UInt_t* nGenJet_RunII = new UInt_t;
+    RVec<Float_t> GenJet_eta;
+    RVec<UChar_t> GenJet_hadronFlavour;
+    RVec<Float_t> GenJet_mass;
+    RVec<Float_t> GenJet_phi;
+    RVec<Float_t> GenJet_pt;
+    //Run3
+    RVec<Short_t> GenJet_partonFlavour;
+    //Run2
+    RVec<Int_t> GenJet_partonFlavour_RunII;
+
+    //PuppiMET----------------------------
+    Float_t PuppiMET_pt;
+    Float_t PuppiMET_phi;
+    Float_t PuppiMET_sumEt;
+    Float_t PuppiMET_ptJERDown;
+    Float_t PuppiMET_phiJERDown;
+    Float_t PuppiMET_ptJERUp;
+    Float_t PuppiMET_phiJERUp;
+    Float_t PuppiMET_ptJESDown;
+    Float_t PuppiMET_phiJESDown;
+    Float_t PuppiMET_ptJESUp;
+    Float_t PuppiMET_phiJESUp;
+    Float_t PuppiMET_ptUnclusteredDown;
+    Float_t PuppiMET_phiUnclusteredDown;
+    Float_t PuppiMET_ptUnclusteredUp;
+    Float_t PuppiMET_phiUnclusteredUp;
+
+    //MET----------------------------
+    Float_t MET_MetUnclustEnUpDeltaX;
+    Float_t MET_MetUnclustEnUpDeltaY;
+    Float_t MET_covXX;
+    Float_t MET_covXY;
+    Float_t MET_covYY;
+    Float_t MET_fiducialGenPhi;
+    Float_t MET_fiducialGenPt;
+    Float_t MET_phi;
+    Float_t MET_pt;
+    Float_t MET_significance;
+    Float_t MET_sumEt;
+    Float_t MET_sumPtUnclustered;
+
+    // rho
+    Float_t fixedGridRhoFastjetAll;
+    // Flag
+    Bool_t Flag_METFilters; // What is this?
+    Bool_t Flag_goodVertices;
+    Bool_t Flag_globalSuperTightHalo2016Filter;
+    Bool_t Flag_ECalDeadCellTriggerPrimitiveFilter;
+    Bool_t Flag_BadPFMuonFilter;
+    Bool_t Flag_BadPFMuonDzFilter;
+    Bool_t Flag_hfNoisyHitsFilter;
+    Bool_t Flag_ecalBadCalibFilter;
+    Bool_t Flag_eeBadScFilter;
+    //Bool_t Flag_ecalBadCalibFilter;
+    UInt_t RunNumber;
+    std::map<TString, pair<Bool_t*,float>> TriggerMap;
 };
 
 #endif

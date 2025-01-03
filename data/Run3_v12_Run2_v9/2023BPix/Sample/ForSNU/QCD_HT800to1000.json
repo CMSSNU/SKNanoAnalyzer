@@ -1,0 +1,10 @@
+{
+    "name": "QCD_HT800to1000",
+    "isMC": 1,
+    "PD": "QCD-4Jets_HT-800to1000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+    "xsec": 3033,
+    "nmc": 21602068.0,
+    "sumsign": 21602064.0,
+    "sumW": 820799668224.0,
+    "path": []
+}

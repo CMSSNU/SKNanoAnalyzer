@@ -46,8 +46,8 @@ void ExampleRun::initializeAnalyzer() {
     // add taggers and WP that you wnat to use in analysis
     // Not implemented yet
     
-    // MCCorrection
-    mcCorr = new MCCorrection(DataEra);
+    // Correction
+    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
 
     //==== Example 2
     //==== Using new PDF
@@ -215,7 +215,7 @@ void ExampleRun::executeEventFromParameter(ExampleParameter param) {
 
         // example of applying muon scale factors
         for (const auto &muon: muons) {
-            float this_idsf = mcCorr->GetMuonIDSF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt(), "nominal");
+            float this_idsf = myCorr->GetMuonIDSF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
             float this_isosf = 1.;
             weight *= this_idsf * this_isosf;
         }

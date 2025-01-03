@@ -7,8 +7,9 @@
 
 #pragma link C++ class LHAPDFHandler+;
 #pragma link C++ class PDFReweight+;
-#pragma link C++ class MCCorrection+;
+#pragma link C++ class Correction+;
 #pragma link C++ class AnalyzerParameter+;
 #pragma link C++ class ExampleParameter+;
+#pragma link C++ class SystematicHelper+;
 
 #endif
