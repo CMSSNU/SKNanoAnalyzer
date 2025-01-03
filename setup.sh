@@ -30,9 +30,12 @@ echo "@@@@ Package: $PACKAGE"
 # no cvmfs related configuration for conda
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
-    #source ~/.conda-activate
-    #conda activate nano
-    micromamba activate Nano
+    source ~/.conda-activate
+    conda activate nano
+    #micromamba activate Nano
+elif [ $PACKAGE = "mamba" ]; then
+    # set up mamba environment
+    micronmamba activate Nano
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ Primary environment using cvmfs"
     RELEASE="`cat /etc/redhat-release`"
