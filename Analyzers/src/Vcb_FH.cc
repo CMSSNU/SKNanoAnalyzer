@@ -1,9 +1,10 @@
 #include "Vcb_FH.h"
-//#include "MLHelper.h"
+// #include "MLHelper.h"
 
 Vcb_FH::Vcb_FH() {}
 
-void Vcb_FH::CreateTrainingTree(){
+void Vcb_FH::CreateTrainingTree()
+{
     Clear();
     RVec<TString> keeps = {};
     RVec<TString> drops = {"*"};
@@ -102,11 +103,14 @@ RVec<RVec<unsigned int>> Vcb_FH::GetPermutations(const RVec<Jet> &jets)
 bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut)
 {
     Clear();
-    if (!ev.PassTrigger(FH_Trigger_DoubleBTag[DataEra.Data()])) return false;
-    if(!PassJetVetoMap(AllJets, AllMuons)) return false; 
-    if(!PassMetFilter(AllJets, ev)) return false;
+    if (!ev.PassTrigger(FH_Trigger_DoubleBTag[DataEra.Data()]))
+        return false;
+    if (!PassJetVetoMap(AllJets, AllMuons))
+        return false;
+    if (!PassMetFilter(AllJets, ev))
+        return false;
 
-    //Set Objects
+    // Set Objects
     Jets = SelectJets(AllJets, Jet_ID, FH_Jet_Pt_cut[DataEra.Data()], Jet_Eta_cut);
     if (systHelper->getCurrentIterSysSource() == "Jet_En")
     {
@@ -132,10 +136,12 @@ bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut)
     Muons = SelectMuons(Muons, Muon_Tight_Iso, Muon_Tight_Pt[DataEra.Data()], Muon_Tight_Eta);
     Electrons = SelectElectrons(AllElectrons, Electron_Tight_ID, Electron_Tight_Pt[DataEra.Data()], Electron_Tight_Eta);
     Jets = JetsVetoLeptonInside(Jets, Electrons_Veto, Muons_Veto, Jet_Veto_DR);
+    Jets = SelectJets(Jets, Jet_PUID, FH_Jet_Pt_cut[DataEra.Data()], Jet_Eta_cut);
     HT = GetHT(Jets);
     n_jets = Jets.size();
 
-    if(n_jets < 6) return false;
+    if (n_jets < 6)
+        return false;
 
     for (const auto &jet : Jets)
     {
@@ -144,15 +150,21 @@ bool Vcb_FH::PassBaseLineSelection(bool remove_flavtagging_cut)
         if (jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).first > myCorr->GetCTaggingWP().first &&
             jet.GetCTaggerResult(FlavTagger[DataEra.Data()]).second > myCorr->GetCTaggingWP().second)
             n_c_tagged_jets++;
-        if(!IsDATA){
-            if(abs(jet.partonFlavour()) == 5) n_partonFlav_b_jets++;
-            if(abs(jet.partonFlavour()) == 4) n_partonFlav_c_jets++;
+        if (!IsDATA)
+        {
+            if (abs(jet.partonFlavour()) == 5)
+                n_partonFlav_b_jets++;
+            if (abs(jet.partonFlavour()) == 4)
+                n_partonFlav_c_jets++;
         }
     }
-    if (n_b_tagged_jets < 2 && !remove_flavtagging_cut) return false;
-    if(Muons_Veto.size() != 0 || Electrons_Veto.size() != 0) return false;
-    if (HT < FH_HT_cut[DataEra.Data()]) return false;
-    
+    if (n_b_tagged_jets < 2 && !remove_flavtagging_cut)
+        return false;
+    if (Muons_Veto.size() != 0 || Electrons_Veto.size() != 0)
+        return false;
+    if (HT < FH_HT_cut[DataEra.Data()])
+        return false;
+
     SetSystematicLambda();
     SetTTbarId();
 
@@ -182,15 +194,17 @@ void Vcb_FH::FillKinematicFitterResult(const TString &histPrefix, float weight)
     FillHist(histPrefix + "/" + "Chi2", best_KF_result.chi2, weight, 600, 0., 300.);
 }
 
-void Vcb_FH::FillTrainingTree(){
-
+void Vcb_FH::FillTrainingTree()
+{
+    ttbar_jet_indices = FindTTbarJetIndices();
     SetBranch("Training_Tree", "MET", MET.Pt());
     SetBranch("Training_Tree", "HT", HT);
     SetBranch("Training_Tree", "n_jets", n_jets);
     SetBranch("Training_Tree", "n_b_tagged_jets", n_b_tagged_jets);
     SetBranch("Training_Tree", "n_c_tagged_jets", n_c_tagged_jets);
     SetBranch("Training_Tree", "find_all_jets", find_all_jets);
-    if(find_all_jets){
+    if (find_all_jets)
+    {
         Particle W1Cand = Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
         Particle W2Cand = Jets[ttbar_jet_indices[4]] + Jets[ttbar_jet_indices[5]];
         Particle Top1Cand = Jets[ttbar_jet_indices[0]] + W1Cand;
@@ -217,7 +231,8 @@ void Vcb_FH::FillTrainingTree(){
         SetBranch("Training_Tree", "ttbarEta", ttCand.Eta());
         SetBranch("Training_Tree", "ttbarPhi", ttCand.Phi());
     }
-    else{
+    else
+    {
         SetBranch("Training_Tree", "Top1Mass", -999.);
         SetBranch("Training_Tree", "Top2Mass", -999.);
         SetBranch("Training_Tree", "W1Mass", -999.);
@@ -254,16 +269,16 @@ void Vcb_FH::FillTrainingTree(){
     //         //Tagging WP
     //         SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), GetPassedBTaggingWP(Jets[i]));
     //         SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), GetPassedCTaggingWP(Jets[i]));
-            
-    //         auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
-    //         if(it != ttbar_jet_indices.end()){
-    //             SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(1));
-    //             SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(it - ttbar_jet_indices.begin()));
-    //         }
-    //         else{
-    //             SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(0));
-    //             SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
-    //         }
+
+    // auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
+    // if(it != ttbar_jet_indices.end()){
+    //     SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(1));
+    //     SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(it - ttbar_jet_indices.begin()));
+    // }
+    // else{
+    //     SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(0));
+    //     SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
+    // }
 
     //     }
     //     else{
@@ -277,7 +292,7 @@ void Vcb_FH::FillTrainingTree(){
     //         SetBranch("Training_Tree", "Jet_QvsG_" + std::to_string(i), -999.);
     //         SetBranch("Training_Tree", "Jet_isTTbarJet_" + std::to_string(i), int(-999));
     //         SetBranch("Training_Tree", "Jet_ttbarJet_idx_" + std::to_string(i), int(-999));
-    //         SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), -999); 
+    //         SetBranch("Training_Tree", "Jet_B_WP_" + std::to_string(i), -999);
     //         SetBranch("Training_Tree", "Jet_C_WP_" + std::to_string(i), -999);
     //     }
     // }
@@ -305,10 +320,11 @@ void Vcb_FH::FillTrainingTree(){
     cosTheta.clear();
 
     float max_jets = 10;
-    if(Jets.size() < max_jets) max_jets = Jets.size();
+    if (Jets.size() < max_jets)
+        max_jets = Jets.size();
 
-
-    for(size_t i = 0; i < max_jets; i++){
+    for (size_t i = 0; i < max_jets; i++)
+    {
         Jet_Px.push_back(Jets[i].Px());
         Jet_Py.push_back(Jets[i].Py());
         Jet_Pz.push_back(Jets[i].Pz());
@@ -324,27 +340,32 @@ void Vcb_FH::FillTrainingTree(){
         Jet_Eta.push_back(Jets[i].Eta());
         Jet_Phi.push_back(Jets[i].Phi());
         auto it = find(ttbar_jet_indices.begin(), ttbar_jet_indices.end(), i);
-        if(it != ttbar_jet_indices.end()){
+        if (it != ttbar_jet_indices.end())
+        {
             Jet_isTTbarJet.push_back(1);
             Jet_ttbarJet_idx.push_back(it - ttbar_jet_indices.begin());
         }
-        else{
+        else
+        {
             Jet_isTTbarJet.push_back(0);
             Jet_ttbarJet_idx.push_back(-999);
         }
     }
 
-    for(int i = 0; i < max_jets; i++){
-        for(int j = i + 1; j < max_jets; j++){
+    for (int i = 0; i < max_jets; i++)
+    {
+        for (int j = i + 1; j < max_jets; j++)
+        {
             edge_index0.push_back(i);
             edge_index1.push_back(j);
-            //undirected graph
+            // undirected graph
             float this_deltaR = Jets[i].DeltaR(Jets[j]);
             float this_invM = (Jets[i] + Jets[j]).M();
             TVector3 v1 = Jets[i].Vect();
             TVector3 v2 = Jets[j].Vect();
             float this_cosTheta = TMath::Cos(v1.Angle(v2));
-            for(size_t k = 0; k < 2; k++){
+            for (size_t k = 0; k < 2; k++)
+            {
                 deltaR.push_back(this_deltaR);
                 invM.push_back(this_invM);
                 cosTheta.push_back(this_cosTheta);
@@ -380,214 +401,377 @@ void Vcb_FH::FillTrainingTree(){
     FillTrees();
 }
 
-RVec<int> Vcb_FH::FindTTbarJetIndices(){
+RVec<int> Vcb_FH::FindTTbarJetIndices()
+{
+    // Return structure of size 6:
+    //   {
+    //     idx_b_t,        // b from top
+    //     idx_b_tbar,     // b from tbar
+    //     idx_Wplus_q1,   // W+ daughter quark #1
+    //     idx_Wplus_q2,   // W+ daughter quark #2
+    //     idx_Wminus_q1,  // W- daughter quark #1
+    //     idx_Wminus_q2   // W- daughter quark #2
+    //   }
+    // Each entry is the matched Reco Jet index (or -1/-999 if not found).
     RVec<int> ttbar_jet_indices = {-1, -1, -1, -1, -1, -1};
-    int w_plus_idx = -1;
-    int w_minus_idx = -1;
-    int t_plus_idx = -1;
-    int t_minus_idx = -1;
-    bool find_w_plus = false;
-    bool find_w_minus = false;
-    bool find_t_plus = false;
-    bool find_t_minus = false;
-    bool find_w_plus_up = false;
-    bool find_w_plus_down = false;
-    bool find_w_minus_up = false;
-    bool find_w_minus_down = false;
-    bool find_b_from_t_plus = false;
-    bool find_b_from_t_minus = false;
-    tt_decay_code = -9999;
-    find_all_jets = false;
-    // find last t+/- and W+/- in gens
-    for(int i = AllGens.size() - 1; i >=0; i--){
 
-        if(AllGens[i].PID() == 24 && !find_w_plus){
-            w_plus_idx = i;
-            find_w_plus = true;
+    // For debugging or classification
+    tt_decay_code = -9999; // optional for user-specific classification
+    find_all_jets = false; // will set to true if all 6 jets are found
+
+    // -----------------------------------------------------------------
+    // 1) Find last copies of t, tbar, W+, W- in the Gen collection
+    // ------------------------------------------------------------------
+    int idx_t_plus = -1;
+    int idx_t_minus = -1;
+    int idx_w_plus = -1;
+    int idx_w_minus = -1;
+    bool found_t_plus = false;
+    bool found_t_minus = false;
+    bool found_w_plus = false;
+    bool found_w_minus = false;
+
+    // Traverse from the end so the first time we see them is the "last copy".
+    for (int i = (int)AllGens.size() - 1; i >= 0; i--)
+    {
+        const int pid = AllGens[i].PID();
+        if (!found_w_plus && pid == 24)
+        {
+            idx_w_plus = i;
+            found_w_plus = true;
         }
-        if(AllGens[i].PID() == -24 && !find_w_minus){
-            w_minus_idx = i;
-            find_w_minus = true;
+        if (!found_w_minus && pid == -24)
+        {
+            idx_w_minus = i;
+            found_w_minus = true;
         }
-        if(AllGens[i].PID() == 6 && !find_t_plus){
-            t_plus_idx = i;
-            find_t_plus = true;
+        if (!found_t_plus && pid == 6)
+        {
+            idx_t_plus = i;
+            found_t_plus = true;
         }
-        if(AllGens[i].PID() == -6 && !find_t_minus){
-            t_minus_idx = i;
-            find_t_minus = true;
+        if (!found_t_minus && pid == -6)
+        {
+            idx_t_minus = i;
+            found_t_minus = true;
         }
-        if(find_w_plus && find_w_minus && find_t_plus && find_t_minus) break;
+
+        if (found_w_plus && found_w_minus && found_t_plus && found_t_minus)
+            break;
     }
 
-    int w_plus_up_idx = -1;
-    int w_plus_down_idx = -1;
-    int w_minus_up_idx = -1;
-    int w_minus_down_idx = -1;
+    // If for some reason we fail to find them, exit early
+    if (!found_w_plus || !found_w_minus || !found_t_plus || !found_t_minus)
+    {
+        std::cout << "[ERROR] Did not find last copies of t/tbar/W+/W- in full-hadronic routine.\n";
+        return ttbar_jet_indices; // all -1
+    }
 
-    // find W+/- daughters
-    for(int i = AllGens.size() - 1; i >=0; i--){
+    // ------------------------------------------------------------------
+    // 2) Find final b-quarks from top and tbar, and final quark daughters of W+ and W-
+    // ------------------------------------------------------------------
+    bool found_b_from_t_plus = false;
+    bool found_b_from_t_minus = false;
 
-        if (AllGens[i].MotherIndex() == w_plus_idx && isPIDUpTypeQuark(AllGens[i].PID()) && AllGens[i].PID() > 0 && !find_w_plus_up)
+    int idx_b_from_t_plus = -1;
+    int idx_b_from_t_minus = -1;
+
+    // W+ daughters:
+    int idx_wplus_dau1 = -1;
+    int idx_wplus_dau2 = -1;
+
+    // W- daughters:
+    int idx_wminus_dau1 = -1;
+    int idx_wminus_dau2 = -1;
+
+    // Loop over Gens (backwards) to find first copies of quarks from t, tbar, W+, W-
+    for (int i = (int)AllGens.size() - 1; i >= 0; i--)
+    {
+        const auto &g = AllGens[i];
+        const int pid = g.PID();
+
+        // We only care about final stable copies of quarks, so skip if not firstCopy
+        if (!g.isFirstCopy())
+            continue;
+
+        // Also skip if not from the hard process / prompt
+        // (this helps filter out quarks from hadron decays, QED FSR, etc.)
+        if (!g.isPrompt() || !g.fromHardProcess())
+            continue;
+
+        // Identify b from top
+        if (!found_b_from_t_plus && pid == 5 && isDaughterOf(i, idx_t_plus))
         {
-            w_plus_up_idx = i;
-            find_w_plus_up = true;
+            idx_b_from_t_plus = i;
+            found_b_from_t_plus = true;
         }
-        if (AllGens[i].MotherIndex() == w_plus_idx && isPIDDownTypeQuark(AllGens[i].PID()) && AllGens[i].PID() < 0 && !find_w_plus_down)
+        // Identify b-bar from tbar
+        if (!found_b_from_t_minus && pid == -5 && isDaughterOf(i, idx_t_minus))
         {
-            w_plus_down_idx = i;
-            find_w_plus_down = true;
+            idx_b_from_t_minus = i;
+            found_b_from_t_minus = true;
         }
-        if (AllGens[i].MotherIndex() == w_minus_idx && isPIDUpTypeQuark(AllGens[i].PID()) && AllGens[i].PID() < 0 && !find_w_minus_up)
+
+        // W+ daughters
+        if (isDaughterOf(i, idx_w_plus) && (isPIDUpTypeQuark(pid) || isPIDDownTypeQuark(pid)))
         {
-            w_minus_up_idx = i;
-            find_w_minus_up = true;
+            if (idx_wplus_dau1 < 0)
+                idx_wplus_dau1 = i;
+            else if (idx_wplus_dau2 < 0)
+                idx_wplus_dau2 = i;
         }
-        if (AllGens[i].MotherIndex() == w_minus_idx && isPIDDownTypeQuark(AllGens[i].PID()) && AllGens[i].PID() > 0 && !find_w_minus_down)
+
+        // W- daughters
+        if (isDaughterOf(i, idx_w_minus) && (isPIDUpTypeQuark(pid) || isPIDDownTypeQuark(pid)))
         {
-            w_minus_down_idx = i;
-            find_w_minus_down = true;
+            if (idx_wminus_dau1 < 0)
+                idx_wminus_dau1 = i;
+            else if (idx_wminus_dau2 < 0)
+                idx_wminus_dau2 = i;
+        }
+
+        // If we've found everything, we can break early
+        if (found_b_from_t_plus && found_b_from_t_minus &&
+            idx_wplus_dau1 >= 0 && idx_wplus_dau2 >= 0 &&
+            idx_wminus_dau1 >= 0 && idx_wminus_dau2 >= 0)
+        {
+            break;
         }
     }
 
-    int b_from_t_plus_idx = -1;
-    int b_from_t_minus_idx = -1;
+    // Now check that indeed we have all b’s and all quark daughters from each W
+    bool found_all_gen = (found_b_from_t_plus && found_b_from_t_minus &&
+                          idx_wplus_dau1 >= 0 && idx_wplus_dau2 >= 0 &&
+                          idx_wminus_dau1 >= 0 && idx_wminus_dau2 >= 0);
 
-    for(int i = AllGens.size() - 1; i >=0; i--){
-
-        if(AllGens[i].MotherIndex() == t_plus_idx && AllGens[i].PID() == 5 && !find_b_from_t_plus){
-            b_from_t_plus_idx = i;
-            find_b_from_t_plus = true;
-        }
-        if(AllGens[i].MotherIndex() == t_minus_idx && AllGens[i].PID() == -5 && !find_b_from_t_minus){
-            b_from_t_minus_idx = i;
-            find_b_from_t_minus = true;
-        }
-        if(find_b_from_t_plus && find_b_from_t_minus) break;
-    }
-    //print all gen that we found
-    cout << "w plus up PID:" << AllGens[w_plus_up_idx].PID() << " w plus down PID:" << AllGens[w_plus_down_idx].PID() << " w minus up PID:" << AllGens[w_minus_up_idx].PID() << " w minus down PID:" << AllGens[w_minus_down_idx].PID() << " b from t plus PID:" << AllGens[b_from_t_plus_idx].PID() << " b from t minus PID:" << AllGens[b_from_t_minus_idx].PID() << endl; 
-
-    bool findall_gen = (w_plus_up_idx >= 0 && w_plus_down_idx >= 0 && w_minus_up_idx >= 0 && w_minus_down_idx >= 0 && b_from_t_plus_idx >= 0 && b_from_t_minus_idx >= 0);
-    if(!findall_gen) return ttbar_jet_indices;
-    tt_decay_code = 1000 * abs(AllGens[w_plus_up_idx].PID()) + 100 * abs(AllGens[w_plus_down_idx].PID()) + 10 * abs(AllGens[w_minus_up_idx].PID()) + abs(AllGens[w_minus_down_idx].PID());
-    RVec<Gen> this_gens = {AllGens[b_from_t_plus_idx], AllGens[b_from_t_minus_idx], AllGens[w_plus_up_idx], AllGens[w_plus_down_idx], AllGens[w_minus_up_idx], AllGens[w_minus_down_idx]};
-    unordered_map<int,RVec<pair<size_t, Gen>>> gen_by_PID;
-
-    for(size_t i = 0; i < this_gens.size(); i++){
-        gen_by_PID[this_gens[i].PID()].push_back({i, this_gens[i]});
+    if (!found_all_gen)
+    {
+        // For debugging, you can print out info here if desired
+        return ttbar_jet_indices; // all -1
     }
 
-    RVec<int> this_gens_PID = {this_gens[0].PID(), this_gens[1].PID(), this_gens[2].PID(), this_gens[3].PID(), this_gens[4].PID(), this_gens[5].PID()};
-    RVec<int> this_genjet_PID;
+    // For possible debugging or classification—e.g., you can build a code from the quark PIDs
+    int pid_wp1 = AllGens[idx_wplus_dau1].PID();
+    int pid_wp2 = AllGens[idx_wplus_dau2].PID();
+    int pid_wm1 = AllGens[idx_wminus_dau1].PID();
+    int pid_wm2 = AllGens[idx_wminus_dau2].PID();
+    tt_decay_code = abs(pid_wp1) * 1000 + abs(pid_wp2) * 100 + abs(pid_wm1) * 10 + abs(pid_wm2);
 
-    for(size_t i = 0; i < AllGenJets.size(); i++){
-        this_genjet_PID.push_back(AllGenJets[i].partonFlavour());
+    // (Optional) Fill a histogram for passing these Gen-level selections
+    FillHist("FindTT_FullHad_CutFlow", 0, 1.f, 10, 0., 10.);
+
+    // ------------------------------------------------------------------
+    // 3) Put these 6 quarks into a container in a known order
+    // ------------------------------------------------------------------
+    // Indices:
+    //   0 => b_t,
+    //   1 => b_tbar,
+    //   2 => W+ q1,
+    //   3 => W+ q2,
+    //   4 => W- q1,
+    //   5 => W- q2
+    RVec<Gen> relevant_gens(6);
+    relevant_gens[0] = AllGens[idx_b_from_t_plus];
+    relevant_gens[1] = AllGens[idx_b_from_t_minus];
+    relevant_gens[2] = AllGens[idx_wplus_dau1];
+    relevant_gens[3] = AllGens[idx_wplus_dau2];
+    relevant_gens[4] = AllGens[idx_wminus_dau1];
+    relevant_gens[5] = AllGens[idx_wminus_dau2];
+
+    // ------------------------------------------------------------------
+    // 4) Match these 6 Gen objects to GenJets
+    // ------------------------------------------------------------------
+    // Build a map from PID -> vector of (indexInRelevantGens, Gen object)
+    // so that each quark tries to match to GenJets of the same partonFlavour.
+    std::unordered_map<int, RVec<std::pair<size_t, Gen>>> map_pid_to_genIdxObj;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+    {
+        int pid = relevant_gens[iG].PID();
+        pid = GetSimplePID(pid, false);
+        map_pid_to_genIdxObj[pid].push_back({iG, relevant_gens[iG]});
     }
 
-    unordered_map<int, int> gen_genjet_matching_result;
+    // PartonFlavour array for all GenJets
+    RVec<int> genjet_flavours(AllGenJets.size());
+    for (size_t i = 0; i < AllGenJets.size(); i++)
+    {
+        int genJet_flavour = AllGenJets[i].partonFlavour();
+        genJet_flavour = GetSimplePID(genJet_flavour, false);
+        genjet_flavours[i] = genJet_flavour;
+    }
 
-    for(const auto &PID_group : gen_by_PID){
-        int current_PID = PID_group.first;
-        const auto &gen_idx_Gen_pair = PID_group.second;
+    // This map will store, for each final-state Gen quark, the index of the matched GenJet
+    // Start all unmatched => -999
+    std::unordered_map<size_t, int> map_genIndex_to_genJetIdx;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+        map_genIndex_to_genJetIdx[iG] = -999;
 
-        RVec<GenJet> filtered_genjets;
-        RVec<int> filtered_genjet_indices;
+    // Perform deltaR matching within each PID group
+    for (auto &kv : map_pid_to_genIdxObj)
+    {
+        int target_pid = kv.first;
+        auto &idxGenPairs = kv.second; // each element is { iG, GenObject }
 
-        for(size_t genjet_idx = 0; genjet_idx < this_genjet_PID.size(); genjet_idx++)
+        // Gather candidate GenJets that have the same partonFlavour as target_pid
+        RVec<GenJet> candidateGenJets;
+        RVec<int> candidateGJIndices;
+        for (size_t j = 0; j < AllGenJets.size(); j++)
         {
-            if (this_genjet_PID[genjet_idx] == current_PID)
+            if (genjet_flavours[j] == target_pid)
             {
-                filtered_genjets.push_back(AllGenJets[genjet_idx]);
-                filtered_genjet_indices.push_back(genjet_idx);
+                candidateGenJets.push_back(AllGenJets[j]);
+                candidateGJIndices.push_back(j);
             }
         }
-        //if no genjets that matches to this PID found, this PID group is failed to match
-        if(filtered_genjets.size() == 0){
-            for(const auto &gen_idx_Gen_pair : gen_idx_Gen_pair){
-                gen_genjet_matching_result[gen_idx_Gen_pair.first] = -999;
-            }
-        }
-        //do deltaRMatching if we have matching genjets
-        else{
-            RVec<Gen> current_gen;
-            RVec<int> current_gen_indices;
-            for(const auto &gen_idx_Gen_pair : gen_idx_Gen_pair){
-                current_gen.push_back(gen_idx_Gen_pair.second);
-                current_gen_indices.push_back(gen_idx_Gen_pair.first);
-            }
-            unordered_map<int, int> temp_match = deltaRMatching(current_gen, filtered_genjets, 0.5);
-            for(const auto &temp_match_pair : temp_match){
-                if(temp_match_pair.second >= 0){
-                    gen_genjet_matching_result[current_gen_indices[temp_match_pair.first]] = filtered_genjet_indices[temp_match_pair.second];
-                }
-                else{
-                    gen_genjet_matching_result[current_gen_indices[temp_match_pair.first]] = -999;
-                }
-            }
-        }
-    }
 
-    //we get gen-genjet matching. now do genjet-jet matching
-    RVec<GenJet> gen_matched_genjet;
-    RVec<size_t> gen_matched_genjet_indices;
-    for(size_t i = 0; i < gen_genjet_matching_result.size(); i++){
-        if (gen_genjet_matching_result[i] >= 0)
+        // If no GenJet found for this PID, mark as unmatched
+        if (candidateGenJets.empty())
         {
-            gen_matched_genjet.push_back(AllGenJets[gen_genjet_matching_result[i]]);
-            gen_matched_genjet_indices.push_back(i);
+            for (auto &p : idxGenPairs)
+                map_genIndex_to_genJetIdx.at(p.first) = -1;
+            continue;
+        }
+
+        // Prepare only the Gen objects that share that PID
+        RVec<Gen> these_gens;
+        these_gens.reserve(idxGenPairs.size());
+        for (auto &p : idxGenPairs)
+            these_gens.push_back(p.second);
+
+
+        // Perform deltaR matching
+        auto result_map = deltaRMatching(these_gens, candidateGenJets, 0.4);
+
+        // Store the results
+        // result_map[iGenInGroup] -> iJetInCandidate (or -1 if none matched)
+        for (auto &matchPair : result_map)
+        {
+            size_t iGenInGroup = matchPair.first;
+            int iGJetInGroup = matchPair.second;
+            size_t relevantGIndex = idxGenPairs[iGenInGroup].first;
+
+            if (iGJetInGroup >= 0)
+                map_genIndex_to_genJetIdx.at(relevantGIndex) = candidateGJIndices[iGJetInGroup];
+            else
+                map_genIndex_to_genJetIdx.at(relevantGIndex) = -1;
         }
     }
-    unordered_map<int, int> jet_genjet_matching_results = GenJetMatching(Jets, gen_matched_genjet, ev.GetRho());
-    unordered_map<int, int> matching_result;
 
-    //now store parton-jet matching result
-    for(const auto jet_genjet_matching_result : jet_genjet_matching_results){
-        if(jet_genjet_matching_result.second >= 0){
-            matching_result[gen_matched_genjet_indices[jet_genjet_matching_result.second]] = jet_genjet_matching_result.first;
+    // Check how many are matched
+    bool matched_all_genJets = true;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+    {
+        if (map_genIndex_to_genJetIdx[iG] < 0)
+        {
+            matched_all_genJets = false;
+            break;
         }
-        else{
-            matching_result[gen_matched_genjet_indices[jet_genjet_matching_result.second]] = -999;
+    }
+    if (matched_all_genJets)
+        FillHist("FindTT_FullHad_CutFlow", 1, 1.f, 10, 0., 10.);
+
+    // ------------------------------------------------------------------
+    // 5) Match the GenJets to Reco Jets
+    // ------------------------------------------------------------------
+    // Build a subset of GenJets that *were* matched
+    RVec<GenJet> matchedGenJets;
+    RVec<size_t> matchedGenIndices; // which of the 6 quarks did it come from
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+    {
+        int gjIdx = map_genIndex_to_genJetIdx[iG];
+        if (gjIdx >= 0)
+        {
+            matchedGenJets.push_back(AllGenJets[gjIdx]);
+            matchedGenIndices.push_back(iG);
         }
     }
 
-    for(size_t i = 0; i < 6; i++){
-        if(matching_result.find(i) == matching_result.end()){
-            matching_result[i] = -999;
-        }
+    // Perform the GenJet -> RecoJet matching
+    // e.g.  GenJetMatching(yourRecoJets, matchedGenJets, evt.GetRho(), dR=0.4, pTdiff=INFINITY)
+    auto recoMatchMap = GenJetMatching(Jets, matchedGenJets, ev.GetRho(), 0.4, INFINITY);
+
+    // Invert that map so we can see for the i-th GenJet in matchedGenJets which RecoJet was matched
+    std::unordered_map<int, int> map_genJetIdx_inSubset_to_recoJetIdx;
+    for (auto &kv : recoMatchMap)
+    {
+        int iRecoJet = kv.first;
+        int iGenJetSubidx = kv.second; // index in matchedGenJets
+        if (iGenJetSubidx >= 0)
+            map_genJetIdx_inSubset_to_recoJetIdx[iGenJetSubidx] = iRecoJet;
     }
 
-    ttbar_jet_indices = {matching_result[0], matching_result[1], matching_result[2], matching_result[3], matching_result[4], matching_result[5]};
-    for(size_t i = 0; i < ttbar_jet_indices.size(); i++){
-        if(ttbar_jet_indices[i] == -999){
+    // Fill the final 6-element array in the order:
+    //   { b_t, b_tbar, W+q1, W+q2, W-q1, W-q2 }
+    for (const auto &kv : map_genJetIdx_inSubset_to_recoJetIdx)
+    {
+        int iGenJetSub = kv.first;
+        int iRecoJet = kv.second;
+        int whichQuark = matchedGenIndices[iGenJetSub];
+        ttbar_jet_indices[whichQuark] = iRecoJet;
+    }
+
+    // Check if all 6 are matched
+    find_all_jets = true;
+    for (auto idx : ttbar_jet_indices)
+    {
+        if (idx < 0)
+        {
             find_all_jets = false;
             break;
         }
-        else{
-            find_all_jets = true;
-        }
     }
-    if(matching_result[0] >= 0 && matching_result[1] >= 0){
-        //sort top system as pt order
-        if(Jets[matching_result[0]].Pt() < Jets[matching_result[1]].Pt()){
-            swap(ttbar_jet_indices[0], ttbar_jet_indices[1]);
-            swap(ttbar_jet_indices[2], ttbar_jet_indices[4]);
-            swap(ttbar_jet_indices[3], ttbar_jet_indices[5]);
-        }
+
+    if (find_all_jets)
+        FillHist("FindTT_FullHad_CutFlow", 2, 1.f, 10, 0., 10.);
+
+    // ------------------------------------------------------------------
+    // 6) (Optional) Fill some Gen-level/Reco-level histograms
+    // ------------------------------------------------------------------
+    if (find_all_jets)
+    {
+        // Reconstruct top from (b_t + W+ quarks)
+        Particle Wplus_gen = AllGens[idx_wplus_dau1] + AllGens[idx_wplus_dau2];
+        Particle TopPlus_gen = Wplus_gen + AllGens[idx_b_from_t_plus];
+
+        // Reconstruct tbar from (b_tbar + W- quarks)
+        Particle Wminus_gen = AllGens[idx_wminus_dau1] + AllGens[idx_wminus_dau2];
+        Particle TopMinus_gen = Wminus_gen + AllGens[idx_b_from_t_minus];
+
+        // Similarly, you can reconstruct from Reco-level Jets:
+        Particle Wplus_reco = Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
+        Particle TopPlus_reco = Wplus_reco + Jets[ttbar_jet_indices[0]];
+
+        Particle Wminus_reco = Jets[ttbar_jet_indices[4]] + Jets[ttbar_jet_indices[5]];
+        Particle TopMinus_reco = Wminus_reco + Jets[ttbar_jet_indices[1]];
+
+        // Example histograms
+        FillHist("genLevel_TopPlusMass", TopPlus_gen.M(), 1.f, 100, 100., 300.);
+        FillHist("genLevel_TopMinusMass", TopMinus_gen.M(), 1.f, 100, 100., 300.);
+        FillHist("genLevel_WplusMass", Wplus_gen.M(), 1.f, 100, 50., 110.);
+        FillHist("genLevel_WminusMass", Wminus_gen.M(), 1.f, 100, 50., 110.);
+
+        FillHist("recoLevel_TopPlusMass", TopPlus_reco.M(), 1.f, 100, 100., 300.);
+        FillHist("recoLevel_TopMinusMass", TopMinus_reco.M(), 1.f, 100, 100., 300.);
+        FillHist("recoLevel_WplusMass", Wplus_reco.M(), 1.f, 100, 50., 110.);
+        FillHist("recoLevel_WminusMass", Wminus_reco.M(), 1.f, 100, 50., 110.);
     }
+
     return ttbar_jet_indices;
 }
 
-void Vcb_FH::GetKineMaticFitterResult(const RVec<Jet> &jets){
+void Vcb_FH::GetKineMaticFitterResult(const RVec<Jet> &jets)
+{
     RVec<RVec<unsigned int>> possible_permutations = GetPermutations(jets);
     best_KF_result.chi2 = 9999.;
-    for(const auto &permutation: possible_permutations){
+    for (const auto &permutation : possible_permutations)
+    {
         auto result = FitKinFitter(jets, permutation);
         int status = std::get<0>(result);
         float chi2 = std::get<1>(result);
         RVec<unsigned int> this_permutation = std::get<2>(result);
         RVec<TLorentzVector> fitted_result = std::get<3>(result);
-        if(chi2 < best_KF_result.chi2 && status == 0){
+        if (chi2 < best_KF_result.chi2 && status == 0)
+        {
             best_KF_result.status = status;
             best_KF_result.chi2 = chi2;
             best_KF_result.best_b1_idx = this_permutation[0];
@@ -628,8 +812,6 @@ tuple<int, float, RVec<unsigned int>, RVec<TLorentzVector>> Vcb_FH::FitKinFitter
         this_JERs.push_back(this_Cov);
     }
 
-    
-
     // Initialize the TFitParticlePt objects with smart pointers
     auto b1 = std::make_unique<TFitParticlePt>("b1", "b1", &(this_pts[permutation[0]]), &(this_JERs[permutation[0]]));
     auto b2 = std::make_unique<TFitParticlePt>("b2", "b2", &(this_pts[permutation[1]]), &(this_JERs[permutation[1]]));
@@ -639,12 +821,12 @@ tuple<int, float, RVec<unsigned int>, RVec<TLorentzVector>> Vcb_FH::FitKinFitter
     auto w22 = std::make_unique<TFitParticlePt>("w22", "w22", &(this_pts[permutation[5]]), &(this_JERs[permutation[5]]));
 
     // Mass and energy-momentum constraints
-    //auto mW1 = std::make_unique<TFitConstraintMGaus>("MW1", "MW1", nullptr, nullptr, W_MASS, W_WIDTH);
+    // auto mW1 = std::make_unique<TFitConstraintMGaus>("MW1", "MW1", nullptr, nullptr, W_MASS, W_WIDTH);
     auto mW1 = std::make_unique<TFitConstraintM>("MW1", "MW1", nullptr, nullptr, W_MASS);
     mW1->addParticle1(w11.get());
     mW1->addParticle1(w12.get());
 
-    //auto mW2 = std::make_unique<TFitConstraintMGaus>("MW2", "MW2", nullptr, nullptr, W_MASS, W_WIDTH);
+    // auto mW2 = std::make_unique<TFitConstraintMGaus>("MW2", "MW2", nullptr, nullptr, W_MASS, W_WIDTH);
     auto mW2 = std::make_unique<TFitConstraintM>("MW2", "MW2", nullptr, nullptr, W_MASS);
     mW2->addParticle1(w21.get());
     mW2->addParticle1(w22.get());
@@ -667,9 +849,11 @@ tuple<int, float, RVec<unsigned int>, RVec<TLorentzVector>> Vcb_FH::FitKinFitter
     fitter->addMeasParticle(w21.get());
     fitter->addMeasParticle(w22.get());
 
-    //extra jets
-    for(size_t i = 0; i < jets.size(); i++){
-        if(std::find(permutation.begin(), permutation.end(), i) == permutation.end()){
+    // extra jets
+    for (size_t i = 0; i < jets.size(); i++)
+    {
+        if (std::find(permutation.begin(), permutation.end(), i) == permutation.end())
+        {
             auto extra_jet = std::make_unique<TFitParticlePt>("extra_jet_" + std::to_string(i), "extra_jet_" + std::to_string(i), &(this_pts[i]), &(this_JERs[i]));
             fitter->addMeasParticle(extra_jet.get());
         }
@@ -695,5 +879,228 @@ tuple<int, float, RVec<unsigned int>, RVec<TLorentzVector>> Vcb_FH::FitKinFitter
         TLorentzVector(*w22->getCurr4Vec())};
 
     // Return the result as a tuple
-    return std::make_tuple(status, chi2,permutation, fitted_result);
+    return std::make_tuple(status, chi2, permutation, fitted_result);
+}
+
+void Vcb_FH::InferONNX()
+{
+    // Prepare input tensor
+    std::vector<uint8_t> MASK;
+    std::vector<float> pt;
+    std::vector<float> eta;
+    std::vector<float> sin_phi;
+    std::vector<float> cos_phi;
+    std::vector<float> m;
+    std::vector<float> btag;
+    std::vector<float> Momenta_data;
+    std::vector<uint8_t> Momenta_mask;
+
+    int max_jet = 10;
+    for (size_t i = 0; i < max_jet; i++)
+    {
+        if (i < Jets.size())
+            MASK.push_back(1);
+        else
+            MASK.push_back(0);
+
+        if (i < Jets.size())
+        {
+            pt.push_back(Jets[i].Pt());
+            eta.push_back(Jets[i].Eta());
+            sin_phi.push_back(static_cast<float>(TMath::Sin(Jets[i].Phi())));
+            cos_phi.push_back(static_cast<float>(TMath::Cos(Jets[i].Phi())));
+            m.push_back(Jets[i].M());
+            btag.push_back(Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]));
+        }
+        else
+        {
+            pt.push_back(0.);
+            eta.push_back(0.);
+            sin_phi.push_back(0.);
+            cos_phi.push_back(0.);
+            m.push_back(0.);
+            btag.push_back(0.);
+        }
+    }
+
+    std::unordered_map<std::string, std::vector<int>> input_shape;
+    input_shape["Momenta_data"] = {1, 10, 6};
+    input_shape["Momenta_mask"] = {1, 10};
+
+    // row-major order
+    for (size_t i = 0; i < pt.size(); i++)
+    {
+        Momenta_data.push_back(pt[i]);
+        Momenta_data.push_back(eta[i]);
+        Momenta_data.push_back(sin_phi[i]);
+        Momenta_data.push_back(cos_phi[i]);
+        Momenta_data.push_back(m[i]);
+        Momenta_data.push_back(btag[i]);
+        Momenta_mask.push_back(MASK[i]);
+    }
+
+    std::unordered_map<std::string, VariousArray> input_data;
+    input_data["Momenta_data"] = Momenta_data;
+    input_data["Momenta_mask"] = Momenta_mask;
+
+    std::unordered_map<std::string, FloatArray> output_data = myMLHelper->Run_ONNX_Model(input_data, input_shape);
+
+
+    for(size_t i = 0; i < class_score.size(); i++)
+    {
+        
+        class_score[i] = (std::exp((output_data.at("EVENT/signal").at(i))));
+    }
+
+    // find the assignment from output_data["t_assignment_log_probability"], output_data["ht_assignment_log_probability"]
+    int t1b_assignment = -1;
+    int t2b_assignment = -1;
+    int t1q1_assignment = -1;
+    int t1q2_assignment = -1;
+    int t2q1_assignment = -1;
+    int t2q2_assignment = -1;
+
+    std::vector<int> t1_assignment_shape = {1, 10, 10, 10};
+    std::vector<int> t2_assignment_shape = {1, 10, 10, 10};
+
+    //first find the most lt probable assignment
+
+    size_t max_idx = FindNthMaxIndex(output_data["t1_assignment_log_probability"], 0);
+    std::vector<int> current_t1_assignment = UnravelIndex(max_idx, t1_assignment_shape);
+
+    t1b_assignment = current_t1_assignment[1];
+    t1q1_assignment = current_t1_assignment[2];
+    t1q2_assignment = current_t1_assignment[3];
+
+    bool checkUnique = false;
+    int num_total_t2_assignments = output_data["t2_assignment_log_probability"].size();
+
+    for (size_t i = 0; i < num_total_t2_assignments; i++)
+    {
+        size_t current_max_idx = FindNthMaxIndex(output_data["t2_assignment_log_probability"], i);
+        std::vector<int> current_t2_assignment = UnravelIndex(current_max_idx, t2_assignment_shape);
+        
+        t2b_assignment = current_t2_assignment[1];
+        t2q1_assignment = current_t2_assignment[2];
+        t2q2_assignment = current_t2_assignment[3];
+
+        std::set<int> unique_assignment = {t1b_assignment, t1q1_assignment, t1q2_assignment, t2b_assignment, t2q1_assignment, t2q2_assignment};
+        if (unique_assignment.size() == 6)
+        {
+            checkUnique = true;
+        }
+    
+        if (checkUnique)
+        {
+            break;
+        }
+    }
+
+    Particle w1 = Jets[t1q1_assignment] + Jets[t1q2_assignment];
+    Particle w2 = Jets[t2q1_assignment] + Jets[t2q2_assignment];
+    Particle t1 = Jets[t1b_assignment] + w1;
+    Particle t2 = Jets[t2b_assignment] + w2;
+
+    assignment[0] = t1b_assignment;
+    assignment[1] = t2b_assignment;
+    assignment[2] = t1q1_assignment;
+    assignment[3] = t1q2_assignment;
+    assignment[4] = t2q1_assignment;
+    assignment[5] = t2q2_assignment;
+
+
+    // find which class has the highest score in class_score(find index)
+    std::array<float, 3> class_score_temp = {class_score[0], class_score[1], class_score[2]};
+    int max_class;
+    if(class_score_temp[2] > 0.007) max_class = 2;
+    else{
+        if(class_score_temp[0] > 0.8) max_class = 0;
+        else max_class = 1;
+    }
+    
+    switch (max_class){
+        case 0:
+            class_label  = classCategory::Signal;
+            break;
+        case 1:
+            class_label = classCategory::tt;
+            break;
+        case 2:
+            class_label = classCategory::Disposal;
+            break;
+        default:
+            break;
+    }
+}
+
+void Vcb_FH::FillONNXRecoInfo(const TString &histPrefix, float weight)
+{
+    ttbar_jet_indices = FindTTbarJetIndices();
+    // if (find_all_jets)
+    // {
+    //     FillHist(histPrefix + "/" + "CorrectAssignment_Tot", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+    //     bool isCorrect = true;
+    //     //check if the assignment is correct. w1 and w2 can be swapped
+    //     //if (assignment[0] != ttbar_jet_indices[0]) isCorrect = false;
+    //     //if (assignment[1] != ttbar_jet_indices[1]) isCorrect = false;
+    //     if ((assignment[2] != ttbar_jet_indices[2] || assignment[3] != ttbar_jet_indices[3]) && (assignment[2] != ttbar_jet_indices[3] || assignment[3] != ttbar_jet_indices[2])) isCorrect = false;
+    //     if (isCorrect) FillHist(histPrefix + "/" + "CorrectAssignment", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+    //     else FillHist(histPrefix + "/" + "WrongAssignment", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+    // }
+    if(Jets[assignment[2]].GetBTaggerResult(FlavTagger[DataEra.Data()]) > Jets[assignment[3]].GetBTaggerResult(FlavTagger[DataEra.Data()]))
+    {
+        //swap the assignment
+        int temp = assignment[2];
+        assignment[2] = assignment[3];
+        assignment[3] = temp;
+    }
+    if(Jets[assignment[4]].GetBTaggerResult(FlavTagger[DataEra.Data()]) > Jets[assignment[5]].GetBTaggerResult(FlavTagger[DataEra.Data()]))
+    {
+        //swap the assignment
+        int temp = assignment[4];
+        assignment[4] = assignment[5];
+        assignment[5] = temp;
+    }
+    if(Jets[assignment[3]].GetBTaggerResult(FlavTagger[DataEra.Data()]) > Jets[assignment[5]].GetBTaggerResult(FlavTagger[DataEra.Data()]))
+    {
+        //swap the assignment
+        std::swap(assignment[3], assignment[5]);
+        std::swap(assignment[2], assignment[4]);
+        std::swap(assignment[0], assignment[1]);
+    }
+    Particle w1 = Jets[assignment[2]] + Jets[assignment[3]];
+    Particle w2 = Jets[assignment[4]] + Jets[assignment[5]];
+    Particle t1 = Jets[assignment[0]] + w1;
+    Particle t2 = Jets[assignment[1]] + w2;
+    float W11_BvsC = Jets[assignment[2]].GetBTaggerResult(FlavTagger[DataEra.Data()]);
+    float W12_BvsC = Jets[assignment[3]].GetBTaggerResult(FlavTagger[DataEra.Data()]);
+    float W21_BvsC = Jets[assignment[4]].GetBTaggerResult(FlavTagger[DataEra.Data()]);
+    float W22_BvsC = Jets[assignment[5]].GetBTaggerResult(FlavTagger[DataEra.Data()]);
+
+    FillHist(histPrefix + "/" + "Reco_HadWMass1", w1.M(), weight, 100, 30., 130.);
+    FillHist(histPrefix + "/" + "Reco_HadTopMass1", t1.M(), weight, 100, 100., 300.);
+    FillHist(histPrefix + "/" + "Reco_HadWMass2", w2.M(), weight, 100, 30., 130.);
+    FillHist(histPrefix + "/" + "Reco_HadTopMass2", t2.M(), weight, 100, 100., 300.);
+    FillHist(histPrefix + "/" + "Reco_W11JetPt", Jets[assignment[2]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_W12JetPt", Jets[assignment[3]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_W21JetPt", Jets[assignment[4]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_W22JetPt", Jets[assignment[5]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_W11BvsC", W11_BvsC, weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_W12BvsC", W12_BvsC, weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_W21BvsC", W21_BvsC, weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_W22BvsC", W22_BvsC, weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_t1bJetPt", Jets[assignment[0]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_t2bJetPt", Jets[assignment[1]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_t1bBvsC", Jets[assignment[0]].GetBTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_t2bBvsC", Jets[assignment[1]].GetBTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
+
+    FillHist(histPrefix + "/" + "Reco_BvsCAdded" , W21_BvsC + W22_BvsC, weight, 100, 0., 2.);
+    int unrolledIdx = Unroller(Jets[assignment[4]], Jets[assignment[5]]);
+    FillHist(histPrefix + "/" + "Reco_W1Bvsc_W2Bvsc_Unrolled", unrolledIdx, weight, 16, 0., 16.);
+    std::vector<float> class_score_bin = {0.,0.5,0.6,0.7,0.8,0.85,0.9,0.95};
+    FillHist(histPrefix + "/" + "Class_Category", static_cast<float>(class_label), weight, 3, 0., 3.);
+    FillHist(histPrefix + "/" + "Class_Score0", static_cast<float>(class_score[0]), weight, class_score_bin.size() - 1 , class_score_bin.data());
+    FillHist(histPrefix + "/" + "Class_Score1", static_cast<float>(class_score[1]), weight, class_score_bin.size() - 1 , class_score_bin.data());
+    FillHist(histPrefix + "/" + "Class_Score2", static_cast<float>(class_score[2]), weight, class_score_bin.size() - 1 , class_score_bin.data());
+
 }

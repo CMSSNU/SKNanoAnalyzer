@@ -73,6 +73,7 @@ bool Vcb_DL::PassBaseLineSelection(bool remove_flavtagging_cut)
     Electrons_Veto = SelectElectrons(AllElectrons, Electron_Veto_ID, Electron_Veto_Pt, Electron_Veto_Eta);
     Electrons = SelectElectrons(AllElectrons, Electron_Tight_ID, Electron_Tight_Pt[DataEra.Data()], Electron_Tight_Eta);
     Jets = JetsVetoLeptonInside(Jets, Electrons_Veto, Muons_Veto, Jet_Veto_DR);
+    Jets = SelectJets(Jets, Jet_PUID, DL_Jet_Pt_cut, Jet_Eta_cut);
 
     HT = GetHT(Jets);
     n_jets = Jets.size();

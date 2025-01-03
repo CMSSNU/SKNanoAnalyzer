@@ -49,7 +49,7 @@ set(PCM "libMLHelper_rdict.pcm")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
 install(FILES include/MLHelper.h DESTINATION include/AnalyzerTools)
 # Prepare headers for ROOT dictionary
-file(GLOB HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/*.h)
+file(GLOB HEADERS include/*.h)
 list(FILTER DICTIONARY_HEADERS EXCLUDE REGEX "MLHelper.h")
 
 # Attempt to resolve header conflicts more elegantly
@@ -60,7 +60,7 @@ set(DICTIONARY_HEADERS ${HEADERS})
 
 
 # Prepare source files
-file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cc)
+file(GLOB SOURCES src/*.cc)
 list(FILTER SOURCES EXCLUDE REGEX "MLHelper.cc")
 
 # Main library target

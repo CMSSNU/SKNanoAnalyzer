@@ -248,7 +248,7 @@ if __name__ == '__main__':
     parser.add_argument('--skimTreeOrigPD', dest='skimTreeOrigPD',default='',help='Original PD of the skim tree')
     parser.add_argument('--era',dest='era',default='',help='Era of the sample')
     args = parser.parse_args()
-    run3eras = ['2022','2022EE']
+    run3eras = ['2022','2022EE', '2023', '2023BPix']
     run2eras = ['2016preVFP','2016postVFP','2017','2018']
     eras = run3eras + run2eras
     if args.era == '':

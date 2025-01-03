@@ -10,7 +10,6 @@
 #pragma link C++ class Correction+;
 #pragma link C++ class AnalyzerParameter+;
 #pragma link C++ class ExampleParameter+;
-#pragma link C++ class PhysicalParameter+;
 #pragma link C++ class SystematicHelper+;
 
 #endif

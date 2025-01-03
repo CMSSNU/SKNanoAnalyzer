@@ -40,10 +40,16 @@ public:
     void FillTrainingTree() override;
     RVec<RVec<unsigned int>> GetPermutations(const RVec<Jet> &jets) override;
     void CreateTrainingTree() override;
+    void virtual InferONNX() override;
+    void virtual FillONNXRecoInfo(const TString &histPrefix, float weight) override;
     inline std::string GetRegionString() override
     {
-        return "FH";
+        if(class_label == classCategory::Signal) return "SR_FH";
+        else if(class_label == classCategory::tt) return "tt_FH";
+        else if(class_label == classCategory::Disposal) return "Disposal_FH";
+        else throw std::runtime_error("Invalid class label");
     }
+
     
     Vcb_FH();
     ~Vcb_FH() override = default;
@@ -73,6 +79,18 @@ public:
     std::vector<float> deltaR;
     std::vector<float> invM;
     std::vector<float> cosTheta;
+
+    //infering ONNX
+    enum class classCategory
+    {
+        Signal,
+        tt,
+        Disposal,
+    };
+
+    std::array<int,6> assignment;
+    std::array<float, 3> class_score;
+    classCategory class_label;
 };
 
 #endif

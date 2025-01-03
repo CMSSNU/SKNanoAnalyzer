@@ -1,147 +1,110 @@
 systematics:
   - syst: Central
-    variation_target: Central
     source: "total"
 
   - syst: Jet_En
-    variation_target: Jet_En
     source: "total"
     evtLoopAgain: true
 
   - syst: Jet_Res
-    variation_target: Jet_Res
     source: "total"
     evtLoopAgain: true
 
   - syst: UE
-    variation_target: UE
     source: "total"
     evtLoopAgain: true
 
   - syst: Mu_En
-    variation_target: Mu_En
     source: "total"
     evtLoopAgain: true
 
   - syst: Mu_Res
-    variation_target: Mu_Res
     source: "total"
     evtLoopAgain: true
 
   - syst: Mu_ID
-    variation_target: Mu_ID
 
   - syst: Mu_Iso
-    variation_target: Mu_Iso
 
   - syst: Mu_Trig
-    variation_target: Mu_Trig
 
   - syst: El_En
-    variation_target: El_En
     evtLoopAgain: true
 
   - syst: El_Res
-    variation_target: El_Res
     evtLoopAgain: true
 
   - syst: El_ID
-    variation_target: El_ID
 
   - syst: El_Reco
-    variation_target: El_Reco
 
   - syst: El_Trig
-    variation_target: El_Trig
 
   - syst: Pileup
-    variation_target: Pileup
 
   - syst: Prefire
-    variation_target: Prefire
 
   - syst: MuF
-    variation_target: Scale
 
   - syst: MuR
-    variation_target: Scale
 
   - syst: FSR
-    variation_target: FSR
 
   - syst: ISR
-    variation_target: ISR
 
   - syst: Top_Pt_Reweight
-    variation_target: Top_Pt_Reweight
     oneSided: true
 
   - syst: C_Tag_Extrap
-    variation_target: CTag
     source: "Extrap"
 
   - syst: C_Tag_Interp
-    variation_target: CTag
     source: "Interp"
 
   - syst: C_Tag_LHE_Scale_MuF
-    variation_target: CTag
     source: "LHEScaleWeight_muF"
 
   - syst: C_Tag_LHE_Scale_MuR
-    variation_target: CTag
     source: "LHEScaleWeight_muR"
 
   - syst: C_Tag_PS_FSR_Fixed
-    variation_target: CTag
     source: "PSWeightFSR"
 
   - syst: C_Tag_PS_ISR
-    variation_target: CTag
     source: "PSWeightISR"
 
   - syst: C_Tag_PU
-    variation_target: CTag
     source: "PUWeight"
 
   - syst: C_Tag_Stat
-    variation_target: CTag
     source: "Stat"
 
   - syst: C_Tag_XSec_Br_Unc_DYJets_B
-    variation_target: CTag
     source: "XSec_BRUnc_DYJets_b"
 
   - syst: C_Tag_XSec_Br_Unc_DYJets_C
-    variation_target: CTag
     source: "XSec_BRUnc_DYJets_c"
 
   - syst: C_Tag_XSec_Br_Unc_WJets_C
-    variation_target: CTag
     source: "XSec_BRUnc_WJets_c"
 
   - syst: C_Tag_JER
-    variation_target: CTag
     source: "jer"
 
   - syst: C_Tag_JES
-    variation_target: CTag
     source: "jesTotal"
 
   - syst: CP5
-    variation_target: Central
     hasDedicatedSample: true
     dedicatedSampleKey_up: "CP5Up"
     dedicatedSampleKey_down: "CP5Down"
 
   - syst: hdamp
-    variation_target: Central
     hasDedicatedSample: true
     dedicatedSampleKey_up: "hDampUP"
     dedicatedSampleKey_down: "hDampDOWN"
 
   - syst: mtop
-    variation_target: Central
     hasDedicatedSample: true
     dedicatedSampleKey_up: "mtop171p5"
     dedicatedSampleKey_down: "mtop173p5"

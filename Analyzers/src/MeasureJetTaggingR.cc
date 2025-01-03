@@ -275,6 +275,8 @@ void MeasureJetTaggingR::executeEventFromParameter()
                                 FillHist(JetTagging::GetTaggerCorrectionLibStr(Taggers[i_tagger]) + "/LeadingJet_CTaggingScore_CvsL_" + this_syst, vec_sel_jet[0].GetCTaggerResult(Taggers[i_tagger]).second, weight, 100, 0.f, 1.f);
                                 
                             }
+                            FillHist("n_medium_btagged_jets_" + this_syst, n_medium_btagged_jets, weight, 10, 0, 10);
+                            FillHist("n_medium_ctagged_jets_" + this_syst, n_medium_ctagged_jets, weight, 10, 0, 10);
                         }
                     }
                 }

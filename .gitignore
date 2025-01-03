@@ -7,3 +7,10 @@ external/lhapdf/*
 config/config.*
 **/Skim*.json
 external/** 
+*.onnx
+!external/KinematicFitter
+
+#Temporary Added to my personal temp files
+DataCOPY/** 
+MCCOPY/**
+.vscode/**

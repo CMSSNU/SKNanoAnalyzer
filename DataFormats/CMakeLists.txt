@@ -1,5 +1,5 @@
 # Define the library with source files and the generated dictionary
-file(GLOB RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} SOURCES src/*.cc)
+file(GLOB SOURCES src/*.cc)
 add_library(DataFormats SHARED
     ${SOURCES}
     #${CMAKE_CURRENT_BINARY_DIR}/G__DataFormats.cxx
@@ -17,7 +17,7 @@ target_include_directories(DataFormats PRIVATE
 )
 
 # Generate the ROOT dictionary before defining the library
-file(GLOB HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/*.h)
+file(GLOB HEADERS include/*.h)
 #install(FILES ${HEADERS} DESTINATION include/DataFormats)
 
 ROOT_GENERATE_DICTIONARY(G__DataFormats

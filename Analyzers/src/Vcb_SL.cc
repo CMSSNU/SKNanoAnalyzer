@@ -195,6 +195,7 @@ bool Vcb_SL::PassBaseLineSelection(bool remove_flavtagging_cut)
     Electrons_Veto = SelectElectrons(AllElectrons, Electron_Veto_ID, Electron_Veto_Pt, Electron_Veto_Eta);
     Electrons = SelectElectrons(Electrons_Veto, Electron_Tight_ID, Electron_Tight_Pt[DataEra.Data()], Electron_Tight_Eta);
     Jets = JetsVetoLeptonInside(Jets, Electrons_Veto, Muons_Veto, Jet_Veto_DR);
+    Jets = SelectJets(Jets, Jet_PUID, SL_Jet_Pt_cut, Jet_Eta_cut);
 
     HT = GetHT(Jets);
     n_jets = Jets.size();
@@ -237,7 +238,6 @@ bool Vcb_SL::PassBaseLineSelection(bool remove_flavtagging_cut)
     FillCutFlow(6);
     SetTTbarId();
     SetSystematicLambda();
-    RVec<int> ttbar_jet_indices = FindTTbarJetIndices();
     return true;
 }
 
@@ -500,343 +500,411 @@ void Vcb_SL::FillTrainingTree()
 
 RVec<int> Vcb_SL::FindTTbarJetIndices()
 {
+    // Return structure:
+    //   { idx_bHad, idx_bLep, idx_Wq1, idx_Wq2 },
+    // where each entry is the matched Reco Jet index (or -999 if not found).
     RVec<int> ttbar_jet_indices = {-1, -1, -1, -1};
-    int w_plus_idx = -1;
-    int w_minus_idx = -1;
-    int t_plus_idx = -1;
-    int t_minus_idx = -1;
-    bool find_w_plus = false;
-    bool find_w_minus = false;
-    bool find_t_plus = false;
-    bool find_t_minus = false;
-    bool find_w_plus_up = false;
-    bool find_w_plus_down = false;
-    bool find_w_minus_up = false;
-    bool find_w_minus_down = false;
-    bool find_b_from_t_plus = false;
-    bool find_b_from_t_minus = false;
 
+    // For debugging or classification
     tt_decay_code = -9999;
     find_all_jets = false;
-    // find last t+/- and W+/- in gens
-    for (int i = AllGens.size() - 1; i >= 0; i--)
-    {
-        if (AllGens[i].PID() == 24 && !find_w_plus)
-        {
-            w_plus_idx = i;
-            find_w_plus = true;
-        }
-        if (AllGens[i].PID() == -24 && !find_w_minus)
-        {
-            w_minus_idx = i;
-            find_w_minus = true;
-        }
-        if (AllGens[i].PID() == 6 && !find_t_plus)
-        {
-            t_plus_idx = i;
-            find_t_plus = true;
-        }
-        if (AllGens[i].PID() == -6 && !find_t_minus)
-        {
-            t_minus_idx = i;
-            find_t_minus = true;
-        }
-        if (find_w_plus && find_w_minus && find_t_plus && find_t_minus)
-            break;
-    }
 
-    int b_from_t_plus_idx = -1;
-    int b_from_t_minus_idx = -1;
-    int w_plus_up_idx = -1;
-    int w_plus_down_idx = -1;
-    int w_minus_up_idx = -1; // if leptonic decay, up is lepton
-    int w_minus_down_idx = -1;
+    // ------------------------------------------------------------------
+    // 1) Find last copies of t, tbar, W+, W- in the Gen collection
+    // ------------------------------------------------------------------
+    int idx_t_plus = -1;
+    int idx_t_minus = -1;
+    int idx_w_plus = -1;
+    int idx_w_minus = -1;
+    bool found_t_plus = false;
+    bool found_t_minus = false;
+    bool found_w_plus = false;
+    bool found_w_minus = false;
 
-    // Loop through AllGens to find last-copy W decay products
+    // Traverse from end so the first time we see them is the "last copy".
     for (int i = (int)AllGens.size() - 1; i >= 0; i--)
     {
-        const auto &gen = AllGens[i];
-        int pid = gen.PID();
-
-        // We only want last-copy particles
-        if (!gen.isFirstCopy())
-            continue;
-
-        // Handle W+ decays
-        if (!find_w_plus_up &&
-            ((isPIDUpTypeQuark(pid) && pid > 0) || (isPIDLepton(pid) && pid < 0 && gen.isPrompt())) &&
-            isDaughterOf(i, w_plus_idx))
+        const int pid = AllGens[i].PID();
+        if (!found_w_plus && pid == 24)
         {
-            w_plus_up_idx = i;
-            find_w_plus_up = true;
-            continue;
+            idx_w_plus = i;
+            found_w_plus = true;
+        }
+        if (!found_w_minus && pid == -24)
+        {
+            idx_w_minus = i;
+            found_w_minus = true;
+        }
+        if (!found_t_plus && pid == 6)
+        {
+            idx_t_plus = i;
+            found_t_plus = true;
+        }
+        if (!found_t_minus && pid == -6)
+        {
+            idx_t_minus = i;
+            found_t_minus = true;
         }
 
-        if (!find_w_plus_down &&
-            ((isPIDDownTypeQuark(pid) && pid < 0) || (isPIDNeutrino(pid) && pid > 0 && gen.isPrompt())) &&
-            isDaughterOf(i, w_plus_idx))
-        {
-            w_plus_down_idx = i;
-            if (isPIDNeutrino(pid))
-            {
-                gen_neutrino = gen;
-            }
-            find_w_plus_down = true;
-            continue;
-        }
-
-        // Handle W- decays
-        if (!find_w_minus_up &&
-            ((isPIDUpTypeQuark(pid) && pid < 0) || (isPIDLepton(pid) && pid > 0 && gen.isPrompt())) &&
-            isDaughterOf(i, w_minus_idx))
-        {
-            w_minus_up_idx = i;
-            find_w_minus_up = true;
-            continue;
-        }
-
-        if (!find_w_minus_down &&
-            ((isPIDDownTypeQuark(pid) && pid > 0) || (isPIDNeutrino(pid) && pid < 0 && gen.isPrompt())) &&
-            isDaughterOf(i, w_minus_idx))
-        {
-            w_minus_down_idx = i;
-            if (isPIDNeutrino(pid))
-            {
-                gen_neutrino = gen;
-            }
-            find_w_minus_down = true;
-            continue;
-        }
-
-        // If we have found all W decay products, we can break early
-        if (find_w_plus_up && find_w_plus_down && find_w_minus_up && find_w_minus_down)
+        if (found_w_plus && found_w_minus && found_t_plus && found_t_minus)
             break;
     }
-    bool w_plus_hadronic = false;
-    FillHist("FindTT_CutFlow", 0, 1.f, 10, 0., 10.);
 
-    if (isPIDLepton(AllGens[w_plus_up_idx].PID()))
-        w_plus_hadronic = false;
+    // If for some reason we fail to find them, exit early
+    if (!found_w_plus || !found_w_minus || !found_t_plus || !found_t_minus)
+    {
+        std::cout << "[ERROR] Did not find last copies of t/tbar/W+/W- in semileptonic routine.\n";
+        return ttbar_jet_indices; // all -1
+    }
+
+    // ------------------------------------------------------------------
+    // 2) Determine which W is hadronic and which W is leptonic
+    //    by looking at their final daughters.
+    // ------------------------------------------------------------------
+    // We'll store the indices of the final W daughters (2 for hadronic, or lepton+nu for leptonic)
+    // Keep track of b from t, b from tbar, etc.
+    bool w_plus_had = false;
+    bool w_minus_had = false;
+
+    // We also want to keep track of the final b from each top
+    int idx_b_from_t_plus = -1;
+    int idx_b_from_t_minus = -1;
+    bool found_b_from_t_plus = false;
+    bool found_b_from_t_minus = false;
+
+    // W+ daughters:
+    int idx_w_plus_dau1 = -1;
+    int idx_w_plus_dau2 = -1;
+    // W- daughters:
+    int idx_w_minus_dau1 = -1;
+    int idx_w_minus_dau2 = -1;
+
+    // Loop over Gens to find final copies of b from top, and final copies of W daughters
+    for (int i = (int)AllGens.size() - 1; i >= 0; i--)
+    {
+        const auto &g = AllGens[i];
+        int pid = g.PID();
+        if (!g.isFirstCopy())
+            continue;
+        if (!(isPIDLepton(pid) || isPIDNeutrino(pid) || isPIDUpTypeQuark(pid) || isPIDDownTypeQuark(pid)))
+            continue;
+        if (!g.isPrompt() || !g.fromHardProcess()) //filter bremsstrahlung, semi-leptonic decay of b,c hadrons
+            continue;
+        // b from t
+        if (!found_b_from_t_plus && pid == 5 && isDaughterOf(i, idx_t_plus) && !isDaughterOf(i, idx_w_plus))
+        {
+            idx_b_from_t_plus = i;
+            found_b_from_t_plus = true;
+        }
+        // b-bar from tbar
+        if (!found_b_from_t_minus && pid == -5 && isDaughterOf(i, idx_t_minus) && !isDaughterOf(i, idx_w_minus))
+        {
+            idx_b_from_t_minus = i;
+            found_b_from_t_minus = true;
+        }
+
+
+
+        // W+ daughters
+        if (isDaughterOf(i, idx_w_plus))
+        {
+            if (idx_w_plus_dau1 < 0)
+                idx_w_plus_dau1 = i;
+            else if (idx_w_plus_dau2 < 0)
+                idx_w_plus_dau2 = i;
+        }
+        // W- daughters
+        if (isDaughterOf(i, idx_w_minus))
+        {
+            if (idx_w_minus_dau1 < 0)
+                idx_w_minus_dau1 = i;
+            else if (idx_w_minus_dau2 < 0)
+                idx_w_minus_dau2 = i;
+        }
+
+        // If we've found everything, we can break early
+        if (found_b_from_t_plus && found_b_from_t_minus &&
+            idx_w_plus_dau1 >= 0 && idx_w_plus_dau2 >= 0 &&
+            idx_w_minus_dau1 >= 0 && idx_w_minus_dau2 >= 0)
+        {
+            break;
+        }
+    }
+
+    // Check W+:
+    int pid_Wp1 = (idx_w_plus_dau1 >= 0 ? AllGens[idx_w_plus_dau1].PID() : 0);
+    int pid_Wp2 = (idx_w_plus_dau2 >= 0 ? AllGens[idx_w_plus_dau2].PID() : 0);
+    bool wplus_has_lept = (isPIDLepton(pid_Wp1) || isPIDLepton(pid_Wp2));
+    bool wplus_has_nu = (isPIDNeutrino(pid_Wp1) || isPIDNeutrino(pid_Wp2));
+    // => If W+ has a lepton & neutrino => leptonic
+    //    otherwise hadronic
+    w_plus_had = !(wplus_has_lept && wplus_has_nu);
+
+    // Similarly for W-:
+    int pid_Wm1 = (idx_w_minus_dau1 >= 0 ? AllGens[idx_w_minus_dau1].PID() : 0);
+    int pid_Wm2 = (idx_w_minus_dau2 >= 0 ? AllGens[idx_w_minus_dau2].PID() : 0);
+    bool wminus_has_lept = (isPIDLepton(pid_Wm1) || isPIDLepton(pid_Wm2));
+    bool wminus_has_nu = (isPIDNeutrino(pid_Wm1) || isPIDNeutrino(pid_Wm2));
+    w_minus_had = !(wminus_has_lept && wminus_has_nu);
+    
+    //sorting the found result to be
+    //dau1 = up quark or lepton
+    //dau2 = down quark or neutrino
+    if (w_plus_had)
+    {
+        if (isPIDLepton(pid_Wm2)){
+            std::swap(idx_w_minus_dau1, idx_w_minus_dau2);
+            std::swap(pid_Wm1, pid_Wm2);
+        }
+        if (isPIDUpTypeQuark(pid_Wp2)){
+            std::swap(idx_w_plus_dau1, idx_w_plus_dau2);
+            std::swap(pid_Wp1, pid_Wp2);
+        }
+        tt_decay_code = abs(pid_Wp1) * 1000 + abs(pid_Wp2) * 100 + abs(pid_Wm1);
+        gen_neutrino = AllGens[idx_w_minus_dau2];
+    }
+    else if(w_minus_had)
+    {
+        if (isPIDLepton(pid_Wp2)){
+            std::swap(idx_w_plus_dau1, idx_w_plus_dau2);
+            std::swap(pid_Wp1, pid_Wp2);
+        }
+        if (isPIDUpTypeQuark(pid_Wm2)){
+            std::swap(idx_w_minus_dau1, idx_w_minus_dau2);
+            std::swap(pid_Wm1, pid_Wm2);
+        }
+        tt_decay_code = abs(pid_Wm1) * 1000 + abs(pid_Wm2) * 100 + abs(pid_Wp1);
+        gen_neutrino = AllGens[idx_w_plus_dau2];
+    }
+
+    // In a semi-leptonic event, exactly one W should be hadronic and the other leptonic.
+    // If both are hadronic or both are leptonic => code won't handle that properly.
+    bool found_all_gen = (found_b_from_t_plus && found_b_from_t_minus &&
+                          ((w_plus_had && !w_minus_had) || (!w_plus_had && w_minus_had)));
+    if (!found_all_gen)
+    {
+        // std::cout << "[ERROR] This event does not appear to be semi-leptonic as expected.\n";
+        // //debugging what is wrong
+        // std::cout << "w_plus_had: " << w_plus_had << " w_minus_had: " << w_minus_had << std::endl;
+        // std::cout << "found_b_from_t_plus: " << found_b_from_t_plus << " found_b_from_t_minus: " << found_b_from_t_minus << std::endl;
+        // std::cout << "idx_w_plus_dau1: " << idx_w_plus_dau1 << " idx_w_plus_dau2: " << idx_w_plus_dau2 << std::endl;
+        // std::cout << "idx_w_minus_dau1: " << idx_w_minus_dau1 << " idx_w_minus_dau2: " << idx_w_minus_dau2 << std::endl;
+        // //pid
+        // std::cout << "pid_Wp1: " << pid_Wp1 << " pid_Wp2: " << pid_Wp2 << std::endl;
+        // std::cout << "pid_Wm1: " << pid_Wm1 << " pid_Wm2: " << pid_Wm2 << std::endl;
+        return ttbar_jet_indices; // all -1
+    }
+
+    FillHist("FindTT_SemiLep_CutFlow", 0, 1.f, 10, 0., 10.);
+
+    // ------------------------------------------------------------------
+    // 3) Identify the hadronic side quarks & the leptonic side b
+    // ------------------------------------------------------------------
+    // We'll store hadronic side b and Wq1, Wq2, plus the other b is from leptonic side.
+    int idx_bHad = -1;
+    int idx_bLep = -1;
+    int idx_wq1 = -1;
+    int idx_wq2 = -1;
+
+    // If W+ is hadronic:
+    if (w_plus_had)
+    {
+        idx_bHad = idx_b_from_t_plus;
+        idx_bLep = idx_b_from_t_minus; // b from the other top
+        // The W+ must have 2 quarks
+        idx_wq1 = idx_w_plus_dau1;
+        idx_wq2 = idx_w_plus_dau2;
+    }
     else
-        w_plus_hadronic = true;
-
-    bool w_minus_hadronic = !w_plus_hadronic;
-
-    for (int i = AllGens.size() - 1; i >= 0; i--)
     {
-        if (!AllGens[i].isFirstCopy())
+        // Then W- is hadronic
+        idx_bHad = idx_b_from_t_minus;
+        idx_bLep = idx_b_from_t_plus;
+        // The W- must have 2 quarks
+        idx_wq1 = idx_w_minus_dau1;
+        idx_wq2 = idx_w_minus_dau2;
+    }
+
+    // ------------------------------------------------------------------
+    // 4) Build a small vector of these 3 hadronic quarks (bHad + Wq1 + Wq2)
+    //    plus the *leptonic b* if we also want to match it to a jet.
+    // ------------------------------------------------------------------
+    // Let's say we want to match 4 total jets: bHad, bLep, Wq1, Wq2.
+    RVec<Gen> relevant_gens;
+    relevant_gens.push_back(AllGens[idx_bHad]);
+    relevant_gens.push_back(AllGens[idx_bLep]);
+    relevant_gens.push_back(AllGens[idx_wq1]);
+    relevant_gens.push_back(AllGens[idx_wq2]);
+
+    // We'll keep an index-based ordering:
+    //   0 => bHad, 1 => bLep, 2 => Wq1, 3 => Wq2
+    // so we fill ttbar_jet_indices in that order eventually.
+
+    // ------------------------------------------------------------------
+    // 5) Match these 4 Gen objects to GenJets by PID + deltaR, then
+    //    match those GenJets to Reco Jets.
+    // ------------------------------------------------------------------
+    // Group them by PID
+    std::unordered_map<int, RVec<std::pair<size_t, Gen>>> map_pid_to_genIdxObj;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+    {
+        int pid = relevant_gens[iG].PID();
+        map_pid_to_genIdxObj[pid].push_back({iG, relevant_gens[iG]});
+    }
+
+    // PartonFlavour array for all GenJets
+    RVec<int> genjet_flavours(AllGenJets.size());
+    for (size_t i = 0; i < AllGenJets.size(); i++){
+        int genJet_flavour = AllGenJets[i].partonFlavour();
+        genjet_flavours[i] = genJet_flavour;
+    }
+
+    // For each final-state gen object, we store "which GenJet it matched"
+    // Start all unmatched -> -999
+    std::unordered_map<size_t, int> map_genIndex_to_genJetIdx;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
+        map_genIndex_to_genJetIdx[iG] = -999;
+
+    // Do matching by PID group
+    for (auto &kv : map_pid_to_genIdxObj)
+    {
+        int target_pid = kv.first;
+        auto &idxGenPairs = kv.second; // each element is { iG, GenObject }
+
+        // Gather candidate GenJets that have the same partonFlavour == target_pid
+        // abs due to radiation
+        RVec<GenJet> candidateGenJets;
+        RVec<int> candidateGJIndices;
+        for (size_t j = 0; j < genjet_flavours.size(); j++)
+        {
+            if (genjet_flavours[j] == target_pid)
+            {
+                candidateGenJets.push_back(AllGenJets[j]);
+                candidateGJIndices.push_back(j);
+            }
+        }
+
+        if (candidateGenJets.empty())
+        {
+            // No GenJet for this PID
+            for (auto &p : idxGenPairs)
+                map_genIndex_to_genJetIdx.at(p.first) = -1;
             continue;
-        if (AllGens[i].PID() == 5 &&
-            !find_b_from_t_plus &&
-            isDaughterOf(i, t_plus_idx) &&
-            !isDaughterOf(i, w_plus_idx))
-        {
-            b_from_t_plus_idx = i;
-            find_b_from_t_plus = true;
         }
-        if (AllGens[i].PID() == -5 &&
-            !find_b_from_t_minus &&
-            isDaughterOf(i, t_minus_idx) &&
-            !isDaughterOf(i, w_minus_idx))
+
+        // Prepare only the Gen objects that share that PID
+        RVec<Gen> these_gens;
+        RVec<size_t> these_genIndices;
+        these_gens.reserve(idxGenPairs.size());
+        for (auto &p : idxGenPairs) these_gens.push_back(p.second);
+
+        // Perform deltaR matching
+        auto result_map = deltaRMatching(these_gens, candidateGenJets, 0.4);
+
+        // Store
+        // result_map[iGenInGroup] -> iJetInCandidate (or -1)
+        for (auto &matchPair : result_map)
         {
-            b_from_t_minus_idx = i;
-            find_b_from_t_minus = true;
-        }
-        if (find_b_from_t_plus && find_b_from_t_minus)
-            break;
-    }
-
-    bool findall_gen = false;
-    findall_gen = find_w_plus_up && find_w_plus_down && find_w_minus_up && find_w_minus_down && find_b_from_t_plus && find_b_from_t_minus;
-    if (!findall_gen)
-    {
-        cout << "[ERROR] Cannot find all necessary particles in gen level" << endl;
-        return ttbar_jet_indices;
-    }
-    FillHist("FindTT_CutFlow", 1, 1.f, 10, 0., 10.);
-
-    if (w_plus_hadronic)
-        tt_decay_code = 1000 * abs(AllGens[w_plus_up_idx].PID()) + 100 * abs(AllGens[w_plus_down_idx].PID()) + abs(AllGens[w_minus_up_idx].PID());
-    else if (w_minus_hadronic)
-        tt_decay_code = 100 * abs(AllGens[w_plus_up_idx].PID()) + 10 * abs(AllGens[w_minus_up_idx].PID()) + abs(AllGens[w_minus_down_idx].PID());
-
-    RVec<Gen> this_gens;
-    if (w_plus_hadronic)
-    {
-        this_gens.push_back(AllGens[b_from_t_plus_idx]);
-        this_gens.push_back(AllGens[b_from_t_minus_idx]);
-        this_gens.push_back(AllGens[w_plus_up_idx]);
-        this_gens.push_back(AllGens[w_plus_down_idx]);
-    }
-    else if (w_minus_hadronic)
-    {
-        this_gens.push_back(AllGens[b_from_t_minus_idx]);
-        this_gens.push_back(AllGens[b_from_t_plus_idx]);
-        this_gens.push_back(AllGens[w_minus_up_idx]);
-        this_gens.push_back(AllGens[w_minus_down_idx]);
-    }
-
-    unordered_map<int, RVec<pair<size_t, Gen>>> map_key_pid_val_vector_of_tuple_gen_index_gen;
-
-    for (size_t i = 0; i < this_gens.size(); i++)
-    {
-        map_key_pid_val_vector_of_tuple_gen_index_gen[this_gens[i].PID()].push_back({i, this_gens[i]});
-    }
-
-    RVec<int> gens_PID = {this_gens[0].PID(), this_gens[1].PID(), this_gens[2].PID(), this_gens[3].PID()};
-    RVec<int> all_genjet_PID;
-
-    for (size_t i = 0; i < AllGenJets.size(); i++)
-    {
-        all_genjet_PID.push_back(AllGenJets[i].partonFlavour());
-    }
-
-    unordered_map<int, int> map_key_4gen_idx_val_genjet_idx_deltaRMatched;
-
-    for (const auto &PID_group : map_key_pid_val_vector_of_tuple_gen_index_gen)
-    {
-        int current_target_PID = PID_group.first;
-        const auto &vector_gen_idx_Gen_pairs = PID_group.second;
-
-        RVec<GenJet> genjets_same_PID_as_current_gen_group;
-        RVec<int> genjets_same_PID_as_current_gen_group_indices;
-        unordered_map<int, int> map_key_gen_idx_of_current_gens_val_genjet_idx_of_pid_group;
-        for (size_t genjet_idx = 0; genjet_idx < all_genjet_PID.size(); genjet_idx++)
-        {
-            if (all_genjet_PID[genjet_idx] == current_target_PID)
-            {
-                genjets_same_PID_as_current_gen_group.push_back(AllGenJets[genjet_idx]);
-                genjets_same_PID_as_current_gen_group_indices.push_back(genjet_idx);
-            }
-        }
-        // if no genjets that matches to this PID found, this PID group is failed to match
-        if (genjets_same_PID_as_current_gen_group_indices.size() == 0)
-        {
-            for (const auto &gen_idx_Gen_pair : vector_gen_idx_Gen_pairs)
-            {
-                map_key_4gen_idx_val_genjet_idx_deltaRMatched[gen_idx_Gen_pair.first] = -999;
-            }
-        }
-        // do deltaRMatching if we have matching genjets
-        else
-        {
-            RVec<Gen> current_gens;
-            RVec<int> current_gen_indices;
-            for (const auto &gen_idx_Gen_pair : vector_gen_idx_Gen_pairs)
-            {
-                current_gens.push_back(gen_idx_Gen_pair.second);
-                current_gen_indices.push_back(gen_idx_Gen_pair.first);
-            }
-            map_key_gen_idx_of_current_gens_val_genjet_idx_of_pid_group = deltaRMatching(current_gens, genjets_same_PID_as_current_gen_group, 0.5);
-
-            for (const auto &temp_match_pair : map_key_gen_idx_of_current_gens_val_genjet_idx_of_pid_group)
-            {
-                if (temp_match_pair.second >= 0)
-                {
-                    map_key_4gen_idx_val_genjet_idx_deltaRMatched[current_gen_indices[temp_match_pair.first]] = genjets_same_PID_as_current_gen_group_indices[temp_match_pair.second];
-                }
-                else
-                {
-                    map_key_4gen_idx_val_genjet_idx_deltaRMatched[current_gen_indices[temp_match_pair.first]] = -999;
-                }
-            }
+            size_t iGenInGroup = matchPair.first;
+            int iGJetInGroup = matchPair.second;
+            size_t releventGenIndex = idxGenPairs[iGenInGroup].first;
+            if (iGJetInGroup >= 0)
+                map_genIndex_to_genJetIdx.at(releventGenIndex) = candidateGJIndices[iGJetInGroup];
+            else
+                map_genIndex_to_genJetIdx.at(releventGenIndex) = -1;
         }
     }
 
-    // check all gen particles are matched to genjets
-    bool find_all_genjets = true;
-    for (size_t i = 0; i < 4; i++)
+    // Check how many are matched
+    bool matched_all_genJets = true;
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
     {
-        if (map_key_4gen_idx_val_genjet_idx_deltaRMatched[i] < 0.f)
+        if (map_genIndex_to_genJetIdx[iG] < 0)
         {
-            find_all_genjets = false;
+            matched_all_genJets = false;
             break;
         }
     }
-    if (find_all_genjets)
-        FillHist("FindTT_CutFlow", 2, 1.f, 10, 0., 10.);
+    if (matched_all_genJets)
+        FillHist("FindTT_SemiLep_CutFlow", 1, 1.f, 10, 0., 10.);
 
-    // we get gen-genjet matching. now do genjet-jet matching
-    RVec<GenJet> gen_matched_genjets;
-    RVec<size_t> idx_4gens_of_gen_match_to_genjet;
-    for (size_t i = 0; i < 4; i++)
+    // Now match GenJets -> Reco Jets
+    // Build the subset of GenJets that *were* matched
+    RVec<GenJet> matchedGenJets;
+    RVec<size_t> matchedGenIndices; // which of the 4 did it come from
+    for (size_t iG = 0; iG < relevant_gens.size(); iG++)
     {
-        if (map_key_4gen_idx_val_genjet_idx_deltaRMatched[i] >= 0)
+        if (map_genIndex_to_genJetIdx[iG] >= 0)
         {
-            gen_matched_genjets.push_back(AllGenJets[map_key_4gen_idx_val_genjet_idx_deltaRMatched[i]]);
-            idx_4gens_of_gen_match_to_genjet.push_back(i);
+            matchedGenJets.push_back(AllGenJets[map_genIndex_to_genJetIdx[iG]]);
+            matchedGenIndices.push_back(iG);
         }
     }
 
-    unordered_map<int, int> map_key_Jet_idx_val_gen_matched_genjets_idx = GenJetMatching(Jets, gen_matched_genjets, ev.GetRho(), 0.4, 999999);
-    unordered_map<int, int> map_key_idx_4gen_val_jet_idx;
 
-    // now store parton-jet matching result
-    for (const auto jet_genjet_matching_result : map_key_Jet_idx_val_gen_matched_genjets_idx)
+    auto recoMatchMap = GenJetMatching(Jets, matchedGenJets, ev.GetRho(), 0.4, INFINITY);
+
+    // Invert that map so we can see for i-th GenJet in matchedGenJets which RecoJet was matched
+    std::unordered_map<int, int> map_genJetIdx_inSubset_to_recoJetIdx;
+    for (auto &kv : recoMatchMap)
     {
-        if (jet_genjet_matching_result.second >= 0)
-        {
-            map_key_idx_4gen_val_jet_idx[idx_4gens_of_gen_match_to_genjet[jet_genjet_matching_result.second]] = jet_genjet_matching_result.first;
-        }
-        else
-        {
-            map_key_idx_4gen_val_jet_idx[idx_4gens_of_gen_match_to_genjet[jet_genjet_matching_result.second]] = -999;
-        }
+        int iRecoJet = kv.first;
+        int iGenJetSub = kv.second; // index in matchedGenJets
+        if (iGenJetSub >= 0)
+            map_genJetIdx_inSubset_to_recoJetIdx[iGenJetSub] = iRecoJet;
     }
 
-    for (size_t i = 0; i < 4; i++)
+    // Fill the final 4-element array in order: { bHad, bLep, Wq1, Wq2 }
+    // i.e. [0,1,2,3] from relevant_gens
+    for (const auto &kv : map_genJetIdx_inSubset_to_recoJetIdx)
     {
-        if (map_key_idx_4gen_val_jet_idx.find(i) == map_key_idx_4gen_val_jet_idx.end())
-        {
-            map_key_idx_4gen_val_jet_idx[i] = -999;
-        }
+        int iGenJetSub = kv.first;
+        int iRecoJet = kv.second;
+        int iG = matchedGenIndices[iGenJetSub];
+        ttbar_jet_indices[iG] = iRecoJet;
     }
 
-    ttbar_jet_indices = {map_key_idx_4gen_val_jet_idx[0], map_key_idx_4gen_val_jet_idx[1], map_key_idx_4gen_val_jet_idx[2], map_key_idx_4gen_val_jet_idx[3]};
-    for (size_t i = 0; i < ttbar_jet_indices.size(); i++)
+    // Check if all 4 are matched
+    find_all_jets = true;
+    for (auto idx : ttbar_jet_indices)
     {
-        if (ttbar_jet_indices[i] == -999)
+        if (idx < 0)
         {
             find_all_jets = false;
             break;
         }
-        else
-        {
-            find_all_jets = true;
-        }
-    }
-
-    Particle LepW;
-    Particle HadW;
-    Particle LepTop;
-    Particle HadTop;
-
-    if (w_minus_hadronic)
-    {
-        LepW = AllGens[w_plus_up_idx] + AllGens[w_plus_down_idx];
-        HadW = AllGens[w_minus_up_idx] + AllGens[w_minus_down_idx];
-        LepTop = LepW + AllGens[b_from_t_plus_idx];
-        HadTop = HadW + AllGens[b_from_t_minus_idx];
-    }
-    else if (w_plus_hadronic)
-    {
-        LepW = AllGens[w_minus_up_idx] + AllGens[w_minus_down_idx];
-        HadW = AllGens[w_plus_up_idx] + AllGens[w_plus_down_idx];
-        LepTop = LepW + AllGens[b_from_t_minus_idx];
-        HadTop = HadW + AllGens[b_from_t_plus_idx];
     }
     if (find_all_jets)
-        FillHist("FindTT_CutFlow", 3, 1.f, 10, 0., 10.);
-    if (find_all_genjets)
+        FillHist("FindTT_SemiLep_CutFlow", 2, 1.f, 10, 0., 10.);
+
+    // ------------------------------------------------------------------
+    // 6) Optionally fill some Gen-level or GenJet-level histograms
+    // ------------------------------------------------------------------
+    if(find_all_jets)
     {
-        Particle GenJetHadW = AllGenJets[map_key_4gen_idx_val_genjet_idx_deltaRMatched[2]] + AllGenJets[map_key_4gen_idx_val_genjet_idx_deltaRMatched[3]];
-        Particle GenJetHadTop = GenJetHadW + AllGenJets[map_key_4gen_idx_val_genjet_idx_deltaRMatched[0]];
-        FillHist("genLevel_LepTopMass", LepTop.M(), 1.f, 100, 100., 300.);
-        FillHist("genLevel_HadTopMass", HadTop.M(), 1.f, 100, 100., 300.);
-        FillHist("genLevel_LepWMass", LepW.M(), 1.f, 100, 50., 100.);
-        FillHist("genLevel_HadWMass", HadW.M(), 1.f, 100, 50., 100.);
-        FillHist("genLevel_GenJetHadTopMass", GenJetHadTop.M(), 1.f, 100, 100., 300.);
-        FillHist("genLevel_GenJetHadWMass", GenJetHadW.M(), 1.f, 100, 50., 100.);
+        // Reconstruct hadronic top from (bHad + wq1 + wq2)
+        Particle W_had = AllGens[idx_wq1] + AllGens[idx_wq2];
+        Particle Top_had = W_had + AllGens[idx_bHad];
+        Particle Top_lep;
+        if(w_plus_had)
+            Top_lep = AllGens[idx_bLep] + AllGens[idx_w_minus_dau1] + AllGens[idx_w_minus_dau2];
+        else
+            Top_lep = AllGens[idx_bLep] + AllGens[idx_w_plus_dau1] + AllGens[idx_w_plus_dau2];
+        Particle W_had_Reco = Jets[ttbar_jet_indices[2]] + Jets[ttbar_jet_indices[3]];
+        Particle Top_had_Reco = W_had_Reco + Jets[ttbar_jet_indices[0]];
+        Particle Top_had_GenJet = matchedGenJets[0] + matchedGenJets[2] + matchedGenJets[3];
+        Particle W_had_GenJet = matchedGenJets[2] + matchedGenJets[3];
+        // Reconstruct leptonic top from (bLep + lepton + neutrino) if you want
+        // In the code above, we can figure out the indices of the lepton, neutrino from the other W
+        // For demonstration, we just fill the hadronic top mass:
+        FillHist("genLevel_HadTopMass", Top_had.M(), 1.f, 100, 100., 300.);
+        FillHist("genLevel_HadWMass", W_had.M(), 1.f, 100, 50., 110.);
+        FillHist("genLevel_LepTopMass", Top_lep.M(), 1.f, 100, 100., 300.);
+        FillHist("genLevel_LepWMass", W_had.M(), 1.f, 100, 50., 110.);
+        FillHist("GenJetLevel_HadTopMass", Top_had_GenJet.M(), 1.f, 100, 100., 300.);
+        FillHist("GenJetLevel_HadWMass", W_had_GenJet.M(), 1.f, 100, 50., 110.);
+        FillHist("recoLevel_HadTopMass", Top_had_Reco.M(), 1.f, 100, 100., 300.);
+        FillHist("recoLevel_HadWMass", W_had_Reco.M(), 1.f, 100, 50., 110.);
     }
 
     return ttbar_jet_indices;
@@ -1043,6 +1111,7 @@ void Vcb_SL::InferONNX()
     std::vector<float> sin_phi;
     std::vector<float> cos_phi;
     std::vector<float> m;
+    std::vector<float> qtag;
     std::vector<float> btag;
     std::vector<float> etag;
     std::vector<float> utag;
@@ -1062,6 +1131,7 @@ void Vcb_SL::InferONNX()
             sin_phi.push_back(static_cast<float>(TMath::Sin(Jets[i].Phi())));
             cos_phi.push_back(static_cast<float>(TMath::Cos(Jets[i].Phi())));
             m.push_back(Jets[i].M());
+            qtag.push_back(1.);
             btag.push_back(Jets[i].GetBTaggerResult(FlavTagger[DataEra.Data()]));
             etag.push_back(0.);
             utag.push_back(0.);
@@ -1073,6 +1143,7 @@ void Vcb_SL::InferONNX()
             sin_phi.push_back(0.);
             cos_phi.push_back(0.);
             m.push_back(0.);
+            qtag.push_back(0.);
             btag.push_back(0.);
             etag.push_back(0.);
             utag.push_back(0.);
@@ -1083,6 +1154,7 @@ void Vcb_SL::InferONNX()
     sin_phi.push_back(static_cast<float>(TMath::Sin(lepton.Phi())));
     cos_phi.push_back(static_cast<float>(TMath::Cos(lepton.Phi())));
     m.push_back(lepton.M());
+    qtag.push_back(0.);
     btag.push_back(0.);
     if (channel == Channel::Mu)
     {
@@ -1106,7 +1178,7 @@ void Vcb_SL::InferONNX()
     // Flatteing the input tensor
 
     std::unordered_map<std::string, std::vector<int>> input_shape;
-    input_shape["Momenta_data"] = {1, 9, 8};
+    input_shape["Momenta_data"] = {1, 9, 9};
     input_shape["Momenta_mask"] = {1, 9};
     input_shape["Met_data"] = {1, 1, 3};
     input_shape["Met_mask"] = {1, 1};
@@ -1119,6 +1191,7 @@ void Vcb_SL::InferONNX()
         Momenta_data.push_back(sin_phi[i]);
         Momenta_data.push_back(cos_phi[i]);
         Momenta_data.push_back(m[i]);
+        Momenta_data.push_back(qtag[i]);
         Momenta_data.push_back(btag[i]);
         Momenta_data.push_back(etag[i]);
         Momenta_data.push_back(utag[i]);
@@ -1155,42 +1228,34 @@ void Vcb_SL::InferONNX()
     Particle ht;
     Particle hw;
 
-    std::vector<int> lt_assignment_shape = {1, 9, 9};
+    std::vector<int> lt_assignment_shape = {1, 9};
     std::vector<int> ht_assignment_shape = {1, 9, 9, 9};
 
     //first find the most lt probable assignment
-    for(size_t i = 0; i < n_jets+1; i++){
-        size_t max_idx = FindNthMaxIndex(output_data["lt_assignment_log_probability"], i);
-        std::vector<int> assignment = UnravelIndex(max_idx, lt_assignment_shape);
-        if(assignment[1] != 8) cout << "Assignment failed" << endl;
-        else{
-            l_assignment = assignment[1];
-            lb_assignment = assignment[2];
-            break;
-        }
-    }
+
+    size_t max_idx = FindNthMaxIndex(output_data["lt_assignment_log_probability"], 0);
+    std::vector<int> current_lt_assignment = UnravelIndex(max_idx, lt_assignment_shape);
+
+    lb_assignment = current_lt_assignment[1];
 
     bool checkUnique = false;
     int num_total_ht_assignments = output_data["ht_assignment_log_probability"].size();
 
     for (size_t i = 0; i < num_total_ht_assignments; i++)
     {
-        size_t max_idx = FindNthMaxIndex(output_data["ht_assignment_log_probability"], i);
-        std::vector<int> assignment = UnravelIndex(max_idx, ht_assignment_shape);
-        hb_assignment = assignment[1];
-        w1_assignment = assignment[2];
-        w2_assignment = assignment[3];
+        size_t current_max_idx = FindNthMaxIndex(output_data["ht_assignment_log_probability"], i);
+        std::vector<int> current_ht_assignment = UnravelIndex(current_max_idx, ht_assignment_shape);
+        hb_assignment = current_ht_assignment[1];
+        w1_assignment = current_ht_assignment[2];
+        w2_assignment = current_ht_assignment[3];
+        cout << endl;
 
-        checkUnique = true; 
-        for (size_t j = 1; j < assignment.size(); j++)
+        std::set<int> unique_assignment = {lb_assignment, hb_assignment, w1_assignment, w2_assignment};
+        if (unique_assignment.size() == 4)
         {
-            if (assignment[j] == l_assignment || assignment[j] == lb_assignment)
-            {
-                checkUnique = false; // Found a conflict
-                break;               // Exit the inner loop early
-            }
+            checkUnique = true;
         }
-
+    
         if (checkUnique)
         {
             break;
@@ -1198,7 +1263,7 @@ void Vcb_SL::InferONNX()
     }
 
     Particle regressed_neutrino;
-    regressed_neutrino.SetXYZM(MET.Px(), MET.Py(), output_data.at("EVENT/neutrino_pz")[0], 0.);
+    //regressed_neutrino.SetXYZM(MET.Px(), MET.Py(), output_data.at("EVENT/neutrino_pz")[0], 0.);
 
     lt = Jets[lb_assignment] + lepton + regressed_neutrino;
     hw = Jets[w1_assignment] + Jets[w2_assignment];
@@ -1209,16 +1274,41 @@ void Vcb_SL::InferONNX()
     assignment[2] = w1_assignment;
     assignment[3] = w2_assignment;
 
-    if(class_score[0] > 0.6)
-        class_label = Vcb_SL::classCategory::Signal;
-    else if(class_score[0] <= 0.6 && class_score[0] > 0.4)
-        class_label = Vcb_SL::classCategory::Control0;
-    else
-        class_label = Vcb_SL::classCategory::Disposal;
+
+    // find which class has the highest score in class_score(find index)
+    std::array<float, 3> class_score_temp = {class_score[0], class_score[1], class_score[2]};
+    class_score_temp[0] = 0.1724 * class_score_temp[0];
+    class_score_temp[2] = 0.1034 * class_score_temp[2];
+    int max_class = std::distance(class_score_temp.begin(), std::max_element(class_score_temp.begin(), class_score_temp.end()));
+    switch (max_class){
+        case 0:
+            class_label  = classCategory::Signal;
+            break;
+        case 1:
+            class_label = classCategory::tt;
+            break;
+        case 2:
+            class_label = classCategory::ttHF;
+            break;
+        default:
+            break;
+    }
 }
 
 void Vcb_SL::FillONNXRecoInfo(const TString &histPrefix, float weight)
 {
+    ttbar_jet_indices = FindTTbarJetIndices();
+    if (find_all_jets)
+    {
+        FillHist(histPrefix + "/" + "CorrectAssignment_Tot", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+        bool isCorrect = true;
+        //check if the assignment is correct. w1 and w2 can be swapped
+        //if (assignment[0] != ttbar_jet_indices[0]) isCorrect = false;
+        //if (assignment[1] != ttbar_jet_indices[1]) isCorrect = false;
+        if ((assignment[2] != ttbar_jet_indices[2] || assignment[3] != ttbar_jet_indices[3]) && (assignment[2] != ttbar_jet_indices[3] || assignment[3] != ttbar_jet_indices[2])) isCorrect = false;
+        if (isCorrect) FillHist(histPrefix + "/" + "CorrectAssignment", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+        else FillHist(histPrefix + "/" + "WrongAssignment", n_jets, n_b_tagged_jets, 1., 6, 4., 10., 4, 2, 6);
+    }
     if(Jets[assignment[2]].GetBTaggerResult(FlavTagger[DataEra.Data()]) > Jets[assignment[3]].GetBTaggerResult(FlavTagger[DataEra.Data()]))
     {
         //swap the assignment
@@ -1236,12 +1326,18 @@ void Vcb_SL::FillONNXRecoInfo(const TString &histPrefix, float weight)
     FillHist(histPrefix + "/" + "Reco_W2JetPt", Jets[assignment[3]].Pt(), weight, 100, 0., 200.);
     FillHist(histPrefix + "/" + "Reco_W1BvsC", W1_BvsC, weight, 100, 0., 1.);
     FillHist(histPrefix + "/" + "Reco_W2BvsC", W2_BvsC, weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_hbJetPt", Jets[assignment[0]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_lbJetPt", Jets[assignment[1]].Pt(), weight, 100, 0., 200.);
+    FillHist(histPrefix + "/" + "Reco_lbBvsC", Jets[assignment[1]].GetBTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
+    FillHist(histPrefix + "/" + "Reco_hbBvsC", Jets[assignment[0]].GetBTaggerResult(FlavTagger[DataEra.Data()]), weight, 100, 0., 1.);
     FillHist(histPrefix + "/" + "Reco_BvsCAdded" , W1_BvsC + W2_BvsC, weight, 100, 0., 2.);
     int unrolledIdx = Unroller(Jets[assignment[2]], Jets[assignment[3]]);
     FillHist(histPrefix + "/" + "Reco_W1Bvsc_W2Bvsc_Unrolled", unrolledIdx, weight, 16, 0., 16.);
-    FillHist(histPrefix + "/" + "Class_Score0", static_cast<float>(class_score[0]), weight, 100, 0., 1.);
-    FillHist(histPrefix + "/" + "Class_Score1", static_cast<float>(class_score[1]), weight, 100, 0., 1.);
-    FillHist(histPrefix + "/" + "Class_Score2", static_cast<float>(class_score[2]), weight, 100, 0., 1.);
+    std::vector<float> class_score_bin = {0.,0.5,0.6,0.7,0.8,0.85,0.9,0.95};
+    FillHist(histPrefix + "/" + "Class_Category", static_cast<float>(class_label), weight, 3, 0., 3.);
+    FillHist(histPrefix + "/" + "Class_Score0", static_cast<float>(class_score[0]), weight, class_score_bin.size() - 1 , class_score_bin.data());
+    FillHist(histPrefix + "/" + "Class_Score1", static_cast<float>(class_score[1]), weight, class_score_bin.size() - 1 , class_score_bin.data());
+    FillHist(histPrefix + "/" + "Class_Score2", static_cast<float>(class_score[2]), weight, class_score_bin.size() - 1 , class_score_bin.data());
     FillHist(histPrefix + "/" + "EnergyFrac0p5VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 0.5), weight, 10, 0., 1., 50, 0. ,1.);
     FillHist(histPrefix + "/" + "EnergyFrac0p8VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 0.8), weight, 10, 0., 1., 50, 0. ,1.);
     FillHist(histPrefix + "/" + "EnergyFrac1p2VsBvsC", W2_BvsC, GetJetEnergyFractionWithRadius(Jets[assignment[3]], 1.2), weight, 10, 0., 1., 50, 0. ,1.);

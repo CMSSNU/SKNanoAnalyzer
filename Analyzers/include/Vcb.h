@@ -1,7 +1,6 @@
 #ifndef Vcb_h
 #define Vcb_h
 
-
 #include <future>
 #include <tuple>
 #include <memory>
@@ -33,21 +32,39 @@ using VariousArray = std::variant<FloatArray, IntArray, BoolArray>;
 class Vcb : public AnalyzerCore
 {
 public:
-
     inline bool isPIDUpTypeQuark(int pdg) { return (abs(pdg) == 2 || abs(pdg) == 4 || abs(pdg) == 6); }
     inline bool isPIDDownTypeQuark(int pdg) { return (abs(pdg) == 1 || abs(pdg) == 3 || abs(pdg) == 5); }
     inline bool isPIDLepton(int pdg) { return (abs(pdg) == 11 || abs(pdg) == 13 || abs(pdg) == 15); }
     inline bool isPIDNeutrino(int pdg) { return (abs(pdg) == 12 || abs(pdg) == 14 || abs(pdg) == 16); }
-    inline bool isDaughterOf(int idx, int m_idx) {
-    while (idx >= 0) {
-        int midx = AllGens[idx].MotherIndex();
-        if (midx < 0) break; // No valid mother
-        if (midx == m_idx) return true; // Found the W in the chain
-        idx = midx;
-    }
-    return false;
+    inline bool isDaughterOf(int idx, int m_idx)
+    {
+        while (idx >= 0)
+        {
+            int midx = AllGens[idx].MotherIndex();
+            if (midx < 0)
+                break; // No valid mother
+            if (midx == m_idx)
+                return true; // Found the W in the chain
+            idx = midx;
+        }
+        return false;
     };
-    float LeptonTriggerWeight(bool isEle, const Correction::variation syst = Correction::variation::nom, const TString &source = "total");   
+    inline int GetSimplePID(int pid, bool usesign = false)
+    {
+        int simple_pid = 0;
+        if (abs(pid) == 5)
+            simple_pid = 5;
+        else if (abs(pid) == 4)
+            simple_pid = 4;
+        else
+            simple_pid = 0;
+        if (!usesign)
+            return simple_pid;
+        if (pid < 0)
+            return -simple_pid;
+        return simple_pid;
+    }
+    float LeptonTriggerWeight(bool isEle, const Correction::variation syst = Correction::variation::nom, const TString &source = "total");
     void Clear();
     int Unroller(RVec<Jet> &jets);
     int Unroller(Jet &jet1, Jet &jet2);
@@ -72,9 +89,14 @@ public:
     std::string virtual GetRegionString() = 0;
     inline size_t FindNthMaxIndex(FloatArray &array, int ranking)
     {
+        if (ranking < 0 || static_cast<size_t>(ranking) >= array.size())
+        {
+            throw std::out_of_range("Ranking is out of bounds");
+        }
         std::vector<size_t> indices(array.size());
         std::iota(indices.begin(), indices.end(), 0);
-        std::sort(indices.begin(), indices.end(), [&array](size_t i1, size_t i2) { return array[i1] > array[i2]; });
+        std::sort(indices.begin(), indices.end(), [&array](size_t i1, size_t i2)
+                  { return array[i1] > array[i2]; });
         return indices[ranking];
     }
     inline std::vector<int> UnravelIndex(int idx, std::vector<int> shape)
@@ -87,10 +109,14 @@ public:
         }
         return indices;
     }
-    inline std::string GetTTHFPostFix(){
-        if (ttbj || ttbb) return "+B";
-        if (ttcc) return "+C";
-        if (ttLF) return "+LF";
+    inline std::string GetTTHFPostFix()
+    {
+        if (ttbj || ttbb)
+            return "+B";
+        if (ttcc)
+            return "+C";
+        if (ttLF)
+            return "+LF";
         return "";
     }
 
@@ -100,11 +126,12 @@ public:
         float sum = 0;
         for (size_t i = 0; i < Jets.size(); i++)
         {
-            if (jet.DeltaR(Jets[i]) < 1e-5) continue;
-            if (jet.DeltaR(Jets[i]) < radius) sum += Jets[i].E();
+            if (jet.DeltaR(Jets[i]) < 1e-5)
+                continue;
+            if (jet.DeltaR(Jets[i]) < radius)
+                sum += Jets[i].E();
         }
-        return jet.E()/sum;
-
+        return jet.E() / sum;
     }
 
     RVec<RVec<unsigned int>> virtual GetPermutations(const RVec<Jet> &jets);
@@ -174,7 +201,7 @@ public:
             return "";
         }
     }
-    
+
     Channel channel;
 
     std::unique_ptr<MLHelper> myMLHelper;

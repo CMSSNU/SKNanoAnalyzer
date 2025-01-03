@@ -17,7 +17,11 @@ from time import sleep
 from multiprocessing import Pool
 import requests
 import re
-from tqdm import tqdm
+from tqdm.rich import tqdm
+import warnings
+from tqdm import TqdmExperimentalWarning
+warnings.simplefilter("ignore", TqdmExperimentalWarning)
+
 
 
 ##############################
@@ -31,7 +35,7 @@ SKNANO_INSTALLDIR = os.environ['SKNANO_INSTALLDIR']
 SKNANO_RUN3_NANOAODPATH = os.environ['SKNANO_RUN3_NANOAODPATH']
 SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
-Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3}
+Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3, '2023':3, '2023BPix':3}
 TOKEN = os.environ['TOKEN_TELEGRAMBOT']
 chat_id = os.environ['USER_CHATID']
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}"
@@ -286,7 +290,7 @@ def create_cpp_job(i, out_base, sample, argparse_module, sampleInfo, isMC, era, 
         print(f"Error writing {job_filename}: {e}")
 
  
-def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
+def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, totsamples):
     isMC, period = isMCandGetPeriod(sample)
     AnalyzerName = argparse.Analyzer
 
@@ -319,7 +323,7 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags):
     
     totalNumberOfJobs = len(samplePaths)
 
-    for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}", smoothing=1.):
+    for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}, ({isample}/{totsamples})", smoothing=1.):
         output = out_base.replace('.root',f'_{i+1}.root')
         cpp_lines = [
             "#include <algorithm>",
@@ -398,7 +402,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     libpath = [os.path.join(abs_MasterDirectoryName,'install/lib')]+libpath
     libpath = ":".join(libpath)
     if 'ROOT_INCLUDE_PATH' not in os.environ:
-        inclpath = []
+        inclpath = ""
     else:
         inclpath = os.environ['ROOT_INCLUDE_PATH']
     inclpath = inclpath.split(":")
@@ -452,7 +456,7 @@ def makeHaddJobs(working_dir,argparser,sample):
     with open(os.path.join(working_dir,"hadd.sh"),'w') as f:
         f.writelines("#!/bin/bash\n")
         f.writelines(f"cd {working_dir}\n")
-        f.writelines(f"hadd -f9 -j 8 {hadd_target} output/hists_*.root\n")
+        f.writelines(f"hadd -f -j 8 {hadd_target} output/hists_*.root\n")
         
     job_dict = {}
     job_dict['executable'] = os.path.join(working_dir,"hadd.sh")
@@ -460,7 +464,7 @@ def makeHaddJobs(working_dir,argparser,sample):
     job_dict['universe'] = "vanilla"
     job_dict['getenv'] = "True"
     job_dict['RequestCpus'] = 8
-    job_dict['RequestMemory'] = 2048
+    job_dict['RequestMemory'] = 8192
     job_dict['output'] = os.path.join(working_dir,"hadd.out")
     job_dict['error'] = os.path.join(working_dir,"hadd.err")
     job_dict['should_transfer_files'] = "YES"
@@ -665,9 +669,10 @@ if __name__ == '__main__':
     postproc_layers = []
 
     for era in eras:
+        print(f"Working on {era}")
         InputSamplelist_era = makeSampleList(InputSamplelist, era)
-        for sample in tqdm(InputSamplelist_era, position=0, desc=f"Processing for {era}"):
-            working_dir, totalNumberofJobs = pythonJobProducer(era, sample, args, abs_MasterDirectoryName, userflags)
+        for isample, sample in enumerate(InputSamplelist_era):
+            working_dir, totalNumberofJobs = pythonJobProducer(era, sample, args, abs_MasterDirectoryName, userflags, isample, len(InputSamplelist_era))
             if totalNumberofJobs == None:
                 continue
             analyzer_sub_dict = makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberofJobs,args)

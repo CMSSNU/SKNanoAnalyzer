@@ -21,7 +21,7 @@ target_include_directories(Analyzers PRIVATE
 )
 
 # Generate the ROOT dictionary before defining the library
-file(GLOB HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/*.h)
+file(GLOB HEADERS include/*.h)
 #install(FILES ${HEADERS} DESTINATION include/Analyzers)
 
 ROOT_GENERATE_DICTIONARY(G__Analyzers 
