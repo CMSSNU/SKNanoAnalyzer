@@ -67,9 +67,9 @@ def getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName):
     isMC, period = isMCandGetPeriod(sample)
     suffix = f"Temp_Skim_{AnalyzerName.replace('Skim_','')}_{sample if isMC else sample.replace(f'_{period}','')}"
     if Run[era] == 2:
-        out_base = os.path.join(SKNANO_RUN2_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+        out_base = os.path.join(SKNANO_RUN2_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',os.environ['USER'],suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
     elif Run[era] == 3:
-        out_base = os.path.join(SKNANO_RUN3_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
+        out_base = os.path.join(SKNANO_RUN3_NANOAODPATH ,era,'MC' if isMC else 'DATA','Skim',os.environ['USER'],suffix,'' if isMC else f'Period{period}', 'tree.root') if SKIMMING_MODE else 'output/hists.root'
 
     return out_base, suffix
 
