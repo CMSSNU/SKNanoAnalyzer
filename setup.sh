@@ -36,6 +36,8 @@ if [ $PACKAGE = "conda" ]; then
 elif [ $PACKAGE = "mamba" ]; then
     # set up mamba environment
     micromamba activate Nano
+    # from this point on, we can follow conda version of setup
+    PACKAGE="conda"
 elif [ $PACKAGE = "cvmfs" ]; then
     echo "@@@@ Primary environment using cvmfs"
     RELEASE="`cat /etc/redhat-release`"
