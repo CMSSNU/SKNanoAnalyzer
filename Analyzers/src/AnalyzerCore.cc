@@ -36,6 +36,7 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Even
 }
 
 float AnalyzerCore::GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst) {
+    if(nLHEScaleWeight == 0) return 1.;
     if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::down) return LHEScaleWeight[0];
     else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::down) return LHEScaleWeight[1];
     else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::down) return LHEScaleWeight[2];
