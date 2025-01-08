@@ -22,10 +22,14 @@ target_include_directories(Analyzers PRIVATE
 
 # Generate the ROOT dictionary before defining the library
 file(GLOB HEADERS include/*.h)
-#install(FILES ${HEADERS} DESTINATION include/Analyzers)
+foreach(HEADER ${HEADERS})
+    file(RELATIVE_PATH REL_HEADER ${CMAKE_CURRENT_SOURCE_DIR} ${HEADER})
+    list(APPEND REL_HEADERS ${REL_HEADER})
+endforeach()
+set(DICTIONARY_HEADERS ${REL_HEADERS})
 
 ROOT_GENERATE_DICTIONARY(G__Analyzers 
-    ${HEADERS}
+    ${DICTIONARY_HEADERS}
     MODULE Analyzers
     LINKDEF include/AnalyzersLinkDef.hpp
 )
