@@ -100,7 +100,7 @@ ROOT_GENERATE_DICTIONARY(G__AnalyzerTools
 
 # Installation
 install(TARGETS AnalyzerTools DESTINATION lib)
-install(DIRECTORY include/ DESTINATION include/AnalyzerTools)
+install(DIRECTORY include/ DESTINATION include)
 
 
 
