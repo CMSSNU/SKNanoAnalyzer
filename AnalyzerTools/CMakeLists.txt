@@ -37,6 +37,7 @@ target_link_libraries(MLHelper PUBLIC
 
 
 #install(FILES include/MLHelper.h DESTINATION include)
+
 ROOT_GENERATE_DICTIONARY(G__MLHelper
     include/MLHelper.h
     MODULE MLHelper
@@ -51,12 +52,11 @@ install(FILES include/MLHelper.h DESTINATION include/AnalyzerTools)
 # Prepare headers for ROOT dictionary
 file(GLOB HEADERS include/*.h)
 list(FILTER DICTIONARY_HEADERS EXCLUDE REGEX "MLHelper.h")
-
-# Attempt to resolve header conflicts more elegantly
-# This is a placeholder - you may need a more sophisticated approach
-set(DICTIONARY_HEADERS ${HEADERS})
-#install(FILES ${HEADERS} DESTINATION include/AnalyzerTools)
-
+foreach(HEADER ${HEADERS})
+    file(RELATIVE_PATH REL_HEADER ${CMAKE_CURRENT_SOURCE_DIR} ${HEADER})
+    list(APPEND REL_HEADERS ${REL_HEADER})
+endforeach()
+set(DICTIONARY_HEADERS ${REL_HEADERS})
 
 
 # Prepare source files
@@ -109,4 +109,3 @@ set(ROOTMAP "libAnalyzerTools.rootmap")
 set(PCM "libAnalyzerTools_rdict.pcm")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/AnalyzerTools)

@@ -4,6 +4,7 @@ echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
 echo -e "\033[31m######################################################\033[0m"
 echo ""
 
+
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
 export SKNANO_HOME=`pwd`
@@ -71,6 +72,7 @@ export PYTHONPATH=$PYTHONPATH:$SKNANO_PYTHON
 export SKNANO_LIB=$SKNANO_INSTALLDIR/lib
 export SKNANO_RUN3_NANOAODPATH="/gv0/DATA/SKNano/Run3NanoAODv12/"
 export SKNANO_RUN2_NANOAODPATH="/gv0/DATA/SKNano/Run2NanoAODv9/"
+export ROOT_INCLUDE_DIRS=$ROOT_INCLUDE_DIRS:$SKNANO_INSTALLDIR/include
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
