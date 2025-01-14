@@ -7,9 +7,10 @@ echo ""
 
 # Set up environment
 echo "@@@@ Working Directory: `pwd`"
+DATA9=/data9/Users/$USER
 export SKNANO_HOME=`pwd`
-export SKNANO_RUNLOG="$GV0/SKNanoRunlog"
-export SKNANO_OUTPUT="$GV0/SKNanoOutput"
+export SKNANO_RUNLOG="$DATA9/SKNanoRunlog"
+export SKNANO_OUTPUT="$DATA9/SKNanoOutput"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
