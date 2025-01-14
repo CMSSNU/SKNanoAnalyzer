@@ -4,11 +4,14 @@ test/*
 test.root
 CMakeFiles/*
 external/lhapdf/*
+external/libtorch/*
 config/config.*
+!config/config.default
 **/Skim*.json
 external/** 
 *.onnx
 !external/KinematicFitter
+templates/__pycache__/*
 
 #Temporary Added to my personal temp files
 DataCOPY/** 

@@ -29,6 +29,7 @@ public:
     bool IsDATA;
     TString DataStream;
     TString MCSample;
+    TString Campaign;
     //bool IsFastSim;
     int DataYear;
     TString DataEra;
@@ -40,9 +41,7 @@ public:
     virtual void SetMaxLeafSize();
     virtual void Loop();
 
-    //virtual void beginEvent(){};
     virtual void executeEvent(){};
-    //virtual void endEvent(){};
 
     virtual void SetEra(TString era) {
         DataEra=era;
@@ -51,9 +50,10 @@ public:
         if(DataYear == 2016 or DataYear == 2017 or DataYear == 2018) Run = 2;
         else if(DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025) Run = 3;
     }
-    
+    virtual void SetCampaign(TString campaign) { Campaign=campaign; }
+
     virtual TString GetEra() const { return DataEra; }
-    //virtual TString GetEraShort() const;
+    virtual TString GetCampaign() const { return Campaign; }
     virtual int GetYear() const { return DataYear; }
 
     TChain *fChain=nullptr;
