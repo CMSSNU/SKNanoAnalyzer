@@ -49,6 +49,18 @@ cp config/config.default config/config.$USER
 source setup.sh    # you have to do this every new session
 ```
 
+### Singularity Support
+If you want to use Singularity image for the batch job, first compile the project within singularity image.
+```bash
+singularity exec $SINGULARITY_IMAGE bash -c "source setup.sh && ./scripts/build.sh"
+```
+$SINGULARITY\_IMAGE variable will be automatically parsed from config/config.$USER file. Use SKNano.py to submit
+batch jobs:
+```bash
+SKNano.py -a ExampleRun -i DYJets -e 2022 -n 10 --reduction 10 --no_exec ...
+```
+
+
 ### Testing PRs
 Here is a recommended way to test PRs.
 ```bash
