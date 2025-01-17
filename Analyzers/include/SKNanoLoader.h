@@ -29,6 +29,7 @@ public:
     bool IsDATA;
     TString DataStream;
     TString MCSample;
+    TString Campaign;
     //bool IsFastSim;
     int DataYear;
     TString DataEra;
@@ -39,10 +40,7 @@ public:
     virtual void Init();
     virtual void SetMaxLeafSize();
     virtual void Loop();
-
-    //virtual void beginEvent(){};
     virtual void executeEvent(){};
-    //virtual void endEvent(){};
 
     virtual void SetEra(TString era) {
         DataEra=era;
@@ -51,15 +49,27 @@ public:
         if(DataYear == 2016 or DataYear == 2017 or DataYear == 2018) Run = 2;
         else if(DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025) Run = 3;
     }
-    
+    virtual void SetCampaign(TString campaign) { Campaign=campaign; }
+
     virtual TString GetEra() const { return DataEra; }
-    //virtual TString GetEraShort() const;
+    virtual TString GetCampaign() const { return Campaign; }
     virtual int GetYear() const { return DataYear; }
 
     TChain *fChain=nullptr;
     ROOT::RDataFrame *df=nullptr;
 
     // Declaration of leaf types
+    // Weights
+    Float_t genWeight;
+    Float_t LHEWeight_originalXWGTUP;
+    Float_t Generator_weight;
+    static constexpr int nLHEPdfWeight = 110; // 325300 - 325402
+    static constexpr int nLHEScaleWeight = 9;
+    static constexpr int nPSWeight = 4; 
+    Float_t LHEPdfWeight[nLHEPdfWeight];
+    Float_t LHEScaleWeight[nLHEScaleWeight];
+    Float_t PSWeight[nPSWeight];
+
     // PDFs
     Int_t Generator_id1;
     Int_t Generator_id2;
@@ -67,17 +77,104 @@ public:
     Float_t Generator_x2;
     Float_t Generator_xpdf1;
     Float_t Generator_xpdf2;
-    Float_t Generator_scalePDF;
-    Float_t Generator_weight;
-    // Weights
-    Float_t genWeight;
-    Float_t LHEWeight_originalXWGTUP;
-    static constexpr int nLHEPdfWeight = 110; // 325300 - 325402
-    static constexpr int nLHEScaleWeight = 9;
-    static constexpr int nPSWeight = 4; 
-    Float_t LHEPdfWeight[nLHEPdfWeight];
-    Float_t LHEScaleWeight[nLHEScaleWeight];
-    Float_t PSWeight[nPSWeight];
+    Float_t Generator_scalePDF; 
+
+    // LHE
+    Float_t LHE_HT, LHE_HTIncoming;
+    Float_t LHE_Vpt;
+    Float_t LHE_AlphaS;
+    UChar_t LHE_Njets, LHE_Nb, LHE_Nc, LHE_Nuds, LHE_Nglu;
+    UChar_t LHE_NpLO, LHE_NpNLO;
+
+    // LHEPart
+    Int_t nLHEPart;
+    UInt_t nLHEPart_RunII;
+    RVec<Float_t> LHEPart_pt;
+    RVec<Float_t> LHEPart_eta;
+    RVec<Float_t> LHEPart_phi;
+    RVec<Float_t> LHEPart_mass;
+    RVec<Float_t> LHEPart_incomingpz;
+    RVec<Int_t> LHEPart_pdgId;
+    RVec<Int_t> LHEPart_status;
+    RVec<Int_t> LHEPart_spin;
+
+    // GenPart
+    Int_t nGenPart;
+    UInt_t nGenPart_RunII;
+    RVec<Float_t> GenPart_eta;
+    RVec<Float_t> GenPart_mass;
+    RVec<Int_t> GenPart_pdgId;
+    RVec<Float_t> GenPart_phi;
+    RVec<Float_t> GenPart_pt;
+    RVec<Int_t> GenPart_status;
+    //Run3
+    RVec<Short_t> GenPart_genPartIdxMother;
+    RVec<UShort_t> GenPart_statusFlags;
+    //Run2
+    RVec<Int_t> GenPart_genPartIdxMother_RunII;
+    RVec<Int_t> GenPart_statusFlags_RunII;
+
+    // GenJet
+    Int_t nGenJet;
+    UInt_t nGenJet_RunII;
+    RVec<Float_t> GenJet_eta;
+    RVec<UChar_t> GenJet_hadronFlavour;
+    RVec<Float_t> GenJet_mass;
+    RVec<Float_t> GenJet_phi;
+    RVec<Float_t> GenJet_pt;
+    //Run3
+    RVec<Short_t> GenJet_partonFlavour;
+    //Run2
+    RVec<Int_t> GenJet_partonFlavour_RunII;
+
+    // GenJetAK8
+    Int_t nGenJetAK8;
+    UInt_t nGenJetAK8_RunII;
+    RVec<Float_t> GenJetAK8_eta;
+    RVec<UChar_t> GenJetAK8_hadronFlavour;
+    RVec<Float_t> GenJetAK8_mass;
+    RVec<Float_t> GenJetAK8_phi;
+    RVec<Float_t> GenJetAK8_pt;
+    //Run3
+    RVec<Short_t> GenJetAK8_partonFlavour;
+    //Run2
+    RVec<Int_t> GenJetAK8_partonFlavour_RunII;
+
+    // GenMet
+    Float_t GenMet_pt;
+    Float_t GenMet_phi;
+
+    // GenDressedLepton
+    Int_t nGenDressedLepton;
+    UInt_t nGenDressedLepton_RunII;
+    RVec<Float_t> GenDressedLepton_pt;
+    RVec<Float_t> GenDressedLepton_eta;
+    RVec<Float_t> GenDressedLepton_phi;
+    RVec<Float_t> GenDressedLepton_mass;
+    RVec<Int_t> GenDressedLepton_pdgId;
+    RVec<Bool_t> GenDressedLepton_hasTauAnc;
+
+    // GenIsolatedPhotons
+    Int_t nGenIsolatedPhoton;
+    UInt_t nGenIsolatedPhoton_RunII;
+    RVec<Float_t> GenIsolatedPhoton_pt;
+    RVec<Float_t> GenIsolatedPhoton_eta;
+    RVec<Float_t> GenIsolatedPhoton_phi;
+    RVec<Float_t> GenIsolatedPhoton_mass;
+    
+    // GenVisTau
+    Int_t nGenVisTau;
+    UInt_t nGenVisTau_RunII;
+    RVec<Float_t> GenVisTau_pt;
+    RVec<Float_t> GenVisTau_eta;
+    RVec<Float_t> GenVisTau_phi;
+    RVec<Float_t> GenVisTau_mass;
+    RVec<Int_t> GenVisTau_charge;
+    RVec<Int_t> GenVisTau_genPartIdxMother;
+    RVec<Int_t> GenVisTau_status;
+
+    // GenVtx -> Need Update
+
     //L1Prefire-------------------------
     Float_t L1PreFiringWeight_Nom;
     Float_t L1PreFiringWeight_Dn;
@@ -101,37 +198,9 @@ public:
     Int_t PV_npvs_RunII;
     Int_t PV_npvsGood_RunII;
 
-    //GenPart----------------------------
-    Int_t* nGenPart = new Int_t;
-    UInt_t* nGenPart_RunII = new UInt_t;
-    RVec<Float_t> GenPart_eta;
-    RVec<Float_t> GenPart_mass;
-    RVec<Int_t> GenPart_pdgId;
-    RVec<Float_t> GenPart_phi;
-    RVec<Float_t> GenPart_pt;
-    RVec<Int_t> GenPart_status;
-    //Run3
-    RVec<Short_t> GenPart_genPartIdxMother;
-    RVec<UShort_t> GenPart_statusFlags;
-    //Run2
-    RVec<Int_t> GenPart_genPartIdxMother_RunII;
-    RVec<Int_t> GenPart_statusFlags_RunII;
-
-    //LHEPart-----------------
-    Int_t* nLHEPart = new Int_t;
-    UInt_t* nLHEPart_RunII = new UInt_t;
-    RVec<Float_t> LHEPart_pt;
-    RVec<Float_t> LHEPart_eta;
-    RVec<Float_t> LHEPart_phi;
-    RVec<Float_t> LHEPart_mass;
-    RVec<Float_t> LHEPart_incomingpz;
-    RVec<Int_t> LHEPart_pdgId;
-    RVec<Int_t> LHEPart_status;
-    RVec<Int_t> LHEPart_spin;
-
     // Muon----------------------------
-    Int_t* nMuon = new Int_t;
-    UInt_t* nMuon_RunII = new UInt_t;
+    Int_t nMuon;
+    UInt_t nMuon_RunII;
     RVec<Int_t> Muon_charge;
     RVec<Float_t> Muon_dxy;
     RVec<Float_t> Muon_dxyErr;
@@ -173,8 +242,8 @@ public:
     RVec<UChar_t> Muon_mvaId; //this is in fact wp
 
     //Electron----------------------------
-    Int_t* nElectron = new Int_t;
-    UInt_t* nElectron_RunII = new UInt_t;
+    Int_t nElectron;
+    UInt_t nElectron_RunII;
     RVec<Int_t> Electron_charge;
     RVec<Bool_t> Electron_convVeto;
     RVec<Bool_t> Electron_cutBased_HEEP;
@@ -242,8 +311,8 @@ public:
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
 
     //Photon----------------------------
-    Int_t* nPhoton = new Int_t;
-    UInt_t* nPhoton_RunII = new UInt_t;
+    Int_t nPhoton;
+    UInt_t nPhoton_RunII;
     RVec<Float_t> Photon_energyErr;
     RVec<Float_t> Photon_eta;
     RVec<UChar_t> Photon_genPartFlav;
@@ -264,8 +333,8 @@ public:
     RVec<Int_t> Photon_cutBased_RunII;
 
     //Jet----------------------------
-    Int_t* nJet = new Int_t;
-    UInt_t* nJet_RunII = new UInt_t;
+    Int_t nJet;
+    UInt_t nJet_RunII;
     RVec<Float_t> Jet_area;
     RVec<Float_t> Jet_btagDeepFlavB;
     RVec<Float_t> Jet_btagDeepFlavCvB;
@@ -339,8 +408,8 @@ public:
     RVec<Float_t> Jet_qgl;
 
     //Tau---------------------------------------
-    Int_t* nTau = new Int_t;
-    UInt_t* nTau_RunII = new UInt_t;
+    Int_t nTau;
+    UInt_t nTau_RunII;
     RVec<Float_t> Tau_dxy;
     RVec<Float_t> Tau_dz;
     RVec<Float_t> Tau_eta;
@@ -365,8 +434,8 @@ public:
     RVec<Int_t> Tau_genPartIdx_RunII;
 
     // FatJet----------------------------
-    Int_t* nFatJet = new Int_t;
-    UInt_t* nFatJet_RunII = new UInt_t;
+    Int_t nFatJet;
+    UInt_t nFatJet_RunII;
     RVec<Float_t> FatJet_area;
     RVec<Float_t> FatJet_btagDDBvLV2;
     RVec<Float_t> FatJet_btagDDCvBV2;
@@ -444,19 +513,6 @@ public:
     RVec<Float_t> FatJet_particleNet_mass;
     RVec<Int_t> FatJet_subJetIdx1_RunII;
     RVec<Int_t> FatJet_subJetIdx2_RunII;
-
-    //GenJet----------------------------
-    Int_t* nGenJet = new Int_t;
-    UInt_t* nGenJet_RunII = new UInt_t;
-    RVec<Float_t> GenJet_eta;
-    RVec<UChar_t> GenJet_hadronFlavour;
-    RVec<Float_t> GenJet_mass;
-    RVec<Float_t> GenJet_phi;
-    RVec<Float_t> GenJet_pt;
-    //Run3
-    RVec<Short_t> GenJet_partonFlavour;
-    //Run2
-    RVec<Int_t> GenJet_partonFlavour_RunII;
 
     //PuppiMET----------------------------
     Float_t PuppiMET_pt;

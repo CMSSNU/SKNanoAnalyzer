@@ -6,11 +6,10 @@ echo ""
 
 
 # Set up environment
-echo "@@@@ Working Directory: `pwd`"
-DATA9=/data9/Users/$USER
 export SKNANO_HOME=`pwd`
-export SKNANO_RUNLOG="$DATA9/SKNanoRunlog"
-export SKNANO_OUTPUT="$DATA9/SKNanoOutput"
+export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
+export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
+echo "@@@@ Working Directory: $SKNANO_HOME"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
@@ -20,21 +19,31 @@ if [ -f "${CONFIG_FILE}" ]; then
     PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     export TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     export USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
-
+    export SINGULARITY_IMAGE=$(grep '\[SINGULARITY_IMAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
 else
     echo "@@@@ Configuration file $CONFIG_FILE not found"
     echo "@@@@ Please create a configuration file in config/ with your username"
 fi
 echo "@@@@ System:  $SYSTEM"
 echo "@@@@ Package: $PACKAGE"
+echo "@@@@ Telegram Bot Token: $TOKEN_TELEGRAMBOT"
+echo "@@@@ Telegram Chat ID: $USER_CHATID"
+echo "@@@@ Using singularity image: $SINGULARITY_IMAGE"
 
 # root configuration
 # no cvmfs related configuration for conda
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
-    source ~/.conda-activate
-    conda activate nano
-    #micromamba activate Nano
+    IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
+    if [ -n "$IS_SINGULARITY" ]; then
+        # Building within Singularity image, will be used for batch jobs
+        echo "@@@@ Detected Singularity environment"
+        source /opt/conda/bin/activate
+        conda activate torch
+    else
+        source /data9/Users/choij/miniconda3/bin/activate
+        conda activate nano
+    fi
 elif [ $PACKAGE = "mamba" ]; then
     # set up mamba environment
     micromamba activate Nano
