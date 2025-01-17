@@ -360,7 +360,7 @@ Event AnalyzerCore::GetEvent()
 
 RVec<Muon> AnalyzerCore::GetAllMuons() {
     RVec<Muon> muons;
-    for (int i = 0; i < *(nMuon); i++) {
+    for (int i = 0; i < nMuon; i++) {
         Muon muon;
         muon.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
         muon.SetCharge(Muon_charge[i]);
@@ -465,7 +465,7 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID
 
 RVec<Electron> AnalyzerCore::GetAllElectrons(){
     RVec<Electron> electrons;
-    for (int i = 0; i < *(nElectron); i++){
+    for (int i = 0; i < nElectron; i++){
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
@@ -553,7 +553,7 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
     RVec<Gen> Gens;
     if(IsDATA) return Gens;
 
-    for (int i = 0; i < *(nGenPart); i++){
+    for (int i = 0; i < nGenPart; i++){
 
         Gen gen;
 
@@ -577,7 +577,7 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
 
 RVec<LHE> AnalyzerCore::GetAllLHEs() {
     RVec<LHE> lhes;
-    for (int i = 0; i < *(nLHEPart); i++) {
+    for (int i = 0; i < nLHEPart; i++) {
         LHE lhe;
         lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
         lhe.SetStatus(LHEPart_status[i]);
@@ -593,7 +593,7 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
 
     RVec<Tau> taus;
     
-    for (int i = 0; i < *(nTau); i++) {
+    for (int i = 0; i < nTau; i++) {
 
         Tau tau;
         tau.SetPtEtaPhiM(Tau_pt[i], Tau_eta[i], Tau_phi[i], Tau_mass[i]);
@@ -644,7 +644,7 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
-    for (int i = 0; i < *(nJet); i++)
+    for (int i = 0; i < nJet; i++)
     {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
@@ -710,7 +710,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
 
 RVec<Photon> AnalyzerCore::GetAllPhotons() {
     RVec<Photon> Photons;
-    for (int i = 0; i< *(nPhoton); i++) {
+    for (int i = 0; i< nPhoton; i++) {
         Photon photon;
         photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
         float photon_theta = photon.Theta();
@@ -842,7 +842,7 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
     
     RVec<FatJet> FatJets;
 
-    for (int i = 0; i < *(nFatJet); i++) {
+    for (int i = 0; i < nFatJet; i++) {
 
         FatJet fatjet;
 
@@ -899,7 +899,7 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     RVec<GenJet> GenJets;
     if(IsDATA) return GenJets;
 
-    for (int i = 0; i < *(nGenJet); i++) {
+    for (int i = 0; i < nGenJet; i++) {
 
         GenJet genjet;
 
