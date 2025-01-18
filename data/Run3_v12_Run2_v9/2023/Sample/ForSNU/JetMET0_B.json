@@ -1,8 +1,6 @@
 {
     "name": "JetMET0",
     "isMC": 0,
-    "NEvents": [
-        125082680.0
-    ],
+    "NEvents": [],
     "path": []
 }

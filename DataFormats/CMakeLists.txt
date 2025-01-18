@@ -20,8 +20,16 @@ target_include_directories(DataFormats PRIVATE
 file(GLOB HEADERS include/*.h)
 #install(FILES ${HEADERS} DESTINATION include/DataFormats)
 
+file(GLOB HEADERS include/*.h)
+foreach(HEADER ${HEADERS})
+    file(RELATIVE_PATH REL_HEADER ${CMAKE_CURRENT_SOURCE_DIR} ${HEADER})
+    list(APPEND REL_HEADERS ${REL_HEADER})
+endforeach()
+set(DICTIONARY_HEADERS ${REL_HEADERS})
+
+
 ROOT_GENERATE_DICTIONARY(G__DataFormats
-    ${HEADERS}
+    ${DICTIONARY_HEADERS}
     MODULE DataFormats
     LINKDEF include/DataFormatsLinkDef.hpp
 )
@@ -40,4 +48,4 @@ set(PCM "libDataFormats_rdict.pcm")
 message(STATUS "ROOTMAP: ${ROOTMAP}")
 message(STATUS "PCM: ${PCM}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ROOTMAP}" "${CMAKE_CURRENT_BINARY_DIR}/${PCM}" DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/DataFormats)
+install(FILES ${HEADERS} DESTINATION include)

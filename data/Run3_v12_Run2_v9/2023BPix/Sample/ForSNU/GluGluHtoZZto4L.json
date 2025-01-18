@@ -1,0 +1,11 @@
+{
+    "name": "GluGluHtoZZto4L",
+    "isMC": 1,
+    "PD": "GluGluHtoZZto4L_M-125_TuneCP5_13p6TeV_powheg2-JHUGenV752-pythia8",
+    "xsec_formula": "52.23*0.001672*3*0.033658*0.033658",
+    "nmc": 1666666.0,
+    "sumsign": 1666560.0,
+    "sumW": 38557072.0,
+    "xsec": 0.00029679334999899555,
+    "path": []
+}
