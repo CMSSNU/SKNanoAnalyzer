@@ -99,7 +99,7 @@ Correction::Correction(const TString &era, const TString &sample, const bool IsD
     }
     else if (era == "2022")
     {
-        json_muon += "/2022_27Jun2023/muon_Z.json.gz";
+        json_muon += "/2022_Summer22/muon_Z.json.gz";
         json_muon_trig_eff += "/2022/MUO/muon_trig.json";
         json_puWeights += "/2022_Summer22/puWeights.json.gz";
         json_btagging += "/2022_Summer22/btagging.json.gz";
@@ -118,7 +118,7 @@ Correction::Correction(const TString &era, const TString &sample, const bool IsD
     }
     else if (era == "2022EE")
     {
-        json_muon += "/2022EE_27Jun2023/muon_Z.json.gz";
+        json_muon += "/2022_Summer22EE/muon_Z.json.gz";
         json_muon_trig_eff += "/2022EE/MUO/muon_trig.json";
         json_puWeights += "/2022_Summer22EE/puWeights.json.gz";
         json_btagging += "/2022_Summer22EE/btagging.json.gz";
