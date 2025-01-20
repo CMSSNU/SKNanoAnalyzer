@@ -1079,7 +1079,7 @@ void SKNanoLoader::Init() {
             TriggerMap[key_str].second = value["lumi"];
             //if key_str is in tree, set branch address
             if (fChain->GetBranch(key_str)) {
-                fChain->SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
             } else if(key_str=="Full") {
                 *TriggerMap[key_str].first = true;
             } else{
