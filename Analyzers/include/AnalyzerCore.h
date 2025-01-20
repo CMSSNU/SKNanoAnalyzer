@@ -154,7 +154,7 @@ public:
     //template <typename T>
     //inline void SetBranch(const TString &treename, const TString &branchname, std::vector<T> &val) {SetBranch_Vector(treename, branchname, val);};
 
-    void FillTrees();
+    void FillTrees(const TString &treename="");
     virtual void WriteHist();
 
 private:

@@ -1082,21 +1082,51 @@ template void AnalyzerCore::SetBranch_Vector<float>(const TString &, const TStri
 template void AnalyzerCore::SetBranch_Vector<double>(const TString &, const TString &, std::vector<double> &);
 template void AnalyzerCore::SetBranch_Vector<bool>(const TString &, const TString &, std::vector<bool> &);
 
-void AnalyzerCore::FillTrees()
+
+void AnalyzerCore::FillTrees(const TString &treename)
 {
-    for (const auto &pair : treemap)
+    if (treename == "")
     {
-        const string &treename = pair.first;
-        TTree *tree = pair.second;
-        tree->Fill();
+        for (const auto &pair : treemap)
+        {
+            const string &treename = pair.first;
+            TTree *tree = pair.second;
+            tree->Fill();
+        }
         this_floats.clear();
         this_ints.clear();
         this_bools.clear();
         this_floats.shrink_to_fit();
         this_ints.shrink_to_fit();
-        this_bools.shrink_to_fit(); //Mandatory;
+        this_bools.shrink_to_fit(); // Mandatory;
+    }
+    else
+    {
+        // Convert treeName to std::string for comparison
+        std::string treeNameStr(treename.Data());
+
+        auto it = treemap.find(treeNameStr);
+        if (it != treemap.end())
+        {
+            // Tree with the given name exists, fill it
+            TTree *tree = it->second;
+            tree->Fill();
+            this_floats.clear();
+            this_ints.clear();
+            this_bools.clear();
+            this_floats.shrink_to_fit();
+            this_ints.shrink_to_fit();
+            this_bools.shrink_to_fit(); // Mandatory;
+        }
+        else
+        {
+            // Handle the case where the treeName is not found in the map
+            throw std::runtime_error("[AnalyzerCore::FillTrees] Tree with name '" + treeNameStr + "' not found in treemap.");
+        }
     }
 }
+
+
 void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms to " << outfile->GetName() << endl;
     std::vector<std::pair<std::string, TH1F *>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
