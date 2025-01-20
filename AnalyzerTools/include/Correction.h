@@ -20,6 +20,53 @@ using correction::CorrectionSet;
 class Correction
 {
 public:
+    struct EraConfig {
+        std::string json_muon;
+        std::string json_muon_trig_eff;
+        std::string json_puWeights;
+        std::string json_btagging;
+        std::string json_ctagging;
+        std::string json_btagging_eff;
+        std::string json_ctagging_eff;
+        std::string json_btagging_R;
+        std::string json_ctagging_R;
+        std::string json_electron;
+        std::string json_electron_hlt;
+        std::string json_photon;
+        std::string json_jerc;
+        std::string json_jerc_fatjet;
+        std::string json_jetvetomap;
+        std::string json_met;
+    };
+    EraConfig GetEraConfig(TString era, string btagging_eff_file, string ctagging_eff_file, string btagging_R_file, string ctagging_R_file);
+
+    inline bool loadCorrectionSet(const std::string &name,
+                                  const std::string &file,
+                                  unique_ptr<CorrectionSet> &cset,
+                                  bool optional = false)
+    {
+        std::cout << "[Correction::Correction] using " << name << " file: " << file << std::endl;
+        try
+        {
+            cset = CorrectionSet::from_file(file);
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            if (optional)
+            {
+                std::cerr << "[Correction::Correction] Warning: Failed to load " << name
+                          << " file (" << file << "): " << e.what() << std::endl;
+                return false;
+            }
+            else
+            {
+                std::cerr << "[Correction::Correction] Error: Failed to load " << name
+                          << " file (" << file << "): " << e.what() << std::endl;
+                throw;
+            }
+        }
+    }
     Correction();
     Correction(const TString &era, const TString &sample, const bool IsData, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
     ~Correction();
@@ -40,29 +87,29 @@ public:
         JME
     };
 
-    enum class XYCorrection_MetType{
+    enum class XYCorrection_MetType
+    {
         Type1PFMET,
         Type1PuppiMET
     };
 
-
-
     inline TString GetEra() const { return DataEra; }
-    inline void SetEra(TString era) { 
-        DataEra = era; 
-        if(era == "2016preVFP" || era == "2016postVFP" || era == "2017" || era == "2018" || era == "2018UL" ) Run = 2;
-        else Run = 3;
+    inline void SetEra(TString era)
+    {
+        DataEra = era;
+        if (era == "2016preVFP" || era == "2016postVFP" || era == "2017" || era == "2018" || era == "2018UL")
+            Run = 2;
+        else
+            Run = 3;
     }
     inline void SetSample(TString sample) { Sample = sample; }
     inline void setIsData(bool isData) { IsDATA = isData; }
-
-
 
     // Muon
     inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, abseta, pt, syst, source); }
     inline float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_Trigger_SF_Key, abseta, pt, syst, source); };
     inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, muons, syst, source); }
-    //float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "");
+    // float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "");
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "") const;
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") const;
     float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool eff_for_data, const variation syst = variation::nom, const TString &source = "") const;
@@ -91,10 +138,12 @@ public:
     float GetElectronRECOSF(const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, bool ofDATA, const variation syst = variation::nom, const TString &source = "total") const;
-    inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total"){
+    inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total")
+    {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, true, syst, source);
     };
-    inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total"){
+    inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total")
+    {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, false, syst, source);
     };
 
@@ -109,12 +158,12 @@ public:
     // jerc_fatjet
     // jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, TString mapCategory) const;
-    //MET
+    // MET
     void METXYCorrection(Particle &Met, const int RunNumber, const int npvs, const XYCorrection_MetType MetType);
-    //reweighting
+    // reweighting
     float GetTopPtReweight(const RVec<Gen> &gens) const;
 
-private: 
+private:
     JetTagging::JetFlavTaggerWP global_wp;
     JetTagging::JetFlavTagger global_tagger;
     string global_wpStr;
@@ -123,7 +172,7 @@ private:
     int Run;
     TString Sample;
     bool IsDATA;
-    
+
     unique_ptr<CorrectionSet> cset_muon;
     unique_ptr<CorrectionSet> cset_muon_trig_eff;
     unique_ptr<CorrectionSet> cset_puWeights;
