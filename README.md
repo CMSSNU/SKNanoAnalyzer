@@ -3,18 +3,9 @@
 
 ## THIS IS DEVELOPMENT VERSION!!
 
-## Project Updates
-[HedgeDoc](https://demo.hedgedoc.org/VrWRIlceTjO9SPOVLKUNVA?view)
 
 ## Notes
 - ROOT v6.32.xx have memory leak issue while reading root files with <= v6.30.xx -> Avoid using ROOT >= v6.32.xx temporariliy
-
-## To do
-- Make ExampleRun runable -> done
-- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
-- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
-- external dependencies: ~~LHAPDF~~ / GEScaleSyst(?) / ~~CorrectionLib~~
-
 ## How to
 ### Preliminary Setup
 Here is an example to setup the environment using conda.
@@ -29,7 +20,21 @@ conda install onnxruntime-cpp
 # Install correctionlib
 pip install correctionlib
 ```
+I recommend to use micromamba, which is a faster alternative to anaconda that is infamous for its slow speed to solving the environment.
+```bash
+"${SHELL}" <(curl -L micro.mamba.pm/install.sh)
+```
+Then, you can create the environment using micromamba, just replace `conda` with `micromamba`.
 
+For both `micromamba` and `conda`, Do not install the packages in home directory. It is because home directory cannot be accessed by the worker nodes. Use `/data6/Users/foo` instead.
+
+If you are choose to use `micromamba` set your `[PACKAGE]` as `mamba` in the config file.
+you can copy my environment by use `Nano.yml` under templates directory. Just Change the `prefix` to your own directory.
+```bash
+# @ $SKNANO_HOME/templates
+# After modifying the prefix in Nano.yml
+micromamba env create -f Nano.yml
+```
 ### Installation
 Recommend to fork the repo to your account.
 ```bash
@@ -54,7 +59,7 @@ If you want to use Singularity image for the batch job, first compile the projec
 ```bash
 singularity exec $SINGULARITY_IMAGE bash -c "source setup.sh && ./scripts/build.sh"
 ```
-$SINGULARITY\_IMAGE variable will be automatically parsed from config/config.$USER file. Use SKNano.py to submit
+`$SINGULARITY_IMAGE` variable will be automatically parsed from `config/config.$USER` file. Use SKNano.py to submit
 batch jobs:
 ```bash
 SKNano.py -a ExampleRun -i DYJets -e 2022 -n 10 --reduction 10 --no_exec ...
@@ -162,9 +167,11 @@ Basic usage is as aboves. There are some additional options for the submission:
 
 ### Skimming mode
 By passing --skimming_mode, SKFlat.py will submit the jobs for the skimming mode. In this mode, the jobs will create the output in `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[Data,MC]/Skim/$USERNAME` directory, Instead of submit hadd layer in DAG, *PostProc* layer will add in the DAG. 
+
 If your analyzer has name that starts with "Skim_", you will be asked to be enable the skimming mode. If you choose to enable the skimming mode, then skimming mode will be activated. Of course you can manually activate the skimming mode by passing --skimming_mode flag.
+
 PostProc layer will create the Skimmed sample folder and will creat the skimTreeInfo.json file and dedicated json that saves the information of the skimmed samples under $SKNANO_DATA/era/Sample/Skim directory.
-Each postproc job modify the skimTreeInfo.json sequentially, so ***DO NOT SUBMIT THE DAG CLUSTER THAT DO SKIMMING.*** After all the postproc jobs are done, you can submit the new jobs that using skimmed sample. A prefix of Skim_AnalyzerName will be added to the output file name.
+Each postproc job modify the skimTreeInfo.json sequentially, so ***DO NOT SUBMIT THE MULTIPLE DAG CLUSTERS THAT DO SKIMMING.*** After all the postproc jobs are done, you can submit the new jobs that using skimmed sample. A prefix of Skim_AnalyzerName will be added to the output file name.
 ```bash
 SKFlat.py -a AnalyzerName -i DYJets -n -1 -e era --skimming_mode
 ```
@@ -178,65 +185,35 @@ Then you can submit the jobs by
 SKFlat.py -a AnalyzerName -i Skim_AnalyzerName_DYJets -n -1 -e era
 ```
 
-
-## To do
-- Make ExampleRun runable -> done
-- DataFormats -> Electron, Muon, LHE(Jin), Jet/GenJet (Yeonjun), Tau/FatJet(Youngwan), Gen(Taehee)
-- TODO: start validation task, check installation of correctionlib, private NanoAOD generation
-- external dependencies: LHAPDF / GEScaleSyst(?) / CorrectionLib
-
 ## Note
 
-# SKFlat - Run3 Update
-
-## General
-- Scope of the update: Run3 only
-- Baseline: Central NanoAOD → postproc (Private Skim + add branch)
-- Any missing variables in NanoAOD? Need processing from MiniAOD?
-- Private NANO: MiniAOD $\to$ NanoAOD (JME Private) 
-- Jihoon will follow (SKFlatMaker): need time
-
-## Object updates
-- Event(Trigger, MET): trigger list 조사 / json? 영완
-- DataStream 이름 조사 - 영완
-- Muon / Electron: 진 / 영완 (Correction updated)
-- Tau / FatJet: 영완 믿습니다(brave student) (updated)
-- JetTaggingParameter (updating): 영완
-- Jet / GenJet: 연준 / 지훈 (updated)
-- GEN: 태희 / 진 (updating)
-- Photon: 지훈(neeeww) (updating)
-    - isolation value만
-SNUCMSSW? 지훈(neeeww)
-- systematic variation update
-
-## SKFlat.py refactoring
-- Run3용으로 update
-- Done: Dagman framwork, Telegram notification, No Data-period support, auto iterating submission
-
-### Validation task
-- Drell Yan Peak 보기
-- Scale Variation
-- LHAPDF reweight validation
-- GEN + GENJET validation: flag가 맞는지 확인하는 정도
-
-
 ## To do
-- [ ]  Make a list of Data / MC samples and check the replicas [google docs](https://docs.google.com/spreadsheets/d/1fyk_y6L2OoVgDvDmSCGPMKjQEKwaNSo0Ji2NXtNKRf8/edit?usp=sharing)
-- [ ]  Postproc development → survey for objects / branches / corrections / scale factors -> after sample list finalized
-- [ ]  Make Baseline 
-- support for local run
-- survey for /gv0 storage (not using skim files)
-- 오브젝트 가져올때 Skim된 Nano에서 branch가 drop되어있는지 확인(e.g. flags) -> Youngwan will follow
-- SNUCMS에 github repo 파기
+### Assigned
+- [ ] Add new features to ExampleRun.cc and make them manual: **Yeonjoon**
+- [ ] Check the update in jsonpog-correction when sourcing setup.sh: **Chihwan**
+- [ ] Clean up gv0: **Jin**
+- [ ] Compare the sample list in SKFlat with the necessary samples, and bring them if necessary, check xsec, etc.: **Taehee+Eunsu**
+- [ ] Update the CheckStorages.sh to respect the folder structure under gv0: **Jin**
+- [ ] FatJet and Tau: **Youngwan**
 
 
-RDataframe / uproot (memory issue) / SKFlat
-SKFlat(base) -> std::vector<Muon>
-             -> ROOT::RVec<Muon>
-Correctionlib -> only python binding -> Youngwan will follow
-    
-- history fill -> hash map in C++?
-    
+### Not Assigned Yet
+- [ ] Auto-Validation: Make validation files and check the consistency of the output for a specific NanoAOD file
+- [ ] Update the network to 10G? (later)
+- [ ] Check for CVMFS environment compatability
+- [ ] Update MeasureTaggingEff.cc
+- [ ] Rochester Correction Follow-up
+
+For DY, check the before/after of
+- [ ] Electrons
+- [ ] Muons
+- [ ] Jets(B-tagging)
+
+## Make Tutorial
+- [ ] From make Training tree, Export ONNX, Use this model in the Analyzer : **Yeonjoon**
+- [ ] tt reconstruction using KinFitter
+- [ ] NLO vs LO comparison
+
 
 ## Useful links
 - [MiniAOD](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD)
