@@ -2,13 +2,14 @@
 #define ExampleRun_h
 
 #include "AnalyzerCore.h"
-#include "ExampleParameter.h"
+#include "SystematicHelper.h"
+
 
 class ExampleRun : public AnalyzerCore {
 public:
     void initializeAnalyzer();
     void executeEvent();
-    void executeEventFromParameter(ExampleParameter param);
+    void executeEventFromParameter();
 
     bool RunSyst;
     bool RunNewPDF;
@@ -17,11 +18,14 @@ public:
     TString IsoMuTriggerName;
     float TriggerSafePtCut;
 
-    RVec<TString> MuonIDs, MuonIDSFKeys;
+    RVec<TString> MuonIDSFKeys;
+    RVec<Muon::MuonID> MuonIDs;
     RVec<Muon> AllMuons;
     //RVec<Jet> AllJets;
 
     float weight_Prefire;
+
+    unique_ptr<SystematicHelper> systHelper;
 
     ExampleRun();
     ~ExampleRun();
