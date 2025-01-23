@@ -8,13 +8,13 @@ void ExampleRun::initializeAnalyzer() {
     //==== Dimuon Z-peak events with two muon IDs, with systematics
     
     // if you use "--userflags RunSyst" with SKFlat.py, HasFlag("RunSyst") will return true
-    //RunSyst = HasFlag("RunSyst");
+    RunSyst = HasFlag("RunSyst");
     RunSyst = false;
     cout << "[ExampleRun::initializeAnalyzer] RunSyst = " << RunSyst << endl;
 
     // Dimuon Z-peak with two muon IDs
     // "RVec<TString> MuonIDs;" is defined in Analyzers/include/ExampleRun.h
-    MuonIDs = {"POGMedium", "POGTight"};
+    MuonIDs = {Muon::MuonID::POG_MEDIUM, Muon::MuonID::POG_TIGHT};
     MuonIDSFKeys = {"NUM_MediumID_DEN_TrackerMuons", "NUM_TightID_DEN_TrackerMuons"};
 
     // At this point, sample informations (e.g. IsDATA, DataStream, MCSample, or DataEra) are all set
@@ -48,6 +48,16 @@ void ExampleRun::initializeAnalyzer() {
     
     // Correction
     myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    // SystematicHelper
+    string SKNANO_HOME = getenv("SKNANO_HOME");
+    if (IsDATA)
+    {
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream);
+    }
+    else
+    {
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/ExampleSystematic.yaml", MCSample);
+    }
 
     //==== Example 2
     //==== Using new PDF
@@ -99,42 +109,11 @@ void ExampleRun::executeEvent() {
     // No prefire weight for Run3?
     weight_Prefire = 1.;  //조사해보기
 
-    // Declare parameter set
-    ExampleParameter param;
 
-    // Loop over muonIDs
-    for (unsigned int it_MuonID=0; it_MuonID < MuonIDs.size(); it_MuonID++) {
-        const TString MuonID = MuonIDs.at(it_MuonID);
-        const TString MuonIDSFKey = MuonIDSFKeys.at(it_MuonID);
-
-        // 1) First, let's run central values
-        // clear parameter set
-        param.Clear();
-
-        // set which systematic sources you want to run this time
-        param.syst = ExampleParameter::SYST::Central;
-
-        // set name of the parameter set
-        param.Name = MuonID+"_"+param.GetSystType();
-
-        // you can define lepton ID string here
-        param.Muon_Tight_ID = MuonID;
-        param.Muon_ID_SF_Key = MuonIDSFKey;
-
-        // and jet ID
-        param.Jet_ID = "tight";
-
-        // now all parameters are set, run executeEventFromParmeter(param)
-        executeEventFromParameter(param);
-
-        // 2) Now, loop over systematic sources
-        if (RunSyst) {
-            for (unsigned int syst=1; syst < ExampleParameter::SYST::NSyst; syst++) {
-                param.syst = syst; 
-                param.Name = MuonID+"_"+"Syst_"+param.GetSystType();
-                executeEventFromParameter(param);
-            }
-        }
+    // Loop over systematic sources that require separate event loop
+    for (const auto &syst_dummy : *systHelper)
+    {
+        executeEventFromParameter();
     }
 
     //==== Example 2
@@ -155,7 +134,27 @@ void ExampleRun::executeEvent() {
     //==== Need Update
 }
 
-void ExampleRun::executeEventFromParameter(ExampleParameter param) {
+void ExampleRun::executeEventFromParameter() {
+    // Assign systematic sources, In this example, only muon ID scale factors are considered
+    string Mu_ID_SF_Key;
+    Muon::MuonID Muon_Tight_ID;
+    if(systHelper->getCurrentSysName() == "Central"){
+        Mu_ID_SF_Key = MuonIDSFKeys[0];
+        Muon_Tight_ID = MuonIDs[0];
+    }
+    // In this case, change of Muon ID is considered as systematic variation.
+    // Of course this only has one varation, not up and down
+    // I turned on OneSided option in the yaml file, then it variates in "Up" variation and stays same in "Down" variation
+    else if(systHelper->getCurrentSysName() == "Muon_ID_Tight_Up"){
+        Mu_ID_SF_Key = MuonIDSFKeys[1];
+        Muon_Tight_ID = MuonIDs[1];
+    }
+    else{
+        return;
+    }
+
+    std::unordered_map<std::string, std::variant<std::function<float(Correction::variation, TString)>, std::function<float()>>> weight_function_map;
+
     // No cut
     //FillHist(param.Name+"/NoCut_"+param.Name, 0., 1., 1, 0., 1.);
 
@@ -168,21 +167,9 @@ void ExampleRun::executeEventFromParameter(ExampleParameter param) {
     // Copy All objects
     RVec<Muon> this_AllMuons = AllMuons;
     //RVec<Jet> this_AllJets = AllJets;
-    
-    // For each systematic sources,
-    // 1. Smear or scale them
-    // 2. apply ID selections
-    // This order should be explicitly followed
-    // below are all varibales for available systematic sources
-    // Update systematic sources!
-    if (param.syst == ExampleParameter::SYST::Central) {}
-    else {
-        cerr << "[ExampleRun::executeEventFromParameter] syst = " << param.syst << " is not implemented" << endl;
-        exit(EXIT_FAILURE);
-    }
 
     // apply ID selections using this_AllXXX
-    RVec<Muon> muons = SelectMuons(this_AllMuons, param.Muon_Tight_ID, 20., 2.4);
+    RVec<Muon> muons = SelectMuons(this_AllMuons, Muon_Tight_ID, 20., 2.4);
     //RVec<Jet> jets = SelectJets(this_AllJets, param.Jet_ID, 30., 2.4);
     
     // sort in pt-order
@@ -206,21 +193,26 @@ void ExampleRun::executeEventFromParameter(ExampleParameter param) {
     Particle ZCand = muons.at(0) + muons.at(1);
     if (! (fabs(ZCand.M() - 91.2) < 15.)) return;
 
+    // example of applying muon scale factors
+    auto mu_id_lambda = [&](Correction::variation syst, TString source)
+    { return myCorr->GetMuonIDSF(Mu_ID_SF_Key, muons, syst, source); };
+    weight_function_map["Muon_ID"] = mu_id_lambda;
+    systHelper->assignWeightFunctionMap(weight_function_map);
+
     // Event weight
     float weight = 1.;
     if (!IsDATA) {
         weight *= MCweight();
         weight *= ev.GetTriggerLumi("Full");
         weight *= weight_Prefire;
-
-        // example of applying muon scale factors
-        for (const auto &muon: muons) {
-            float this_idsf = myCorr->GetMuonIDSF(param.Muon_ID_SF_Key, muon.Eta(), muon.Pt());
-            float this_isosf = 1.;
-            weight *= this_idsf * this_isosf;
+        float default_weight = weight;
+        // Below line will caculate weight for each systematic sources
+        unordered_map<std::string, float> weight_map = systHelper->calculateWeight();
+        for (const auto &w : weight_map)
+        {
+            // fill histograms
+            string Name = systHelper->getCurrentSysName();
+            FillHist(Name+"/ZCand_Mass_"+w.first, ZCand.M(), default_weight*w.second, 50, 70., 110.);
         }
     }
-
-    // fill histograms
-    FillHist(param.Name+"/ZCand_Mass_"+param.Name, ZCand.M(), weight, 50, 70., 110.);
 }
