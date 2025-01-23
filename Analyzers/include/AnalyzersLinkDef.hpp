@@ -7,11 +7,10 @@
 #pragma link C++ class AnalyzerCore+;
 #pragma link C++ class ExampleRun+;
 #pragma link C++ class GetEffLumi+;
-//#pragma link C++ class TestAnalyzer+;
-//#pragma link C++ class TestAnalyzer2+;
 #pragma link C++ class MeasureJetTaggingEff+;
 #pragma link C++ class MeasureJetTaggingR+;
 #pragma link C++ class Vcb_FH+;
 #pragma link C++ class Vcb_SL+;
 #pragma link C++ class Vcb_DL+;
 #pragma link C++ class FullHadronicTriggerTnP+;
+#pragma link C++ class GeneratorStudy+;

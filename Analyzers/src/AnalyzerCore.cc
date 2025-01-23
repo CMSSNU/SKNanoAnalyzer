@@ -549,7 +549,6 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
 }
 
 RVec<Gen> AnalyzerCore::GetAllGens(){
-
     RVec<Gen> Gens;
     if(IsDATA) return Gens;
 
@@ -577,6 +576,11 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
 
 RVec<LHE> AnalyzerCore::GetAllLHEs() {
     RVec<LHE> lhes;
+    if (IsDATA) return lhes;
+    
+    // Safety check for array sizes
+    if (nLHEPart <= 0) return lhes;
+
     for (int i = 0; i < nLHEPart; i++) {
         LHE lhe;
         lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
