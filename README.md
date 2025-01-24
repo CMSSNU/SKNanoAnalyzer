@@ -3,39 +3,38 @@
 
 ## THIS IS DEVELOPMENT VERSION!!
 
-
-## Notes
-- ROOT v6.32.xx have memory leak issue while reading root files with <= v6.30.xx -> Avoid using ROOT >= v6.32.xx temporariliy
 ## Introduction
 - If you want to engage in the development and commit to the repository, please read [Development Guide](docs/DevelopmentGuide.md) first.
 - For setting up the environment and starting the analysis, please refer [Getting Started](docs/GettingStarted.md).
 
 ## To do
 ### Assigned
-- [ ] Add new features to ExampleRun.cc and make them manual: **Yeonjoon**
+- [x] Add new features to ExampleRun.cc and make them manual: **Yeonjoon**
 - [ ] Check the update in jsonpog-correction when sourcing setup.sh: **Chihwan**
-- [ ] Clean up gv0: **Jin**
-- [ ] Compare the sample list in SKFlat with the necessary samples, and bring them if necessary, check xsec, etc.: **Taehee+Eunsu**
+- [x] Clean up gv0: **Jin**
+- [ ] Compare the sample list in SKFlat with the necessary samples, and bring them if necessary, check xsec, etc.: **Taehee+Eunsu+Jin**
 - [ ] Update the CheckStorages.sh to respect the folder structure under gv0: **Jin**
 - [ ] FatJet and Tau: **Youngwan**
-
-
-### Not Assigned Yet
-- [ ] Auto-Validation: Make validation files and check the consistency of the output for a specific NanoAOD file
+- [ ] SKNano.py skimming test **Yeonjoon**
+- [ ] Auto-Validation: Make validation files and check the consistency of the output for a specific NanoAOD file: **Jin**
+- [ ] Check for CVMFS environment compatability **deprecated**
+- [ ] Update MeasureTaggingEff.cc **Yeonjoon**
+- [ ] Rochester Correction Follow-up **Ask Hyonsan or Won(Contact: Chihwan)**
 - [ ] Update the network to 10G? (later)
-- [ ] Check for CVMFS environment compatability
-- [ ] Update MeasureTaggingEff.cc
-- [ ] Rochester Correction Follow-up
 
-For DY, check the before/after of
-- [ ] Electrons
-- [ ] Muons
-- [ ] Jets(B-tagging)
+For DY, check the before/after of correction
+- [ ] Leptons **Jihoon**
+- [ ] Jets(B-tagging) **Taehee**
 
 ## Make Tutorial
-- [ ] From make Training tree, Export ONNX, Use this model in the Analyzer : **Yeonjoon**
-- [ ] tt reconstruction using KinFitter
-- [ ] NLO vs LO comparison
+- [ ] From make Training tree, Export ONNX, Use this model in the Analyzer : **Yeonjoon(Review: Youngwan)**
+- [ ] Simple DY tutorial : **Eunsu(Review: Jin)**
+- [ ] tt reconstruction using Kinematic Fit : **Minseok(Review: Byunghun)**
+- [ ] tt reconstruction using KinFit Library : **Yeonjoon**
+- [ ] NLO vs LO comparison in MadGraph Tutorial: **Jin**
+- [ ] Tau+Fatjet Tutorial : **Youngwan**
+
+- [ ] At least try to install untill next meeting : ***All***
 
 
 ## Useful links
