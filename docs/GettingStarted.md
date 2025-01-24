@@ -1,7 +1,7 @@
 # Getting Started
 ## Important Notes
 Before starting your main part of your analysis, ***PLEASE SKIM YOUR SAMPLES!***
-The main bottleneck of SNU Server is the I/O. In most cases, the fraction of the event that pass the baseline selection is very small(for semileptonic $t\bar t$ analysis $\sim 10-20\%$), Thus, it will make unnecessary I/O if you don't skim your samples.
+The main bottleneck of SNU Server is the I/O. In most cases, the fraction of the event that pass the baseline selection is very small(for semileptonic $t\bar t$ analysis $\sim 10-20$%), Thus, it will make unnecessary I/O if you don't skim your samples.
 
 And also will described later, you can submit the job with regex. if you skim the samples, you can use the regex to submit all the samples that desired in your analysis, by only one command like
 ```bash
