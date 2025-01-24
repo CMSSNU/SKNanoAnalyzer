@@ -29,7 +29,7 @@ For DY, check the before/after of correction
 ## Make Tutorial
 - [ ] From make Training tree, Export ONNX, Use this model in the Analyzer : **Yeonjoon(Review: Youngwan)**
 - [ ] Simple DY tutorial : **Eunsu(Review: Jin)**
-- [ ] tt reconstruction using Kinematic Fit : **Minseok(Review: 병훈)**
+- [ ] tt reconstruction using Kinematic Fit : **Minseok(Review: Byunghun)**
 - [ ] tt reconstruction using KinFit Library : **Yeonjoon**
 - [ ] NLO vs LO comparison in MadGraph Tutorial: **Jin**
 - [ ] Tau+Fatjet Tutorial : **Youngwan**
