@@ -35,7 +35,7 @@ SKNano.py -a ExampleRun -i '[YOUR_PREFIX]*' -e 2022 -n 10 --reduction 10 ...
 #### Making config file
 Your configuration file should be named as `config/config.$USER`. You can copy the default configuration file and modify it.
 - [SYSTEM]: OS that you are using. `osx / linux`
-- [PACKAGE]: Package manager that you are using. `conda / mamba / cvmfs`
+- [PACKAGE]: Package manager that you are using. `conda / mamba / cvmfs(deprecated)`
 - [TOKEN_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
 - [USER_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
 - [SINGULARITY_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
