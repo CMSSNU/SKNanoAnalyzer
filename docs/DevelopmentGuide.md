@@ -42,7 +42,7 @@ I recommend to use `enum class` for the key. For example, in [`Electron.h`](../D
       POG_MVANOISO_WP90,
   };
 ```
-and used it for further development. If one use string as key, It will be hard clarify to use aming `"POG_TIGHT"` or `"TIGHT"` or `"T"` or `"POGTIGHT"` or etc.
+and used it for further development. If one use string as key, It will be hard clarify to use among `"POG_TIGHT"` or `"TIGHT"` or `"T"` or `"POGTIGHT"` or etc.
 
 In same sense, Pleas use `PhysicalConstants.h` under `AnalyzerTools/include` for the physical constants. This is included in `AnalyzerCore.h` by default, so you can use it without any additional include as
 ```cpp
