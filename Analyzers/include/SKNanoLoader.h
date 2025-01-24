@@ -56,19 +56,20 @@ public:
     virtual int GetYear() const { return DataYear; }
 
     TChain *fChain=nullptr;
-    ROOT::RDataFrame *df=nullptr;
-
-    // Declaration of leaf types
+    // ****** WARNING ******
+    // Do not mix RVec and Array while declaring variables
+    // It will cause a memory allocation issue - not be spotted while compiling
+    // ****** WARNING ******
     // Weights
     Float_t genWeight;
     Float_t LHEWeight_originalXWGTUP;
     Float_t Generator_weight;
-    static constexpr int nLHEPdfWeight = 110; // 325300 - 325402
-    static constexpr int nLHEScaleWeight = 9;
-    static constexpr int nPSWeight = 4; 
-    Float_t LHEPdfWeight[nLHEPdfWeight];
-    Float_t LHEScaleWeight[nLHEScaleWeight];
-    Float_t PSWeight[nPSWeight];
+    Int_t nLHEPdfWeight;   // 325300 - 325402
+    Int_t nLHEScaleWeight; // 9
+    Int_t nPSWeight;       // 4
+    RVec<Float_t> LHEPdfWeight;
+    RVec<Float_t> LHEScaleWeight;
+    RVec<Float_t> PSWeight;
 
     // PDFs
     Int_t Generator_id1;
@@ -97,7 +98,7 @@ public:
     RVec<Int_t> LHEPart_pdgId;
     RVec<Int_t> LHEPart_status;
     RVec<Int_t> LHEPart_spin;
-
+    
     // GenPart
     Int_t nGenPart;
     UInt_t nGenPart_RunII;

@@ -43,22 +43,41 @@ void SKNanoLoader::Loop() {
             cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries
                  << " | Elapsed: " << std::fixed << std::setprecision(2) << elapsedTime.count() << "s, Remaining: " << estimatedRemaining << "s" << endl;
         }
+
         if (fChain->GetEntry(jentry) < 0) {
             cerr << "[SKNanoLoader::Loop] Error reading event " << jentry << endl;
             exit(1);
-        };
+        }
+        
+        // make sure Run2 and Run3 variables are in sync
+        if (Run == 2) {
+            nLHEPart = static_cast<UInt_t>(nLHEPart_RunII);
+            nGenPart = static_cast<UInt_t>(nGenPart_RunII);
+            nGenJet = static_cast<UInt_t>(nGenJet_RunII);
+            nGenJetAK8 = static_cast<UInt_t>(nGenJetAK8_RunII);
+            nGenIsolatedPhoton = static_cast<UInt_t>(nGenIsolatedPhoton_RunII);
+            nGenDressedLepton = static_cast<UInt_t>(nGenDressedLepton_RunII);
+            nGenVisTau = static_cast<UInt_t>(nGenVisTau_RunII);
+            nMuon = static_cast<UInt_t>(nMuon_RunII);
+            nElectron = static_cast<UInt_t>(nElectron_RunII);
+            nTau = static_cast<UInt_t>(nTau_RunII);
+            nPhoton = static_cast<UInt_t>(nPhoton_RunII);
+            nJet = static_cast<UInt_t>(nJet_RunII);
+            nFatJet = static_cast<UInt_t>(nFatJet_RunII);
+        }
+        
         executeEvent();
     }
     cout << "[SKNanoLoader::Loop] Event Loop Finished"<< endl;
 }
 
 void SKNanoLoader::SetMaxLeafSize(){
-    auto getMaxBranchValue = [this](const TString &branchName) {
+    auto getMaxBranchValue = [this](ROOT::RDataFrame &df, const TString &branchName) {
         if (!fChain->GetBranch(branchName)) {
             cout << "[SKNanoGenLoader::SetMaxLeafSize] Warning: Branch " << branchName << " not found" << endl;
             return 0;
         } 
-        auto maxValue = static_cast<int>(*df->Max(branchName));
+        auto maxValue = static_cast<int>(*(df.Max(branchName)));
         cout << "[SKNanoLoader::SetMaxLeafSize] Branch: " << branchName << ", Max Value: " << maxValue << endl;
         return maxValue;
     };
@@ -68,25 +87,31 @@ void SKNanoLoader::SetMaxLeafSize(){
     auto start = std::chrono::high_resolution_clock::now();
 
     // Get Maximum length of arrays
-    df = new ROOT::RDataFrame(*fChain);
-    const UInt_t kMaxPhoton = getMaxBranchValue("nPhoton");
-    const UInt_t kMaxJet = getMaxBranchValue("nJet");
-    const UInt_t kMaxMuon = getMaxBranchValue("nMuon");
-    const UInt_t kMaxElectron = getMaxBranchValue("nElectron");
-    const UInt_t kMaxTau = getMaxBranchValue("nTau");
-    const UInt_t kMaxFatJet = getMaxBranchValue("nFatJet");
-    const UInt_t kMaxGenPart = getMaxBranchValue("nGenPart");
-    const UInt_t kMaxLHEPart = getMaxBranchValue("nLHEPart");
-    const UInt_t kMaxGenJet = getMaxBranchValue("nGenJet");
-    const UInt_t kMaxGenJetAK8 = getMaxBranchValue("nGenJetAK8");
-    const UInt_t kMaxGenIsolatedPhoton = getMaxBranchValue("nGenIsolatedPhoton");
-    const UInt_t kMaxGenDressedLepton = getMaxBranchValue("nGenDressedLepton");
-    const UInt_t kMaxGenVisTau = getMaxBranchValue("nGenVisTau");
+    ROOT::RDataFrame df = ROOT::RDataFrame(*fChain);
+    const UInt_t kMaxLHEPdfWeight = getMaxBranchValue(df, "nLHEPdfWeight");
+    const UInt_t kMaxLHEScaleWeight = getMaxBranchValue(df, "nLHEScaleWeight");
+    const UInt_t kMaxPSWeight = getMaxBranchValue(df, "nPSWeight");
+    const UInt_t kMaxLHEPart = getMaxBranchValue(df, "nLHEPart"); 
+    const UInt_t kMaxGenPart = getMaxBranchValue(df, "nGenPart");
+    const UInt_t kMaxGenJet = getMaxBranchValue(df, "nGenJet");
+    const UInt_t kMaxGenJetAK8 = getMaxBranchValue(df, "nGenJetAK8");
+    const UInt_t kMaxGenIsolatedPhoton = getMaxBranchValue(df, "nGenIsolatedPhoton");
+    const UInt_t kMaxGenDressedLepton = getMaxBranchValue(df, "nGenDressedLepton");
+    const UInt_t kMaxGenVisTau = getMaxBranchValue(df, "nGenVisTau");
+    const UInt_t kMaxPhoton = getMaxBranchValue(df, "nPhoton");
+    const UInt_t kMaxJet = getMaxBranchValue(df, "nJet");
+    const UInt_t kMaxMuon = getMaxBranchValue(df, "nMuon");
+    const UInt_t kMaxElectron = getMaxBranchValue(df, "nElectron");
+    const UInt_t kMaxTau = getMaxBranchValue(df, "nTau");
+    const UInt_t kMaxFatJet = getMaxBranchValue(df, "nFatJet");
     cout << "[SKNanoLoader::SetMaxLeafSize] Maximum Leaf Size Set" << endl;
     auto RDataFrameFinishTime = std::chrono::high_resolution_clock::now();
-    delete df;
-
+    
     // Now missing parts will automatically shrink
+    LHEPdfWeight.resize(kMaxLHEPdfWeight);
+    LHEScaleWeight.resize(kMaxLHEScaleWeight);
+    PSWeight.resize(kMaxPSWeight);
+
     // LHEPart
     LHEPart_pt.resize(kMaxLHEPart);
     LHEPart_eta.resize(kMaxLHEPart);
@@ -568,17 +593,17 @@ void SKNanoLoader::Init() {
         TBranch* branch = fChain->GetBranch(branchName);
         if (!branch) {
             cout << "[SKNanoGenLoader::Init] Warning:Branch " << branchName << " not found" << endl;
+            return;
         }
         fChain->SetBranchStatus(branchName, 1);
         fChain->SetBranchAddress(branchName, address);
     };
     // For type conversion between Run2 and Run3
-    auto SetBranchWithRunCheck = [this, &SafeSetBranchAddress](const TString &branchName, UInt_t &runIIVar, Int_t &commonVar) {
+    auto SetBranchWithRunCheck = [this, &SafeSetBranchAddress](const TString &branchName, Int_t &run3Var, UInt_t &runIIVar) {
         if (Run == 3) {
-            SafeSetBranchAddress(branchName, &commonVar);
+            SafeSetBranchAddress(branchName, &run3Var);
         } else {
             SafeSetBranchAddress(branchName, &runIIVar);
-            commonVar = static_cast<Int_t>(runIIVar);
         }
     };
 
@@ -596,9 +621,12 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("genWeight", &genWeight);
     SafeSetBranchAddress("LHEWeight_originalXWGTUP", &LHEWeight_originalXWGTUP);
     SafeSetBranchAddress("Generator_weight", &Generator_weight);
-    SafeSetBranchAddress("LHEPdfWeight", &LHEPdfWeight);
-    SafeSetBranchAddress("LHEScaleWeight", &LHEScaleWeight);
-    SafeSetBranchAddress("PSWeight", &PSWeight);
+    SafeSetBranchAddress("nLHEPdfWeight", &nLHEPdfWeight);
+    SafeSetBranchAddress("nLHEScaleWeight", &nLHEScaleWeight);
+    SafeSetBranchAddress("nPSWeight", &nPSWeight);
+    SafeSetBranchAddress("LHEPdfWeight", LHEPdfWeight.data());
+    SafeSetBranchAddress("LHEScaleWeight", LHEScaleWeight.data());
+    SafeSetBranchAddress("PSWeight", PSWeight.data());
 
     // PDFs
     SafeSetBranchAddress("Generator_id1", &Generator_id1);
@@ -623,16 +651,18 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("LHE_NpNLO", &LHE_NpNLO);
 
     // LHEPart
-    SetBranchWithRunCheck("nLHEPart", nLHEPart_RunII, nLHEPart);
+    SetBranchWithRunCheck("nLHEPart", nLHEPart, nLHEPart_RunII); 
     SafeSetBranchAddress("LHEPart_pt", LHEPart_pt.data());
     SafeSetBranchAddress("LHEPart_eta", LHEPart_eta.data());
     SafeSetBranchAddress("LHEPart_phi", LHEPart_phi.data());
     SafeSetBranchAddress("LHEPart_mass", LHEPart_mass.data());
+    SafeSetBranchAddress("LHEPart_pdgId", LHEPart_pdgId.data());
     SafeSetBranchAddress("LHEPart_status", LHEPart_status.data());
     SafeSetBranchAddress("LHEPart_spin", LHEPart_spin.data());
+    SafeSetBranchAddress("LHEPart_incomingpz", LHEPart_incomingpz.data());
 
     // GenPart
-    SetBranchWithRunCheck("nGenPart", nGenPart_RunII, nGenPart);
+    SetBranchWithRunCheck("nGenPart", nGenPart, nGenPart_RunII);
     SafeSetBranchAddress("GenPart_eta", GenPart_eta.data());
     SafeSetBranchAddress("GenPart_mass", GenPart_mass.data());
     SafeSetBranchAddress("GenPart_pdgId", GenPart_pdgId.data());
@@ -648,7 +678,7 @@ void SKNanoLoader::Init() {
     }
 
     // GenJet
-    SetBranchWithRunCheck("nGenJet", nGenJet_RunII, nGenJet);
+    SetBranchWithRunCheck("nGenJet", nGenJet, nGenJet_RunII);
     SafeSetBranchAddress("GenJet_eta", GenJet_eta.data());
     SafeSetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour.data());
     SafeSetBranchAddress("GenJet_mass", GenJet_mass.data());
@@ -661,7 +691,7 @@ void SKNanoLoader::Init() {
     }
 
     // GenJetAK8
-    SetBranchWithRunCheck("nGenJetAK8", nGenJetAK8_RunII, nGenJetAK8);
+    SetBranchWithRunCheck("nGenJetAK8", nGenJetAK8, nGenJetAK8_RunII);
     SafeSetBranchAddress("GenJetAK8_eta", GenJetAK8_eta.data());
     SafeSetBranchAddress("GenJetAK8_hadronFlavour", GenJetAK8_hadronFlavour.data());
     SafeSetBranchAddress("GenJetAK8_mass", GenJetAK8_mass.data());
@@ -673,7 +703,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("GenMet_phi", &GenMet_phi);
 
     // GenDressedLepton
-    SetBranchWithRunCheck("nGenDressedLepton", nGenDressedLepton_RunII, nGenDressedLepton);
+    SetBranchWithRunCheck("nGenDressedLepton", nGenDressedLepton, nGenDressedLepton_RunII);
     SafeSetBranchAddress("GenDressedLepton_pt", GenDressedLepton_pt.data());
     SafeSetBranchAddress("GenDressedLepton_eta", GenDressedLepton_eta.data());
     SafeSetBranchAddress("GenDressedLepton_phi", GenDressedLepton_phi.data());
@@ -682,14 +712,14 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("GenDressedLepton_hasTauAnc", GenDressedLepton_hasTauAnc.data());
     
     // GenIsolatedPhoton
-    SetBranchWithRunCheck("nGenIsolatedPhoton", nGenIsolatedPhoton_RunII, nGenIsolatedPhoton);
+    SetBranchWithRunCheck("nGenIsolatedPhoton", nGenIsolatedPhoton, nGenIsolatedPhoton_RunII);
     SafeSetBranchAddress("GenIsolatedPhoton_pt", GenIsolatedPhoton_pt.data());
     SafeSetBranchAddress("GenIsolatedPhoton_eta", GenIsolatedPhoton_eta.data());
     SafeSetBranchAddress("GenIsolatedPhoton_phi", GenIsolatedPhoton_phi.data());
     SafeSetBranchAddress("GenIsolatedPhoton_mass", GenIsolatedPhoton_mass.data());
 
     // GenVisTau
-    SetBranchWithRunCheck("nGenVisTau", nGenVisTau_RunII, nGenVisTau);
+    SetBranchWithRunCheck("nGenVisTau", nGenVisTau, nGenVisTau_RunII);
     SafeSetBranchAddress("GenVisTau_pt", GenVisTau_pt.data());
     SafeSetBranchAddress("GenVisTau_eta", GenVisTau_eta.data());
     SafeSetBranchAddress("GenVisTau_phi", GenVisTau_phi.data());
@@ -710,7 +740,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("genTtbarId", &genTtbarId);
 
     // Muon----------------------------
-    SetBranchWithRunCheck("nMuon", nMuon_RunII, nMuon);
+    SetBranchWithRunCheck("nMuon", nMuon, nMuon_RunII);
     SafeSetBranchAddress("Muon_charge", Muon_charge.data());
     SafeSetBranchAddress("Muon_dxy", Muon_dxy.data());
     SafeSetBranchAddress("Muon_dxyErr", Muon_dxyErr.data());
@@ -751,7 +781,7 @@ void SKNanoLoader::Init() {
     }
 
     //Electron----------------------------
-    SetBranchWithRunCheck("nElectron", nElectron_RunII, nElectron);
+    SetBranchWithRunCheck("nElectron", nElectron, nElectron_RunII);
     SafeSetBranchAddress("Electron_charge", Electron_charge.data());
     SafeSetBranchAddress("Electron_convVeto", Electron_convVeto.data());
     SafeSetBranchAddress("Electron_cutBased_HEEP", Electron_cutBased_HEEP.data());
@@ -811,7 +841,7 @@ void SKNanoLoader::Init() {
     }
 
     // Photon----------------------------
-    SetBranchWithRunCheck("nPhoton", nPhoton_RunII, nPhoton);
+    SetBranchWithRunCheck("nPhoton", nPhoton, nPhoton_RunII);
     SafeSetBranchAddress("Photon_eta", Photon_eta.data());
     SafeSetBranchAddress("Photon_hoe", Photon_hoe.data());
     SafeSetBranchAddress("Photon_isScEtaEB", Photon_isScEtaEB.data());
@@ -830,7 +860,7 @@ void SKNanoLoader::Init() {
     }
 
     //Jet----------------------------
-    SetBranchWithRunCheck("nJet", nJet_RunII, nJet);
+    SetBranchWithRunCheck("nJet", nJet, nJet_RunII);
     SafeSetBranchAddress("Jet_area", Jet_area.data());
     SafeSetBranchAddress("Jet_btagDeepFlavB", Jet_btagDeepFlavB.data());
     SafeSetBranchAddress("Jet_btagDeepFlavCvB", Jet_btagDeepFlavCvB.data());
@@ -905,7 +935,7 @@ void SKNanoLoader::Init() {
     }
 
     //Tau---------------------------- 
-    SetBranchWithRunCheck("nTau", nTau_RunII, nTau);
+    SetBranchWithRunCheck("nTau", nTau, nTau_RunII);
     SafeSetBranchAddress("Tau_dxy", Tau_dxy.data());
     SafeSetBranchAddress("Tau_dz", Tau_dz.data());
     SafeSetBranchAddress("Tau_eta", Tau_eta.data());
@@ -931,7 +961,7 @@ void SKNanoLoader::Init() {
     }
 
     //FatJet----------------------------
-    SetBranchWithRunCheck("nFatJet", nFatJet_RunII, nFatJet);
+    SetBranchWithRunCheck("nFatJet", nFatJet, nFatJet_RunII);
     SafeSetBranchAddress("FatJet_area", FatJet_area.data());
     SafeSetBranchAddress("FatJet_btagDDBvLV2", FatJet_btagDDBvLV2.data());
     SafeSetBranchAddress("FatJet_btagDDCvBV2", FatJet_btagDDCvBV2.data());
