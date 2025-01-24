@@ -3,9 +3,6 @@
 
 ## THIS IS DEVELOPMENT VERSION!!
 
-
-## Notes
-- ROOT v6.32.xx have memory leak issue while reading root files with <= v6.30.xx -> Avoid using ROOT >= v6.32.xx temporariliy
 ## Introduction
 - If you want to engage in the development and commit to the repository, please read [Development Guide](docs/DevelopmentGuide.md) first.
 - For setting up the environment and starting the analysis, please refer [Getting Started](docs/GettingStarted.md).
