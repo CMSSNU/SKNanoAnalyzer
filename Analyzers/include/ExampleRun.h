@@ -21,7 +21,8 @@ public:
     RVec<TString> MuonIDSFKeys;
     RVec<Muon::MuonID> MuonIDs;
     RVec<Muon> AllMuons;
-    //RVec<Jet> AllJets;
+    RVec<Jet> AllJets;
+    Event ev;
 
     float weight_Prefire;
 
