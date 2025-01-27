@@ -134,6 +134,35 @@ else
     echo "@@@@ Correctionlib not found"
 fi
 
+#JSONPOG integration auto-update
+JSONPOG_REPO_PATH=$SKNANO_HOME/external/jsonpog-integration
+
+if [ ! -d "$JSONPOG_REPO_PATH" ]; then
+    echo "@@@@ Cloning jsonpog-integration repository for the first time..."
+    git clone --recurse-submodules ssh://git@gitlab.cern.ch:7999/cms-nanoAOD/jsonpog-integration.git "$JSONPOG_REPO_PATH"
+else
+    echo "@@@@ Checking for updates in jsonpog-integration repository..."
+    cd "$JSONPOG_REPO_PATH"
+    git fetch origin 
+    LOCAL_HASH=$(git rev-parse HEAD) # local hash of latest
+    REMOTE_HASH=$(git rev-parse origin/master) # remote hash of latest
+
+    # latest commit date and message of the remote branch
+    REMOTE_DATE=$(git log -1 --format=%ci origin/master) 
+    REMOTE_MESSAGE=$(git log -1 --format=%s origin/master) 
+    echo "@@@@ Remote latest update: $REMOTE_DATE - $REMOTE_MESSAGE"
+    cd "$SKNANO_HOME"
+    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+        echo "@@@@ Updating jsonpog-integration repository..."
+        git pull origin master
+    else
+        echo "@@@@ jsonpog-integration repository is already up-to-date."
+    fi
+fi
+
+
+
+
 #env for onnxruntime
 if [ "$PACKAGE" = "conda" ]; then
     export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
