@@ -26,7 +26,7 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
           git config --global url."https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch:7999/".insteadOf "ssh://git@gitlab.cern.ch:7999/"
-          git submodule --init --recursive
+          git submodule update --init --recursive
 
       - name: Run setup.sh
         run: |
