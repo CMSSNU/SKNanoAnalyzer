@@ -25,8 +25,9 @@ jobs:
       - name: Fetch Submodules
         run: |
           git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
+          git config --global url."https://${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch".insteadOf "https://gitlab.cern.ch"
           git submodule add https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration.git
-
+          
       - name: Run setup.sh
         run: source setup.sh
 
