@@ -10,7 +10,7 @@
 
 ## Before Making Changes
 ### Interplay between `SystematicHelper` and `Correction`
-This Analyzer is developed to use with `SystematicHelper` class. If you want to add some new correction, or etc. that relates with the systematic variation, please end it's list of parameters should end with
+This Analyzer is developed to use with `SystematicHelper` class. If you want to add some new correction, or etc. that relates with the systematic variation, please it's list of parameters should end with
 ```cpp
 // Correction.h
 float Correction::YOUR_NEW_FUNCTION(PARMETERS... , const variation syst, const TString &source="total")
