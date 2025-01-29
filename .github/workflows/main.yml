@@ -14,7 +14,7 @@ jobs:
 
     container:
       image: choij1589/private-el9:full
-      options: --user root --workdir /github/workspace
+      options: --user runner --workdir /github/workspace
 
     steps:
       - name: Checkout Code
