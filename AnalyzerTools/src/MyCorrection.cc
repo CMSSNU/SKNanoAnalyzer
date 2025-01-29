@@ -273,8 +273,8 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     JME_JES_GT["2016postVFP"] = "Summer19UL16APV_V7_MC_######_AK4PFchs";
     JME_JES_GT["2016preVFP"] = "Summer19UL16_V7_MC_V5_MC_######_AK4PFchs";
 
-    JME_MET_keys["2023BPix"] = "Summer23BPixPrompt23_RunD_V1";
-    JME_MET_keys["2023"] = "Summer23Prompt23_RunC_V1";
+    JME_vetomap_keys["2023BPix"] = "Summer23BPixPrompt23_RunD_V1";
+    JME_vetomap_keys["2023"] = "Summer23Prompt23_RunC_V1";
     JME_vetomap_keys["2022EE"] = "Summer22EE_23Sep2023_RunEFG_V1";
     JME_vetomap_keys["2022"] = "Summer22_23Sep2023_RunBCD_V1";
     JME_vetomap_keys["2018"] = "Summer19UL18_V1";
