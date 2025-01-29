@@ -14,16 +14,17 @@ jobs:
 
     container:
       image: choij1589/private-el9:full
-      options: --user runner --workdir /github/workspace
+      options: --user root --workdir /github/workspace
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: false
-
+        
       - name: Fetch Submodules
         run: |
+          git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
           git config --global url."https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch:7999/".insteadOf "ssh://git@gitlab.cern.ch:7999/"
           git submodule --init --recursive
 
