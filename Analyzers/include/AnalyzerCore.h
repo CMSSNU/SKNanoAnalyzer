@@ -32,7 +32,7 @@
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
-#include "Correction.h"
+#include "MyCorrection.h"
 #include "JetTaggingParameter.h"
 #include "PhysicalConstants.h"
 
@@ -59,7 +59,7 @@ public:
     float GetPDFReweight();
     float GetPDFReweight(int member);    
     // Correction
-    Correction *myCorr;
+    MyCorrection *myCorr;
     //unique_ptr<CorrectionSet> csetMuon;
     //unique_ptr<CorrectionSet> csetElectron;;
 
@@ -92,8 +92,8 @@ public:
     RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax) const;
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const;
     // Functions
-    float GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst);
-    float GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst);
+    float GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst);
+    float GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst);
     inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetBTaggingWP(tagger, wp); }
     inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetCTaggingWP(tagger, wp); }
     inline float GetBTaggingWP(){ return myCorr->GetBTaggingWP(); }
@@ -103,15 +103,15 @@ public:
 
     void METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects);
 
-    float GetL1PrefireWeight(Correction::variation syst = Correction::variation::nom);
+    float GetL1PrefireWeight(MyCorrection::variation syst = MyCorrection::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
     unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
-    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");

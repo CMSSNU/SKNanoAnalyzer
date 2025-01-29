@@ -71,11 +71,11 @@ void Event::SetMET(RVec<float> MET_pt, RVec<float> MET_phi) {
     j_METVector_PUPPI_JES_Down.SetPtEtaPhiM(MET_pt[6], 0, MET_phi[6], 0);
 }
 
-Particle Event::GetMETVector(Event::MET_Type MET_type, Correction::variation syst, Event::MET_Syst source) const
+Particle Event::GetMETVector(Event::MET_Type MET_type, MyCorrection::variation syst, Event::MET_Syst source) const
 {
     if(MET_type!=MET_Type::PUPPI) {
         cerr << "[Event::GetMETVector] Only PUPPI MET is implemented" << endl;
-        exit(ENODATA);
+        exit(EXIT_FAILURE);
     }
     // switch (syst) {
     //     case MET_Syst::CENTRAL:
@@ -94,12 +94,15 @@ Particle Event::GetMETVector(Event::MET_Type MET_type, Correction::variation sys
     //         return j_METVector_PUPPI_JES_Down;
     // }
     switch (syst) {
-        case Correction::variation::nom:
-            if (source != MET_Syst::CENTRAL){
-                    std::cerr << "[Event::GetMETVector] Source is not MET_Syst::CENTRAL but variation is nominal" << std::endl;
+        case MyCorrection::variation::nom:
+            switch (source) {
+                case MET_Syst::CENTRAL:
+                    return j_METVector_PUPPI;
+                default:
+                    cerr << "[Event::GetMETVector] Source is not MET_Syst::CENTRAL but variation is nominal" << endl;
+                    exit(EXIT_FAILURE);
             }
-            return j_METVector_PUPPI;
-        case Correction::variation::up:
+        case MyCorrection::variation::up:
             switch (source) {
                 case MET_Syst::UE:
                     return j_METVector_PUPPI_UE_UP;
@@ -107,8 +110,11 @@ Particle Event::GetMETVector(Event::MET_Type MET_type, Correction::variation sys
                     return j_METVector_PUPPI_JER_UP;
                 case MET_Syst::JES:
                     return j_METVector_PUPPI_JES_UP;
+                default:
+                    cerr << "[Event::GetMETVector] Source is not MET_Syst::UE, JER, or JES but variation is up" << endl;
+                    exit(EXIT_FAILURE);
             }
-        case Correction::variation::down:
+        case MyCorrection::variation::down:
             switch (source) {
                 case MET_Syst::UE:
                     return j_METVector_PUPPI_UE_Down;
@@ -116,7 +122,12 @@ Particle Event::GetMETVector(Event::MET_Type MET_type, Correction::variation sys
                     return j_METVector_PUPPI_JER_Down;
                 case MET_Syst::JES:
                     return j_METVector_PUPPI_JES_Down;
+                default:
+                    cerr << "[Event::GetMETVector] Source is not MET_Syst::UE, JER, or JES but variation is down" << endl;
+                    exit(EXIT_FAILURE);
             }
+        default:
+            cerr << "[Event::GetMETVector] Unknown variation" << endl;
+            exit(EXIT_FAILURE);
     }
-    return j_METVector_PUPPI;
 }

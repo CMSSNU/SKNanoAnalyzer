@@ -4,7 +4,7 @@
 GetEffLumi::GetEffLumi(){};
 GetEffLumi::~GetEffLumi(){};
 void GetEffLumi::initializeAnalyzer(){
-  myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+  myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
   fChain->SetBranchStatus("*", 0);
   if(!IsDATA){
     fChain->SetBranchStatus("genWeight", 1);

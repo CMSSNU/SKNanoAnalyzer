@@ -33,6 +33,7 @@ target_include_directories(MLHelper PUBLIC
 target_link_libraries(MLHelper PUBLIC 
     #${TORCH_LIBRARIES}
     ${ONNXRUNTIME_LIBRARY}
+    ${ROOT_LIBRARIES}
 )
 
 

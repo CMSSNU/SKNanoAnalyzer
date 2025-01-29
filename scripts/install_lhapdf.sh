@@ -4,9 +4,9 @@ rm -rf $SKNANO_HOME/external/lhapdf
 
 # download and install lhapdf
 cd $SKNANO_HOME/external
-wget https://lhapdf.hepforge.org/downloads/\?f\=LHAPDF-6.5.4.tar.gz -O LHAPDF-6.5.4.tar.gz
-tar xf LHAPDF-6.5.4.tar.gz
-cd LHAPDF-6.5.4/config
+wget https://lhapdf.hepforge.org/downloads/\?f\=LHAPDF-6.5.5.tar.gz -O LHAPDF-6.5.5.tar.gz
+tar xf LHAPDF-6.5.5.tar.gz
+cd LHAPDF-6.5.5/config
 wget https://git.savannah.gnu.org/gitweb/\?p\=config.git\;a\=blob_plain\;f\=config.sub\;hb\=HEAD -O config.sub
 wget https://git.savannah.gnu.org/gitweb/\?p\=config.git\;a\=blob_plain\;f\=config.guess\;hb\=HEAD -O config.guess
 cd ..
