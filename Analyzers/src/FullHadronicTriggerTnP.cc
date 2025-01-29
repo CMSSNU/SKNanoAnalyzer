@@ -5,7 +5,7 @@ FullHadronicTriggerTnP::~FullHadronicTriggerTnP() {}
 
 void FullHadronicTriggerTnP::initializeAnalyzer()
 {
-    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
 }
 
 
@@ -64,11 +64,11 @@ void FullHadronicTriggerTnP::executeEventFromParameter(TString syst)
     }
     else if (syst == "JESUp")
     {
-        this_systjet = ScaleJets(this_jet, Correction::variation::up);
+        this_systjet = ScaleJets(this_jet, MyCorrection::variation::up);
     }
     else if (syst == "JESDown")
     {
-        this_systjet = ScaleJets(this_jet, Correction::variation::down);
+        this_systjet = ScaleJets(this_jet, MyCorrection::variation::down);
     }
     else
     {

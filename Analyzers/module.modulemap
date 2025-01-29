@@ -1,0 +1,13 @@
+module "Analyzers" {
+  requires cplusplus
+  module "include/AnalyzerCore.h" { header "include/AnalyzerCore.h" export * }
+  module "include/ExampleRun.h" { header "include/ExampleRun.h" export * }
+  module "include/FullHadronicTriggerTnP.h" { header "include/FullHadronicTriggerTnP.h" export * }
+  module "include/GeneratorStudy.h" { header "include/GeneratorStudy.h" export * }
+  module "include/GetEffLumi.h" { header "include/GetEffLumi.h" export * }
+  module "include/MeasureJetTaggingEff.h" { header "include/MeasureJetTaggingEff.h" export * }
+  module "include/SKNanoLoader.h" { header "include/SKNanoLoader.h" export * }
+  link "libAnalyzers.dylib"
+  export *
+}
+

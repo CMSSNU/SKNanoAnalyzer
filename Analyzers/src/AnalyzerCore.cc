@@ -35,29 +35,29 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Even
     return true;
 }
 
-float AnalyzerCore::GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst) {
+float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst) {
     if(nLHEScaleWeight == 0) return 1.;
-    if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::down) return LHEScaleWeight[0];
-    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::down) return LHEScaleWeight[1];
-    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::down) return LHEScaleWeight[2];
-    else if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::nom) return LHEScaleWeight[3];
-    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::nom) return LHEScaleWeight[4];
-    else if(muF_syst == Correction::variation::down && muR_syst == Correction::variation::up) return LHEScaleWeight[5];
-    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::up) return LHEScaleWeight[6];
-    else if(muF_syst == Correction::variation::up && muR_syst == Correction::variation::up) return LHEScaleWeight[7];
-    else if(muF_syst == Correction::variation::nom && muR_syst == Correction::variation::nom) return 1.f;
+    if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[0];
+    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[1];
+    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[2];
+    else if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::nom) return LHEScaleWeight[3];
+    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::nom) return LHEScaleWeight[4];
+    else if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[5];
+    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[6];
+    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[7];
+    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::nom) return 1.f;
     else{
         cout << "[AnalyzerCore::GetScaleVariation] muF_syst = " << int(muF_syst) << " and muR_syst = " << int(muR_syst) << " is not implemented" << endl;
         exit(ENODATA);
     }
 }
 
-float AnalyzerCore::GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst){
+float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst){
     //[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;
-    if(ISR_syst == Correction::variation::up && FSR_syst == Correction::variation::nom) return PSWeight[0];
-    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::up) return PSWeight[1];
-    else if(ISR_syst == Correction::variation::down && FSR_syst == Correction::variation::nom) return PSWeight[2];
-    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::down) return PSWeight[3];
+    if(ISR_syst == MyCorrection::variation::up && FSR_syst == MyCorrection::variation::nom) return PSWeight[0];
+    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::up) return PSWeight[1];
+    else if(ISR_syst == MyCorrection::variation::down && FSR_syst == MyCorrection::variation::nom) return PSWeight[2];
+    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::down) return PSWeight[3];
     else{
         cout << "[AnalyzerCore::GetPSWeight] ISR_syst = " << int(ISR_syst) << " and FSR_syst = " << int(FSR_syst) << " is not implemented" << endl;
         exit(ENODATA);
@@ -84,19 +84,19 @@ void AnalyzerCore::METType1Propagation(Particle &MET, RVec<Particle> &original_o
     MET += Typle1Correction;
 }
 
-float AnalyzerCore::GetL1PrefireWeight(Correction::variation syst){
+float AnalyzerCore::GetL1PrefireWeight(MyCorrection::variation syst){
     if(Run == 3) return 1.;
     if (IsDATA)
         return 1.;
     float weight = 1.;
     switch(syst){
-        case Correction::variation::nom:
+        case MyCorrection::variation::nom:
             weight = L1PreFiringWeight_Nom;
             break;
-        case Correction::variation::up:
+        case MyCorrection::variation::up:
             weight = L1PreFiringWeight_Up;
             break;
-        case Correction::variation::down:
+        case MyCorrection::variation::down:
             weight = L1PreFiringWeight_Dn;
             break;
         default:
@@ -181,7 +181,7 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst, const TString &source){
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source){
     gRandom->SetSeed(0);
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
@@ -229,7 +229,7 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
     return smeared_jets;
 }
 
-RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst, const TString &source)
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst, const TString &source)
 {
     RVec<Jet> scaled_jets;
     RVec<TString> syst_sources = {"AbsoluteMPFBias",
@@ -262,7 +262,7 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const Correction::varia
                                   "SinglePionHCAL",
                                   "TimePtEta"};
 
-    if(syst == Correction::variation::nom) return jets;
+    if(syst == MyCorrection::variation::nom) return jets;
 
 
     for(const auto &jet: jets){

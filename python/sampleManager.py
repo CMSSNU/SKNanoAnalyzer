@@ -9,7 +9,12 @@ basePath = os.environ['SKNANO_RUN3_NANOAODPATH']
     
 def loadCommonSampleInfo(era):
     sampleInfoJson = os.path.join(os.environ['SKNANO_DATA'],era,'Sample','CommonSampleInfo.json')
-    sampleInfos = json.load(open(sampleInfoJson))
+    sampleInfos = {} 
+    try:
+        sampleInfos = json.load(open(sampleInfoJson))
+    except Exception as e:
+        print(f'Error: on {era}')
+        print(e)
     return sampleInfos
 
 # def fillSamplePath(era):

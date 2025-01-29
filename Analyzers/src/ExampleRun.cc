@@ -47,7 +47,7 @@ void ExampleRun::initializeAnalyzer() {
     // Not implemented yet
     
     // Correction
-    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
     // SystematicHelper
     string SKNANO_HOME = getenv("SKNANO_HOME");
     if (IsDATA)
@@ -153,7 +153,7 @@ void ExampleRun::executeEventFromParameter() {
         return;
     }
 
-    std::unordered_map<std::string, std::variant<std::function<float(Correction::variation, TString)>, std::function<float()>>> weight_function_map;
+    std::unordered_map<std::string, std::variant<std::function<float(MyCorrection::variation, TString)>, std::function<float()>>> weight_function_map;
 
     // No cut
     //FillHist(param.Name+"/NoCut_"+param.Name, 0., 1., 1, 0., 1.);
@@ -194,7 +194,7 @@ void ExampleRun::executeEventFromParameter() {
     if (! (fabs(ZCand.M() - 91.2) < 15.)) return;
 
     // example of applying muon scale factors
-    auto mu_id_lambda = [&](Correction::variation syst, TString source)
+    auto mu_id_lambda = [&](MyCorrection::variation syst, TString source)
     { return myCorr->GetMuonIDSF(Mu_ID_SF_Key, muons, syst, source); };
     weight_function_map["Muon_ID"] = mu_id_lambda;
     systHelper->assignWeightFunctionMap(weight_function_map);

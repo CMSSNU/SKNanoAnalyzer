@@ -4,9 +4,9 @@
 SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
 {
     variation_prefix = {
-        {Correction::variation::nom, ""},
-        {Correction::variation::up, "_Up"},
-        {Correction::variation::down, "_Down"}};
+        {MyCorrection::variation::nom, ""},
+        {MyCorrection::variation::up, "_Up"},
+        {MyCorrection::variation::down, "_Down"}};
 
     YAML::Node config = YAML::LoadFile(yaml_path);
     for (const auto &node : config["systematics"])
@@ -157,7 +157,7 @@ void SystematicHelper::make_Iter_obj_EvtLoopAgain()
     SystematicHelper::Iter_obj obj_central;
     obj_central.iter_name = central_name;
     obj_central.syst_name = central_name;
-    obj_central.variation = Correction::variation::nom;
+    obj_central.variation = MyCorrection::variation::nom;
     systematics_evtLoopAgain.push_back(obj_central);
 
     // if systematic sample is provided, only loop over central
@@ -170,12 +170,12 @@ void SystematicHelper::make_Iter_obj_EvtLoopAgain()
         {
             SystematicHelper::Iter_obj obj_up;
             SystematicHelper::Iter_obj obj_down;
-            obj_up.iter_name = syst.syst + variation_prefix[Correction::variation::up];
-            obj_down.iter_name = syst.syst + variation_prefix[Correction::variation::down];
+            obj_up.iter_name = syst.syst + variation_prefix[MyCorrection::variation::up];
+            obj_down.iter_name = syst.syst + variation_prefix[MyCorrection::variation::down];
             obj_up.syst_name = syst.syst;
-            obj_up.variation = Correction::variation::up;
+            obj_up.variation = MyCorrection::variation::up;
             obj_down.syst_name = syst.syst;
-            obj_down.variation = Correction::variation::down;
+            obj_down.variation = MyCorrection::variation::down;
 
             systematics_evtLoopAgain.push_back(obj_up);
             systematics_evtLoopAgain.push_back(obj_down);
@@ -189,13 +189,13 @@ void SystematicHelper::make_map_dedicatedSample()
     {
         if (syst.hasDedicatedSample)
         {
-            map_dedicatesamplekey_systname[syst.dedicatedSampleKey_up] = syst.syst + variation_prefix[Correction::variation::up];
-            map_dedicatesamplekey_systname[syst.dedicatedSampleKey_down] = syst.syst + variation_prefix[Correction::variation::down];
+            map_dedicatesamplekey_systname[syst.dedicatedSampleKey_up] = syst.syst + variation_prefix[MyCorrection::variation::up];
+            map_dedicatesamplekey_systname[syst.dedicatedSampleKey_down] = syst.syst + variation_prefix[MyCorrection::variation::down];
         }
     }
 }
 
-void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, std::variant<std::function<float(Correction::variation, TString)>, std::function<float()>>> &weight_function_map)
+void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, std::variant<std::function<float(MyCorrection::variation, TString)>, std::function<float()>>> &weight_function_map)
 {
     std::vector<std::string> syst_no_weight_function;
     // clear weight functions
@@ -235,7 +235,7 @@ void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, 
                 std::cerr << "Weight function for " << syst.syst << " is not a two-sided weight function" << std::endl;
                 exit(1);
             }
-            weight_functions[syst.target] = std::get<std::function<float(Correction::variation, TString)>>(weight_variant);
+            weight_functions[syst.target] = std::get<std::function<float(MyCorrection::variation, TString)>>(weight_variant);
         };
 
         syst.oneSided ? assignOneSided() : assignTwoSided();
@@ -285,9 +285,9 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
             float weight_nominal = 1.;
 
             auto weight_function = weight_functions[syst.target];
-            weight_nominal = weight_function(Correction::variation::nom, "total");
-            weight_up = weight_function(Correction::variation::up, syst.source);
-            weight_down = weight_function(Correction::variation::down, syst.source);
+            weight_nominal = weight_function(MyCorrection::variation::nom, "total");
+            weight_up = weight_function(MyCorrection::variation::up, syst.source);
+            weight_down = weight_function(MyCorrection::variation::down, syst.source);
 
             weight_map_nominal[syst.target] = weight_nominal;
             weight_map_up[syst.syst] = weight_up;
@@ -295,7 +295,7 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
         }
     }
     unordered_map<std::string, float> weights;
-    if (current_Iter_obj.variation == Correction::variation::nom)
+    if (current_Iter_obj.variation == MyCorrection::variation::nom)
     {
         weights = calculateWeight_central_case();
     }
@@ -359,8 +359,8 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_central_case
             }
         }
         if (correlation_should_be_skipped) continue;
-        weights[correlation.second.rep_name + variation_prefix[Correction::variation::up]] = weight_up;
-        weights[correlation.second.rep_name + variation_prefix[Correction::variation::down]] = weight_down;
+        weights[correlation.second.rep_name + variation_prefix[MyCorrection::variation::up]] = weight_up;
+        weights[correlation.second.rep_name + variation_prefix[MyCorrection::variation::down]] = weight_down;
     }
 
     // systematic that not in correlation table
@@ -377,8 +377,8 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_central_case
         weight_down = safe_divide(weight_down, weight_map_nominal[this_target]);
         weight_up *= weight_map_up[syst];
         weight_down *= weight_map_down[syst];
-        weights[syst + variation_prefix[Correction::variation::up]] = weight_up;
-        weights[syst + variation_prefix[Correction::variation::down]] = weight_down;
+        weights[syst + variation_prefix[MyCorrection::variation::up]] = weight_up;
+        weights[syst + variation_prefix[MyCorrection::variation::down]] = weight_down;
     }
     if(isDedicatedSample)
     {
@@ -439,7 +439,7 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_non_central_
 
         switch (current_Iter_obj.variation)
         {
-        case Correction::variation::up:
+        case MyCorrection::variation::up:
             weights[current_Iter_obj.iter_name]  = safe_divide(weights[current_Iter_obj.iter_name], weight_map_nominal[findSystematic(this_correlation.rep_name)->target]);
             weights[current_Iter_obj.iter_name] *= weight_map_up[findSystematic(this_correlation.rep_name)->syst];
             for (const auto &syst : this_correlation.child_syst_names)
@@ -448,7 +448,7 @@ unordered_map<std::string, float> SystematicHelper::calculateWeight_non_central_
                 weights[current_Iter_obj.iter_name] *= weight_map_up[syst];
             }
             break;
-        case Correction::variation::down:
+        case MyCorrection::variation::down:
             weights[current_Iter_obj.iter_name] = safe_divide(weights[current_Iter_obj.iter_name], weight_map_nominal[findSystematic(this_correlation.rep_name)->target]);
             weights[current_Iter_obj.iter_name] *= weight_map_down[findSystematic(this_correlation.rep_name)->syst];
             for (const auto &syst : this_correlation.child_syst_names)
@@ -549,10 +549,10 @@ std::vector<std::string> SystematicHelper::get_sources_from_name(const std::stri
     return sources;
 }
 
-Correction::variation SystematicHelper::get_variation_from_name(const std::string &syst_name){
+MyCorrection::variation SystematicHelper::get_variation_from_name(const std::string &syst_name){
     //find which prefix is in the syst_name
     if (syst_name == central_name){
-        return Correction::variation::nom;
+        return MyCorrection::variation::nom;
     }
     for (const auto &prefix : variation_prefix)
     {
