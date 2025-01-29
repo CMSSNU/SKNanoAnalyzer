@@ -1,0 +1,28 @@
+name: CI/CD Pileline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: choij1589/private-el9:full
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run setup.sh
+        run: |
+          source setup.sh
+
+      - name: Build project
+        run: |
+          ./scripts/build.sh
