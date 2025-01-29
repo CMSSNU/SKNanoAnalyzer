@@ -21,13 +21,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: false
-        
-      - name: Fetch Submodules
+
+      - name: Setup SSH for GitLab
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan gitlab.cern.ch >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+        
+      - name: Fetch Submodules
+        run: |
           git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
           git submodule update --init --recursive
           
