@@ -14,11 +14,11 @@ jobs:
 
     container:
       image: choij1589/private-el9:full
-      options: --user root
+      options: --user root --workdir /github/workspace
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
