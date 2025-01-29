@@ -20,7 +20,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
+
+      - name: Fetch Submodules
+        run: |
+          git config --global url."https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch:7999/".insteadOf "ssh://git@gitlab.cern.ch:7999/"
+          git submodule --init --recursive
 
       - name: Run setup.sh
         run: |
