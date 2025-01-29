@@ -25,7 +25,9 @@ jobs:
       - name: Fetch Submodules
         run: |
           git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
-          git config --global url."https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch:7999/".insteadOf "ssh://git@gitlab.cern.ch:7999/"
+          git submodule deinit -f --all
+          git submodule sync --recursive
+          git config --global url."https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.cern.ch/".insteadOf "ssh://git@gitlab.cern.ch:7999/"
           git submodule update --init --recursive
 
       - name: Run setup.sh
