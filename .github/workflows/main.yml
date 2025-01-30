@@ -25,26 +25,13 @@ jobs:
       - name: Add GitLab Host key to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan gitlab.cern.ch >> ~/.ssh/known_hosts
+          ssh-keyscan -p 7999 gitlab.cern.ch >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
-        
-        #run: |
-        #  mkdir -p ~/.ssh
-        #  echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        #  chmod 600 ~/.ssh/id_rsa
-        #  ssh-keyscan gitlab.cern.ch >> ~/.ssh/known_hosts
-        #  eval "$(ssh-agent -s)"
-        #  ssh-add ~/.ssh/id_rsa
           
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: true
-          
-      #- name: Fetch Submodules
-      #  run: |
-      #    git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
-      #    git submodule update --init --recursive
           
       - name: Run setup.sh
         run: source setup.sh
