@@ -35,7 +35,7 @@ echo "@@@@ Using singularity image: $SINGULARITY_IMAGE"
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
-    if [[ -n "$IS_SINGULARITY" || "$GITHUB_ACTION" == "true" ]]; then
+    if [[ -n "$IS_SINGULARITY" || -n "$GITHUB_ACTION" ]]; then
         # Building within Singularity image, will be used for batch jobs
         echo "@@@@ Detected Singularity environment"
         source /opt/conda/bin/activate
