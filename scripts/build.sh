@@ -1,8 +1,4 @@
 #!/bin/bash
-if [[ -n $GITHUB_ACTION ]]; then
-    source setup.sh
-fi
-
 export SKNANO_BUILDDIR=$SKNANO_HOME/build
 
 #add use_ninja argument
