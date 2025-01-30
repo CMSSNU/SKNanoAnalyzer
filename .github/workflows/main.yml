@@ -17,17 +17,28 @@ jobs:
       options: --user root --workdir /github/workspace
 
     steps:
-      - name: Checkout Code
-      - uses: actions/checkout@v4
-      - uses: webfactory/ssh-agent@v0.9.0
+      - name: Setup SSH for GitLab
+        uses: webfactory/ssh-agent@v0.9.9
         with:
-          ssh-private-kye: ${{ secrets.SSH_PRIVATE_KYE }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+        #run: |
+        #  mkdir -p ~/.ssh
+        #  echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        #  chmod 600 ~/.ssh/id_rsa
+        #  ssh-keyscan gitlab.cern.ch >> ~/.ssh/known_hosts
+        #  eval "$(ssh-agent -s)"
+        #  ssh-add ~/.ssh/id_rsa
+          
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
           submodules: true
           
-      - name: Fetch Submodules
-        run: |
-          git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
-          git submodule update --init --recursive
+      #- name: Fetch Submodules
+      #  run: |
+      #    git config --global --add safe.directory /__w/SKNanoAnalyzer/SKNanoAnalyzer
+      #    git submodule update --init --recursive
           
       - name: Run setup.sh
         run: source setup.sh
