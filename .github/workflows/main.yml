@@ -17,7 +17,6 @@ jobs:
       options: --user root
       env:
         USER: root
-        GITHUB_ACTIOON: true
 
     steps:
       - name: Setup SSH for CERN GitLab
