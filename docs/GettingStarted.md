@@ -47,11 +47,9 @@ Here is an example to setup the environment using conda.
 conda create -n nano python=3.11 root=6.30.04 -c conda-forge
 conda activate nano
 
-# Install onnxruntime-cpp
-conda install onnxruntime-cpp
-
-# Install correctionlib
-pip install correctionlib
+# Install onnxruntime-cpp and correctionlib
+# NOTE: Using pip to install dependencies is not recommended. Might cause the confusion while compiling the project.
+conda install onnxruntime-cpp correctionlib
 ```
 
 #### Using micromamba
@@ -72,8 +70,7 @@ micromamba env create -f Nano.yml
 ```
 
 #### Using cvmfs
-TODO: Add the instruction for cvmfs
-
+Deprecated.
 
 ## About LHAPDFs
 For using LHAPDFHandler and PDFReweight classes, two possible options
@@ -188,15 +185,15 @@ Basic usage is as aboves. There are some additional options for the submission:
 - --ncpu: set the number of cpus for the job. Default is 1.
 - --userflags: set the user flags for the job. Default is empty. to set multiple flags, use comma. e.g. --userflags flag1,flag2
 - --batchname: set the batch name for the job. Default is the analyzer name_userflags.
-- --skimming_mode: by passing this flag, SKFlat.py will submit the jobs for the skimming mode. Detailed information as follows.
+- --skimming\_mode: by passing this flag, SKFlat.py will submit the jobs for the skimming mode. Detailed information as follows.
 
 
 ### Skimming mode
-By passing --skimming_mode, SKFlat.py will submit the jobs for the skimming mode. In this mode, the jobs will create the output in `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[Data,MC]/Skim/$USERNAME` directory, Instead of submit hadd layer in DAG, *PostProc* layer will add in the DAG. 
+By passing --skimming\_mode, SKFlat.py will submit the jobs for the skimming mode. In this mode, the jobs will create the output in `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[Data,MC]/Skim/$USERNAME` directory, Instead of submit hadd layer in DAG, *PostProc* layer will add in the DAG. 
 
-If your analyzer has name that starts with "Skim_", you will be asked to be enable the skimming mode. If you choose to enable the skimming mode, then skimming mode will be activated. Of course you can manually activate the skimming mode by passing --skimming_mode flag.
+If your analyzer has name that starts with "Skim_", you will be asked to be enable the skimming mode. If you choose to enable the skimming mode, then skimming mode will be activated. Of course you can manually activate the skimming mode by passing --skimming\_mode flag.
 
-PostProc layer will create the Skimmed sample folder and will creat the skimTreeInfo.json file and dedicated json that saves the information of the skimmed samples under $SKNANO_DATA/era/Sample/Skim directory.
+PostProc layer will create the Skimmed sample folder and will creat the skimTreeInfo.json file and dedicated json that saves the information of the skimmed samples under $SKNANO\_DATA/era/Sample/Skim directory.
 Each postproc job modify the skimTreeInfo.json sequentially, so ***DO NOT SUBMIT THE MULTIPLE DAG CLUSTERS THAT DO SKIMMING.*** After all the postproc jobs are done, you can submit the new jobs that using skimmed sample. A prefix of Skim_AnalyzerName will be added to the output file name.
 ```bash
 SKFlat.py -a AnalyzerName -i DYJets -n -1 -e era --skimming_mode
@@ -205,7 +202,7 @@ or
 ```bash
 SKFlat.py -a Skim_AnalyzerName -i DYJets -n -1 -e era
 ```
-Will create the Skim_AnalyzerName_DYJets (if you choose to answer "y" in latter one).
+Will create the Skim\_AnalyzerName\_DYJets (if you choose to answer "y" in latter one).
 Then you can submit the jobs by
 ```bash
 SKFlat.py -a AnalyzerName -i Skim_AnalyzerName_DYJets -n -1 -e era

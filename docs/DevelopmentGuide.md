@@ -69,3 +69,15 @@ git fetch upstream pull/16/head:pr16
 git checkout pr16
 ```
 
+### Open Pull Request
+- If you make changes in the CMSSNU/SKNanoAnalyzer repository, it will automatically execute the Github Actions to check if the environment is correctly set up and build is successful.
+- If you want to open a PR from your forked repository, you should set ssh keys to supdate the submmodule (i.e. jsonpog-integration). Here is a way to do it.
+1. make a new ssh key
+```bash
+ssh-keygen -t ed25519 -C "gitlab-ci-key" -f ~/.ssh/id_ed25519_gitlab_gha
+```
+2. Add the public key to the gitlab repository. Go to the [gitlab.cern.ch](https://gitlab.cern.ch) -> Preferences -> SSH Keys -> Add an SSH key
+3. Add the private key in your forked repository. Go the the github repository -> Settings -> Secrets and variables -> Actions -> New repository secret. Add the private key as `SSH_PRIVATE_KEY`.
+4. Now the github action will be triggered every time you make a PR to the upstream repository.
+
+
