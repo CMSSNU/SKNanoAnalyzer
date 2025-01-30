@@ -20,7 +20,7 @@ jobs:
       - name: Setup SSH for CERN GitLab
         run: |
           whoami
-          echo "HOME = $HONE"
+          echo "HOME = $HOME"
           ls -al $HOME/.ssh
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
