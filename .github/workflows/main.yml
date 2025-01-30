@@ -17,10 +17,16 @@ jobs:
       options: --user root --workdir /github/workspace
 
     steps:
-      - name: Setup SSH for GitLab
+      - name: Setup SSH for CERN GitLab
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add GitLab Host key to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan gitlab.cern.ch >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
         
         #run: |
         #  mkdir -p ~/.ssh
