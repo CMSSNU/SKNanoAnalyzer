@@ -35,7 +35,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
-          ssh-key: true
           
       - name: Run setup.sh
         run: source setup.sh
