@@ -6,8 +6,8 @@ echo ""
 
 
 # Set up environment
-#export SKNANO_HOME=`pwd`
-export SKNANO_HOME="/data9/Users/$USER/SKNanoAnalyzer"
+export SKNANO_HOME=`pwd`
+#export SKNANO_HOME="/data9/Users/$USER/SKNanoAnalyzer"
 export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
 export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 echo "@@@@ Working Directory: $SKNANO_HOME"
@@ -41,7 +41,8 @@ if [ $PACKAGE = "conda" ]; then
         source /opt/conda/bin/activate
         conda activate torch
     else
-        source /data9/Users/$USER/miniconda3/bin/activate
+        source ~/.conda-activate
+        #source /data9/Users/$USER/miniconda3/bin/activate
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
