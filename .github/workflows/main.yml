@@ -17,6 +17,7 @@ jobs:
       options: --user root
       env:
         USER: root
+        GITHUB_ACTIOON: true
 
     steps:
       - name: Setup SSH for CERN GitLab
@@ -38,6 +39,7 @@ jobs:
       - name: Run setup.sh
         run: |
           echo $USER
+          echo $GITHUB_ACTION
           chmod 755 setup.sh && ./setup.sh
 
       - name: Build project
