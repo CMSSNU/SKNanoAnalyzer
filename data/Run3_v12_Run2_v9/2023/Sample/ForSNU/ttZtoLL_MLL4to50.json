@@ -1,0 +1,32 @@
+{
+    "name": "ttZtoLL_MLL4to50",
+    "isMC": 1,
+    "PD": "TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8",
+    "xsec": 0.03949,
+    "nmc": 1334574.0,
+    "sumsign": 527226.0,
+    "sumW": 1710340.875,
+    "path": [
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_1.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_2.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_3.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_4.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_5.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_6.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_7.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_8.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_9.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_10.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_11.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_12.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_13.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_14.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_15.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_16.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_17.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_18.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_19.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_20.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTLL_MLL-4to50_TuneCP5_13p6TeV_amcatnlo-pythia8/250113_191555/0000/tree_21.root"
+    ]
+}
