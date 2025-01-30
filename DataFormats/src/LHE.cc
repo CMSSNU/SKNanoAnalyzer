@@ -11,3 +11,7 @@ LHE::LHE() : Particle()
 }
 
 LHE::~LHE() {}
+
+void LHE::Print() const {
+    cout << "(PID, Status, Pt, Eta, Phi, M, Spin) = " << PdgId() << "\t" << Status() << "\t" << Pt() << "\t" << Eta() << "\t" << Phi() << "\t" << M() << "\t" << Spin() << endl;
+}

@@ -8,8 +8,8 @@ public:
     void initializeAnalyzer();
     void executeEvent();
 
-    RVec<Gen> AllGens;
-    RVec<LHE> AllLHEs;
+    RVec<LHE> LHEs;
+    RVec<GenJet> GenJets;
 
     GeneratorStudy();
     ~GeneratorStudy();
