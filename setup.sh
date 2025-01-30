@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo -e "\033[31m##################### WARNING ########################\033[0m"
 echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
 echo -e "\033[31m######################################################\033[0m"
@@ -31,18 +31,17 @@ echo "@@@@ Telegram Bot Token: $TOKEN_TELEGRAMBOT"
 echo "@@@@ Telegram Chat ID: $USER_CHATID"
 echo "@@@@ Using singularity image: $SINGULARITY_IMAGE"
 
-# root configuration
-# no cvmfs related configuration for conda
+# ROOT Package Settings
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
-    if [ -n "$IS_SINGULARITY" ]; then
+    if [[ -n "$IS_SINGULARITY" || -n "$GITHUB_ACTION" ]]; then
         # Building within Singularity image, will be used for batch jobs
         echo "@@@@ Detected Singularity environment"
         source /opt/conda/bin/activate
         conda activate torch
     else
-        source /data9/Users/$USER/miniconda3/bin/activate
+        source ~/.conda-activate
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
@@ -52,7 +51,7 @@ elif [ $PACKAGE = "mamba" ]; then
     PACKAGE="conda"
 elif [ $PACKAGE = "cvmfs" ]; then
     echo -e "\033[31m@@@@ cvmfs is not supported anymore\033[0m"
-    exit 1  
+    exit 1
 else
     echo "@@@@ Package not recognized"
     echo "@@@@ Please check configuration file in config/config.$USER"
@@ -116,7 +115,7 @@ CORRECTIONLIBS=$(conda list | grep "correctionlib")
 if [ -z "$CORRECTIONLIBS" ]; then
     echo -e "\033[31m@@@@ correctionlib not found in conda environment\033[0m"
     echo -e "\033[31m@@@@ Please install correctionlib in conda environment\033[0m"
-    exit 1
+    exit 1 
 fi
 export CORRECTION_INCLUDE_DIR=`correction config --incdir`
 export CORRECTION_LIB_DIR=`correction config --libdir`
@@ -127,8 +126,7 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
-# onnxruntime
-# check if onnxruntime is installed in conda environment
+# env for onnxruntime
 ONNXRUNTIME=$(conda list | grep "onnxruntime")
 if [ -z "$ONNXRUNTIME" ]; then
     echo -e "\033[31m@@@@ onnxruntime not found in conda environment\033[0m"
