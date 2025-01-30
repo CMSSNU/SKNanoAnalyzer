@@ -17,11 +17,6 @@ jobs:
       options: --user root --workdir /github/workspace
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: false
-
       - name: Setup SSH for GitLab
         run: |
           mkdir -p ~/.ssh
@@ -31,6 +26,11 @@ jobs:
           chmod 700 ~/.ssh
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
+          
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
         
       - name: Fetch Submodules
         run: |
