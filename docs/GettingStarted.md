@@ -19,26 +19,24 @@ SKNano.py -a ExampleRun -i '[YOUR_PREFIX]*' -e 2022 -n 10 --reduction 10 ...
       - [Using conda](#using-conda)
       - [Using micromamba](#using-micromamba)
       - [Using cvmfs](#using-cvmfs)
-  - [About LHAPDFs](#about-lhapdfs)
-  - [About correctionlibs](#about-correctionlibs)
-    - [Installation](#installation)
-    - [Singularity Support](#singularity-support)
-  - [Compilation](#compilation)
-  - [Check modules](#check-modules)
+      - [Setting up ssh-key for gitlab.cern.ch (required for jsonpog-integration)](#setting-up-ssh-key-for-gitlabcernch-required-for-jsonpog-integration)
+  - [Installation](#installation)
+      - [About LHAPDFs](#about-lhapdfs)
+      - [About correctionlibs](#about-correctionlibs)
+      - [Singularity Support](#singularity-support)
+      - [Check modules](#check-modules)
   - [How to Submit the job](#how-to-submit-the-job)
   - [Setting the telegram bot](#setting-the-telegram-bot)
 
 ## Setting up the environment
-
-
 ### Preliminary Setup
 #### Making config file
 Your configuration file should be named as `config/config.$USER`. You can copy the default configuration file and modify it.
-- [SYSTEM]: OS that you are using. `osx / linux`
+- [SYSTEM]: OS that you are using. `osx / redhat`
 - [PACKAGE]: Package manager that you are using. `conda / mamba / cvmfs(deprecated)`
-- [TOKEN_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
-- [USER_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
-- [SINGULARITY_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
+- [TOKEN\_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
+- [USER\_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
+- [SINGULARITY\_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
 
 #### Using conda
 Here is an example to setup the environment using conda.
@@ -72,7 +70,33 @@ micromamba env create -f Nano.yml
 #### Using cvmfs
 Deprecated.
 
-## About LHAPDFs
+#### Setting up ssh-key for gitlab.cern.ch (required for jsonpog-integration)
+```bash
+ssh-keygen -t ed25519 -C "your cern email"
+```
+2. Add the public key to the gitlab repository. Go to the [gitlab.cern.ch](https://gitlab.cern.ch) -> Preferences -> SSH Keys -> Add an SSH key
+
+### Installation
+Recommend to fork the repository to your account.
+```bash
+git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
+git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
+
+# Checkout to your development branch
+# for the main branch, it is recommended to sync with the upstream main branch to get the latest updates.
+git checkout $DEVBRANCH
+
+# create config file and edit the configuration
+cp config/config.default config/config.$USER
+
+# first time setup
+source setup.sh    # you have to do this every new session. It will install lhapdf and libtorch if not installed.
+
+# build the project
+./scripts/build.sh
+```
+
+#### About LHAPDFs
 For using LHAPDFHandler and PDFReweight classes, two possible options
 1. install lhapdf manually.
 ```bash
@@ -82,7 +106,7 @@ It would be run automatically for the first time setup.
 
 2. use lhapdf from cvmfs
 
-## About correctionlibs
+#### About correctionlibs
 In the config/config.$USER file, there is an option to choose bewteen conda and cvmfs. When configuring your environment with conda, at least ROOT and correctionlibs should be installed:
 ```bash
 # example
@@ -91,26 +115,7 @@ conda activate nano
 pip install correctionlib
 ```
 
-### Installation
-Recommend to fork the repo to your account.
-```bash
-# Clone the repository
-# jsonpog-integration should be cloned as a submodule if you don't use cvmfs
-git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
-
-# Add to your remote repo
-git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
-git checkout $DEVBRANCH
-
-# create config file
-cp config/config.default config/config.$USER
-# edit the configuration!
-
-# first time setup
-source setup.sh    # you have to do this every new session
-```
-
-### Singularity Support
+#### Singularity Support
 If you want to use Singularity image for the batch job, first compile the project within singularity image.
 ```bash
 singularity exec $SINGULARITY_IMAGE bash -c "source setup.sh && ./scripts/build.sh"
@@ -121,24 +126,7 @@ batch jobs:
 SKNano.py -a ExampleRun -i DYJets -e 2022 -n 10 --reduction 10 --no_exec ...
 ```
 
-
-## Compilation
-We are using cmake for the default compiling management.
-Use scripts/build.sh for clean compilation.
-```bash
-./scripts/build.sh
-```
-
-Or you can do it manually
-```bash
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=$SKNANO_HOME ..
-make
-make install
-cd $SKNANO_HOME
-```
-
-## Check modules
+#### Check modules
 Every module(or class) can be imported both in ROOT and python
 ```cpp
 root -l
@@ -160,7 +148,6 @@ p.Print()
 For testing other modules and analyzers, check scripts/test.py
 
 ## How to Submit the job
-
 Jobs can be submitted to htcondor using SKFlat.py
 ```bash
 SKFlat.py -a AnalyzerName -i SamplePD -n number of jobs -e era
