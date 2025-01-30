@@ -34,10 +34,7 @@ jobs:
           submodules: true
           
       - name: Run setup.sh
-        run: |
-          echo $PWD
-          cd /github/workspace/SKNanoAnalyzer
-          source setup.sh
+        run: chmod 755 setup.sh && ./setup.sh
 
       - name: Build project
         run: ./scripts/build.sh
