@@ -17,18 +17,17 @@ jobs:
       options: --user root
       env:
         USER: root
-        HOME: /root
 
     steps:
       - name: Setup SSH for CERN GitLab
         run: |
-          mkdir -p $HOME/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
-          chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -p 7999 gitlab.cern.ch >> $HOME/.ssh/known_hosts
-          chmod 644 $HOME/.ssh/known_hosts
+          mkdir -p /root/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /root/.ssh/id_rsa
+          chmod 600 /root/.ssh/id_rsa
+          ssh-keyscan -p 7999 gitlab.cern.ch >> /root/.ssh/known_hosts
+          chmod 644 /root/.ssh/known_hosts
           eval "$(ssh-agent -s)"
-          ssh-add $HOME/.ssh/id_rsa
+          ssh-add /root/.ssh/id_rsa
           ssh -T git@gitlab.cern.ch -p 7999 || true
           
       - name: Checkout Code
@@ -37,7 +36,9 @@ jobs:
           submodules: true
           
       - name: Run setup.sh
-        run: chmod 755 setup.sh && ./setup.sh
+        run: |
+          echo $USER
+          chmod 755 setup.sh && ./setup.sh
 
       - name: Build project
         run: ./scripts/build.sh
