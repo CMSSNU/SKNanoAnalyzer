@@ -6,7 +6,8 @@ echo ""
 
 
 # Set up environment
-export SKNANO_HOME=`pwd`
+#export SKNANO_HOME=`pwd`
+export SKNANO_HOME="/data9/Users/$USER/SKNanoAnalyzer"
 export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
 export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 echo "@@@@ Working Directory: $SKNANO_HOME"
@@ -40,7 +41,7 @@ if [ $PACKAGE = "conda" ]; then
         source /opt/conda/bin/activate
         conda activate torch
     else
-        source /data9/Users/choij/miniconda3/bin/activate
+        source /data9/Users/$USER/miniconda3/bin/activate
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
@@ -126,7 +127,6 @@ echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
 # env for onnxruntime
-# check if onnxruntime is installed in conda environment
 ONNXRUNTIME=$(conda list | grep "onnxruntime")
 if [ -z "$ONNXRUNTIME" ]; then
     echo -e "\033[31m@@@@ onnxruntime not found in conda environment\033[0m"
