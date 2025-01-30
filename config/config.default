@@ -1,5 +1,5 @@
 [SYSTEM] redhat / osx 
-[PACKAGE] cvmfs / conda / mamba
+[PACKAGE] conda / mamba
 [TOKEN_TELEGRAMBOT]
 [USER_CHATID]
 [SINGULARITY_IMAGE]
