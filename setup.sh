@@ -6,8 +6,7 @@ echo ""
 
 
 # Set up environment
-#export SKNANO_HOME=`pwd`
-export SKNANO_HOME="/data9/Users/$USER/SKNanoAnalyzer"
+export SKNANO_HOME=`pwd`
 export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
 export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 echo "@@@@ Working Directory: $SKNANO_HOME"
