@@ -7,7 +7,6 @@ echo ""
 
 # Set up environment
 export SKNANO_HOME=`pwd`
-#export SKNANO_HOME="/data9/Users/$USER/SKNanoAnalyzer"
 export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
 export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 echo "@@@@ Working Directory: $SKNANO_HOME"
@@ -42,7 +41,6 @@ if [ $PACKAGE = "conda" ]; then
         conda activate torch
     else
         source ~/.conda-activate
-        #source /data9/Users/$USER/miniconda3/bin/activate
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
@@ -52,7 +50,7 @@ elif [ $PACKAGE = "mamba" ]; then
     PACKAGE="conda"
 elif [ $PACKAGE = "cvmfs" ]; then
     echo -e "\033[31m@@@@ cvmfs is not supported anymore\033[0m"
-    exit
+    exit 1
 else
     echo "@@@@ Package not recognized"
     echo "@@@@ Please check configuration file in config/config.$USER"
@@ -116,7 +114,7 @@ CORRECTIONLIBS=$(conda list | grep "correctionlib")
 if [ -z "$CORRECTIONLIBS" ]; then
     echo -e "\033[31m@@@@ correctionlib not found in conda environment\033[0m"
     echo -e "\033[31m@@@@ Please install correctionlib in conda environment\033[0m"
-    exit 1
+    exit 1 
 fi
 export CORRECTION_INCLUDE_DIR=`correction config --incdir`
 export CORRECTION_LIB_DIR=`correction config --libdir`
