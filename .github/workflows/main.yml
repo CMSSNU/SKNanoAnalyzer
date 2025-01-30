@@ -27,11 +27,17 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p 7999 gitlab.cern.ch >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
+
+      - name: Test ssh connection to gitlib
+        run: |
+          ssh-add -l
+          ssh -T git@gitlab.cern.ch -p 7999 || true
           
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: true
+          ssh-key: true
           
       - name: Run setup.sh
         run: source setup.sh
