@@ -79,13 +79,13 @@ git fetch upstream pull/16/head:pr16
 git checkout pr16
 ```
 
-### Open Pull Request
+### Setting ssh-key for gitlab.cern.ch within github workflow
 - If you make changes in the CMSSNU/SKNanoAnalyzer repository, it will automatically execute the Github Actions to check if the environment is correctly set up and build is successful.
-- If you want to open a PR from your forked repository, you should set ssh keys to supdate the submmodule (i.e. jsonpog-integration). Here is a way to do it.
+- To activave ssh authentication with gitlab.cern.ch, you should add the private key.
 1. make a new ssh key
 ```bash
 ssh-keygen -t ed25519 -C "gitlab-ci-key" -f ~/.ssh/id_ed25519_gitlab_gha
 ```
 2. Add the public key to the gitlab repository. Go to the [gitlab.cern.ch](https://gitlab.cern.ch) -> Preferences -> SSH Keys -> Add an SSH key
-3. Add the private key in your forked repository. Go the the github repository -> Settings -> Secrets and variables -> Actions -> New repository secret. Add the private key as `SSH_PRIVATE_KEY`.
-4. Now the github action will be triggered every time you make a PR to the upstream repository.
+3. Add the private key in the upstream repository. Go the the github repository -> Settings -> Secrets and variables -> Actions -> New repository secret. Add the private key as `SSH_PRIVATE_KEY`.
+> pull_request_target trigger the workflow from the upstream repo, so nothing should be done from the forked repository.
