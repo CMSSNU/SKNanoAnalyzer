@@ -23,9 +23,6 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /root/.ssh/id_rsa
           chmod 600 /root/.ssh/id_rsa
           ssh-keyscan -p 7999 gitlab.cern.ch >> /root/.ssh/known_hosts
-          echo "===== known_hosts ====="
-          cat /root/.ssh/known_hosts
-          echo "======================="
           chmod 644 /root/.ssh/known_hosts
           eval "$(ssh-agent -s)"
           ssh-add /root/.ssh/id_rsa
@@ -37,7 +34,10 @@ jobs:
           submodules: true
           
       - name: Run setup.sh
-        run: source setup.sh
+        run: |
+          echo $PWD
+          cd /github/workspace/SKNanoAnalyzer
+          source setup.sh
 
       - name: Build project
         run: ./scripts/build.sh
