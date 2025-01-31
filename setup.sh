@@ -53,9 +53,10 @@ elif [ $PACKAGE = "mamba" ]; then
     fi
     # from this point on, we can follow conda version of setup
     PACKAGE="conda"
+    alias conda="mamba"
 elif [ $PACKAGE = "cvmfs" ]; then
     echo -e "\033[31m@@@@ cvmfs is not supported anymore\033[0m"
-    exit 1
+    return 1
 else
     echo "@@@@ Package not recognized"
     echo "@@@@ Please check configuration file in config/config.$USER"
@@ -87,7 +88,7 @@ if [[ ! -d "external/lhapdf" ]]; then
     ./scripts/install_lhapdf.sh
     if [ $? -ne 0 ]; then
         echo -e "\033[31m@@@@ LHAPDF installation failed\033[0m"
-        exit 1
+        return 1
     fi
 fi
 export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
@@ -107,7 +108,7 @@ if [[ ! -d "external/libtorch" ]]; then
     ./scripts/install_libtorch.sh
     if [ $? -ne 0 ]; then
         echo -e "\033[31m@@@@ LibTorch installation failed\033[0m"
-        exit 1
+        return 1
     fi
 fi
 export LIBTORCH_INCLUDE_DIR=$SKNANO_HOME/external/libtorch/include
@@ -119,7 +120,7 @@ CORRECTIONLIBS=$(conda list | grep "correctionlib")
 if [ -z "$CORRECTIONLIBS" ]; then
     echo -e "\033[31m@@@@ correctionlib not found in conda environment\033[0m"
     echo -e "\033[31m@@@@ Please install correctionlib in conda environment\033[0m"
-    exit 1 
+    return 1 
 fi
 export CORRECTION_INCLUDE_DIR=`correction config --incdir`
 export CORRECTION_LIB_DIR=`correction config --libdir`
@@ -135,7 +136,7 @@ ONNXRUNTIME=$(conda list | grep "onnxruntime")
 if [ -z "$ONNXRUNTIME" ]; then
     echo -e "\033[31m@@@@ onnxruntime not found in conda environment\033[0m"
     echo -e "\033[31m@@@@ Please install onnxruntime in conda environment\033[0m"
-    exit 1
+    return 1
 fi
 export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
 export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
