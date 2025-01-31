@@ -67,6 +67,37 @@ you can copy my environment by use `Nano.yml` under `docs` directory. Just Chang
 micromamba env create -f Nano.yml
 ```
 
+#### Note on using OSX
+If you are testing your jobs on MacOS, you can use both conda and mamba environment. However, you should be cautious about the python version.
+- Latest ROOT from homebrew is 6.32.08. The pre-compiled version run smoothly wiht python 3.12, but correctionlib only supports up to python 3.12.
+- Possible solution is to use the conda / mamba environment with python 3.11 or 3.12 and install root from source. Here are some steps to install ROOT manually and link onnxruntime libraries.
+```bash
+# install root
+cd ~/Downloads
+git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git root_src
+# I've installed mamba in my home directory. Let's install ROOT inside the mamba directory.
+cd ~/mamba
+mkdir root_build root_install
+cd root_build
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/mamba/root_install -Dbuiltin_glew=ON  $HOME/root_src
+cmake --build . --target install -j8 # takes some time
+rm -rf ~/Downloads/root_src ~/mamba/root_build
+
+# link the libraries.
+# I have already installed onnxruntime-cpp in my mamba environment named Nano
+ln -s $HOME/mamba/envs/Nano/lib/libonnxruntime.1.20.1.dylib $HOME/mamba/root_install/lib/libonnxruntime.1.20.1.dylib
+
+# Configure setup.sh if you installed ROOT in different directory
+source setup.sh
+./scripts/build.sh
+``` 
+Tested on
+- M4 Mac Mini 
+- MacOS Sequoia 15.2
+- python 3.12
+- ROOT 6.32.08
+- micromamba from homebrew
+
 #### Using cvmfs
 Deprecated.
 
