@@ -1,6 +1,7 @@
 #include "AnalyzerCore.h"
 
 AnalyzerCore::AnalyzerCore() {
+    myCorr = nullptr;
     outfile = nullptr;
     // pdfReweight = new PDFReweight();
 }
