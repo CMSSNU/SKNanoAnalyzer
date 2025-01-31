@@ -46,11 +46,6 @@ if [ $PACKAGE = "conda" ]; then
 elif [ $PACKAGE = "mamba" ]; then
     # set up mamba environment
     mamba activate Nano
-    if [ $SYSTEM = "osx" ]; then
-        # You should install ROOT manually on OSX
-        # brew only works for python3.13, correctionlib is available for python<=3.12
-        source ~/mamba/root_install/bin/thisroot.sh
-    fi
     # from this point on, we can follow conda version of setup
     PACKAGE="conda"
     alias conda="mamba"

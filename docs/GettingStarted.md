@@ -72,7 +72,14 @@ If you are testing your jobs on MacOS, you can use both conda and mamba environm
 - Latest ROOT from homebrew is 6.32.08. The pre-compiled version run smoothly wiht python 3.12, but correctionlib only supports up to python 3.12.
 - Possible solution is to use the conda / mamba environment with python 3.11 or 3.12 and install root from source. Here are some steps to install ROOT manually and link onnxruntime libraries.
 ```bash
+# install mamba
+brew install micromamba # follow the instruction to add the path to your shell
+mamba create -n Nano python=3.12
+mamba activate Nano
+mamba install correctionlib onnxruntime-cpp -c conda-forge
+
 # install root
+# As Nano environment is activated, pyROOT will be binded to the python in Nano environment.
 cd ~/Downloads
 git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git root_src
 # I've installed mamba in my home directory. Let's install ROOT inside the mamba directory.
@@ -87,9 +94,10 @@ rm -rf ~/Downloads/root_src ~/mamba/root_build
 # I have already installed onnxruntime-cpp in my mamba environment named Nano
 ln -s $HOME/mamba/envs/Nano/lib/libonnxruntime.1.20.1.dylib $HOME/mamba/root_install/lib/libonnxruntime.1.20.1.dylib
 
-# Configure setup.sh if you installed ROOT in different directory
-source setup.sh
-./scripts/build.sh
+# We do not set-up root while setup.sh. Activate root when you open the shell.
+echo "source $HOME/mamba/root_install/bin/thisroot.sh" >> ~/.zshrc
+source ~/.zshrc
+root -l # Test the ROOT
 ``` 
 Tested on
 - M4 Mac Mini 
