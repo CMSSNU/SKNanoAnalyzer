@@ -117,14 +117,33 @@ if [ -z "$CORRECTIONLIBS" ]; then
     echo -e "\033[31m@@@@ Please install correctionlib in conda environment\033[0m"
     return 1 
 fi
+
 export CORRECTION_INCLUDE_DIR=`correction config --incdir`
 export CORRECTION_LIB_DIR=`correction config --libdir`
-export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
-
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
+
+# JSONPOG integration auto-update
+export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
+echo "@@@@ Checking for updates in jsonpog-integration repository..."
+cd "$JSONPOG_INTEGRATION_PATH"
+git fetch origin 
+LOCAL_HASH=$(git rev-parse HEAD) # local hash of latest
+REMOTE_HASH=$(git rev-parse origin/master) # remote hash of latest
+echo "@@@@ Local latest commit: $LOCAL_HASH"
+echo "@@@@ Remote latest commit: $REMOTE_HASH"
+
+# latest commit date and message of the remote branch
+REMOTE_DATE=$(git log -1 --format=%ci origin/master) 
+REMOTE_MESSAGE=$(git log -1 --format=%s origin/master) 
+echo "@@@@ Remote latest update: $REMOTE_DATE - $REMOTE_MESSAGE"
+cd -    
+if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+    echo "@@@@ Updating jsonpog-integration repository..."
+    git submodule update --remote external/jsonpog-integration
+else
+    echo "@@@@ jsonpog-integration repository is already up-to-date."
+fi
 
 # env for onnxruntime
 ONNXRUNTIME=$(conda list | grep "onnxruntime")
@@ -135,3 +154,5 @@ if [ -z "$ONNXRUNTIME" ]; then
 fi
 export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
 export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
+echo "@@@@ onnxruntime include: $ONNXRUNTIME_INCLUDE_DIR"
+echo "@@@@ onnxruntime lib: $ONNXRUNTIME_LIB_DIR"
