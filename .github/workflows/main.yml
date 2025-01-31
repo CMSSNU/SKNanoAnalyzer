@@ -1,0 +1,39 @@
+name: Testing environment setup and build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: choij1589/private-el9:full
+      options: --user root
+      env:
+        USER: root
+
+    steps:
+      - name: Setup SSH for CERN GitLab
+        run: |
+          mkdir -p /root/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /root/.ssh/id_ed25519
+          chmod 600 /root/.ssh/id_ed25519
+          ssh-keyscan -p 7999 gitlab.cern.ch >> /root/.ssh/known_hosts
+          chmod 644 /root/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add /root/.ssh/id_ed25519
+          ssh -T git@gitlab.cern.ch -p 7999 || true
+          
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup and Build
+        run: source ./setup.sh && ./scripts/build.sh

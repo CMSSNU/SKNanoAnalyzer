@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 export SKNANO_BUILDDIR=$SKNANO_HOME/build
 
 #add use_ninja argument

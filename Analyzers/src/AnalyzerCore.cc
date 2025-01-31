@@ -509,40 +509,38 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
     return electrons;
 }
 
-RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, const float fetamax) {
+RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, const float fetamax, bool vetoHEM) {
     RVec<Electron> electrons = GetAllElectrons();
     RVec<Electron> selected_electrons;
     for (const auto &electron: electrons) {
         if (! (electron.Pt() > ptmin)) continue;
         if (! (fabs(electron.Eta()) < fetamax)) continue;
         if (! electron.PassID(ID)) continue;
+        if (vetoHEM && IsHEMElectron(electron)) continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax) const {
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax, bool vetoHEM) const {
     RVec<Electron> selected_electrons;
     for (const auto &electron: electrons) {
         if (! (electron.Pt() > ptmin)) continue;
         if (! (fabs(electron.Eta()) < fetamax)) continue;
         if (! electron.PassID(ID)) continue;
+        if (vetoHEM && IsHEMElectron(electron)) continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax) const
-{
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax, bool vetoHEM) const {
     RVec<Electron> selected_electrons;
-    for (const auto &electron : electrons)
-    {
-        if (!(electron.Pt() > ptmin))
-            continue;
-        if (!(fabs(electron.Eta()) < fetamax))
-            continue;
-        if (!electron.PassID(ID))
-            continue;
+    for (const auto &electron : electrons) {
+        if (!(electron.Pt() > ptmin)) continue;
+        if (!(fabs(electron.Eta()) < fetamax)) continue;
+        if (!electron.PassID(ID)) continue;
+        if (vetoHEM && IsHEMElectron(electron)) continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
@@ -918,6 +916,458 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     return GenJets;
 }
 
+bool AnalyzerCore::IsHEMElectron(const Electron& electron) const {
+    if (DataYear != 2018) return false;
+
+    if (electron.Eta() < -1.25){
+        if((electron.Phi() < -0.82) && (electron.Phi() > -1.62)) return true;
+    }
+    return false;
+}
+
+// Gen Matching
+void AnalyzerCore::PrintGen(const RVec<Gen> &gens) {
+    cout << "===========================================================" << endl;
+    //cout << "RunNumber:EventNumber = " << Run << ":" << event << endl;
+    cout << "index\tPID\tStatus\tMIdx\tMPID\tStart\tPt\tEta\tPhi\tM" << endl;
+    for(unsigned int i=2; i<gens.size(); i++){
+        Gen gen = gens.at(i);
+        RVec<int> history = TrackGenSelfHistory(gen, gens);
+        cout << i << "\t" 
+             << gen.PID() << "\t" 
+             << gen.Status() << "\t" 
+             << gen.MotherIndex() << "\t" 
+             << gens.at(gen.MotherIndex()).PID() << "\t" 
+             << history[0] << "\t" 
+             << fixed << setprecision(2) 
+             << gen.Pt() << "\t" 
+             << gen.Eta() << "\t" 
+             << gen.Phi() << "\t" 
+             << gen.M() << endl;
+    }
+}
+
+RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens) {
+    //returns {index of the first history of the gen, 
+    //         index of the last history of the gen's mother}
+    int myindex = me.Index();
+    if(myindex<2){ // 0 and 1 are initial partons
+        RVec<int> out = {myindex, -1};
+        return out;
+    }
+    int mypid = gens.at(myindex).PID();
+    int currentidx = myindex;
+    int motherindex = me.MotherIndex();
+
+    while(gens.at(motherindex).PID() == mypid){
+        // Go one generation up
+        currentidx = motherindex;
+        motherindex = gens.at(motherindex).MotherIndex();
+        if(motherindex<0) break;
+    }
+    RVec<int> out = {currentidx, motherindex};
+    return out;
+}
+
+Gen AnalyzerCore::GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens){
+    //==== find status 1 lepton
+    int reco_PID = -999;
+    if(lep.LeptonFlavour() == Lepton::ELECTRON) {
+        reco_PID = 11;
+    } else if(lep.LeptonFlavour() == Lepton::MUON) {
+        reco_PID = 13;
+    } else {
+        cerr << "[AnalyzerCore::GetGenMatchedLepton] input lepton flavour not set" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    float min_dR = 0.1;
+    Gen gen_closest;
+    bool found_match = false;
+    for(unsigned int i=2; i<gens.size(); i++){
+        const Gen &gen = gens.at(i);
+        if( gen.Status() != 1 ) continue; 
+        if( abs( gen.PID() ) != reco_PID ) continue; 
+        if( gen.MotherIndex() < 0 ) continue; // reject ISR
+        if( gen.DeltaR( lep ) < min_dR ){ // dR matching
+            min_dR = gen.DeltaR( lep ) ;
+            gen_closest = gen;
+            found_match = true;
+        }
+    }
+    if(!found_match){
+        // Return a Gen with invalid index if no match found
+        Gen dummy;
+        dummy.SetIndexPIDStatus(-1, 0, -1); 
+        return dummy;
+    }
+    return gen_closest;
+}
+
+Gen AnalyzerCore::GetGenMatchedPhoton(const Lepton& lep, const RVec<Gen>& gens){
+    //Find if there is a photon candidate for a source of external conversion (similar pt, direction of lepton)
+    //1) Validity of cuts are checked for electron with PT>10. Note that the previous dPtRel<0.2 cut in the CatNtuple analysis was optimized for PT(e)>25.
+    //   External conversion rate proportionate to M^{-2}, thus muon external conversion rate is negligible.
+    //2) As the algorithm targets stable photon near lepton, only status-1 photon should be investigated theoretically. 
+    //   However, in some events, last status in photon history is 23. This is believed to be due to skimming of GEN history between pythia & MiniAOD. 
+    //   This case is also covered here. Note that IsFinalPhotonSt23 has to analyze whole history, i.e. computationally heavier part in this function.
+    //   Therefore it is put at last part of criteria for efficient functioning.
+    //For more details about the optimization, ask J.B..
+    float min_dR = 0.2;//1)
+    Gen gen_closest;
+    bool found_match = false;
+    float pt_min = 10., dPtRelmax=0.5, dRmax=0.2;//1)
+    for(unsigned int i=2; i<gens.size(); i++){
+        const Gen &gen = gens.at(i);
+        if( gen.MotherIndex() < 0 ) continue;
+        if( ! ( abs(gen.PID())==22 && (gen.Status()==1 || gen.Status()==23) ) ) continue;
+        if( gen.Pt() < pt_min ) continue;
+        if( !(lep.Pt()/gen.Pt()>(1.-dPtRelmax) && lep.Pt()/gen.Pt()<(1.+dPtRelmax)) ) continue;
+        if( gen.DeltaR( lep ) > dRmax ) continue;
+        if( gen.Status()==23 && !IsFinalPhotonSt23_Public(gens) ) continue;
+
+        if( gen.DeltaR( lep ) < min_dR ){
+            min_dR = gen.DeltaR( lep ) ;
+            gen_closest = gen;
+            found_match = true;
+        }
+    }
+    if(!found_match){
+        // Return a Gen with invalid index if no match found
+        Gen dummy;
+        dummy.SetIndexPIDStatus(-1, 0, -1); 
+        return dummy;
+    }
+    return gen_closest;
+}
+
+bool AnalyzerCore::IsFinalPhotonSt23_Public(const RVec<Gen>& gens){
+    //In Some XG proc events, it is observed that some of photons' last status is 23. Presumably due to skimming of generator history between pythia and MiniAOD.
+    //The function returns if this is the case.
+    //And this is designed only for 1 hard photon case as W+G or Z+G or TT+G
+    bool IsFinalGammaStatus23 = false;
+    bool HasStatus23Photon    = false;
+    for(unsigned int i=2; i<gens.size(); i++){
+        const Gen &gen = gens.at(i);
+        int fpid  = fabs(gen.PID());
+        int GenSt = gen.Status();
+        int MPID_direct= gens.at(gen.MotherIndex()).PID();
+        if( !((fpid!=22 && MPID_direct==22) || (fpid==22 && (GenSt==23||GenSt==1))) ) continue;
+
+        RVec<int> my_history, mom_history;
+        my_history  = TrackGenSelfHistory(gen, gens);
+        int LastSelfIdx     = my_history[0];
+        int MotherIdx       = my_history[1];
+        int LastSelfSt      = gens.at(LastSelfIdx).Status();
+        int LastSelfMIdx=-1, MStatus_orig=-1;
+        if(MotherIdx!=-1){
+            mom_history  = TrackGenSelfHistory(gens.at(MotherIdx), gens);
+            LastSelfMIdx = mom_history[0];
+            MStatus_orig = gens.at(LastSelfMIdx).Status();
+        }
+
+        if(fpid==22){
+            if(GenSt==23) {
+                HasStatus23Photon=true; 
+                IsFinalGammaStatus23=true;
+            } else if(GenSt==1 && LastSelfSt==23) {
+                IsFinalGammaStatus23=false;
+                break; //a
+            }
+        } else if( MPID_direct==22 && MStatus_orig==23 ){ 
+            IsFinalGammaStatus23=false; 
+            break; //b
+        }
+    }
+    if(!HasStatus23Photon) return false;
+    return IsFinalGammaStatus23;
+    //**footnotes
+    // a) Status-23 photon's last is 1. Thus status-23 photon is not the last history.
+    // b) Daughter particle of status-23 photon is found. Thus status-23 photon is not the last history. 
+}
+
+bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
+    bool out = false;
+    int myindex = me.Index();
+    if(myindex<2) return true;
+    RVec<int> my_history = TrackGenSelfHistory(me, gens);
+    Gen          Start = gens.at( my_history[0] );
+    Gen MotherOf_Start = gens.at( my_history[1] );
+
+    //==== Status 21~29 are from hardprocess
+    //==== Means it's lepton from hardprocess
+    //==== e.g., leptons from Z start their lives with status 23
+    if( 20 < Start.Status() && Start.Status() < 30 ) return false;
+
+     Gen current_me = Start; // me will always be Start
+     Gen current_mother = Start; // initializing
+    while( current_mother.Index() >= 2 ){
+        RVec<int> current_history = TrackGenSelfHistory(current_me, gens);
+
+        //==== Go one generation up
+        current_me = gens.at(current_history[1]);
+
+       //==== Now look at mother of previous "me"
+        current_mother = gens.at(current_history[1]);
+
+        RVec<int> current_mother_history = TrackGenSelfHistory(current_mother, gens);
+        Gen StartOf_current_mother = gens.at(current_mother_history[0]);
+        int current_mother_PID = current_mother.PID();
+
+        //==== From Z,W,H,t
+        if( current_mother_PID==23 || current_mother_PID==24 || current_mother_PID==25 || current_mother_PID==6 ){
+            out = false;
+            break;
+        }
+    
+        //==== From Signal
+        if( IsSignalPID(current_mother_PID) ){
+            out = false;
+            break;
+        }
+        if( (current_mother_PID==11 || current_mother_PID==13 || current_mother_PID==15 || current_mother_PID==22) && (StartOf_current_mother.Status()>20 && StartOf_current_mother.Status()<30)){
+            out = false;
+            break;
+        }
+        if( current_mother_PID>50 ){
+            out=true;
+            break;
+        }
+        if( (current_mother_PID>=1 && current_mother_PID<=5) || current_mother_PID==21 ){
+            out=true; 
+            break;
+        }
+    }
+
+    return out;
+}
+
+bool AnalyzerCore::IsSignalPID(const int &pid) {
+    const unsigned int fpid = abs(pid);
+
+    //==== HeavyNeutrino
+    if(fpid>=9900000) return true;
+    //==== CP-odd Higgs
+    if(fpid==36) return true;
+    return false;
+}
+
+//==== [Type]
+//====  1 : EWPrompt
+//====  2 : Signal Daughter
+//====  3 : EWtau daughter
+//====  4 : Internal Conversion daughter from t/EWV/EWlep(Implicit,Explicit)
+//====  5 : Internal Conversion daughter from HardScatterPhoton
+//====  6 : From Offshell W (mother == 37)
+//==== -1 : Unmatched & not EW Conversion candidate
+//==== -2 : Hadron daughter
+//==== -3 : Daughter of tau from hadron or parton
+//==== -4 : Internal conversion daughter(implicit,explicit) having hadronic origin 
+//==== -5 : External conversion candidate(Hard scattered photon)
+//==== -6 : External conversion from t/EWV/EWlep
+//==== (-4: Daughter of Non-hard scattered photon & has parton or hadron ancestor OR implicit Conv from quark)
+//==== -------------------------------------------------------------
+//====  0 : Error
+//==== >0 : Non-fake; Non-hadronic origin
+//==== <0 : Fakes   ; Hadronic origin or external conversion
+
+int AnalyzerCore::GetLeptonType(const Gen& gen, const RVec<Gen>& gens) {
+    int LeptonType = GetLeptonType_Public(gen.Index(), gens);//4)
+    if(LeptonType>=4 && LeptonType<=5){//5)
+        int NearbyPrElType = GetPrElType_InSameSCRange_Public(gen.Index(), gens);
+        if(NearbyPrElType>0) LeptonType = NearbyPrElType;
+    }
+    return LeptonType;
+}
+
+int AnalyzerCore::GetLeptonType(const Lepton& lep, const RVec<Gen>& gens) {
+    int LeptonType=0, MatchedTruthIdx=-1; 
+    Gen gen_closest = GetGenMatchedLepton(lep, gens);
+    //cout << "[AnalyzerCore::GetLeptonType] [Reco] pt = " << lep.Pt() << "\t, eta = " << lep.Eta() << endl;
+    //cout << "[AnalyzerCore::GetLeptonType] [Gen] Index = " << gen_closest.Index() << endl;
+
+    //==== No matched gen lepton
+    if( gen_closest.IsEmpty() ){
+        Gen gen_photon_closest = GetGenMatchedPhoton(lep, gens);
+        int NearPhotonType = GetGenPhotonType(gen_photon_closest,gens);
+        if     ( NearPhotonType<=0 ) LeptonType=-1;
+        else if( NearPhotonType==1 ) LeptonType=-5;
+        else if( NearPhotonType==2 ) LeptonType=-6;
+    } else { //==== Has macthed gen lepton
+        MatchedTruthIdx = gen_closest.Index();
+        LeptonType = GetLeptonType_Public(MatchedTruthIdx, gens);
+        if(LeptonType>=4 && LeptonType<=5){
+            int NearbyPrElType = GetPrElType_InSameSCRange_Public(MatchedTruthIdx, gens);
+            if(NearbyPrElType>0) LeptonType = NearbyPrElType;
+        }
+    }
+    return LeptonType;
+    //**footnote
+    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
+    //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
+    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
+    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
+    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
+    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron,
+    //   rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
+    //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
+}
+
+int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens) {
+    //Type : 1:EW-Prompt / 2: BSM-Prompt / 3:EW/BSM-Prompt-Tau Daughter / 6: From Offshell W (mother == 37)
+    //       4:Internal Conversion from Soft QED Radiation (PS-level) / 5:Internal Conversion from Hard Process Photon (ME-level)
+    //      -1:Unmatched & not EW Conversion candidate (mis-reco. or external conversion within jets)
+    //      -2:Hadron Daughter / -3:Daughter of Tau from Hadron or Parton / -4:Internal Conversion Daughter having hadronic origin
+    //      -5:External Conversion from Hard process photon / -6:External conversion from t/EWV/EWlep
+    //      (-4:Daughter of Non-hard scattered photon & has parton or hadron ancestor OR implicit Conv from quark)
+    //       0:Error / >0: Non-fake: Non-hadronic origin / <0 : Fakes: Hadronic origin or external conversion
+    //Note: There is no physical distinction between type 4 vs. 5 and type -5 vs. -6. The distinction is only intended for straightforward debugging.
+
+    //Only consider Status 1 lepton
+    if (genIdx<2) return 0;
+    if (gens.at(genIdx).Status()!=1) return 0;
+    if( !(fabs(gens.at(genIdx).PID())==11 || fabs(gens.at(genIdx).PID())==13) ) return 0;
+
+
+    int LeptonType=0;
+    int MPID=0, GrMPID=0;
+    RVec<int> my_history, mom_history, grmom_history;
+    int LastSelfIdx=-1, MotherIdx=-1, LastSelfMIdx=-1, GrMotherIdx=-1, LastSelfGrMIdx=-1;
+    int Status_orig=0, MStatus_orig=0, MStatus_last=0, GrMStatus_orig=0, GrMStatus_last=0;
+    bool HadronicOrigin = false;
+
+    my_history      = TrackGenSelfHistory(gens.at(genIdx), gens);
+    LastSelfIdx     = my_history[0];
+    MotherIdx       = my_history[1];
+    Status_orig     = gens.at(LastSelfIdx).Status();
+    HadronicOrigin  = IsFromHadron(gens.at(genIdx), gens);
+
+    if(   MotherIdx!=-1   ){ 
+        mom_history  = TrackGenSelfHistory(gens.at(MotherIdx), gens);
+        LastSelfMIdx = mom_history[0];
+        GrMotherIdx  = mom_history[1];
+        MPID         = gens.at(MotherIdx).PID();
+        MStatus_orig = gens.at(LastSelfMIdx).Status();
+        MStatus_last = gens.at(MotherIdx).Status();
+    }
+    if(  GrMotherIdx!=-1  ){ 
+        grmom_history  = TrackGenSelfHistory(gens.at(GrMotherIdx), gens);
+        LastSelfGrMIdx = grmom_history[0];
+        GrMPID         = gens.at(GrMotherIdx).PID();
+        GrMStatus_orig = gens.at(LastSelfGrMIdx).Status();
+        GrMStatus_last = gens.at(GrMotherIdx).Status();
+    }
+
+    if     ( genIdx==-1 )                                         LeptonType= 0;
+    else if( fabs(MPID)==23 || fabs(MPID)==24 || fabs(MPID)==25 ) LeptonType= 1;
+    else if( IsSignalPID(MPID) )                                  LeptonType= 2;
+    else if( abs(MPID) == 37 )                                    LeptonType= 6; 
+    else if( Status_orig>20 && Status_orig<30 )                   LeptonType= 1;//1)
+    else if( fabs(MPID)>50 )                                      LeptonType=-2;
+    else if( fabs(MPID)==15 && MStatus_last==2 ){
+        if     ( fabs(GrMPID)==23 || fabs(GrMPID)==24 || fabs(GrMPID)==25 )    LeptonType= 3;
+        else if( IsSignalPID(GrMPID) )                                         LeptonType= 3;
+        else if( MStatus_orig>20  && MStatus_orig<30  )                        LeptonType= 3;//1)
+        else if( HadronicOrigin )                                              LeptonType=-3;//2-a)
+        else if( fabs(GrMPID)==22  && GrMStatus_orig>20 && GrMStatus_orig<30 ) LeptonType= 5;//2-b)
+        else if( fabs(GrMPID)==22 )                                            LeptonType= 4;//2-c)
+        else if( (fabs(GrMPID)==11 || fabs(GrMPID)==13 || fabs(GrMPID)==15) && GrMStatus_last!=2 ) LeptonType= 4;//2-d)
+        else                                                                   LeptonType= 0;
+    }
+    else if( fabs(MPID)==22 ){
+        if( MStatus_orig>20 && MStatus_orig<30 )                            LeptonType= 5;//3-a)
+        else if( HadronicOrigin )                                           LeptonType=-4;//3-b)
+        else if( fabs(GrMPID)==24 || fabs(GrMPID)==23 || fabs(GrMPID)==6  ) LeptonType= 4;//3-c)
+        else if( fabs(GrMPID)==11 || fabs(GrMPID)==13 || fabs(GrMPID)==15 ) LeptonType= 4;//3-d)
+        else                                                                LeptonType= 0;
+    }
+    else if( (fabs(MPID)==11 || fabs(MPID)==13 || fabs(MPID)==15) && MStatus_last!=2 && !HadronicOrigin ) LeptonType= 4;//4-a)
+    else if( ((fabs(MPID)>=1 && fabs(MPID)<=5) || fabs(MPID)==21) && MStatus_last!=2 )                    LeptonType=-4;//4-b)
+    else if( fabs(MPID)==6 ) LeptonType=4;//4-c)
+    else LeptonType=0;
+
+    return LeptonType;
+    //**footnote
+    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
+    //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
+    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
+    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
+    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
+    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron, rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
+    //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
+}
+
+//==== [Type]
+//====  0 : Invalid input or Error or HardScatter is input when hardscatter is not final state
+//====  1 : HardScatter / 2: Else prompt daughter(l,V,t)
+//==== -1 : Reserved for unmatched(Not used now) / -2: Hadronic origin
+int AnalyzerCore::GetGenPhotonType(const Gen& genph, const RVec<Gen>& gens) {
+    if(genph.IsEmpty()) return 0;
+    int genph_index = genph.Index();
+    if( genph_index<2 ) return 0;
+    if( !(gens.at(genph_index).PID()==22 && (gens.at(genph_index).Status()==1 || gens.at(genph_index).Status()==23)) ) return 0;
+
+    if(gens.at(genph_index).Status()==23){
+        if(IsFinalPhotonSt23_Public(gens)) return 1;
+        else                               return 0;
+    }//From this pt, only St1 Photon is treated.
+
+    RVec<int> phhist = TrackGenSelfHistory(genph, gens);
+    const Gen&          Start = gens.at(phhist[0]);
+    const Gen& MotherOf_Start = gens.at(phhist[1]);
+    const int& MotherOf_Start_PID = abs(MotherOf_Start.PID()); // |PID|
+    const bool fromhadron = IsFromHadron(genph, gens);
+
+    if     ( 20 < Start.Status() && Start.Status() < 30 ) return 1;//1)
+    else if( MotherOf_Start_PID==23 || MotherOf_Start_PID==25) return 1;//2)
+    else if( MotherOf_Start_PID==24 || MotherOf_Start_PID==6 || IsSignalPID(MotherOf_Start_PID) ) return 2;//3)
+    else if( fromhadron ) return -2;//4)
+    else if( MotherOf_Start_PID==11 || MotherOf_Start_PID==13 || MotherOf_Start_PID==15 ) return 2;//5)
+    else return 0;
+
+    //**footnote
+    //1) Hard process photon's original status is 20's, unless the history is skimmed in MiniAOD.
+    //2) If part of intermediate history is skimmed at MinoAOD, then last photon status is 1 without any preceding history lines.
+    //   In that case, intermediate mother is written in history, and this line catches the case.
+    //3) top and charged bosons can radiate photons.
+    // - Note that distinction between 1 and 2 is not physical. You should use both 1 & 2 for prompt photons.
+    //4) this category does not include top, but photons from hadrons and quarks. Predominantly, in most of the cases they are daughter of pi0.
+    //   Rarer, but other mesons as eta, B, or even some quarks can also radiate energetic photons.
+    //5) Photons radiated from lepton FSR. Sometimes they are quite energetic.
+}
+
+int AnalyzerCore::GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen>& gens){
+    //Abbreviation: Get Prompt Electron Type In Same Supercluster Range (Public (shared) version of J.B.'s original gen-matching code)
+    //Prompt e>eee (int. conv.) case, collimated electrons can be merged in one SC & track is selected among them, and reconstructed as single electron. 
+    //In this case, still there will be a nearby prompt electron of LepType 1-3 within supercluster merging range.
+    //Supercluster merging range: |dphi|<0.3/0.3 (EB/EE), |deta|<0/0.07 (EB/EE) (additionally put 0.03 for marginal difference from size of crystals)
+    //Ref:JINST 10 (2015) P06005, arXiv:1502.02701
+    //Return Value: 1/2/3:LeptonType-1/2/3 electron found in same SC range
+    //             -1: No LeptonType-1/2/3 electron found in same SC range
+    //Note: Hadronic origins are not included in this algo. as I am not sure of effect of many nearby particles in jets on the ele-reco performance.
+    //      + it is not of my interest yet.
+
+    if(genIdx<2) return -1;
+    if(abs(gens.at(genIdx).PID())!=11) return -1;
+    if(gens.at(genIdx).Status()!=1) return -1;
+
+    float dPhiMax=0.3, dEtaMax=0.1;
+    int NearbyElType=-1;
+
+    for(unsigned int it_gen=2; it_gen<gens.size(); it_gen++){
+        if(gens.at(it_gen).Status()!=1) continue;
+        if(abs(gens.at(it_gen).PID())!=11) continue;
+        if(fabs(gens.at(genIdx).Eta()-gens.at(it_gen).Eta())>dEtaMax) continue;
+        if(gens.at(genIdx).DeltaPhi(gens.at(it_gen))>dPhiMax) continue;
+
+        int LepType = GetLeptonType_Public(it_gen, gens);
+        if(!(LepType>=1 && LepType<=3)) continue;
+        NearbyElType  = LepType;
+    }
+    return NearbyElType;
+}
+
+// Histogram Handlers
 void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
