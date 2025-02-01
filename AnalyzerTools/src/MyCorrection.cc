@@ -233,7 +233,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     }
 
 
-    MUO_keys["2023BPix"] = "Collisions2023_369803_370790_eraD_GoldenJson";
+    LUM_keys["2023BPix"] = "Collisions2023_369803_370790_eraD_GoldenJson";
     LUM_keys["2023"] = "Collisions2023_366403_369802_eraBC_GoldenJson";
     LUM_keys["2022EE"] = "Collisions2022_359022_362760_eraEFG_GoldenJson";
     LUM_keys["2022"] = "Collisions2022_355100_357900_eraBCD_GoldenJson";
@@ -242,7 +242,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     LUM_keys["2016postVFP"] = "Collisions16_UltraLegacy_goldenJSON";
     LUM_keys["2016preVFP"] = "Collisions16_UltraLegacy_goldenJSON";
 
-    BTV_keys["2023BPix"] = "2023PromptD";
+    EGM_keys["2023BPix"] = "2023PromptD";
     EGM_keys["2023"] = "2023PromptC";
     EGM_keys["2022EE"] = "2022Re-recoE+PromptFG";
     EGM_keys["2022"] = "2022ReRecoBCD";
