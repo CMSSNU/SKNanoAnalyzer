@@ -360,7 +360,12 @@ float Correction::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, c
     auto cset = cset_electron_hlt->at("Electron-HLT-SF");
     try
     {
-        return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt, phi});
+        if(cset->inputs().size() == 5){
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt});
+        }
+        else{
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt, phi});
+        }
     }
     catch (exception &e)
     {
