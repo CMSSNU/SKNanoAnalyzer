@@ -324,12 +324,19 @@ float MyCorrection::GetMuonTriggerWeight(const TString &Muon_Trigger_SF_Key, con
     return weight;
 }
 
-float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const variation syst, const TString &source) const
+float Correction::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
 {
     auto cset = cset_electron->at("Electron-ID-SF");
     try
     {
-        return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt});
+        //NOTE: from 2023, It seems some SF depends on phi. I think it will gradually be applied to all SFs.
+        //As a interim solution, I hardcode here.
+        if((cset->inputs().size() == 5)){
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt});
+        }
+        else{
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt, phi});
+        }
     }
     catch (exception &e)
     {
@@ -343,17 +350,17 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVe
     float weight = 1.;
     for (const auto &electron : electrons)
     {
-        weight *= GetElectronIDSF(Electron_ID_SF_Key, fabs(electron.Eta()), electron.Pt(), syst, source);
+        weight *= GetElectronIDSF(Electron_ID_SF_Key, fabs(electron.Eta()), electron.Pt(), electron.Phi(), syst, source);
     }
     return weight;
 }
 
-float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const variation syst, const TString &source) const
+float Correction::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
 {
     auto cset = cset_electron_hlt->at("Electron-HLT-SF");
     try
     {
-        return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt});
+        return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt, phi});
     }
     catch (exception &e)
     {
@@ -362,7 +369,7 @@ float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
     }
 }
 
-float MyCorrection::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, bool ofDATA, const variation syst, const TString &source) const
+float Correction::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, bool ofDATA, const variation syst, const TString &source) const
 {
     std::string key = ofDATA ? "Electron-HLT-DataEff" : "Electron-HLT-McEff";
     auto cset = cset_electron_hlt->at(key);
@@ -378,7 +385,7 @@ float MyCorrection::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key
         throw std::runtime_error("[MyCorrection::GetElectronTriggerEff] Invalid syst value");
     try
     {
-        return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt});
+        return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt, phi});
     }
     catch (exception &e)
     {
@@ -387,14 +394,14 @@ float MyCorrection::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key
     }
 }
 
-float MyCorrection::GetElectronRECOSF(const float eta, const float pt, const variation syst, const TString &source) const
+float Correction::GetElectronRECOSF(const float eta, const float pt, const float phi,const variation syst, const TString &source) const
 {
     if (pt < 20.)
-        return GetElectronIDSF("RecoBelow20", eta, pt, syst);
+        return GetElectronIDSF("RecoBelow20", eta, pt, phi, syst);
     else if (pt >= 20. && pt < 75)
-        return GetElectronIDSF("Reco20to75", eta, pt, syst);
+        return GetElectronIDSF("Reco20to75", eta, pt, phi, syst);
     else if (pt >= 75.)
-        return GetElectronIDSF("RecoAbove75", eta, pt, syst);
+        return GetElectronIDSF("RecoAbove75", eta, pt, phi, syst);
     else
         return 1.;
 }
@@ -404,7 +411,7 @@ float MyCorrection::GetElectronRECOSF(const RVec<Electron> &electrons, const var
     float weight = 1.;
     for (const auto &electron : electrons)
     {
-        weight *= GetElectronRECOSF(fabs(electron.Eta()), electron.Pt(), syst);
+        weight *= GetElectronRECOSF(fabs(electron.Eta()), electron.Pt(), electron.Phi(), syst);
     }
     return weight;
 }
