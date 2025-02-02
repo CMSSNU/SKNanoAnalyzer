@@ -390,7 +390,12 @@ float Correction::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, 
         throw std::runtime_error("[MyCorrection::GetElectronTriggerEff] Invalid syst value");
     try
     {
-        return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt, phi});
+        if(cset->inputs().size() == 5){
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt});
+        }
+        else{
+            return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt, phi});
+        }
     }
     catch (exception &e)
     {
