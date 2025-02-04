@@ -138,8 +138,8 @@ fi
 JSONPOG_REPO_PATH=$SKNANO_HOME/external/jsonpog-integration
 
 if [ ! -d "$JSONPOG_REPO_PATH" ]; then
-    echo "@@@@ Cloning jsonpog-integration repository for the first time..."
-    git clone --recurse-submodules ssh://git@gitlab.cern.ch:7999/cms-nanoAOD/jsonpog-integration.git "$JSONPOG_REPO_PATH"
+    echo "@@@@ JSONPOG Repository not found"
+    
 else
     echo "@@@@ Checking for updates in jsonpog-integration repository..."
     cd "$JSONPOG_REPO_PATH"
