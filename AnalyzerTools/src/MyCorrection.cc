@@ -451,19 +451,46 @@ void MyCorrection::SetTaggingParam(JetTagging::JetFlavTagger tagger, JetTagging:
 
 float MyCorrection::GetBTaggingWP() const
 {
-    correction::Correction::Ref cset = cset_btagging->at(global_taggerStr + "_wp_values");
-    return cset->evaluate({global_wpStr});
+    try
+    {
+        correction::Correction::Ref cset = cset_btagging->at(global_taggerStr + "_wp_values");
+        return cset->evaluate({global_wpStr});
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[Correction::GetBTaggingWP] Warning: Failed to evaluate WP '"
+                  << global_wpStr << "' for tagger '" << global_taggerStr
+                  << "'. Returning 1.f as default." << std::endl;
+        return 1.f;
+    }
 }
 
 float MyCorrection::GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const
 {
-    string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
-    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
-    correction::Correction::Ref cset = cset_btagging->at(this_taggerStr + "_wp_values");
-    return cset->evaluate({this_wpStr});
+    // Convert enumerations to strings
+    std::string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+    std::string this_wpStr     = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+
+    try
+    {
+        correction::Correction::Ref cset = cset_btagging->at(this_taggerStr + "_wp_values");
+        return cset->evaluate({this_wpStr});
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[Correction::GetBTaggingWP] Warning: Failed to evaluate WP '"
+                  << this_wpStr << "' for tagger '" << this_taggerStr
+                  << "'. Returning 1.f as default." << std::endl;
+        return 1.f;
+    }
 }
 
+<<<<<<< HEAD:AnalyzerTools/src/MyCorrection.cc
 float MyCorrection::GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
+=======
+
+float Correction::GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
+>>>>>>> fix Hardcoded c-tagging Wp retriever:AnalyzerTools/src/Correction.cc
 {
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
@@ -591,29 +618,57 @@ float MyCorrection::GetBTaggingR(const RVec<Jet> &jets, const JetTagging::JetFla
 
 pair<float, float> MyCorrection::GetCTaggingWP() const
 {
-    if ((int)global_wp >= 3)
+    try
     {
-        cout << "[MyCorrection::GetCTaggingWP] Workingpoint VeryTight and SuperTight are not available for C-Tagging" << endl;
-        exit(ENODATA);
+        correction::Correction::Ref cset = cset_ctagging->at(global_taggerStr + "_wp_values");
+        float valCvB = cset->evaluate({global_wpStr, "CvB"});
+        float valCvL = cset->evaluate({global_wpStr, "CvL"});
+        return make_pair(valCvB, valCvL);
     }
-    correction::Correction::Ref cset = cset_ctagging->at(global_taggerStr + "_wp_values");
-    return make_pair(cset->evaluate({global_wpStr, "CvB"}), cset->evaluate({global_wpStr, "CvL"}));
+    catch (const std::exception& e)
+    {
+        // If the requested WP is not found or any other error occurs, 
+        // log a warning and return (1.f, 1.f) as a fallback.
+        cerr << "[Correction::GetCTaggingWP] Warning: Failed to evaluate WP '"
+             << global_wpStr << "' for tagger '" << global_taggerStr
+             << "'. Returning (1.f, 1.f) as default." << endl;
+        return make_pair(1.f, 1.f);
+    }
 }
 
-pair<float, float> MyCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const
+
+pair<float, float> Correction::GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const
 {
+    // Convert enumerations to strings using your existing utility functions
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
-    string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
-    if ((int)wp >= 3)
-    {
-        cout << "[MyCorrection::GetCTaggingWP] Workingpoint VeryTight and SuperTight are not available for C-Tagging" << endl;
-        exit(ENODATA);
-    }
+    string this_wpStr     = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+
+    // Retrieve the relevant correction set
     correction::Correction::Ref cset = cset_ctagging->at(this_taggerStr + "_wp_values");
-    return make_pair(cset->evaluate({this_wpStr, "CvB"}), cset->evaluate({this_wpStr, "CvL"}));
+
+    try
+    {
+        // Evaluate the corrections. If the WP does not exist, an exception might be thrown
+        float valCvB = cset->evaluate({this_wpStr, "CvB"});
+        float valCvL = cset->evaluate({this_wpStr, "CvL"});
+
+        // If everything is fine, return the pair
+        return make_pair(valCvB, valCvL);
+    }
+    catch (const std::exception& e)
+    {
+        // In case the WP is not found (or any other error occurs),
+        // print a warning (optional) and return default values
+        std::cerr << "[Correction::GetCTaggingWP] Warning: WP '" 
+                  << this_wpStr << "' not found for tagger '"
+                  << this_taggerStr << "'. Returning (1.f, 1.f) as default."
+                  << std::endl;
+        return make_pair(1.f, 1.f);
+    }
 }
 
-float MyCorrection::GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
+
+float Correction::GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
 {
     return 1.;
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
