@@ -76,9 +76,8 @@ void MeasureJetTaggingEff::executeEvent()
 
     //define your analysis phase space here
     RVec<Jet> jets = SelectJets(AllJets, Jet::JetID::TIGHT, 25., 2.5);
-    // if (jets.size() < 4)
-    //     return;
-    //     ..etc
+    if (jets.size() < )
+        return;
 
     float weight = 1.;
     float w_Gen = MCweight();
@@ -102,6 +101,7 @@ void MeasureJetTaggingEff::executeEvent()
 
         //==== First, fill the denominator
         FillHist(string("tagging#b") + "##era#" + DataEra.Data() + "##flavor#" + string(flav) + "##systematic#central##den", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
+        FillHist(string("tagging#c") + "##era#" + DataEra.Data() + "##flavor#" + string(flav) + "##systematic#central##den", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
         FillHist("DeepJetBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::DeepJet), weight, 100, 0, 1);
         FillHist("ParticleNetBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::ParticleNet), weight, 100, 0, 1);
         FillHist("ParTBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::ParT), weight, 100, 0, 1);
