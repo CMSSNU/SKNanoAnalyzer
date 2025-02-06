@@ -44,7 +44,7 @@ void MeasureJetTaggingEff::initializeAnalyzer()
 
 
     vec_etabins = {0.0, 0.8, 1.6, 2., 2.5};
-    vec_ptbins = {20., 30., 50., 70., 100., 140., 200., 300., 600., 1000.}; // PT bins used in POG SF measurements
+    vec_ptbins = {20., 25., 30., 50., 70., 100., 140., 200., 300., 600., 1000.}; // PT bins used in POG SF measurements
     // for average users, this binning will be sufficient.
     // but eta-dependence of efficiency can be larger for |eta|>~2, where track & muon detector information of jet constituents starts to get lost, which is critical in tagging.
     // precision analysis with high-eta b may use finer binnings there, but beware of small number of b-jets in high-eta, high-pt bins if you use ttbar sample; proper optimization of bin size should be studied.
@@ -70,7 +70,16 @@ void MeasureJetTaggingEff::executeEvent()
     RVec<Jet> AllJets = GetAllJets();
     RVec<Muon> AllMuons = GetAllMuons();
     if(!PassJetVetoMap(AllJets,AllMuons)) return;
-    RVec<Jet> jets = SelectJets(AllJets, "tightLepVeto", 20., 2.5);
+
+    float JetPtCut = 25.;
+    float JetEtaCut = 2.4;
+
+    //define your analysis phase space here
+    RVec<Jet> jets = SelectJets(AllJets, Jet::JetID::TIGHT, 25., 2.5);
+    // if (jets.size() < 4)
+    //     return;
+    //     ..etc
+
     float weight = 1.;
     float w_Gen = MCweight();
     float w_Norm = ev.GetTriggerLumi("Full");
@@ -105,8 +114,6 @@ void MeasureJetTaggingEff::executeEvent()
                 if (jets.at(ij).GetBTaggerResult(this_tagger) > this_bTaggingCut)
                     FillHist(string("tagging#b") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
                 //No XT and XXT for c-tagging
-                if(this_wp == JetTagging::JetFlavTaggerWP::VeryTight) continue;
-                if(this_wp == JetTagging::JetFlavTaggerWP::SuperTight) continue;
                 float this_CvBCut = myCorr->GetCTaggingWP().first;
                 float this_CvLCut = myCorr->GetCTaggingWP().second;
                 if (jets.at(ij).GetCTaggerResult(this_tagger).first > this_CvBCut && jets.at(ij).GetCTaggerResult(this_tagger).second > this_CvLCut)
