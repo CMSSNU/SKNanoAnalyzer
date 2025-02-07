@@ -32,7 +32,7 @@
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
-#include "Correction.h"
+#include "MyCorrection.h"
 #include "JetTaggingParameter.h"
 #include "PhysicalConstants.h"
 
@@ -59,7 +59,7 @@ public:
     float GetPDFReweight();
     float GetPDFReweight(int member);    
     // Correction
-    Correction *myCorr;
+    MyCorrection *myCorr;
     //unique_ptr<CorrectionSet> csetMuon;
     //unique_ptr<CorrectionSet> csetElectron;;
 
@@ -75,7 +75,7 @@ public:
     RVec<Gen> GetAllGens();
     RVec<LHE> GetAllLHEs();
     RVec<Jet> GetJets(const TString id, const float ptmin, const float fetamax);
-    RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax);
+    RVec<Electron> GetElectrons(const TString id, const float ptmin, const float fetamax, bool vetoHEM = false);
     RVec<Tau> GetAllTaus();
     RVec<FatJet> GetAllFatJets();
     RVec<GenJet> GetAllGenJets();
@@ -88,30 +88,46 @@ public:
     RVec<Jet> SelectJets(const RVec<Jet> &jets, const TString id, const float ptmin, const float fetamax) const;
     RVec<Jet> SelectJets(const RVec<Jet> &jets, const Jet::JetID, const float ptmin, const float fetamax) const;
     RVec<Jet> JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR = 0.3) const;
-    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax) const;
-    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax) const;
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const TString id, const float ptmin, const float absetamax, bool vetoHEM = false) const;
+    RVec<Electron> SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float absetamax, bool vetoHEM = false) const;
     RVec<Tau> SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const;
     // Functions
-    float GetScaleVariation(const Correction::variation &muF_syst, const Correction::variation &muR_syst);
-    float GetPSWeight(const Correction::variation &ISR_syst, const Correction::variation &FSR_syst);
+    float GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst);
+    float GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst);
     inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetBTaggingWP(tagger, wp); }
     inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetCTaggingWP(tagger, wp); }
     inline float GetBTaggingWP(){ return myCorr->GetBTaggingWP(); }
     inline pair<float, float> GetCTaggingWP(){ return myCorr->GetCTaggingWP(); }
-
     float GetHT(const RVec<Jet> &jets);
+    bool IsHEMElectron(const Electron& electron) const;
 
+    // Gen Matching
+    void PrintGen(const RVec<Gen> &gens);
+    static RVec<int> TrackGenSelfHistory(const Gen& me, const RVec<Gen>& gens);
+    static Gen GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens);
+    static Gen GetGenMatchedPhoton(const Lepton& lep, const RVec<Gen>& gens);
+    static bool IsFinalPhotonSt23_Public(const RVec<Gen>& gens);
+    bool IsFromHadron(const Gen& me, const RVec<Gen>& gens);
+    bool IsSignalPID(const int &pid);
+    int GetLeptonType(const Lepton& lep, const RVec<Gen>& gens);
+    int GetLeptonType(const Gen& gen, const RVec<Gen>& gens);
+    int GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens);
+    int GetGenPhotonType(const Gen& genph, const RVec<Gen>& gens);
+    int  GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen>& gens);
+
+    // Scale and smear
     void METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects);
-
-    float GetL1PrefireWeight(Correction::variation syst = Correction::variation::nom);
+    float GetL1PrefireWeight(MyCorrection::variation syst = MyCorrection::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
     unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
-    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const Correction::variation &syst = Correction::variation::nom, const TString &source = "total");
+    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+
+    // Histogram Handlers
     void SetOutfilePath(TString outpath);
     TH1F* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");

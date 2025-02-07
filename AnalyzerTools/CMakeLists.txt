@@ -1,14 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 
-# Determine library extension based on OS
-if(APPLE)
-    set(LIB_EXT "dylib")
-elseif(UNIX)
-    set(LIB_EXT "so")
-else()
-    message(FATAL_ERROR "Unsupported platform")
-endif()
-
 # Find packages
 find_package(ROOT REQUIRED)
 # Find libraries with more robust method
@@ -33,6 +24,7 @@ target_include_directories(MLHelper PUBLIC
 target_link_libraries(MLHelper PUBLIC 
     #${TORCH_LIBRARIES}
     ${ONNXRUNTIME_LIBRARY}
+    ${ROOT_LIBRARIES}
 )
 
 

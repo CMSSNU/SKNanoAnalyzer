@@ -19,39 +19,35 @@ SKNano.py -a ExampleRun -i '[YOUR_PREFIX]*' -e 2022 -n 10 --reduction 10 ...
       - [Using conda](#using-conda)
       - [Using micromamba](#using-micromamba)
       - [Using cvmfs](#using-cvmfs)
-  - [About LHAPDFs](#about-lhapdfs)
-  - [About correctionlibs](#about-correctionlibs)
-    - [Installation](#installation)
-    - [Singularity Support](#singularity-support)
-  - [Compilation](#compilation)
-  - [Check modules](#check-modules)
+      - [Setting up ssh-key for gitlab.cern.ch (required for jsonpog-integration)](#setting-up-ssh-key-for-gitlabcernch-required-for-jsonpog-integration)
+  - [Installation](#installation)
+      - [About LHAPDFs](#about-lhapdfs)
+      - [About correctionlibs](#about-correctionlibs)
+      - [Singularity Support](#singularity-support)
+      - [Check modules](#check-modules)
   - [How to Submit the job](#how-to-submit-the-job)
   - [Setting the telegram bot](#setting-the-telegram-bot)
 
 ## Setting up the environment
-
-
 ### Preliminary Setup
 #### Making config file
 Your configuration file should be named as `config/config.$USER`. You can copy the default configuration file and modify it.
-- [SYSTEM]: OS that you are using. `osx / linux`
+- [SYSTEM]: OS that you are using. `osx / redhat`
 - [PACKAGE]: Package manager that you are using. `conda / mamba / cvmfs(deprecated)`
-- [TOKEN_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
-- [USER_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
-- [SINGULARITY_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
+- [TOKEN\_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
+- [USER\_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
+- [SINGULARITY\_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
 
 #### Using conda
 Here is an example to setup the environment using conda.
 ```bash
 # create conda environment
-conda create -n nano python=3.11 root=6.30.04 -c conda-forge
+conda create -n nano python=3.12 root=6.32.02 -c conda-forge
 conda activate nano
 
-# Install onnxruntime-cpp
-conda install onnxruntime-cpp
-
-# Install correctionlib
-pip install correctionlib
+# Install onnxruntime-cpp and correctionlib
+# NOTE: Using pip to install dependencies is not recommended. Might cause the confusion while compiling the project.
+conda install onnxruntime-cpp correctionlib
 ```
 
 #### Using micromamba
@@ -71,11 +67,75 @@ you can copy my environment by use `Nano.yml` under `docs` directory. Just Chang
 micromamba env create -f Nano.yml
 ```
 
+#### Note on using OSX
+If you are testing your jobs on MacOS, you can use both conda and mamba environment. However, you should be cautious about the python version.
+- Latest ROOT from homebrew is 6.32.08. The pre-compiled version run smoothly wiht python 3.12, but correctionlib only supports up to python 3.12.
+- Possible solution is to use the conda / mamba environment with python 3.11 or 3.12 and install root from source. Here are some steps to install ROOT manually and link onnxruntime libraries.
+```bash
+# install mamba
+brew install micromamba # follow the instruction to add the path to your shell
+mamba create -n Nano python=3.12
+mamba activate Nano
+mamba install correctionlib onnxruntime-cpp -c conda-forge
+
+# install root
+# As Nano environment is activated, pyROOT will be binded to the python in Nano environment.
+cd ~/Downloads
+git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git root_src
+# I've installed mamba in my home directory. Let's install ROOT inside the mamba directory.
+cd ~/mamba
+mkdir root_build root_install
+cd root_build
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/mamba/root_install -Dbuiltin_glew=ON  $HOME/root_src
+cmake --build . --target install -j8 # takes some time
+rm -rf ~/Downloads/root_src ~/mamba/root_build
+
+# link the libraries.
+# I have already installed onnxruntime-cpp in my mamba environment named Nano
+ln -s $HOME/mamba/envs/Nano/lib/libonnxruntime.1.20.1.dylib $HOME/mamba/root_install/lib/libonnxruntime.1.20.1.dylib
+
+# We do not set-up root while setup.sh. Activate root when you open the shell.
+echo "source $HOME/mamba/root_install/bin/thisroot.sh" >> ~/.zshrc
+source ~/.zshrc
+root -l # Test the ROOT
+``` 
+Tested on
+- M4 Mac Mini 
+- MacOS Sequoia 15.2
+- python 3.12
+- ROOT 6.32.08
+- micromamba from homebrew
+
 #### Using cvmfs
-TODO: Add the instruction for cvmfs
+Deprecated.
 
+#### Setting up ssh-key for gitlab.cern.ch (required for jsonpog-integration)
+```bash
+ssh-keygen -t ed25519 -C "your cern email"
+```
+2. Add the public key to the gitlab repository. Go to the [gitlab.cern.ch](https://gitlab.cern.ch) -> Preferences -> SSH Keys -> Add an SSH key
 
-## About LHAPDFs
+### Installation
+Recommend to fork the repository to your account.
+```bash
+git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
+git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
+
+# Checkout to your development branch
+# for the main branch, it is recommended to sync with the upstream main branch to get the latest updates.
+git checkout $DEVBRANCH
+
+# create config file and edit the configuration
+cp config/config.default config/config.$USER
+
+# first time setup
+source setup.sh    # you have to do this every new session. It will install lhapdf and libtorch if not installed.
+
+# build the project
+./scripts/build.sh
+```
+
+#### About LHAPDFs
 For using LHAPDFHandler and PDFReweight classes, two possible options
 1. install lhapdf manually.
 ```bash
@@ -85,35 +145,16 @@ It would be run automatically for the first time setup.
 
 2. use lhapdf from cvmfs
 
-## About correctionlibs
+#### About correctionlibs
 In the config/config.$USER file, there is an option to choose bewteen conda and cvmfs. When configuring your environment with conda, at least ROOT and correctionlibs should be installed:
 ```bash
 # example
-conda env create -n nano python=3.11 root=6.30.04 -c conda-forge
+conda env create -n nano python=3.12 root=6.32.02 -c conda-forge
 conda activate nano
-pip install correctionlib
+conda install -c conda-forge correctionlib
 ```
 
-### Installation
-Recommend to fork the repo to your account.
-```bash
-# Clone the repository
-# jsonpog-integration should be cloned as a submodule if you don't use cvmfs
-git clone --recurse-submodules git@github.com:$GITACCOUNT/SKNanoAnalyzer.git
-
-# Add to your remote repo
-git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
-git checkout $DEVBRANCH
-
-# create config file
-cp config/config.default config/config.$USER
-# edit the configuration!
-
-# first time setup
-source setup.sh    # you have to do this every new session
-```
-
-### Singularity Support
+#### Singularity Support
 If you want to use Singularity image for the batch job, first compile the project within singularity image.
 ```bash
 singularity exec $SINGULARITY_IMAGE bash -c "source setup.sh && ./scripts/build.sh"
@@ -124,24 +165,7 @@ batch jobs:
 SKNano.py -a ExampleRun -i DYJets -e 2022 -n 10 --reduction 10 --no_exec ...
 ```
 
-
-## Compilation
-We are using cmake for the default compiling management.
-Use scripts/build.sh for clean compilation.
-```bash
-./scripts/build.sh
-```
-
-Or you can do it manually
-```bash
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=$SKNANO_HOME ..
-make
-make install
-cd $SKNANO_HOME
-```
-
-## Check modules
+#### Check modules
 Every module(or class) can be imported both in ROOT and python
 ```cpp
 root -l
@@ -163,7 +187,6 @@ p.Print()
 For testing other modules and analyzers, check scripts/test.py
 
 ## How to Submit the job
-
 Jobs can be submitted to htcondor using SKFlat.py
 ```bash
 SKFlat.py -a AnalyzerName -i SamplePD -n number of jobs -e era
@@ -188,15 +211,15 @@ Basic usage is as aboves. There are some additional options for the submission:
 - --ncpu: set the number of cpus for the job. Default is 1.
 - --userflags: set the user flags for the job. Default is empty. to set multiple flags, use comma. e.g. --userflags flag1,flag2
 - --batchname: set the batch name for the job. Default is the analyzer name_userflags.
-- --skimming_mode: by passing this flag, SKFlat.py will submit the jobs for the skimming mode. Detailed information as follows.
+- --skimming\_mode: by passing this flag, SKFlat.py will submit the jobs for the skimming mode. Detailed information as follows.
 
 
 ### Skimming mode
-By passing --skimming_mode, SKFlat.py will submit the jobs for the skimming mode. In this mode, the jobs will create the output in `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[Data,MC]/Skim/$USERNAME` directory, Instead of submit hadd layer in DAG, *PostProc* layer will add in the DAG. 
+By passing --skimming\_mode, SKFlat.py will submit the jobs for the skimming mode. In this mode, the jobs will create the output in `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[Data,MC]/Skim/$USERNAME` directory, Instead of submit hadd layer in DAG, *PostProc* layer will add in the DAG. 
 
-If your analyzer has name that starts with "Skim_", you will be asked to be enable the skimming mode. If you choose to enable the skimming mode, then skimming mode will be activated. Of course you can manually activate the skimming mode by passing --skimming_mode flag.
+If your analyzer has name that starts with "Skim_", you will be asked to be enable the skimming mode. If you choose to enable the skimming mode, then skimming mode will be activated. Of course you can manually activate the skimming mode by passing --skimming\_mode flag.
 
-PostProc layer will create the Skimmed sample folder and will creat the skimTreeInfo.json file and dedicated json that saves the information of the skimmed samples under $SKNANO_DATA/era/Sample/Skim directory.
+PostProc layer will create the Skimmed sample folder and will creat the skimTreeInfo.json file and dedicated json that saves the information of the skimmed samples under $SKNANO\_DATA/era/Sample/Skim directory.
 Each postproc job modify the skimTreeInfo.json sequentially, so ***DO NOT SUBMIT THE MULTIPLE DAG CLUSTERS THAT DO SKIMMING.*** After all the postproc jobs are done, you can submit the new jobs that using skimmed sample. A prefix of Skim_AnalyzerName will be added to the output file name.
 ```bash
 SKFlat.py -a AnalyzerName -i DYJets -n -1 -e era --skimming_mode
@@ -205,7 +228,7 @@ or
 ```bash
 SKFlat.py -a Skim_AnalyzerName -i DYJets -n -1 -e era
 ```
-Will create the Skim_AnalyzerName_DYJets (if you choose to answer "y" in latter one).
+Will create the Skim\_AnalyzerName\_DYJets (if you choose to answer "y" in latter one).
 Then you can submit the jobs by
 ```bash
 SKFlat.py -a AnalyzerName -i Skim_AnalyzerName_DYJets -n -1 -e era

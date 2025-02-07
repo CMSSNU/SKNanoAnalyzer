@@ -4,7 +4,7 @@
 #include "Particle.h"
 #include "TString.h"
 #include "TObject.h"
-#include "Correction.h"
+#include "MyCorrection.h"
 using namespace std;
 #include <map>
 
@@ -45,7 +45,7 @@ public:
     bool IsPDForTrigger(TString trig, TString PD);
 
     void SetMET(RVec<float> MET_pt, RVec<float> MET_phi);
-    Particle GetMETVector(Event::MET_Type MET_type, Correction::variation syst = Correction::variation::nom, Event::MET_Syst source = MET_Syst::CENTRAL) const;
+    Particle GetMETVector(Event::MET_Type MET_type, MyCorrection::variation syst = MyCorrection::variation::nom, Event::MET_Syst source = MET_Syst::CENTRAL) const;
 
     void SetEra(TString era) {
         j_DataEra = era;

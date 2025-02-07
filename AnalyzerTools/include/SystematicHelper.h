@@ -6,13 +6,13 @@
 #include <unordered_set>
 #include <functional>
 #include "ROOT/RVec.hxx"
-#include "Correction.h"
+#include "MyCorrection.h"
 #include <variant>
 
 using namespace ROOT::VecOps;
 using namespace std;
 
-typedef std::unordered_map<std::string, std::variant<std::function<float(Correction::variation, std::string)>, std::function<float()>>> weight_function_map;
+typedef std::unordered_map<std::string, std::variant<std::function<float(MyCorrection::variation, std::string)>, std::function<float()>>> weight_function_map;
 
 class SystematicHelper
 {
@@ -41,7 +41,7 @@ public:
     {
         std::string iter_name;
         std::string syst_name;
-        Correction::variation variation;
+        MyCorrection::variation variation;
     };
 
 
@@ -49,7 +49,7 @@ public:
     {
         std::string iter_name;
         std::string syst_name;
-        Correction::variation variation;
+        MyCorrection::variation variation;
         void clone(Iter_obj &obj)
         {
             iter_name = obj.iter_name;
@@ -61,7 +61,7 @@ public:
     SystematicHelper(std::string yaml_path, TString sample);
     ~SystematicHelper();
     SYST* findSystematic(std::string syst_name);
-    void assignWeightFunctionMap(const unordered_map < std::string, std::variant<std::function<float(Correction::variation, TString)>, std::function<float()>>> &weight_functions);
+    void assignWeightFunctionMap(const unordered_map < std::string, std::variant<std::function<float(MyCorrection::variation, TString)>, std::function<float()>>> &weight_functions);
     class EventLoopIterator
     {
     public:
@@ -112,11 +112,11 @@ public:
 
     inline std::string getCurrentSysName() const { return current_Iter_obj.iter_name; }
     inline std::string getCurrentIterSysSource() const { return current_Iter_obj.syst_name; }
-    inline Correction::variation getCurrentIterVariation() const { return current_Iter_obj.variation; }
+    inline MyCorrection::variation getCurrentIterVariation() const { return current_Iter_obj.variation; }
 
     std::vector<std::string> get_targets_from_name(const std::string &syst_name);
     std::vector<std::string> get_sources_from_name(const std::string &syst_name);
-    Correction::variation get_variation_from_name(const std::string &syst_name);
+    MyCorrection::variation get_variation_from_name(const std::string &syst_name);
     std::unordered_map<std::string, float> calculateWeight();
     inline float safe_divide(float numerator, float denominator)
     {
@@ -139,7 +139,7 @@ private:
 
     std::vector<SYST> systematics;
     std::unordered_map<std::string, CORRELATION> correlations;
-    std::unordered_map<std::string, std::function<float(Correction::variation, TString)>> weight_functions;
+    std::unordered_map<std::string, std::function<float(MyCorrection::variation, TString)>> weight_functions;
     std::unordered_map<std::string, std::function<float()>> weight_functions_onesided;
 
     std::vector<Iter_obj> systematics_evtLoopAgain;
@@ -148,7 +148,7 @@ private:
     std::unordered_map<std::string, float> weight_map_nominal;
     std::unordered_map<std::string, float> weight_map_up;
     std::unordered_map<std::string, float> weight_map_down;
-    std::unordered_map<Correction::variation, std::string> variation_prefix; 
+    std::unordered_map<MyCorrection::variation, std::string> variation_prefix; 
 
     bool isDedicatedSample;
     bool weight_functions_assigned;

@@ -1,5 +1,5 @@
-#ifndef Correction_h
-#define Correction_h
+#ifndef MyCorrection_h
+#define MyCorrection_h
 
 #include <cstdlib>
 #include <iostream>
@@ -17,7 +17,7 @@ using namespace std;
 #include "Electron.h"
 using correction::CorrectionSet;
 
-class Correction
+class MyCorrection
 {
 public:
     struct EraConfig {
@@ -45,7 +45,7 @@ public:
                                   unique_ptr<CorrectionSet> &cset,
                                   bool optional = false)
     {
-        std::cout << "[Correction::Correction] using " << name << " file: " << file << std::endl;
+        std::cout << "[MyCorrection::MyCorrection] using " << name << " file: " << file << std::endl;
         try
         {
             cset = CorrectionSet::from_file(file);
@@ -55,21 +55,21 @@ public:
         {
             if (optional)
             {
-                std::cerr << "[Correction::Correction] Warning: Failed to load " << name
+                std::cerr << "[MyCorrection::MyCorrection] Warning: Failed to load " << name
                           << " file (" << file << "): " << e.what() << std::endl;
                 return false;
             }
             else
             {
-                std::cerr << "[Correction::Correction] Error: Failed to load " << name
+                std::cerr << "[MyCorrection::MyCorrection] Error: Failed to load " << name
                           << " file (" << file << "): " << e.what() << std::endl;
                 throw;
             }
         }
     }
-    Correction();
-    Correction(const TString &era, const TString &sample, const bool IsData, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
-    ~Correction();
+    MyCorrection();
+    MyCorrection(const TString &era, const TString &sample, const bool IsData, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
+    ~MyCorrection();
 
     enum class variation
     {
