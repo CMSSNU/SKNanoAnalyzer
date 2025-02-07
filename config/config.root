@@ -1,5 +1,5 @@
-[SYSTEM] redhat / osx 
-[PACKAGE] conda / mamba
+[SYSTEM] redhat
+[PACKAGE] conda
 [TOKEN_TELEGRAMBOT]
 [USER_CHATID]
 [SINGULARITY_IMAGE]

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo -e "\033[31m##################### WARNING ########################\033[0m"
 echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
 echo -e "\033[31m######################################################\033[0m"
@@ -30,38 +30,28 @@ echo "@@@@ Telegram Bot Token: $TOKEN_TELEGRAMBOT"
 echo "@@@@ Telegram Chat ID: $USER_CHATID"
 echo "@@@@ Using singularity image: $SINGULARITY_IMAGE"
 
-# root configuration
-# no cvmfs related configuration for conda
+# ROOT Package Settings
 if [ $PACKAGE = "conda" ]; then
     echo "@@@@ Primary environment using conda"
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
-    if [ -n "$IS_SINGULARITY" ]; then
+    if [[ -n "$IS_SINGULARITY" || -n "$GITHUB_ACTION" ]]; then
         # Building within Singularity image, will be used for batch jobs
         echo "@@@@ Detected Singularity environment"
         source /opt/conda/bin/activate
         conda activate torch
     else
-        source /data9/Users/choij/miniconda3/bin/activate
+        source ~/.conda-activate
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
     # set up mamba environment
-    micromamba activate Nano
+    mamba activate Nano
     # from this point on, we can follow conda version of setup
     PACKAGE="conda"
+    alias conda="mamba"
 elif [ $PACKAGE = "cvmfs" ]; then
-    echo "@@@@ Primary environment using cvmfs"
-    RELEASE="`cat /etc/redhat-release`"
-    if [[ $RELEASE == *"7."* ]]; then
-        source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-centos7-gcc12-opt/setup.sh
-    elif [[ $RELEASE == *"8."* ]]; then
-        source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-centos8-gcc12-opt/setup.sh
-    elif [[ $RELEASE == *"9."* ]]; then
-        source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
-    else
-        echo "@@@@ Not running on redhat 7, 8, or 9"
-        echo "@@@@ Consider using conda environment"
-    fi
+    echo -e "\033[31m@@@@ cvmfs is not supported anymore\033[0m"
+    return 1
 else
     echo "@@@@ Package not recognized"
     echo "@@@@ Please check configuration file in config/config.$USER"
@@ -88,20 +78,18 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
-if [ $PACKAGE = "conda" ]; then
-    if [[ ! -d "external/lhapdf" ]]; then
-        echo "@@@@ Installing LHAPDF for conda environment"
-        ./scripts/install_lhapdf.sh
+if [[ ! -d "external/lhapdf" ]]; then
+    echo "@@@@ Installing LHAPDF for conda environment"
+    ./scripts/install_lhapdf.sh
+    if [ $? -ne 0 ]; then
+        echo -e "\033[31m@@@@ LHAPDF installation failed\033[0m"
+        return 1
     fi
-    export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
-    export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
-elif [ $PACKAGE = "cvmfs" ]; then
-    echo "@@@@ configuring LHAPDF from cvmfs"
-else
-    echo "@@@@ LHAPDF not found"
 fi
+export PATH=$PATH:$SKNANO_HOME/external/lhapdf/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_HOME/external/lhapdf/lib
+export LHAPDF_DATA_PATH=$SKNANO_HOME/external/lhapdf/data
 export LHAPDF_INCLUDE_DIR=`lhapdf-config --incdir`
 export LHAPDF_LIB_DIR=`lhapdf-config --libdir`
 
@@ -113,40 +101,60 @@ echo "@@@@ reading data from $LHAPDF_DATA_PATH"
 if [[ ! -d "external/libtorch" ]]; then
     echo "@@@@ Installing LibTorch"
     ./scripts/install_libtorch.sh
+    if [ $? -ne 0 ]; then
+        echo -e "\033[31m@@@@ LibTorch installation failed\033[0m"
+        return 1
+    fi
 fi
 export LIBTORCH_INCLUDE_DIR=$SKNANO_HOME/external/libtorch/include
 export LIBTORCH_LIB_DIR=$SKNANO_HOME/external/libtorch/lib
 export LIBTORCH_INSTALL_DIR=$SKNANO_HOME/external/libtorch
 
-# env for correctionlibs
-if [ $PACKAGE = "conda" ]; then
-    export CORRECTION_INCLUDE_DIR=`correction config --incdir`
-    export CORRECTION_LIB_DIR=`correction config --libdir`
-    export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
-elif [ $PACKAGE = "cvmfs" ]; then
-    CORRECTION=`ll $(correction config --libdir | sed 's|/lib$||') | grep version.py | awk '{print $NF}' | sed 's|/lib/python3.9/site-packages/correctionlib/version.py||'`
-    export CORRECTION_INCLUDE_DIR=${CORRECTION}/include
-    export CORRECTION_LIB_DIR=${CORRECTION}/lib
-    #export CORRECTION_INCLUDE_DIR=/cvmfs/sft.cern.ch/lcg/releases/correctionlib/2.2.2-c7cee/x86_64-el9-gcc13-opt/include
-    #export CORRECTION_LIB_DIR=/cvmfs/sft.cern.ch/lcg/releases/correctionlib/2.2.2-c7cee/x86_64-el9-gcc13-opt/lib
-    export JSONPOG_INTEGRATION_PATH=/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration
-else
-    echo "@@@@ Correctionlib not found"
+# env for correctionlib
+CORRECTIONLIBS=$(conda list | grep "correctionlib")
+if [ -z "$CORRECTIONLIBS" ]; then
+    echo -e "\033[31m@@@@ correctionlib not found in conda environment\033[0m"
+    echo -e "\033[31m@@@@ Please install correctionlib in conda environment\033[0m"
+    return 1 
 fi
 
-#env for onnxruntime
-if [ "$PACKAGE" = "conda" ]; then
-    export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
-    export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
-elif [ "$PACKAGE" = "cvmfs" ]; then
-    export ONNXRUNTIME_INCLUDE_DIR=$(scram tool info onnxruntime | grep 'INCLUDE=' | awk -F= '{print $2}')
-    export ONNXRUNTIME_LIB_DIR=$(scram tool info onnxruntime | grep 'LIBDIR=' | awk -F= '{print $2}')
-else
-    echo "@@@@ Onnxruntime not found"
-fi
-
+export CORRECTION_INCLUDE_DIR=`correction config --incdir`
+export CORRECTION_LIB_DIR=`correction config --libdir`
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
-
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
+
+# JSONPOG integration auto-update
+export JSONPOG_INTEGRATION_PATH=$SKNANO_HOME/external/jsonpog-integration
+echo "@@@@ Checking for updates in jsonpog-integration repository..."
+cd "$JSONPOG_INTEGRATION_PATH"
+git fetch origin 
+LOCAL_HASH=$(git rev-parse HEAD) # local hash of latest
+REMOTE_HASH=$(git rev-parse origin/master) # remote hash of latest
+echo "@@@@ Local latest commit: $LOCAL_HASH"
+echo "@@@@ Remote latest commit: $REMOTE_HASH"
+
+# latest commit date and message of the remote branch
+REMOTE_DATE=$(git log -1 --format=%ci origin/master) 
+REMOTE_MESSAGE=$(git log -1 --format=%s origin/master) 
+echo "@@@@ Remote latest update: $REMOTE_DATE - $REMOTE_MESSAGE"
+cd -    
+if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+    echo "@@@@ Updating jsonpog-integration repository..."
+    git submodule update --remote external/jsonpog-integration
+else
+    echo "@@@@ jsonpog-integration repository is already up-to-date."
+fi
+
+# env for onnxruntime
+ONNXRUNTIME=$(conda list | grep "onnxruntime")
+if [ -z "$ONNXRUNTIME" ]; then
+    echo -e "\033[31m@@@@ onnxruntime not found in conda environment\033[0m"
+    echo -e "\033[31m@@@@ Please install onnxruntime in conda environment\033[0m"
+    return 1
+fi
+export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
+export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
+echo "@@@@ onnxruntime include: $ONNXRUNTIME_INCLUDE_DIR"
+echo "@@@@ onnxruntime lib: $ONNXRUNTIME_LIB_DIR"

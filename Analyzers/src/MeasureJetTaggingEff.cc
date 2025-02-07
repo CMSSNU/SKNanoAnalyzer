@@ -23,7 +23,7 @@ void MeasureJetTaggingEff::initializeAnalyzer()
     fChain->SetBranchStatus("PV_*", 1);
     fChain->SetBranchStatus("genWeight", 1);
 
-    myCorr = new Correction(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
     TString datapath = getenv("DATA_DIR");
     TString btagpath = datapath + "/" + DataEra + "/BTag/";
 
