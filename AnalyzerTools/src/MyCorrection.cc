@@ -485,12 +485,7 @@ float MyCorrection::GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::
     }
 }
 
-<<<<<<< HEAD:AnalyzerTools/src/MyCorrection.cc
 float MyCorrection::GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
-=======
-
-float Correction::GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
->>>>>>> fix Hardcoded c-tagging Wp retriever:AnalyzerTools/src/Correction.cc
 {
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
