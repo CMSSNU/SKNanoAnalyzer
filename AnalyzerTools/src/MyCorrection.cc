@@ -331,7 +331,7 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const flo
     {
         //NOTE: from 2023, It seems some SF depends on phi. I think it will gradually be applied to all SFs.
         //As a interim solution, I hardcode here.
-        if((cset->inputs().size() == 5)){
+        if(!isInputInCorrection("phi", cset)){
             return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt});
         }
         else{
@@ -360,7 +360,7 @@ float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
     auto cset = cset_electron_hlt->at("Electron-HLT-SF");
     try
     {
-        if(cset->inputs().size() == 5){
+        if(!isInputInCorrection("phi", cset)){
             return cset->evaluate({EGM_keys.at(DataEra.Data()), getSystString_EGM(syst), string(Electron_Trigger_SF_Key), eta, pt});
         }
         else{
@@ -390,7 +390,7 @@ float MyCorrection::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key
         throw std::runtime_error("[MyCorrection::GetElectronTriggerEff] Invalid syst value");
     try
     {
-        if(cset->inputs().size() == 5){
+        if(!isInputInCorrection("phi", cset)){
             return cset->evaluate({EGM_keys.at(DataEra.Data()), ValType, string(Electron_Trigger_SF_Key), eta, pt});
         }
         else{
@@ -459,8 +459,8 @@ float MyCorrection::GetBTaggingWP() const
     catch (const std::exception &e)
     {
         std::cerr << "[Correction::GetBTaggingWP] Warning: Failed to evaluate WP '"
-                  << global_wpStr << "' for tagger '" << global_taggerStr
-                  << "'. Returning 1.f as default." << std::endl;
+                  << global_wpStr << "' for tagger '" << global_taggerStr << std::endl;
+        throw std::runtime_error(e.what());
         return 1.f;
     }
 }
@@ -479,8 +479,8 @@ float MyCorrection::GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::
     catch (const std::exception &e)
     {
         std::cerr << "[Correction::GetBTaggingWP] Warning: Failed to evaluate WP '"
-                  << this_wpStr << "' for tagger '" << this_taggerStr
-                  << "'. Returning 1.f as default." << std::endl;
+                  << this_wpStr << "' for tagger '" << this_taggerStr << std::endl;
+        throw std::runtime_error(e.what());
         return 1.f;
     }
 }
@@ -626,7 +626,8 @@ pair<float, float> MyCorrection::GetCTaggingWP() const
         // log a warning and return (1.f, 1.f) as a fallback.
         cerr << "[Correction::GetCTaggingWP] Warning: Failed to evaluate WP '"
              << global_wpStr << "' for tagger '" << global_taggerStr
-             << "'. Returning (1.f, 1.f) as default." << endl;
+             << endl;
+        throw std::runtime_error(e.what());
         return make_pair(1.f, 1.f);
     }
 }
@@ -656,8 +657,8 @@ pair<float, float> MyCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger,
         // print a warning (optional) and return default values
         std::cerr << "[Correction::GetCTaggingWP] Warning: WP '" 
                   << this_wpStr << "' not found for tagger '"
-                  << this_taggerStr << "'. Returning (1.f, 1.f) as default."
-                  << std::endl;
+                  << this_taggerStr << std::endl;
+        throw std::runtime_error(e.what());
         return make_pair(1.f, 1.f);
     }
 }
