@@ -67,6 +67,17 @@ public:
             }
         }
     }
+
+    inline bool isInputInCorrection(const std::string &key, const correction::Correction::Ref &cset) const
+    {
+        std::vector<std::string> inputs;
+        for (const auto &input : cset->inputs())
+        {
+            inputs.push_back(input.name());
+        }
+        return std::find(inputs.begin(), inputs.end(), key) != inputs.end();
+    }
+
     MyCorrection();
     MyCorrection(const TString &era, const TString &sample, const bool IsData, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
     ~MyCorrection();
