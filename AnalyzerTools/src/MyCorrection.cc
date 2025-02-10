@@ -324,7 +324,7 @@ float MyCorrection::GetMuonTriggerWeight(const TString &Muon_Trigger_SF_Key, con
     return weight;
 }
 
-float Correction::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
+float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
 {
     auto cset = cset_electron->at("Electron-ID-SF");
     try
@@ -355,7 +355,7 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVe
     return weight;
 }
 
-float Correction::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
+float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const
 {
     auto cset = cset_electron_hlt->at("Electron-HLT-SF");
     try
@@ -374,7 +374,7 @@ float Correction::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, c
     }
 }
 
-float Correction::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, bool ofDATA, const variation syst, const TString &source) const
+float MyCorrection::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, bool ofDATA, const variation syst, const TString &source) const
 {
     std::string key = ofDATA ? "Electron-HLT-DataEff" : "Electron-HLT-McEff";
     auto cset = cset_electron_hlt->at(key);
@@ -404,7 +404,7 @@ float Correction::GetElectronTriggerEff(const TString &Electron_Trigger_SF_Key, 
     }
 }
 
-float Correction::GetElectronRECOSF(const float eta, const float pt, const float phi,const variation syst, const TString &source) const
+float MyCorrection::GetElectronRECOSF(const float eta, const float pt, const float phi,const variation syst, const TString &source) const
 {
     if (pt < 20.)
         return GetElectronIDSF("RecoBelow20", eta, pt, phi, syst);
@@ -632,7 +632,7 @@ pair<float, float> MyCorrection::GetCTaggingWP() const
 }
 
 
-pair<float, float> Correction::GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const
+pair<float, float> MyCorrection::GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const
 {
     // Convert enumerations to strings using your existing utility functions
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
@@ -663,7 +663,7 @@ pair<float, float> Correction::GetCTaggingWP(JetTagging::JetFlavTagger tagger, J
 }
 
 
-float Correction::GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
+float MyCorrection::GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst)
 {
     return 1.;
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
