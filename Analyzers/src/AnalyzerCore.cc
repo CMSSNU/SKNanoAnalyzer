@@ -56,10 +56,10 @@ float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst, c
 float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst){
     //[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;
     if(nPSWeight == 1) return 1.;
-    if(ISR_syst == Correction::variation::up && FSR_syst == Correction::variation::nom) return PSWeight[0];
-    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::up) return PSWeight[1];
-    else if(ISR_syst == Correction::variation::down && FSR_syst == Correction::variation::nom) return PSWeight[2];
-    else if(ISR_syst == Correction::variation::nom && FSR_syst == Correction::variation::down) return PSWeight[3];
+    if(ISR_syst == MyCorrection::variation::up && FSR_syst == MyCorrection::variation::nom) return PSWeight[0];
+    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::up) return PSWeight[1];
+    else if(ISR_syst == MyCorrection::variation::down && FSR_syst == MyCorrection::variation::nom) return PSWeight[2];
+    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::down) return PSWeight[3];
     else{
         cout << "[AnalyzerCore::GetPSWeight] ISR_syst = " << int(ISR_syst) << " and FSR_syst = " << int(FSR_syst) << " is not implemented" << endl;
         exit(ENODATA);
