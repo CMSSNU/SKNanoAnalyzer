@@ -672,7 +672,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
             }
-            jet.SetJetID(Jet_jetId[i]);
+            jet.SetJetID(Jet_jetId[i], Jet_eta[i], 3, Jet_neHEF[i], Jet_neEmEF[i], Jet_muEF[i], Jet_chEmEF[i]);
             jet.SetJetPuID(0b111);
             tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
         }
@@ -688,7 +688,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
             }
-            jet.SetJetID(Jet_jetId_RunII[i]);
+            jet.SetJetID(Jet_jetId_RunII[i], Jet_eta[i], 2);
             if (DataYear == 2016)
             {
                 // due to the bug in the NanoAODv9, the puId is stored in a wrong way

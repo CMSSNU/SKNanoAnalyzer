@@ -88,12 +88,40 @@ public:
     j_svIdx2 = sv2;
   };
 
-  inline void SetJetID(unsigned char b)
+  inline void SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF = -1, float Jet_neEmEF = -1, float Jet_muEF = -1, float Jet_chEmEF = -1)
   {
     // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
-    j_looseJetId = (b & 1);
-    j_tightJetID = (b & 2);
-    j_tightLepVetoJetID = (b & 4);
+    if(Run == 2){
+      if(Jet_neHEF > 0.f || Jet_neEmEF > 0.f || Jet_muEF > 0.f || Jet_chEmEF > 0.f){
+        //for run2, we don't need this OTF calculation
+        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run2");
+      }
+      j_looseJetId = (b & 1);
+      j_tightJetID = (b & 2);
+      j_tightLepVetoJetID = (b & 4);
+    }
+    //due to the bug in the NanoAODv12, Below fix is necessary
+    //Please refer https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/117 or https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID13p6TeV#Recommendations_for_the_13_6_AN1
+    else if(Run == 3){
+      if(Jet_neHEF < 0.f || Jet_neEmEF < 0.f || Jet_muEF < 0.f || Jet_chEmEF < 0.f){
+        //for run3, we need this OTF calculation
+        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run3, please provide Jet_neHEF, Jet_neEmEF, Jet_muEF, Jet_chEmEF");
+      }
+
+      bool Jet_passJetIdTight = false;
+      if (abs(eta) <= 2.7) Jet_passJetIdTight = b & (1 << 1);
+      else if (abs(eta) > 2.7 && abs(eta) <= 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neHEF < 0.99);
+      else if (abs(eta) > 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neEmEF < 0.4);
+
+      bool Jet_passJetIdTightLepVeto = false;
+      if (abs(eta) <= 2.7) Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);
+      else Jet_passJetIdTightLepVeto = Jet_passJetIdTight;
+
+      j_looseJetId = (b & 1);
+      j_tightJetID = Jet_passJetIdTight;
+      j_tightLepVetoJetID = Jet_passJetIdTightLepVeto;
+    }
+
   };
   inline void SetJetPuID(int puIDBit)
   {
