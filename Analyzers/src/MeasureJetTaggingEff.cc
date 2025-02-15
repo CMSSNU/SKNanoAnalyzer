@@ -71,10 +71,6 @@ void MeasureJetTaggingEff::executeEvent()
     RVec<Muon> AllMuons = GetAllMuons();
     if(!PassJetVetoMap(AllJets,AllMuons)) return;
 
-    RVec<Electron> AllElectrons =  GetAllElectrons();
-    AllElectrons = SelectElectrons(AllElectrons, Electron::ElectronID::POG_TIGHT, 30., 2.5);
-    myCorr->GetElectronRECOSF(AllElectrons);
-
     float JetPtCut = 25.;
     float JetEtaCut = 2.4;
 
