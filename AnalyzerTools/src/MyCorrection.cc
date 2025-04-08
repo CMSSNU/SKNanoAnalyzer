@@ -490,7 +490,7 @@ float MyCorrection::GetBTaggingEff(const float eta, const float pt, const int fl
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     correction::Correction::Ref cset = cset_btagging_eff->at(this_taggerStr);
-    return cset->evaluate({"eff", this_wpStr, flav, fabs(eta), pt});
+    return cset->evaluate({getSystString_BTV(syst), this_wpStr, flav, fabs(eta), pt});
 }
 
 float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source)
