@@ -1,0 +1,10 @@
+{
+    "name": "QCD_PT50to80",
+    "isMC": 1,
+    "PD": "QCD_Pt_50to80_TuneCP5_13TeV_pythia8",
+    "xsec": 15700000,
+    "nmc": 37307000.0,
+    "sumsign": 37307000.0,
+    "sumW": 37307000.0,
+    "path": []
+}

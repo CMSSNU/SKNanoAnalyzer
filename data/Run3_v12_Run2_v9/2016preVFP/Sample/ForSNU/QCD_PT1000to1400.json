@@ -1,0 +1,10 @@
+{
+    "name": "QCD_PT1000to1400",
+    "isMC": 1,
+    "PD": "QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8",
+    "xsec": 7.478,
+    "nmc": 38009000.0,
+    "sumsign": 38009000.0,
+    "sumW": 38009000.0,
+    "path": []
+}

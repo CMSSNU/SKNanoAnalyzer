@@ -1,0 +1,10 @@
+{
+    "name": "QCD_PT1800to2400",
+    "isMC": 1,
+    "PD": "QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8",
+    "xsec": 0.08745,
+    "nmc": 6125000.0,
+    "sumsign": 6125000.0,
+    "sumW": 6125000.0,
+    "path": []
+}
