@@ -352,12 +352,8 @@ Event AnalyzerCore::GetEvent()
     Event ev;
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
-    if(Run == 3){
-        ev.SetnPVsGood(PV_npvsGood);
-    }
-    else if(Run == 2){
-        ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
-    }
+    ev.SetnPVsGood(PV_npvsGood);
+
 
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
@@ -567,14 +563,9 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
         gen.SetIsEmpty(false);
         gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
         gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
-        if(Run == 3){
-            gen.SetMother(GenPart_genPartIdxMother[i]);
-            gen.SetGenStatusFlags(GenPart_statusFlags[i]);
-        }
-        else if(Run == 2){
-            gen.SetMother(static_cast<short>(GenPart_genPartIdxMother_RunII[i]));
-            gen.SetGenStatusFlags(static_cast<unsigned short>(GenPart_statusFlags_RunII[i])); 
-        }
+
+        gen.SetMother(GenPart_genPartIdxMother[i]);
+        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
 
         Gens.push_back(gen);
     }
@@ -612,22 +603,13 @@ RVec<Tau> AnalyzerCore::GetAllTaus(){
         tau.SetdXY(Tau_dxy[i]);
         tau.SetdZ(Tau_dz[i]);
         tau.SetGenPartFlav(Tau_genPartFlav[i]);
-        if(Run == 3){
-            tau.SetCharge(Tau_charge[i]);
-            tau.SetDecayMode(Tau_decayMode[i]);
-            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
-            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
-            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
-            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx[i]);
-        }
-        else if(Run == 2){
-            tau.SetCharge(Tau_charge_RunII[i]);
-            tau.SetDecayMode(Tau_decayMode_RunII[i]);
-            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2017v2p1VSjet[i]);
-            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2017v2p1VSmu[i]);
-            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2017v2p1VSe[i]);
-            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx_RunII[i]);
-        }
+        tau.SetCharge(Tau_charge[i]);
+        tau.SetDecayMode(Tau_decayMode[i]);
+        tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
+        tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
+        tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
+        if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx[i]);
+
         tau.SetIdDecayModeNewDMs(Tau_idDecayModeNewDMs[i]);
         taus.push_back(tau);
 
@@ -662,14 +644,11 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
         if(!IsDATA){
-            if(Run == 3)
             jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
-            else if(Run == 2)
-            jet.SetJetFlavours(static_cast<short>(Jet_partonFlavour_RunII[i]) , static_cast<unsigned char>(Jet_hadronFlavour_RunII[i]));
         }
         RVec<float> tvs;
         RVec<float> tvs2;
-        if(Run == 3){
+
             tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
                            Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
                            Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
@@ -683,34 +662,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             jet.SetJetID(Jet_jetId[i], Jet_eta[i], 3, Jet_neHEF[i], Jet_neEmEF[i], Jet_muEF[i], Jet_chEmEF[i]);
             jet.SetJetPuID(0b111);
             tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
-        }
-        //for Run 2 DeepJet is only option
-        else if(Run == 2){
-            tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
-                   -999., -999., -999., -999.,
-                   -999., -999., -999., -999., -999.};
-            jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons_RunII[i], Jet_nMuons_RunII[i], 0);
-            if(!IsDATA){
-                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9, Jet_genJetIdx_RunII[i]);
-            }
-            else{
-                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
-            }
-            jet.SetJetID(Jet_jetId_RunII[i], Jet_eta[i], 2);
-            if (DataYear == 2016)
-            {
-                // due to the bug in the NanoAODv9, the puId is stored in a wrong way
-                int InterChanged = 0;
-                InterChanged = Jet_puId[i] >> 2 | ((Jet_puId[i] & 0b001) << 2) | (Jet_puId[i] & 0b010);
-                jet.SetJetPuID(InterChanged);
-            }
-            else
-            {
-                jet.SetJetPuID(Jet_puId[i]);
-            }
-            tvs2 = {-999.0, -999.0, -999.0, -999.0, Jet_rawFactor[i], Jet_bRegCorr[i], Jet_bRegRes[i], Jet_cRegCorr[i], Jet_cRegRes[i]};
 
-        }
         jet.SetTaggerResults(tvs);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetCorrections(tvs2);
@@ -742,12 +694,7 @@ RVec<Photon> AnalyzerCore::GetAllPhotons() {
         photon.SetSCEta(Photon_eta[i], Photon_phi[i], 0, 0, 0, false, false); 
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP80, Photon_mvaID_WP80[i]);
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP90, Photon_mvaID_WP90[i]);
-        if(Run == 3){
-            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
-        }
-        else if(Run == 2){
-            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased_RunII[i]);
-        }
+        photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
 
 
         Photons.push_back(photon);
@@ -861,7 +808,6 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
         RVec<float> pnet_m;
         RVec<float> pnet;
 
-        if(Run == 3){
             pnet_m = {FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
                FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i],
                FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i],
@@ -876,19 +822,7 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets() {
 
             fatjet.SetJetID(FatJet_jetId[i]);
             if(!IsDATA) fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
-        }
-        else if(Run == 2){
-            pnet_m = {FatJet_particleNet_H4qvsQCD[i], FatJet_particleNet_HccvsQCD[i],
-               FatJet_particleNet_HbbvsQCD[i], FatJet_particleNet_QCD[i],
-               FatJet_particleNet_TvsQCD[i], FatJet_particleNet_WvsQCD[i],
-               FatJet_particleNet_ZvsQCD[i]};
-            
-            pnet = {FatJet_particleNetMD_QCD[i], -999., -999., -999.,
-                    FatJet_particleNetMD_Xbb[i], FatJet_particleNetMD_Xcc[i],
-                    FatJet_particleNetMD_Xqq[i], -999., -999., -999., -999., -999.};
-            fatjet.SetJetID(static_cast<unsigned char>(FatJet_jetId_RunII[i]));
-            if(!IsDATA) fatjet.SetGenMatchIDs(static_cast<short>(FatJet_genJetAK8Idx_RunII[i]), static_cast<short>(FatJet_subJetIdx1_RunII[i]), static_cast<short>(FatJet_subJetIdx2_RunII[i]));
-        }
+
 
         fatjet.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
         fatjet.SetArea(FatJet_area[i]);
@@ -916,10 +850,7 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
         GenJet genjet;
 
         genjet.SetPtEtaPhiM(GenJet_pt[i], GenJet_eta[i], GenJet_phi[i], GenJet_mass[i]);
-        if(Run == 3)
         genjet.SetGenFlavours(GenJet_partonFlavour[i], GenJet_hadronFlavour[i]);
-        else if(Run == 2)
-        genjet.SetGenFlavours(static_cast<short>(GenJet_partonFlavour_RunII[i]), GenJet_hadronFlavour[i]); 
         GenJets.push_back(genjet);
     }
 

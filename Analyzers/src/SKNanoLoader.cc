@@ -2,7 +2,1050 @@
 #include "SKNanoLoader.h"
 using json = nlohmann::json;
 
-SKNanoLoader::SKNanoLoader() {
+SKNanoLoader::SKNanoLoader() : // ==============================================================
+                               //  _         _                         _       _    _         _     _
+                               // | |__  ___| |_____ __ __  __ ___  __| |___  | |__| |___  __| |__ (_)___
+                               // | '_ \/ -_) / _ \ V  V / / _/ _ \/ _` / -_) | '_ \ / _ \/ _| / / | (_-<
+                               // |_.__/\___|_\___/\_/\_/  \__\___/\__,_\___| |_.__/_\___/\__|_\_\ |_/__/
+
+                               //            _                                      _          _ _
+                               //  __ _ _  _| |_ ___ ___ __ _ ___ _ _  ___ _ _ __ _| |_ ___ __| | |
+                               // / _` | || |  _/ _ \___/ _` / -_) ' \/ -_) '_/ _` |  _/ -_) _` |_|
+                               // \__,_|\_,_|\__\___/   \__, \___|_||_\___|_| \__,_|\__\___\__,_(_)
+                               //                       |___/
+                               //==============================================================
+
+                               // Electron
+                               Electron_IPx(TTreeReaderArray<Float_t>(*fReader, "Electron_IPx")),
+                               Electron_IPy(TTreeReaderArray<Float_t>(*fReader, "Electron_IPy")),
+                               Electron_IPz(TTreeReaderArray<Float_t>(*fReader, "Electron_IPz")),
+                               Electron_PreshowerEnergy(TTreeReaderArray<Float_t>(*fReader, "Electron_PreshowerEnergy")),
+                               Electron_charge(TTreeReaderArray<Int_t>(*fReader, "Electron_charge")),
+                               Electron_convVeto(TTreeReaderArray<Bool_t>(*fReader, "Electron_convVeto")),
+                               Electron_cutBased(TTreeReaderArray<UChar_t>(*fReader, "Electron_cutBased")),
+                               Electron_cutBased_HEEP(TTreeReaderArray<Bool_t>(*fReader, "Electron_cutBased_HEEP")),
+                               Electron_deltaEtaSC(TTreeReaderArray<Float_t>(*fReader, "Electron_deltaEtaSC")),
+                               Electron_dr03EcalRecHitSumEt(TTreeReaderArray<Float_t>(*fReader, "Electron_dr03EcalRecHitSumEt")),
+                               Electron_dr03HcalDepth1TowerSumEt(TTreeReaderArray<Float_t>(*fReader, "Electron_dr03HcalDepth1TowerSumEt")),
+                               Electron_dr03TkSumPt(TTreeReaderArray<Float_t>(*fReader, "Electron_dr03TkSumPt")),
+                               Electron_dr03TkSumPtHEEP(TTreeReaderArray<Float_t>(*fReader, "Electron_dr03TkSumPtHEEP")),
+                               Electron_dxy(TTreeReaderArray<Float_t>(*fReader, "Electron_dxy")),
+                               Electron_dxyErr(TTreeReaderArray<Float_t>(*fReader, "Electron_dxyErr")),
+                               Electron_dz(TTreeReaderArray<Float_t>(*fReader, "Electron_dz")),
+                               Electron_dzErr(TTreeReaderArray<Float_t>(*fReader, "Electron_dzErr")),
+                               Electron_eInvMinusPInv(TTreeReaderArray<Float_t>(*fReader, "Electron_eInvMinusPInv")),
+                               Electron_ecalEnergy(TTreeReaderArray<Float_t>(*fReader, "Electron_ecalEnergy")),
+                               Electron_ecalEnergyError(TTreeReaderArray<Float_t>(*fReader, "Electron_ecalEnergyError")),
+                               Electron_energyErr(TTreeReaderArray<Float_t>(*fReader, "Electron_energyErr")),
+                               Electron_eta(TTreeReaderArray<Float_t>(*fReader, "Electron_eta")),
+                               Electron_fbrem(TTreeReaderArray<Float_t>(*fReader, "Electron_fbrem")),
+                               Electron_fsrPhotonIdx(TTreeReaderArray<Short_t>(*fReader, "Electron_fsrPhotonIdx")),
+                               Electron_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "Electron_genPartFlav")),
+                               Electron_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "Electron_genPartIdx")),
+                               Electron_gsfTrketaMode(TTreeReaderArray<Float_t>(*fReader, "Electron_gsfTrketaMode")),
+                               Electron_gsfTrkpMode(TTreeReaderArray<Float_t>(*fReader, "Electron_gsfTrkpMode")),
+                               Electron_gsfTrkpModeErr(TTreeReaderArray<Float_t>(*fReader, "Electron_gsfTrkpModeErr")),
+                               Electron_gsfTrkphiMode(TTreeReaderArray<Float_t>(*fReader, "Electron_gsfTrkphiMode")),
+                               Electron_hoe(TTreeReaderArray<Float_t>(*fReader, "Electron_hoe")),
+                               Electron_ip3d(TTreeReaderArray<Float_t>(*fReader, "Electron_ip3d")),
+                               Electron_ipLengthSig(TTreeReaderArray<Float_t>(*fReader, "Electron_ipLengthSig")),
+                               Electron_isEB(TTreeReaderArray<Bool_t>(*fReader, "Electron_isEB")),
+                               Electron_isEcalDriven(TTreeReaderArray<Bool_t>(*fReader, "Electron_isEcalDriven")),
+                               Electron_isPFcand(TTreeReaderArray<Bool_t>(*fReader, "Electron_isPFcand")),
+                               Electron_jetDF(TTreeReaderArray<Float_t>(*fReader, "Electron_jetDF")),
+                               Electron_jetIdx(TTreeReaderArray<Short_t>(*fReader, "Electron_jetIdx")),
+                               Electron_jetNDauCharged(TTreeReaderArray<UChar_t>(*fReader, "Electron_jetNDauCharged")),
+                               Electron_jetPtRelv2(TTreeReaderArray<Float_t>(*fReader, "Electron_jetPtRelv2")),
+                               Electron_jetRelIso(TTreeReaderArray<Float_t>(*fReader, "Electron_jetRelIso")),
+                               Electron_lostHits(TTreeReaderArray<UChar_t>(*fReader, "Electron_lostHits")),
+                               Electron_mass(TTreeReaderArray<Float_t>(*fReader, "Electron_mass")),
+                               Electron_miniPFRelIso_all(TTreeReaderArray<Float_t>(*fReader, "Electron_miniPFRelIso_all")),
+                               Electron_miniPFRelIso_chg(TTreeReaderArray<Float_t>(*fReader, "Electron_miniPFRelIso_chg")),
+                               Electron_mvaHZZIso(TTreeReaderArray<Float_t>(*fReader, "Electron_mvaHZZIso")),
+                               Electron_mvaIso(TTreeReaderArray<Float_t>(*fReader, "Electron_mvaIso")),
+                               Electron_mvaIso_WP80(TTreeReaderArray<Bool_t>(*fReader, "Electron_mvaIso_WP80")),
+                               Electron_mvaIso_WP90(TTreeReaderArray<Bool_t>(*fReader, "Electron_mvaIso_WP90")),
+                               Electron_mvaIso_WPHZZ(TTreeReaderArray<Bool_t>(*fReader, "Electron_mvaIso_WPHZZ")),
+                               Electron_mvaNoIso(TTreeReaderArray<Float_t>(*fReader, "Electron_mvaNoIso")),
+                               Electron_mvaNoIso_WP80(TTreeReaderArray<Bool_t>(*fReader, "Electron_mvaNoIso_WP80")),
+                               Electron_mvaNoIso_WP90(TTreeReaderArray<Bool_t>(*fReader, "Electron_mvaNoIso_WP90")),
+                               Electron_pdgId(TTreeReaderArray<Int_t>(*fReader, "Electron_pdgId")),
+                               Electron_pfRelIso03_all(TTreeReaderArray<Float_t>(*fReader, "Electron_pfRelIso03_all")),
+                               Electron_pfRelIso03_chg(TTreeReaderArray<Float_t>(*fReader, "Electron_pfRelIso03_chg")),
+                               Electron_pfRelIso04_all(TTreeReaderArray<Float_t>(*fReader, "Electron_pfRelIso04_all")),
+                               Electron_phi(TTreeReaderArray<Float_t>(*fReader, "Electron_phi")),
+                               Electron_photonIdx(TTreeReaderArray<Short_t>(*fReader, "Electron_photonIdx")),
+                               Electron_promptMVA(TTreeReaderArray<Float_t>(*fReader, "Electron_promptMVA")),
+                               Electron_pt(TTreeReaderArray<Float_t>(*fReader, "Electron_pt")),
+                               Electron_r9(TTreeReaderArray<Float_t>(*fReader, "Electron_r9")),
+                               Electron_rawEnergy(TTreeReaderArray<Float_t>(*fReader, "Electron_rawEnergy")),
+                               Electron_scEtOverPt(TTreeReaderArray<Float_t>(*fReader, "Electron_scEtOverPt")),
+                               Electron_seedGain(TTreeReaderArray<UChar_t>(*fReader, "Electron_seedGain")),
+                               Electron_seediEtaOriX(TTreeReaderArray<Short_t>(*fReader, "Electron_seediEtaOriX")),
+                               Electron_seediPhiOriY(TTreeReaderArray<Short_t>(*fReader, "Electron_seediPhiOriY")),
+                               Electron_sieie(TTreeReaderArray<Float_t>(*fReader, "Electron_sieie")),
+                               Electron_sip3d(TTreeReaderArray<Float_t>(*fReader, "Electron_sip3d")),
+                               Electron_superclusterEta(TTreeReaderArray<Float_t>(*fReader, "Electron_superclusterEta")),
+                               Electron_svIdx(TTreeReaderArray<Short_t>(*fReader, "Electron_svIdx")),
+                               Electron_tightCharge(TTreeReaderArray<UChar_t>(*fReader, "Electron_tightCharge")),
+                               Electron_vidNestedWPBitmap(TTreeReaderArray<Int_t>(*fReader, "Electron_vidNestedWPBitmap")),
+                               Electron_vidNestedWPBitmapHEEP(TTreeReaderArray<Int_t>(*fReader, "Electron_vidNestedWPBitmapHEEP")),
+                               nElectron_Ptr(TTreeReaderValue<Int_t>(*fReader, "nElectron")),
+                               nElectron(*nElectron_Ptr),
+
+                               // FatJet
+                               FatJet_area(TTreeReaderArray<Float_t>(*fReader, "FatJet_area")),
+                               FatJet_chEmEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_chEmEF")),
+                               FatJet_chHEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_chHEF")),
+                               FatJet_chMultiplicity(TTreeReaderArray<Short_t>(*fReader, "FatJet_chMultiplicity")),
+                               FatJet_electronIdx3SJ(TTreeReaderArray<Short_t>(*fReader, "FatJet_electronIdx3SJ")),
+                               FatJet_eta(TTreeReaderArray<Float_t>(*fReader, "FatJet_eta")),
+                               FatJet_genJetAK8Idx(TTreeReaderArray<Short_t>(*fReader, "FatJet_genJetAK8Idx")),
+                               FatJet_globalParT3_QCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_QCD")),
+                               FatJet_globalParT3_TopbWev(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_TopbWev")),
+                               FatJet_globalParT3_TopbWmv(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_TopbWmv")),
+                               FatJet_globalParT3_TopbWq(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_TopbWq")),
+                               FatJet_globalParT3_TopbWqq(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_TopbWqq")),
+                               FatJet_globalParT3_TopbWtauhv(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_TopbWtauhv")),
+                               FatJet_globalParT3_WvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_WvsQCD")),
+                               FatJet_globalParT3_XWW3q(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_XWW3q")),
+                               FatJet_globalParT3_XWW4q(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_XWW4q")),
+                               FatJet_globalParT3_XWWqqev(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_XWWqqev")),
+                               FatJet_globalParT3_XWWqqmv(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_XWWqqmv")),
+                               FatJet_globalParT3_Xbb(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xbb")),
+                               FatJet_globalParT3_Xcc(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xcc")),
+                               FatJet_globalParT3_Xcs(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xcs")),
+                               FatJet_globalParT3_Xqq(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xqq")),
+                               FatJet_globalParT3_Xtauhtaue(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xtauhtaue")),
+                               FatJet_globalParT3_Xtauhtauh(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xtauhtauh")),
+                               FatJet_globalParT3_Xtauhtaum(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_Xtauhtaum")),
+                               FatJet_globalParT3_massCorrGeneric(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_massCorrGeneric")),
+                               FatJet_globalParT3_massCorrX2p(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_massCorrX2p")),
+                               FatJet_globalParT3_withMassTopvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_withMassTopvsQCD")),
+                               FatJet_globalParT3_withMassWvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_withMassWvsQCD")),
+                               FatJet_globalParT3_withMassZvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_globalParT3_withMassZvsQCD")),
+                               FatJet_hadronFlavour(TTreeReaderArray<UChar_t>(*fReader, "FatJet_hadronFlavour")),
+                               FatJet_hfEmEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_hfEmEF")),
+                               FatJet_hfHEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_hfHEF")),
+                               FatJet_lsf3(TTreeReaderArray<Float_t>(*fReader, "FatJet_lsf3")),
+                               FatJet_mass(TTreeReaderArray<Float_t>(*fReader, "FatJet_mass")),
+                               FatJet_msoftdrop(TTreeReaderArray<Float_t>(*fReader, "FatJet_msoftdrop")),
+                               FatJet_muEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_muEF")),
+                               FatJet_muonIdx3SJ(TTreeReaderArray<Short_t>(*fReader, "FatJet_muonIdx3SJ")),
+                               FatJet_n2b1(TTreeReaderArray<Float_t>(*fReader, "FatJet_n2b1")),
+                               FatJet_n3b1(TTreeReaderArray<Float_t>(*fReader, "FatJet_n3b1")),
+                               FatJet_nConstituents(TTreeReaderArray<UChar_t>(*fReader, "FatJet_nConstituents")),
+                               FatJet_neEmEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_neEmEF")),
+                               FatJet_neHEF(TTreeReaderArray<Float_t>(*fReader, "FatJet_neHEF")),
+                               FatJet_neMultiplicity(TTreeReaderArray<Short_t>(*fReader, "FatJet_neMultiplicity")),
+                               FatJet_particleNetLegacy_QCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetLegacy_QCD")),
+                               FatJet_particleNetLegacy_Xbb(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetLegacy_Xbb")),
+                               FatJet_particleNetLegacy_Xcc(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetLegacy_Xcc")),
+                               FatJet_particleNetLegacy_Xqq(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetLegacy_Xqq")),
+                               FatJet_particleNetLegacy_mass(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetLegacy_mass")),
+                               FatJet_particleNetWithMass_H4qvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_H4qvsQCD")),
+                               FatJet_particleNetWithMass_HbbvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_HbbvsQCD")),
+                               FatJet_particleNetWithMass_HccvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_HccvsQCD")),
+                               FatJet_particleNetWithMass_QCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_QCD")),
+                               FatJet_particleNetWithMass_TvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_TvsQCD")),
+                               FatJet_particleNetWithMass_WvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_WvsQCD")),
+                               FatJet_particleNetWithMass_ZvsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNetWithMass_ZvsQCD")),
+                               FatJet_particleNet_QCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_QCD")),
+                               FatJet_particleNet_QCD0HF(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_QCD0HF")),
+                               FatJet_particleNet_QCD1HF(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_QCD1HF")),
+                               FatJet_particleNet_QCD2HF(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_QCD2HF")),
+                               FatJet_particleNet_WVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_WVsQCD")),
+                               FatJet_particleNet_XbbVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XbbVsQCD")),
+                               FatJet_particleNet_XccVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XccVsQCD")),
+                               FatJet_particleNet_XggVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XggVsQCD")),
+                               FatJet_particleNet_XqqVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XqqVsQCD")),
+                               FatJet_particleNet_XteVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XteVsQCD")),
+                               FatJet_particleNet_XtmVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XtmVsQCD")),
+                               FatJet_particleNet_XttVsQCD(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_XttVsQCD")),
+                               FatJet_particleNet_massCorr(TTreeReaderArray<Float_t>(*fReader, "FatJet_particleNet_massCorr")),
+                               FatJet_phi(TTreeReaderArray<Float_t>(*fReader, "FatJet_phi")),
+                               FatJet_pt(TTreeReaderArray<Float_t>(*fReader, "FatJet_pt")),
+                               FatJet_rawFactor(TTreeReaderArray<Float_t>(*fReader, "FatJet_rawFactor")),
+                               FatJet_subJetIdx1(TTreeReaderArray<Short_t>(*fReader, "FatJet_subJetIdx1")),
+                               FatJet_subJetIdx2(TTreeReaderArray<Short_t>(*fReader, "FatJet_subJetIdx2")),
+                               FatJet_tau1(TTreeReaderArray<Float_t>(*fReader, "FatJet_tau1")),
+                               FatJet_tau2(TTreeReaderArray<Float_t>(*fReader, "FatJet_tau2")),
+                               FatJet_tau3(TTreeReaderArray<Float_t>(*fReader, "FatJet_tau3")),
+                               FatJet_tau4(TTreeReaderArray<Float_t>(*fReader, "FatJet_tau4")),
+                               nFatJet_Ptr(TTreeReaderValue<Int_t>(*fReader, "nFatJet")),
+                               nFatJet(*nFatJet_Ptr),
+
+                               // FatJetPFCand
+                               FatJetPFCand_jetIdx(TTreeReaderArray<Int_t>(*fReader, "FatJetPFCand_jetIdx")),
+                               FatJetPFCand_pfCandIdx(TTreeReaderArray<Int_t>(*fReader, "FatJetPFCand_pfCandIdx")),
+                               nFatJetPFCand_Ptr(TTreeReaderValue<Int_t>(*fReader, "nFatJetPFCand")),
+                               nFatJetPFCand(*nFatJetPFCand_Ptr),
+
+                               // Flag
+                               Flag_BadChargedCandidateFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_BadChargedCandidateFilter")),
+                               Flag_BadChargedCandidateFilter(*Flag_BadChargedCandidateFilter_Ptr),
+                               Flag_BadChargedCandidateSummer16Filter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_BadChargedCandidateSummer16Filter")),
+                               Flag_BadChargedCandidateSummer16Filter(*Flag_BadChargedCandidateSummer16Filter_Ptr),
+                               Flag_BadPFMuonDzFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_BadPFMuonDzFilter")),
+                               Flag_BadPFMuonDzFilter(*Flag_BadPFMuonDzFilter_Ptr),
+                               Flag_BadPFMuonFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_BadPFMuonFilter")),
+                               Flag_BadPFMuonFilter(*Flag_BadPFMuonFilter_Ptr),
+                               Flag_BadPFMuonSummer16Filter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_BadPFMuonSummer16Filter")),
+                               Flag_BadPFMuonSummer16Filter(*Flag_BadPFMuonSummer16Filter_Ptr),
+                               Flag_CSCTightHalo2015Filter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_CSCTightHalo2015Filter")),
+                               Flag_CSCTightHalo2015Filter(*Flag_CSCTightHalo2015Filter_Ptr),
+                               Flag_CSCTightHaloFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_CSCTightHaloFilter")),
+                               Flag_CSCTightHaloFilter(*Flag_CSCTightHaloFilter_Ptr),
+                               Flag_CSCTightHaloTrkMuUnvetoFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_CSCTightHaloTrkMuUnvetoFilter")),
+                               Flag_CSCTightHaloTrkMuUnvetoFilter(*Flag_CSCTightHaloTrkMuUnvetoFilter_Ptr),
+                               Flag_EcalDeadCellBoundaryEnergyFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_EcalDeadCellBoundaryEnergyFilter")),
+                               Flag_EcalDeadCellBoundaryEnergyFilter(*Flag_EcalDeadCellBoundaryEnergyFilter_Ptr),
+                               Flag_EcalDeadCellTriggerPrimitiveFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_EcalDeadCellTriggerPrimitiveFilter")),
+                               Flag_EcalDeadCellTriggerPrimitiveFilter(*Flag_EcalDeadCellTriggerPrimitiveFilter_Ptr),
+                               Flag_HBHENoiseFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_HBHENoiseFilter")),
+                               Flag_HBHENoiseFilter(*Flag_HBHENoiseFilter_Ptr),
+                               Flag_HBHENoiseIsoFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_HBHENoiseIsoFilter")),
+                               Flag_HBHENoiseIsoFilter(*Flag_HBHENoiseIsoFilter_Ptr),
+                               Flag_HcalStripHaloFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_HcalStripHaloFilter")),
+                               Flag_HcalStripHaloFilter(*Flag_HcalStripHaloFilter_Ptr),
+                               Flag_chargedHadronTrackResolutionFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_chargedHadronTrackResolutionFilter")),
+                               Flag_chargedHadronTrackResolutionFilter(*Flag_chargedHadronTrackResolutionFilter_Ptr),
+                               Flag_ecalBadCalibFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_ecalBadCalibFilter")),
+                               Flag_ecalBadCalibFilter(*Flag_ecalBadCalibFilter_Ptr),
+                               Flag_ecalLaserCorrFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_ecalLaserCorrFilter")),
+                               Flag_ecalLaserCorrFilter(*Flag_ecalLaserCorrFilter_Ptr),
+                               Flag_eeBadScFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_eeBadScFilter")),
+                               Flag_eeBadScFilter(*Flag_eeBadScFilter_Ptr),
+                               Flag_globalSuperTightHalo2016Filter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_globalSuperTightHalo2016Filter")),
+                               Flag_globalSuperTightHalo2016Filter(*Flag_globalSuperTightHalo2016Filter_Ptr),
+                               Flag_globalTightHalo2016Filter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_globalTightHalo2016Filter")),
+                               Flag_globalTightHalo2016Filter(*Flag_globalTightHalo2016Filter_Ptr),
+                               Flag_goodVertices_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_goodVertices")),
+                               Flag_goodVertices(*Flag_goodVertices_Ptr),
+                               Flag_hcalLaserEventFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_hcalLaserEventFilter")),
+                               Flag_hcalLaserEventFilter(*Flag_hcalLaserEventFilter_Ptr),
+                               Flag_hfNoisyHitsFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_hfNoisyHitsFilter")),
+                               Flag_hfNoisyHitsFilter(*Flag_hfNoisyHitsFilter_Ptr),
+                               Flag_muonBadTrackFilter_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_muonBadTrackFilter")),
+                               Flag_muonBadTrackFilter(*Flag_muonBadTrackFilter_Ptr),
+                               Flag_trkPOGFilters_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_trkPOGFilters")),
+                               Flag_trkPOGFilters(*Flag_trkPOGFilters_Ptr),
+                               Flag_trkPOG_logErrorTooManyClusters_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_trkPOG_logErrorTooManyClusters")),
+                               Flag_trkPOG_logErrorTooManyClusters(*Flag_trkPOG_logErrorTooManyClusters_Ptr),
+                               Flag_trkPOG_manystripclus53X_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_trkPOG_manystripclus53X")),
+                               Flag_trkPOG_manystripclus53X(*Flag_trkPOG_manystripclus53X_Ptr),
+                               Flag_trkPOG_toomanystripclus53X_Ptr(TTreeReaderValue<Bool_t>(*fReader, "Flag_trkPOG_toomanystripclus53X")),
+                               Flag_trkPOG_toomanystripclus53X(*Flag_trkPOG_toomanystripclus53X_Ptr),
+
+                               // FsrPhoton
+                               FsrPhoton_dROverEt2(TTreeReaderArray<Float_t>(*fReader, "FsrPhoton_dROverEt2")),
+                               FsrPhoton_electronIdx(TTreeReaderArray<Short_t>(*fReader, "FsrPhoton_electronIdx")),
+                               FsrPhoton_eta(TTreeReaderArray<Float_t>(*fReader, "FsrPhoton_eta")),
+                               FsrPhoton_muonIdx(TTreeReaderArray<Short_t>(*fReader, "FsrPhoton_muonIdx")),
+                               FsrPhoton_phi(TTreeReaderArray<Float_t>(*fReader, "FsrPhoton_phi")),
+                               FsrPhoton_pt(TTreeReaderArray<Float_t>(*fReader, "FsrPhoton_pt")),
+                               FsrPhoton_relIso03(TTreeReaderArray<Float_t>(*fReader, "FsrPhoton_relIso03")),
+                               nFsrPhoton_Ptr(TTreeReaderValue<Int_t>(*fReader, "nFsrPhoton")),
+                               nFsrPhoton(*nFsrPhoton_Ptr),
+
+                               // GenDressedLepton
+                               GenDressedLepton_eta(TTreeReaderArray<Float_t>(*fReader, "GenDressedLepton_eta")),
+                               GenDressedLepton_hasTauAnc(TTreeReaderArray<Bool_t>(*fReader, "GenDressedLepton_hasTauAnc")),
+                               GenDressedLepton_mass(TTreeReaderArray<Float_t>(*fReader, "GenDressedLepton_mass")),
+                               GenDressedLepton_pdgId(TTreeReaderArray<Int_t>(*fReader, "GenDressedLepton_pdgId")),
+                               GenDressedLepton_phi(TTreeReaderArray<Float_t>(*fReader, "GenDressedLepton_phi")),
+                               GenDressedLepton_pt(TTreeReaderArray<Float_t>(*fReader, "GenDressedLepton_pt")),
+                               nGenDressedLepton_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenDressedLepton")),
+                               nGenDressedLepton(*nGenDressedLepton_Ptr),
+
+                               // GenIsolatedPhoton
+                               GenIsolatedPhoton_eta(TTreeReaderArray<Float_t>(*fReader, "GenIsolatedPhoton_eta")),
+                               GenIsolatedPhoton_mass(TTreeReaderArray<Float_t>(*fReader, "GenIsolatedPhoton_mass")),
+                               GenIsolatedPhoton_phi(TTreeReaderArray<Float_t>(*fReader, "GenIsolatedPhoton_phi")),
+                               GenIsolatedPhoton_pt(TTreeReaderArray<Float_t>(*fReader, "GenIsolatedPhoton_pt")),
+                               nGenIsolatedPhoton_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenIsolatedPhoton")),
+                               nGenIsolatedPhoton(*nGenIsolatedPhoton_Ptr),
+
+                               // GenJet
+                               GenJet_eta(TTreeReaderArray<Float_t>(*fReader, "GenJet_eta")),
+                               GenJet_hadronFlavour(TTreeReaderArray<UChar_t>(*fReader, "GenJet_hadronFlavour")),
+                               GenJet_mass(TTreeReaderArray<Float_t>(*fReader, "GenJet_mass")),
+                               GenJet_nBHadrons(TTreeReaderArray<UChar_t>(*fReader, "GenJet_nBHadrons")),
+                               GenJet_nCHadrons(TTreeReaderArray<UChar_t>(*fReader, "GenJet_nCHadrons")),
+                               GenJet_partonFlavour(TTreeReaderArray<Short_t>(*fReader, "GenJet_partonFlavour")),
+                               GenJet_phi(TTreeReaderArray<Float_t>(*fReader, "GenJet_phi")),
+                               GenJet_pt(TTreeReaderArray<Float_t>(*fReader, "GenJet_pt")),
+                               nGenJet_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenJet")),
+                               nGenJet(*nGenJet_Ptr),
+
+                               // GenJetAK8
+                               GenJetAK8_eta(TTreeReaderArray<Float_t>(*fReader, "GenJetAK8_eta")),
+                               GenJetAK8_hadronFlavour(TTreeReaderArray<UChar_t>(*fReader, "GenJetAK8_hadronFlavour")),
+                               GenJetAK8_mass(TTreeReaderArray<Float_t>(*fReader, "GenJetAK8_mass")),
+                               GenJetAK8_nBHadrons(TTreeReaderArray<UChar_t>(*fReader, "GenJetAK8_nBHadrons")),
+                               GenJetAK8_nCHadrons(TTreeReaderArray<UChar_t>(*fReader, "GenJetAK8_nCHadrons")),
+                               GenJetAK8_partonFlavour(TTreeReaderArray<Short_t>(*fReader, "GenJetAK8_partonFlavour")),
+                               GenJetAK8_phi(TTreeReaderArray<Float_t>(*fReader, "GenJetAK8_phi")),
+                               GenJetAK8_pt(TTreeReaderArray<Float_t>(*fReader, "GenJetAK8_pt")),
+                               nGenJetAK8_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenJetAK8")),
+                               nGenJetAK8(*nGenJetAK8_Ptr),
+
+                               // GenMET
+                               GenMET_phi_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenMET_phi")),
+                               GenMET_phi(*GenMET_phi_Ptr),
+                               GenMET_pt_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenMET_pt")),
+                               GenMET_pt(*GenMET_pt_Ptr),
+
+                               // GenPart
+                               GenPart_eta(TTreeReaderArray<Float_t>(*fReader, "GenPart_eta")),
+                               GenPart_genPartIdxMother(TTreeReaderArray<Short_t>(*fReader, "GenPart_genPartIdxMother")),
+                               GenPart_iso(TTreeReaderArray<Float_t>(*fReader, "GenPart_iso")),
+                               GenPart_mass(TTreeReaderArray<Float_t>(*fReader, "GenPart_mass")),
+                               GenPart_pdgId(TTreeReaderArray<Int_t>(*fReader, "GenPart_pdgId")),
+                               GenPart_phi(TTreeReaderArray<Float_t>(*fReader, "GenPart_phi")),
+                               GenPart_pt(TTreeReaderArray<Float_t>(*fReader, "GenPart_pt")),
+                               GenPart_status(TTreeReaderArray<Int_t>(*fReader, "GenPart_status")),
+                               GenPart_statusFlags(TTreeReaderArray<UShort_t>(*fReader, "GenPart_statusFlags")),
+                               nGenPart_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenPart")),
+                               nGenPart(*nGenPart_Ptr),
+
+                               // GenVisTau
+                               GenVisTau_charge(TTreeReaderArray<Short_t>(*fReader, "GenVisTau_charge")),
+                               GenVisTau_eta(TTreeReaderArray<Float_t>(*fReader, "GenVisTau_eta")),
+                               GenVisTau_genPartIdxMother(TTreeReaderArray<Short_t>(*fReader, "GenVisTau_genPartIdxMother")),
+                               GenVisTau_mass(TTreeReaderArray<Float_t>(*fReader, "GenVisTau_mass")),
+                               GenVisTau_phi(TTreeReaderArray<Float_t>(*fReader, "GenVisTau_phi")),
+                               GenVisTau_pt(TTreeReaderArray<Float_t>(*fReader, "GenVisTau_pt")),
+                               GenVisTau_status(TTreeReaderArray<UChar_t>(*fReader, "GenVisTau_status")),
+                               nGenVisTau_Ptr(TTreeReaderValue<Int_t>(*fReader, "nGenVisTau")),
+                               nGenVisTau(*nGenVisTau_Ptr),
+
+                               // GenVtx
+                               GenVtx_t0_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenVtx_t0")),
+                               GenVtx_t0(*GenVtx_t0_Ptr),
+                               GenVtx_x_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenVtx_x")),
+                               GenVtx_x(*GenVtx_x_Ptr),
+                               GenVtx_y_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenVtx_y")),
+                               GenVtx_y(*GenVtx_y_Ptr),
+                               GenVtx_z_Ptr(TTreeReaderValue<Float_t>(*fReader, "GenVtx_z")),
+                               GenVtx_z(*GenVtx_z_Ptr),
+
+                               // Generator
+                               Generator_binvar_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_binvar")),
+                               Generator_binvar(*Generator_binvar_Ptr),
+                               Generator_id1_Ptr(TTreeReaderValue<Int_t>(*fReader, "Generator_id1")),
+                               Generator_id1(*Generator_id1_Ptr),
+                               Generator_id2_Ptr(TTreeReaderValue<Int_t>(*fReader, "Generator_id2")),
+                               Generator_id2(*Generator_id2_Ptr),
+                               Generator_scalePDF_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_scalePDF")),
+                               Generator_scalePDF(*Generator_scalePDF_Ptr),
+                               Generator_weight_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_weight")),
+                               Generator_weight(*Generator_weight_Ptr),
+                               Generator_x1_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_x1")),
+                               Generator_x1(*Generator_x1_Ptr),
+                               Generator_x2_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_x2")),
+                               Generator_x2(*Generator_x2_Ptr),
+                               Generator_xpdf1_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_xpdf1")),
+                               Generator_xpdf1(*Generator_xpdf1_Ptr),
+                               Generator_xpdf2_Ptr(TTreeReaderValue<Float_t>(*fReader, "Generator_xpdf2")),
+                               Generator_xpdf2(*Generator_xpdf2_Ptr),
+
+                               // IsoTrack
+                               IsoTrack_charge(TTreeReaderArray<Short_t>(*fReader, "IsoTrack_charge")),
+                               IsoTrack_dxy(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_dxy")),
+                               IsoTrack_dz(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_dz")),
+                               IsoTrack_eta(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_eta")),
+                               IsoTrack_fromPV(TTreeReaderArray<Short_t>(*fReader, "IsoTrack_fromPV")),
+                               IsoTrack_isFromLostTrack(TTreeReaderArray<Bool_t>(*fReader, "IsoTrack_isFromLostTrack")),
+                               IsoTrack_isHighPurityTrack(TTreeReaderArray<Bool_t>(*fReader, "IsoTrack_isHighPurityTrack")),
+                               IsoTrack_isPFcand(TTreeReaderArray<Bool_t>(*fReader, "IsoTrack_isPFcand")),
+                               IsoTrack_miniPFRelIso_all(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_miniPFRelIso_all")),
+                               IsoTrack_miniPFRelIso_chg(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_miniPFRelIso_chg")),
+                               IsoTrack_pdgId(TTreeReaderArray<Int_t>(*fReader, "IsoTrack_pdgId")),
+                               IsoTrack_pfRelIso03_all(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_pfRelIso03_all")),
+                               IsoTrack_pfRelIso03_chg(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_pfRelIso03_chg")),
+                               IsoTrack_phi(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_phi")),
+                               IsoTrack_pt(TTreeReaderArray<Float_t>(*fReader, "IsoTrack_pt")),
+                               nIsoTrack_Ptr(TTreeReaderValue<Int_t>(*fReader, "nIsoTrack")),
+                               nIsoTrack(*nIsoTrack_Ptr),
+
+                               // Jet
+                               Jet_PNetRegPtRawCorr(TTreeReaderArray<Float_t>(*fReader, "Jet_PNetRegPtRawCorr")),
+                               Jet_PNetRegPtRawCorrNeutrino(TTreeReaderArray<Float_t>(*fReader, "Jet_PNetRegPtRawCorrNeutrino")),
+                               Jet_PNetRegPtRawRes(TTreeReaderArray<Float_t>(*fReader, "Jet_PNetRegPtRawRes")),
+                               Jet_UParTAK4RegPtRawCorr(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4RegPtRawCorr")),
+                               Jet_UParTAK4RegPtRawCorrNeutrino(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4RegPtRawCorrNeutrino")),
+                               Jet_UParTAK4RegPtRawRes(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4RegPtRawRes")),
+                               Jet_UParTAK4V1RegPtRawCorr(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4V1RegPtRawCorr")),
+                               Jet_UParTAK4V1RegPtRawCorrNeutrino(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4V1RegPtRawCorrNeutrino")),
+                               Jet_UParTAK4V1RegPtRawRes(TTreeReaderArray<Float_t>(*fReader, "Jet_UParTAK4V1RegPtRawRes")),
+                               Jet_area(TTreeReaderArray<Float_t>(*fReader, "Jet_area")),
+                               Jet_btagDeepFlavB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagDeepFlavB")),
+                               Jet_btagDeepFlavCvB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagDeepFlavCvB")),
+                               Jet_btagDeepFlavCvL(TTreeReaderArray<Float_t>(*fReader, "Jet_btagDeepFlavCvL")),
+                               Jet_btagDeepFlavQG(TTreeReaderArray<Float_t>(*fReader, "Jet_btagDeepFlavQG")),
+                               Jet_btagPNetB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetB")),
+                               Jet_btagPNetCvB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetCvB")),
+                               Jet_btagPNetCvL(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetCvL")),
+                               Jet_btagPNetCvNotB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetCvNotB")),
+                               Jet_btagPNetQvG(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetQvG")),
+                               Jet_btagPNetTauVJet(TTreeReaderArray<Float_t>(*fReader, "Jet_btagPNetTauVJet")),
+                               Jet_btagUParTAK4B(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4B")),
+                               Jet_btagUParTAK4CvB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4CvB")),
+                               Jet_btagUParTAK4CvL(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4CvL")),
+                               Jet_btagUParTAK4CvNotB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4CvNotB")),
+                               Jet_btagUParTAK4Ele(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4Ele")),
+                               Jet_btagUParTAK4Mu(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4Mu")),
+                               Jet_btagUParTAK4QvG(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4QvG")),
+                               Jet_btagUParTAK4SvCB(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4SvCB")),
+                               Jet_btagUParTAK4SvUDG(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4SvUDG")),
+                               Jet_btagUParTAK4TauVJet(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4TauVJet")),
+                               Jet_btagUParTAK4UDG(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4UDG")),
+                               Jet_btagUParTAK4probb(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4probb")),
+                               Jet_btagUParTAK4probbb(TTreeReaderArray<Float_t>(*fReader, "Jet_btagUParTAK4probbb")),
+                               Jet_chEmEF(TTreeReaderArray<Float_t>(*fReader, "Jet_chEmEF")),
+                               Jet_chHEF(TTreeReaderArray<Float_t>(*fReader, "Jet_chHEF")),
+                               Jet_chMultiplicity(TTreeReaderArray<UChar_t>(*fReader, "Jet_chMultiplicity")),
+                               Jet_electronIdx1(TTreeReaderArray<Short_t>(*fReader, "Jet_electronIdx1")),
+                               Jet_electronIdx2(TTreeReaderArray<Short_t>(*fReader, "Jet_electronIdx2")),
+                               Jet_eta(TTreeReaderArray<Float_t>(*fReader, "Jet_eta")),
+                               Jet_genJetIdx(TTreeReaderArray<Short_t>(*fReader, "Jet_genJetIdx")),
+                               Jet_hadronFlavour(TTreeReaderArray<UChar_t>(*fReader, "Jet_hadronFlavour")),
+                               Jet_hfEmEF(TTreeReaderArray<Float_t>(*fReader, "Jet_hfEmEF")),
+                               Jet_hfHEF(TTreeReaderArray<Float_t>(*fReader, "Jet_hfHEF")),
+                               Jet_hfadjacentEtaStripsSize(TTreeReaderArray<Int_t>(*fReader, "Jet_hfadjacentEtaStripsSize")),
+                               Jet_hfcentralEtaStripSize(TTreeReaderArray<Int_t>(*fReader, "Jet_hfcentralEtaStripSize")),
+                               Jet_hfsigmaEtaEta(TTreeReaderArray<Float_t>(*fReader, "Jet_hfsigmaEtaEta")),
+                               Jet_hfsigmaPhiPhi(TTreeReaderArray<Float_t>(*fReader, "Jet_hfsigmaPhiPhi")),
+                               Jet_mass(TTreeReaderArray<Float_t>(*fReader, "Jet_mass")),
+                               Jet_muEF(TTreeReaderArray<Float_t>(*fReader, "Jet_muEF")),
+                               Jet_muonIdx1(TTreeReaderArray<Short_t>(*fReader, "Jet_muonIdx1")),
+                               Jet_muonIdx2(TTreeReaderArray<Short_t>(*fReader, "Jet_muonIdx2")),
+                               Jet_muonSubtrDeltaEta(TTreeReaderArray<Float_t>(*fReader, "Jet_muonSubtrDeltaEta")),
+                               Jet_muonSubtrDeltaPhi(TTreeReaderArray<Float_t>(*fReader, "Jet_muonSubtrDeltaPhi")),
+                               Jet_muonSubtrFactor(TTreeReaderArray<Float_t>(*fReader, "Jet_muonSubtrFactor")),
+                               Jet_nConstituents(TTreeReaderArray<UChar_t>(*fReader, "Jet_nConstituents")),
+                               Jet_nElectrons(TTreeReaderArray<UChar_t>(*fReader, "Jet_nElectrons")),
+                               Jet_nMuons(TTreeReaderArray<UChar_t>(*fReader, "Jet_nMuons")),
+                               Jet_nSVs(TTreeReaderArray<UChar_t>(*fReader, "Jet_nSVs")),
+                               Jet_neEmEF(TTreeReaderArray<Float_t>(*fReader, "Jet_neEmEF")),
+                               Jet_neHEF(TTreeReaderArray<Float_t>(*fReader, "Jet_neHEF")),
+                               Jet_neMultiplicity(TTreeReaderArray<UChar_t>(*fReader, "Jet_neMultiplicity")),
+                               Jet_partonFlavour(TTreeReaderArray<Short_t>(*fReader, "Jet_partonFlavour")),
+                               Jet_phi(TTreeReaderArray<Float_t>(*fReader, "Jet_phi")),
+                               Jet_pt(TTreeReaderArray<Float_t>(*fReader, "Jet_pt")),
+                               Jet_puIdDisc(TTreeReaderArray<Float_t>(*fReader, "Jet_puIdDisc")),
+                               Jet_rawFactor(TTreeReaderArray<Float_t>(*fReader, "Jet_rawFactor")),
+                               Jet_svIdx1(TTreeReaderArray<Short_t>(*fReader, "Jet_svIdx1")),
+                               Jet_svIdx2(TTreeReaderArray<Short_t>(*fReader, "Jet_svIdx2")),
+                               nJet_Ptr(TTreeReaderValue<Int_t>(*fReader, "nJet")),
+                               nJet(*nJet_Ptr),
+
+                               // LHE
+                               LHE_AlphaS_Ptr(TTreeReaderValue<Float_t>(*fReader, "LHE_AlphaS")),
+                               LHE_AlphaS(*LHE_AlphaS_Ptr),
+                               LHE_HT_Ptr(TTreeReaderValue<Float_t>(*fReader, "LHE_HT")),
+                               LHE_HT(*LHE_HT_Ptr),
+                               LHE_HTIncoming_Ptr(TTreeReaderValue<Float_t>(*fReader, "LHE_HTIncoming")),
+                               LHE_HTIncoming(*LHE_HTIncoming_Ptr),
+                               LHE_Nb_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_Nb")),
+                               LHE_Nb(*LHE_Nb_Ptr),
+                               LHE_Nc_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_Nc")),
+                               LHE_Nc(*LHE_Nc_Ptr),
+                               LHE_Nglu_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_Nglu")),
+                               LHE_Nglu(*LHE_Nglu_Ptr),
+                               LHE_Njets_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_Njets")),
+                               LHE_Njets(*LHE_Njets_Ptr),
+                               LHE_NpLO_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_NpLO")),
+                               LHE_NpLO(*LHE_NpLO_Ptr),
+                               LHE_NpNLO_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_NpNLO")),
+                               LHE_NpNLO(*LHE_NpNLO_Ptr),
+                               LHE_Nuds_Ptr(TTreeReaderValue<UChar_t>(*fReader, "LHE_Nuds")),
+                               LHE_Nuds(*LHE_Nuds_Ptr),
+                               LHE_Vpt_Ptr(TTreeReaderValue<Float_t>(*fReader, "LHE_Vpt")),
+                               LHE_Vpt(*LHE_Vpt_Ptr),
+
+                               // LHEPart
+                               LHEPart_eta(TTreeReaderArray<Float_t>(*fReader, "LHEPart_eta")),
+                               LHEPart_firstMotherIdx(TTreeReaderArray<Short_t>(*fReader, "LHEPart_firstMotherIdx")),
+                               LHEPart_incomingpz(TTreeReaderArray<Float_t>(*fReader, "LHEPart_incomingpz")),
+                               LHEPart_lastMotherIdx(TTreeReaderArray<Short_t>(*fReader, "LHEPart_lastMotherIdx")),
+                               LHEPart_mass(TTreeReaderArray<Float_t>(*fReader, "LHEPart_mass")),
+                               LHEPart_pdgId(TTreeReaderArray<Int_t>(*fReader, "LHEPart_pdgId")),
+                               LHEPart_phi(TTreeReaderArray<Float_t>(*fReader, "LHEPart_phi")),
+                               LHEPart_pt(TTreeReaderArray<Float_t>(*fReader, "LHEPart_pt")),
+                               LHEPart_spin(TTreeReaderArray<Int_t>(*fReader, "LHEPart_spin")),
+                               LHEPart_status(TTreeReaderArray<Int_t>(*fReader, "LHEPart_status")),
+                               nLHEPart_Ptr(TTreeReaderValue<Int_t>(*fReader, "nLHEPart")),
+                               nLHEPart(*nLHEPart_Ptr),
+
+                               // LHEPdfWeight
+                               LHEPdfWeight(TTreeReaderArray<Float_t>(*fReader, "LHEPdfWeight")),
+                               nLHEPdfWeight_Ptr(TTreeReaderValue<Int_t>(*fReader, "nLHEPdfWeight")),
+                               nLHEPdfWeight(*nLHEPdfWeight_Ptr),
+
+                               // LHEReweightingWeight
+                               LHEReweightingWeight(TTreeReaderArray<Float_t>(*fReader, "LHEReweightingWeight")),
+                               nLHEReweightingWeight_Ptr(TTreeReaderValue<Int_t>(*fReader, "nLHEReweightingWeight")),
+                               nLHEReweightingWeight(*nLHEReweightingWeight_Ptr),
+
+                               // LHEScaleWeight
+                               LHEScaleWeight(TTreeReaderArray<Float_t>(*fReader, "LHEScaleWeight")),
+                               nLHEScaleWeight_Ptr(TTreeReaderValue<Int_t>(*fReader, "nLHEScaleWeight")),
+                               nLHEScaleWeight(*nLHEScaleWeight_Ptr),
+
+                               // LHEWeight
+                               LHEWeight_originalXWGTUP_Ptr(TTreeReaderValue<Float_t>(*fReader, "LHEWeight_originalXWGTUP")),
+                               LHEWeight_originalXWGTUP(*LHEWeight_originalXWGTUP_Ptr),
+
+                               // LowPtElectron
+                               LowPtElectron_ID(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_ID")),
+                               LowPtElectron_charge(TTreeReaderArray<Int_t>(*fReader, "LowPtElectron_charge")),
+                               LowPtElectron_convVeto(TTreeReaderArray<Bool_t>(*fReader, "LowPtElectron_convVeto")),
+                               LowPtElectron_convVtxRadius(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_convVtxRadius")),
+                               LowPtElectron_convWP(TTreeReaderArray<UChar_t>(*fReader, "LowPtElectron_convWP")),
+                               LowPtElectron_deltaEtaSC(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_deltaEtaSC")),
+                               LowPtElectron_dxy(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_dxy")),
+                               LowPtElectron_dxyErr(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_dxyErr")),
+                               LowPtElectron_dz(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_dz")),
+                               LowPtElectron_dzErr(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_dzErr")),
+                               LowPtElectron_eInvMinusPInv(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_eInvMinusPInv")),
+                               LowPtElectron_electronIdx(TTreeReaderArray<Short_t>(*fReader, "LowPtElectron_electronIdx")),
+                               LowPtElectron_energyErr(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_energyErr")),
+                               LowPtElectron_eta(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_eta")),
+                               LowPtElectron_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "LowPtElectron_genPartFlav")),
+                               LowPtElectron_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "LowPtElectron_genPartIdx")),
+                               LowPtElectron_hoe(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_hoe")),
+                               LowPtElectron_lostHits(TTreeReaderArray<UChar_t>(*fReader, "LowPtElectron_lostHits")),
+                               LowPtElectron_mass(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_mass")),
+                               LowPtElectron_miniPFRelIso_all(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_miniPFRelIso_all")),
+                               LowPtElectron_miniPFRelIso_chg(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_miniPFRelIso_chg")),
+                               LowPtElectron_pdgId(TTreeReaderArray<Int_t>(*fReader, "LowPtElectron_pdgId")),
+                               LowPtElectron_phi(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_phi")),
+                               LowPtElectron_photonIdx(TTreeReaderArray<Short_t>(*fReader, "LowPtElectron_photonIdx")),
+                               LowPtElectron_pt(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_pt")),
+                               LowPtElectron_ptbiased(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_ptbiased")),
+                               LowPtElectron_r9(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_r9")),
+                               LowPtElectron_scEtOverPt(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_scEtOverPt")),
+                               LowPtElectron_sieie(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_sieie")),
+                               LowPtElectron_unbiased(TTreeReaderArray<Float_t>(*fReader, "LowPtElectron_unbiased")),
+                               nLowPtElectron_Ptr(TTreeReaderValue<Int_t>(*fReader, "nLowPtElectron")),
+                               nLowPtElectron(*nLowPtElectron_Ptr),
+
+                               // Muon
+                               Muon_IPx(TTreeReaderArray<Float_t>(*fReader, "Muon_IPx")),
+                               Muon_IPy(TTreeReaderArray<Float_t>(*fReader, "Muon_IPy")),
+                               Muon_IPz(TTreeReaderArray<Float_t>(*fReader, "Muon_IPz")),
+                               Muon_VXBS_Cov00(TTreeReaderArray<Float_t>(*fReader, "Muon_VXBS_Cov00")),
+                               Muon_VXBS_Cov03(TTreeReaderArray<Float_t>(*fReader, "Muon_VXBS_Cov03")),
+                               Muon_VXBS_Cov33(TTreeReaderArray<Float_t>(*fReader, "Muon_VXBS_Cov33")),
+                               Muon_bestTrackType(TTreeReaderArray<UChar_t>(*fReader, "Muon_bestTrackType")),
+                               Muon_bsConstrainedChi2(TTreeReaderArray<Float_t>(*fReader, "Muon_bsConstrainedChi2")),
+                               Muon_bsConstrainedPt(TTreeReaderArray<Float_t>(*fReader, "Muon_bsConstrainedPt")),
+                               Muon_bsConstrainedPtErr(TTreeReaderArray<Float_t>(*fReader, "Muon_bsConstrainedPtErr")),
+                               Muon_charge(TTreeReaderArray<Int_t>(*fReader, "Muon_charge")),
+                               Muon_dxy(TTreeReaderArray<Float_t>(*fReader, "Muon_dxy")),
+                               Muon_dxyErr(TTreeReaderArray<Float_t>(*fReader, "Muon_dxyErr")),
+                               Muon_dxybs(TTreeReaderArray<Float_t>(*fReader, "Muon_dxybs")),
+                               Muon_dxybsErr(TTreeReaderArray<Float_t>(*fReader, "Muon_dxybsErr")),
+                               Muon_dz(TTreeReaderArray<Float_t>(*fReader, "Muon_dz")),
+                               Muon_dzErr(TTreeReaderArray<Float_t>(*fReader, "Muon_dzErr")),
+                               Muon_eta(TTreeReaderArray<Float_t>(*fReader, "Muon_eta")),
+                               Muon_fsrPhotonIdx(TTreeReaderArray<Short_t>(*fReader, "Muon_fsrPhotonIdx")),
+                               Muon_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "Muon_genPartFlav")),
+                               Muon_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "Muon_genPartIdx")),
+                               Muon_highPtId(TTreeReaderArray<UChar_t>(*fReader, "Muon_highPtId")),
+                               Muon_highPurity(TTreeReaderArray<Bool_t>(*fReader, "Muon_highPurity")),
+                               Muon_inTimeMuon(TTreeReaderArray<Bool_t>(*fReader, "Muon_inTimeMuon")),
+                               Muon_ip3d(TTreeReaderArray<Float_t>(*fReader, "Muon_ip3d")),
+                               Muon_ipLengthSig(TTreeReaderArray<Float_t>(*fReader, "Muon_ipLengthSig")),
+                               Muon_isGlobal(TTreeReaderArray<Bool_t>(*fReader, "Muon_isGlobal")),
+                               Muon_isPFcand(TTreeReaderArray<Bool_t>(*fReader, "Muon_isPFcand")),
+                               Muon_isStandalone(TTreeReaderArray<Bool_t>(*fReader, "Muon_isStandalone")),
+                               Muon_isTracker(TTreeReaderArray<Bool_t>(*fReader, "Muon_isTracker")),
+                               Muon_jetDF(TTreeReaderArray<Float_t>(*fReader, "Muon_jetDF")),
+                               Muon_jetIdx(TTreeReaderArray<Short_t>(*fReader, "Muon_jetIdx")),
+                               Muon_jetNDauCharged(TTreeReaderArray<UChar_t>(*fReader, "Muon_jetNDauCharged")),
+                               Muon_jetPtRelv2(TTreeReaderArray<Float_t>(*fReader, "Muon_jetPtRelv2")),
+                               Muon_jetRelIso(TTreeReaderArray<Float_t>(*fReader, "Muon_jetRelIso")),
+                               Muon_looseId(TTreeReaderArray<Bool_t>(*fReader, "Muon_looseId")),
+                               Muon_mass(TTreeReaderArray<Float_t>(*fReader, "Muon_mass")),
+                               Muon_mediumId(TTreeReaderArray<Bool_t>(*fReader, "Muon_mediumId")),
+                               Muon_mediumPromptId(TTreeReaderArray<Bool_t>(*fReader, "Muon_mediumPromptId")),
+                               Muon_miniIsoId(TTreeReaderArray<UChar_t>(*fReader, "Muon_miniIsoId")),
+                               Muon_miniPFRelIso_all(TTreeReaderArray<Float_t>(*fReader, "Muon_miniPFRelIso_all")),
+                               Muon_miniPFRelIso_chg(TTreeReaderArray<Float_t>(*fReader, "Muon_miniPFRelIso_chg")),
+                               Muon_multiIsoId(TTreeReaderArray<UChar_t>(*fReader, "Muon_multiIsoId")),
+                               Muon_mvaLowPt(TTreeReaderArray<Float_t>(*fReader, "Muon_mvaLowPt")),
+                               Muon_mvaMuID(TTreeReaderArray<Float_t>(*fReader, "Muon_mvaMuID")),
+                               Muon_mvaMuID_WP(TTreeReaderArray<UChar_t>(*fReader, "Muon_mvaMuID_WP")),
+                               Muon_nStations(TTreeReaderArray<UChar_t>(*fReader, "Muon_nStations")),
+                               Muon_nTrackerLayers(TTreeReaderArray<UChar_t>(*fReader, "Muon_nTrackerLayers")),
+                               Muon_pdgId(TTreeReaderArray<Int_t>(*fReader, "Muon_pdgId")),
+                               Muon_pfIsoId(TTreeReaderArray<UChar_t>(*fReader, "Muon_pfIsoId")),
+                               Muon_pfRelIso03_all(TTreeReaderArray<Float_t>(*fReader, "Muon_pfRelIso03_all")),
+                               Muon_pfRelIso03_chg(TTreeReaderArray<Float_t>(*fReader, "Muon_pfRelIso03_chg")),
+                               Muon_pfRelIso04_all(TTreeReaderArray<Float_t>(*fReader, "Muon_pfRelIso04_all")),
+                               Muon_phi(TTreeReaderArray<Float_t>(*fReader, "Muon_phi")),
+                               Muon_pnScore_heavy(TTreeReaderArray<Float_t>(*fReader, "Muon_pnScore_heavy")),
+                               Muon_pnScore_light(TTreeReaderArray<Float_t>(*fReader, "Muon_pnScore_light")),
+                               Muon_pnScore_prompt(TTreeReaderArray<Float_t>(*fReader, "Muon_pnScore_prompt")),
+                               Muon_pnScore_tau(TTreeReaderArray<Float_t>(*fReader, "Muon_pnScore_tau")),
+                               Muon_promptMVA(TTreeReaderArray<Float_t>(*fReader, "Muon_promptMVA")),
+                               Muon_pt(TTreeReaderArray<Float_t>(*fReader, "Muon_pt")),
+                               Muon_ptErr(TTreeReaderArray<Float_t>(*fReader, "Muon_ptErr")),
+                               Muon_puppiIsoId(TTreeReaderArray<UChar_t>(*fReader, "Muon_puppiIsoId")),
+                               Muon_segmentComp(TTreeReaderArray<Float_t>(*fReader, "Muon_segmentComp")),
+                               Muon_sip3d(TTreeReaderArray<Float_t>(*fReader, "Muon_sip3d")),
+                               Muon_softId(TTreeReaderArray<Bool_t>(*fReader, "Muon_softId")),
+                               Muon_softMva(TTreeReaderArray<Float_t>(*fReader, "Muon_softMva")),
+                               Muon_softMvaId(TTreeReaderArray<Bool_t>(*fReader, "Muon_softMvaId")),
+                               Muon_softMvaRun3(TTreeReaderArray<Float_t>(*fReader, "Muon_softMvaRun3")),
+                               Muon_svIdx(TTreeReaderArray<Short_t>(*fReader, "Muon_svIdx")),
+                               Muon_tightCharge(TTreeReaderArray<UChar_t>(*fReader, "Muon_tightCharge")),
+                               Muon_tightId(TTreeReaderArray<Bool_t>(*fReader, "Muon_tightId")),
+                               Muon_tkIsoId(TTreeReaderArray<UChar_t>(*fReader, "Muon_tkIsoId")),
+                               Muon_tkRelIso(TTreeReaderArray<Float_t>(*fReader, "Muon_tkRelIso")),
+                               Muon_triggerIdLoose(TTreeReaderArray<Bool_t>(*fReader, "Muon_triggerIdLoose")),
+                               Muon_tuneP_charge(TTreeReaderArray<Float_t>(*fReader, "Muon_tuneP_charge")),
+                               Muon_tuneP_pterr(TTreeReaderArray<Float_t>(*fReader, "Muon_tuneP_pterr")),
+                               Muon_tunepRelPt(TTreeReaderArray<Float_t>(*fReader, "Muon_tunepRelPt")),
+                               nMuon_Ptr(TTreeReaderValue<Int_t>(*fReader, "nMuon")),
+                               nMuon(*nMuon_Ptr),
+
+                               // OtherPV
+                               OtherPV_score(TTreeReaderArray<Float_t>(*fReader, "OtherPV_score")),
+                               OtherPV_z(TTreeReaderArray<Float_t>(*fReader, "OtherPV_z")),
+                               nOtherPV_Ptr(TTreeReaderValue<Int_t>(*fReader, "nOtherPV")),
+                               nOtherPV(*nOtherPV_Ptr),
+
+                               // PFCand
+                               PFCand_eta(TTreeReaderArray<Float_t>(*fReader, "PFCand_eta")),
+                               PFCand_mass(TTreeReaderArray<Float_t>(*fReader, "PFCand_mass")),
+                               PFCand_pdgId(TTreeReaderArray<Int_t>(*fReader, "PFCand_pdgId")),
+                               PFCand_phi(TTreeReaderArray<Float_t>(*fReader, "PFCand_phi")),
+                               PFCand_pt(TTreeReaderArray<Float_t>(*fReader, "PFCand_pt")),
+                               nPFCand_Ptr(TTreeReaderValue<Int_t>(*fReader, "nPFCand")),
+                               nPFCand(*nPFCand_Ptr),
+
+                               // PFMET
+                               PFMET_covXX_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_covXX")),
+                               PFMET_covXX(*PFMET_covXX_Ptr),
+                               PFMET_covXY_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_covXY")),
+                               PFMET_covXY(*PFMET_covXY_Ptr),
+                               PFMET_covYY_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_covYY")),
+                               PFMET_covYY(*PFMET_covYY_Ptr),
+                               PFMET_phi_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_phi")),
+                               PFMET_phi(*PFMET_phi_Ptr),
+                               PFMET_phiUnclusteredDown_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_phiUnclusteredDown")),
+                               PFMET_phiUnclusteredDown(*PFMET_phiUnclusteredDown_Ptr),
+                               PFMET_phiUnclusteredUp_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_phiUnclusteredUp")),
+                               PFMET_phiUnclusteredUp(*PFMET_phiUnclusteredUp_Ptr),
+                               PFMET_pt_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_pt")),
+                               PFMET_pt(*PFMET_pt_Ptr),
+                               PFMET_ptUnclusteredDown_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_ptUnclusteredDown")),
+                               PFMET_ptUnclusteredDown(*PFMET_ptUnclusteredDown_Ptr),
+                               PFMET_ptUnclusteredUp_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_ptUnclusteredUp")),
+                               PFMET_ptUnclusteredUp(*PFMET_ptUnclusteredUp_Ptr),
+                               PFMET_significance_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_significance")),
+                               PFMET_significance(*PFMET_significance_Ptr),
+                               PFMET_sumEt_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_sumEt")),
+                               PFMET_sumEt(*PFMET_sumEt_Ptr),
+                               PFMET_sumPtUnclustered_Ptr(TTreeReaderValue<Float_t>(*fReader, "PFMET_sumPtUnclustered")),
+                               PFMET_sumPtUnclustered(*PFMET_sumPtUnclustered_Ptr),
+
+                               // PSWeight
+                               PSWeight(TTreeReaderArray<Float_t>(*fReader, "PSWeight")),
+                               nPSWeight_Ptr(TTreeReaderValue<Int_t>(*fReader, "nPSWeight")),
+                               nPSWeight(*nPSWeight_Ptr),
+
+                               // PV
+                               PV_chi2_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_chi2")),
+                               PV_chi2(*PV_chi2_Ptr),
+                               PV_ndof_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_ndof")),
+                               PV_ndof(*PV_ndof_Ptr),
+                               PV_npvs_Ptr(TTreeReaderValue<UChar_t>(*fReader, "PV_npvs")),
+                               PV_npvs(*PV_npvs_Ptr),
+                               PV_npvsGood_Ptr(TTreeReaderValue<UChar_t>(*fReader, "PV_npvsGood")),
+                               PV_npvsGood(*PV_npvsGood_Ptr),
+                               PV_score_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_score")),
+                               PV_score(*PV_score_Ptr),
+                               PV_sumpt2_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_sumpt2")),
+                               PV_sumpt2(*PV_sumpt2_Ptr),
+                               PV_sumpx_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_sumpx")),
+                               PV_sumpx(*PV_sumpx_Ptr),
+                               PV_sumpy_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_sumpy")),
+                               PV_sumpy(*PV_sumpy_Ptr),
+                               PV_x_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_x")),
+                               PV_x(*PV_x_Ptr),
+                               PV_y_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_y")),
+                               PV_y(*PV_y_Ptr),
+                               PV_z_Ptr(TTreeReaderValue<Float_t>(*fReader, "PV_z")),
+                               PV_z(*PV_z_Ptr),
+
+                               // Photon
+                               Photon_cutBased(TTreeReaderArray<UChar_t>(*fReader, "Photon_cutBased")),
+                               Photon_ecalPFClusterIso(TTreeReaderArray<Float_t>(*fReader, "Photon_ecalPFClusterIso")),
+                               Photon_electronIdx(TTreeReaderArray<Short_t>(*fReader, "Photon_electronIdx")),
+                               Photon_electronVeto(TTreeReaderArray<Bool_t>(*fReader, "Photon_electronVeto")),
+                               Photon_energyErr(TTreeReaderArray<Float_t>(*fReader, "Photon_energyErr")),
+                               Photon_energyRaw(TTreeReaderArray<Float_t>(*fReader, "Photon_energyRaw")),
+                               Photon_esEffSigmaRR(TTreeReaderArray<Float_t>(*fReader, "Photon_esEffSigmaRR")),
+                               Photon_esEnergyOverRawE(TTreeReaderArray<Float_t>(*fReader, "Photon_esEnergyOverRawE")),
+                               Photon_eta(TTreeReaderArray<Float_t>(*fReader, "Photon_eta")),
+                               Photon_etaWidth(TTreeReaderArray<Float_t>(*fReader, "Photon_etaWidth")),
+                               Photon_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "Photon_genPartFlav")),
+                               Photon_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "Photon_genPartIdx")),
+                               Photon_haloTaggerMVAVal(TTreeReaderArray<Float_t>(*fReader, "Photon_haloTaggerMVAVal")),
+                               Photon_hasConversionTracks(TTreeReaderArray<Bool_t>(*fReader, "Photon_hasConversionTracks")),
+                               Photon_hcalPFClusterIso(TTreeReaderArray<Float_t>(*fReader, "Photon_hcalPFClusterIso")),
+                               Photon_hoe(TTreeReaderArray<Float_t>(*fReader, "Photon_hoe")),
+                               Photon_hoe_PUcorr(TTreeReaderArray<Float_t>(*fReader, "Photon_hoe_PUcorr")),
+                               Photon_hoe_Tower(TTreeReaderArray<Float_t>(*fReader, "Photon_hoe_Tower")),
+                               Photon_isScEtaEB(TTreeReaderArray<Bool_t>(*fReader, "Photon_isScEtaEB")),
+                               Photon_isScEtaEE(TTreeReaderArray<Bool_t>(*fReader, "Photon_isScEtaEE")),
+                               Photon_jetIdx(TTreeReaderArray<Short_t>(*fReader, "Photon_jetIdx")),
+                               Photon_mvaID(TTreeReaderArray<Float_t>(*fReader, "Photon_mvaID")),
+                               Photon_mvaID_WP80(TTreeReaderArray<Bool_t>(*fReader, "Photon_mvaID_WP80")),
+                               Photon_mvaID_WP90(TTreeReaderArray<Bool_t>(*fReader, "Photon_mvaID_WP90")),
+                               Photon_pfChargedIso(TTreeReaderArray<Float_t>(*fReader, "Photon_pfChargedIso")),
+                               Photon_pfChargedIsoPFPV(TTreeReaderArray<Float_t>(*fReader, "Photon_pfChargedIsoPFPV")),
+                               Photon_pfChargedIsoWorstVtx(TTreeReaderArray<Float_t>(*fReader, "Photon_pfChargedIsoWorstVtx")),
+                               Photon_pfPhoIso03(TTreeReaderArray<Float_t>(*fReader, "Photon_pfPhoIso03")),
+                               Photon_pfRelIso03_all_quadratic(TTreeReaderArray<Float_t>(*fReader, "Photon_pfRelIso03_all_quadratic")),
+                               Photon_pfRelIso03_chg_quadratic(TTreeReaderArray<Float_t>(*fReader, "Photon_pfRelIso03_chg_quadratic")),
+                               Photon_phi(TTreeReaderArray<Float_t>(*fReader, "Photon_phi")),
+                               Photon_phiWidth(TTreeReaderArray<Float_t>(*fReader, "Photon_phiWidth")),
+                               Photon_pixelSeed(TTreeReaderArray<Bool_t>(*fReader, "Photon_pixelSeed")),
+                               Photon_pt(TTreeReaderArray<Float_t>(*fReader, "Photon_pt")),
+                               Photon_r9(TTreeReaderArray<Float_t>(*fReader, "Photon_r9")),
+                               Photon_s4(TTreeReaderArray<Float_t>(*fReader, "Photon_s4")),
+                               Photon_seedGain(TTreeReaderArray<UChar_t>(*fReader, "Photon_seedGain")),
+                               Photon_seediEtaOriX(TTreeReaderArray<Short_t>(*fReader, "Photon_seediEtaOriX")),
+                               Photon_seediPhiOriY(TTreeReaderArray<Short_t>(*fReader, "Photon_seediPhiOriY")),
+                               Photon_sieie(TTreeReaderArray<Float_t>(*fReader, "Photon_sieie")),
+                               Photon_sieip(TTreeReaderArray<Float_t>(*fReader, "Photon_sieip")),
+                               Photon_sipip(TTreeReaderArray<Float_t>(*fReader, "Photon_sipip")),
+                               Photon_superclusterEta(TTreeReaderArray<Float_t>(*fReader, "Photon_superclusterEta")),
+                               Photon_trkSumPtHollowConeDR03(TTreeReaderArray<Float_t>(*fReader, "Photon_trkSumPtHollowConeDR03")),
+                               Photon_trkSumPtSolidConeDR04(TTreeReaderArray<Float_t>(*fReader, "Photon_trkSumPtSolidConeDR04")),
+                               Photon_vidNestedWPBitmap(TTreeReaderArray<Int_t>(*fReader, "Photon_vidNestedWPBitmap")),
+                               Photon_x_calo(TTreeReaderArray<Float_t>(*fReader, "Photon_x_calo")),
+                               Photon_y_calo(TTreeReaderArray<Float_t>(*fReader, "Photon_y_calo")),
+                               Photon_z_calo(TTreeReaderArray<Float_t>(*fReader, "Photon_z_calo")),
+                               nPhoton_Ptr(TTreeReaderValue<Int_t>(*fReader, "nPhoton")),
+                               nPhoton(*nPhoton_Ptr),
+
+                               // Pileup
+                               Pileup_gpudensity_Ptr(TTreeReaderValue<Float_t>(*fReader, "Pileup_gpudensity")),
+                               Pileup_gpudensity(*Pileup_gpudensity_Ptr),
+                               Pileup_nPU_Ptr(TTreeReaderValue<Int_t>(*fReader, "Pileup_nPU")),
+                               Pileup_nPU(*Pileup_nPU_Ptr),
+                               Pileup_nTrueInt_Ptr(TTreeReaderValue<Float_t>(*fReader, "Pileup_nTrueInt")),
+                               Pileup_nTrueInt(*Pileup_nTrueInt_Ptr),
+                               Pileup_pthatmax_Ptr(TTreeReaderValue<Float_t>(*fReader, "Pileup_pthatmax")),
+                               Pileup_pthatmax(*Pileup_pthatmax_Ptr),
+                               Pileup_pudensity_Ptr(TTreeReaderValue<Float_t>(*fReader, "Pileup_pudensity")),
+                               Pileup_pudensity(*Pileup_pudensity_Ptr),
+                               Pileup_sumEOOT_Ptr(TTreeReaderValue<Int_t>(*fReader, "Pileup_sumEOOT")),
+                               Pileup_sumEOOT(*Pileup_sumEOOT_Ptr),
+                               Pileup_sumLOOT_Ptr(TTreeReaderValue<Int_t>(*fReader, "Pileup_sumLOOT")),
+                               Pileup_sumLOOT(*Pileup_sumLOOT_Ptr),
+
+                               // PuppiMET
+                               PuppiMET_covXX_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_covXX")),
+                               PuppiMET_covXX(*PuppiMET_covXX_Ptr),
+                               PuppiMET_covXY_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_covXY")),
+                               PuppiMET_covXY(*PuppiMET_covXY_Ptr),
+                               PuppiMET_covYY_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_covYY")),
+                               PuppiMET_covYY(*PuppiMET_covYY_Ptr),
+                               PuppiMET_phi_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_phi")),
+                               PuppiMET_phi(*PuppiMET_phi_Ptr),
+                               PuppiMET_phiUnclusteredDown_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_phiUnclusteredDown")),
+                               PuppiMET_phiUnclusteredDown(*PuppiMET_phiUnclusteredDown_Ptr),
+                               PuppiMET_phiUnclusteredUp_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_phiUnclusteredUp")),
+                               PuppiMET_phiUnclusteredUp(*PuppiMET_phiUnclusteredUp_Ptr),
+                               PuppiMET_pt_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_pt")),
+                               PuppiMET_pt(*PuppiMET_pt_Ptr),
+                               PuppiMET_ptUnclusteredDown_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_ptUnclusteredDown")),
+                               PuppiMET_ptUnclusteredDown(*PuppiMET_ptUnclusteredDown_Ptr),
+                               PuppiMET_ptUnclusteredUp_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_ptUnclusteredUp")),
+                               PuppiMET_ptUnclusteredUp(*PuppiMET_ptUnclusteredUp_Ptr),
+                               PuppiMET_significance_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_significance")),
+                               PuppiMET_significance(*PuppiMET_significance_Ptr),
+                               PuppiMET_sumEt_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_sumEt")),
+                               PuppiMET_sumEt(*PuppiMET_sumEt_Ptr),
+                               PuppiMET_sumPtUnclustered_Ptr(TTreeReaderValue<Float_t>(*fReader, "PuppiMET_sumPtUnclustered")),
+                               PuppiMET_sumPtUnclustered(*PuppiMET_sumPtUnclustered_Ptr),
+
+                               // Rho
+                               Rho_fixedGridRhoAll_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoAll")),
+                               Rho_fixedGridRhoAll(*Rho_fixedGridRhoAll_Ptr),
+                               Rho_fixedGridRhoFastjetAll_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoFastjetAll")),
+                               Rho_fixedGridRhoFastjetAll(*Rho_fixedGridRhoFastjetAll_Ptr),
+                               Rho_fixedGridRhoFastjetCentral_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoFastjetCentral")),
+                               Rho_fixedGridRhoFastjetCentral(*Rho_fixedGridRhoFastjetCentral_Ptr),
+                               Rho_fixedGridRhoFastjetCentralCalo_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoFastjetCentralCalo")),
+                               Rho_fixedGridRhoFastjetCentralCalo(*Rho_fixedGridRhoFastjetCentralCalo_Ptr),
+                               Rho_fixedGridRhoFastjetCentralChargedPileUp_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoFastjetCentralChargedPileUp")),
+                               Rho_fixedGridRhoFastjetCentralChargedPileUp(*Rho_fixedGridRhoFastjetCentralChargedPileUp_Ptr),
+                               Rho_fixedGridRhoFastjetCentralNeutral_Ptr(TTreeReaderValue<Float_t>(*fReader, "Rho_fixedGridRhoFastjetCentralNeutral")),
+                               Rho_fixedGridRhoFastjetCentralNeutral(*Rho_fixedGridRhoFastjetCentralNeutral_Ptr),
+
+                               // SV
+                               SV_charge(TTreeReaderArray<Short_t>(*fReader, "SV_charge")),
+                               SV_chi2(TTreeReaderArray<Float_t>(*fReader, "SV_chi2")),
+                               SV_dlen(TTreeReaderArray<Float_t>(*fReader, "SV_dlen")),
+                               SV_dlenSig(TTreeReaderArray<Float_t>(*fReader, "SV_dlenSig")),
+                               SV_dxy(TTreeReaderArray<Float_t>(*fReader, "SV_dxy")),
+                               SV_dxySig(TTreeReaderArray<Float_t>(*fReader, "SV_dxySig")),
+                               SV_eta(TTreeReaderArray<Float_t>(*fReader, "SV_eta")),
+                               SV_mass(TTreeReaderArray<Float_t>(*fReader, "SV_mass")),
+                               SV_ndof(TTreeReaderArray<Float_t>(*fReader, "SV_ndof")),
+                               SV_ntracks(TTreeReaderArray<UChar_t>(*fReader, "SV_ntracks")),
+                               SV_pAngle(TTreeReaderArray<Float_t>(*fReader, "SV_pAngle")),
+                               SV_phi(TTreeReaderArray<Float_t>(*fReader, "SV_phi")),
+                               SV_pt(TTreeReaderArray<Float_t>(*fReader, "SV_pt")),
+                               SV_x(TTreeReaderArray<Float_t>(*fReader, "SV_x")),
+                               SV_y(TTreeReaderArray<Float_t>(*fReader, "SV_y")),
+                               SV_z(TTreeReaderArray<Float_t>(*fReader, "SV_z")),
+                               nSV_Ptr(TTreeReaderValue<Int_t>(*fReader, "nSV")),
+                               nSV(*nSV_Ptr),
+
+                               // SubGenJetAK8
+                               SubGenJetAK8_eta(TTreeReaderArray<Float_t>(*fReader, "SubGenJetAK8_eta")),
+                               SubGenJetAK8_mass(TTreeReaderArray<Float_t>(*fReader, "SubGenJetAK8_mass")),
+                               SubGenJetAK8_phi(TTreeReaderArray<Float_t>(*fReader, "SubGenJetAK8_phi")),
+                               SubGenJetAK8_pt(TTreeReaderArray<Float_t>(*fReader, "SubGenJetAK8_pt")),
+                               nSubGenJetAK8_Ptr(TTreeReaderValue<Int_t>(*fReader, "nSubGenJetAK8")),
+                               nSubGenJetAK8(*nSubGenJetAK8_Ptr),
+
+                               // SubJet
+                               SubJet_UParTAK4RegPtRawCorr(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4RegPtRawCorr")),
+                               SubJet_UParTAK4RegPtRawCorrNeutrino(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4RegPtRawCorrNeutrino")),
+                               SubJet_UParTAK4RegPtRawRes(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4RegPtRawRes")),
+                               SubJet_UParTAK4V1RegPtRawCorr(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4V1RegPtRawCorr")),
+                               SubJet_UParTAK4V1RegPtRawCorrNeutrino(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4V1RegPtRawCorrNeutrino")),
+                               SubJet_UParTAK4V1RegPtRawRes(TTreeReaderArray<Float_t>(*fReader, "SubJet_UParTAK4V1RegPtRawRes")),
+                               SubJet_area(TTreeReaderArray<Float_t>(*fReader, "SubJet_area")),
+                               SubJet_btagDeepFlavB(TTreeReaderArray<Float_t>(*fReader, "SubJet_btagDeepFlavB")),
+                               SubJet_btagUParTAK4B(TTreeReaderArray<Float_t>(*fReader, "SubJet_btagUParTAK4B")),
+                               SubJet_eta(TTreeReaderArray<Float_t>(*fReader, "SubJet_eta")),
+                               SubJet_hadronFlavour(TTreeReaderArray<UChar_t>(*fReader, "SubJet_hadronFlavour")),
+                               SubJet_mass(TTreeReaderArray<Float_t>(*fReader, "SubJet_mass")),
+                               SubJet_n2b1(TTreeReaderArray<Float_t>(*fReader, "SubJet_n2b1")),
+                               SubJet_n3b1(TTreeReaderArray<Float_t>(*fReader, "SubJet_n3b1")),
+                               SubJet_nBHadrons(TTreeReaderArray<UChar_t>(*fReader, "SubJet_nBHadrons")),
+                               SubJet_nCHadrons(TTreeReaderArray<UChar_t>(*fReader, "SubJet_nCHadrons")),
+                               SubJet_phi(TTreeReaderArray<Float_t>(*fReader, "SubJet_phi")),
+                               SubJet_pt(TTreeReaderArray<Float_t>(*fReader, "SubJet_pt")),
+                               SubJet_rawFactor(TTreeReaderArray<Float_t>(*fReader, "SubJet_rawFactor")),
+                               SubJet_subGenJetAK8Idx(TTreeReaderArray<Short_t>(*fReader, "SubJet_subGenJetAK8Idx")),
+                               SubJet_tau1(TTreeReaderArray<Float_t>(*fReader, "SubJet_tau1")),
+                               SubJet_tau2(TTreeReaderArray<Float_t>(*fReader, "SubJet_tau2")),
+                               SubJet_tau3(TTreeReaderArray<Float_t>(*fReader, "SubJet_tau3")),
+                               SubJet_tau4(TTreeReaderArray<Float_t>(*fReader, "SubJet_tau4")),
+                               nSubJet_Ptr(TTreeReaderValue<Int_t>(*fReader, "nSubJet")),
+                               nSubJet(*nSubJet_Ptr),
+
+                               // Tau
+                               Tau_IPx(TTreeReaderArray<Float_t>(*fReader, "Tau_IPx")),
+                               Tau_IPy(TTreeReaderArray<Float_t>(*fReader, "Tau_IPy")),
+                               Tau_IPz(TTreeReaderArray<Float_t>(*fReader, "Tau_IPz")),
+                               Tau_charge(TTreeReaderArray<Short_t>(*fReader, "Tau_charge")),
+                               Tau_chargedIso(TTreeReaderArray<Float_t>(*fReader, "Tau_chargedIso")),
+                               Tau_decayMode(TTreeReaderArray<UChar_t>(*fReader, "Tau_decayMode")),
+                               Tau_decayModePNet(TTreeReaderArray<Short_t>(*fReader, "Tau_decayModePNet")),
+                               Tau_decayModeUParT(TTreeReaderArray<Short_t>(*fReader, "Tau_decayModeUParT")),
+                               Tau_dxy(TTreeReaderArray<Float_t>(*fReader, "Tau_dxy")),
+                               Tau_dz(TTreeReaderArray<Float_t>(*fReader, "Tau_dz")),
+                               Tau_eleIdx(TTreeReaderArray<Short_t>(*fReader, "Tau_eleIdx")),
+                               Tau_eta(TTreeReaderArray<Float_t>(*fReader, "Tau_eta")),
+                               Tau_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "Tau_genPartFlav")),
+                               Tau_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "Tau_genPartIdx")),
+                               Tau_hasRefitSV(TTreeReaderArray<Bool_t>(*fReader, "Tau_hasRefitSV")),
+                               Tau_idAntiEleDeadECal(TTreeReaderArray<Bool_t>(*fReader, "Tau_idAntiEleDeadECal")),
+                               Tau_idAntiMu(TTreeReaderArray<UChar_t>(*fReader, "Tau_idAntiMu")),
+                               Tau_idDecayModeNewDMs(TTreeReaderArray<Bool_t>(*fReader, "Tau_idDecayModeNewDMs")),
+                               Tau_idDecayModeOldDMs(TTreeReaderArray<Bool_t>(*fReader, "Tau_idDecayModeOldDMs")),
+                               Tau_idDeepTau2018v2p5VSe(TTreeReaderArray<UChar_t>(*fReader, "Tau_idDeepTau2018v2p5VSe")),
+                               Tau_idDeepTau2018v2p5VSjet(TTreeReaderArray<UChar_t>(*fReader, "Tau_idDeepTau2018v2p5VSjet")),
+                               Tau_idDeepTau2018v2p5VSmu(TTreeReaderArray<UChar_t>(*fReader, "Tau_idDeepTau2018v2p5VSmu")),
+                               Tau_ipLengthSig(TTreeReaderArray<Float_t>(*fReader, "Tau_ipLengthSig")),
+                               Tau_jetIdx(TTreeReaderArray<Short_t>(*fReader, "Tau_jetIdx")),
+                               Tau_leadTkDeltaEta(TTreeReaderArray<Float_t>(*fReader, "Tau_leadTkDeltaEta")),
+                               Tau_leadTkDeltaPhi(TTreeReaderArray<Float_t>(*fReader, "Tau_leadTkDeltaPhi")),
+                               Tau_leadTkPtOverTauPt(TTreeReaderArray<Float_t>(*fReader, "Tau_leadTkPtOverTauPt")),
+                               Tau_mass(TTreeReaderArray<Float_t>(*fReader, "Tau_mass")),
+                               Tau_muIdx(TTreeReaderArray<Short_t>(*fReader, "Tau_muIdx")),
+                               Tau_nSVs(TTreeReaderArray<UChar_t>(*fReader, "Tau_nSVs")),
+                               Tau_neutralIso(TTreeReaderArray<Float_t>(*fReader, "Tau_neutralIso")),
+                               Tau_phi(TTreeReaderArray<Float_t>(*fReader, "Tau_phi")),
+                               Tau_photonsOutsideSignalCone(TTreeReaderArray<Float_t>(*fReader, "Tau_photonsOutsideSignalCone")),
+                               Tau_probDM0PNet(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM0PNet")),
+                               Tau_probDM0UParT(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM0UParT")),
+                               Tau_probDM10PNet(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM10PNet")),
+                               Tau_probDM10UParT(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM10UParT")),
+                               Tau_probDM11PNet(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM11PNet")),
+                               Tau_probDM11UParT(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM11UParT")),
+                               Tau_probDM1PNet(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM1PNet")),
+                               Tau_probDM1UParT(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM1UParT")),
+                               Tau_probDM2PNet(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM2PNet")),
+                               Tau_probDM2UParT(TTreeReaderArray<Float_t>(*fReader, "Tau_probDM2UParT")),
+                               Tau_pt(TTreeReaderArray<Float_t>(*fReader, "Tau_pt")),
+                               Tau_ptCorrPNet(TTreeReaderArray<Float_t>(*fReader, "Tau_ptCorrPNet")),
+                               Tau_ptCorrUParT(TTreeReaderArray<Float_t>(*fReader, "Tau_ptCorrUParT")),
+                               Tau_puCorr(TTreeReaderArray<Float_t>(*fReader, "Tau_puCorr")),
+                               Tau_qConfPNet(TTreeReaderArray<Float_t>(*fReader, "Tau_qConfPNet")),
+                               Tau_qConfUParT(TTreeReaderArray<Float_t>(*fReader, "Tau_qConfUParT")),
+                               Tau_rawDeepTau2018v2p5VSe(TTreeReaderArray<Float_t>(*fReader, "Tau_rawDeepTau2018v2p5VSe")),
+                               Tau_rawDeepTau2018v2p5VSjet(TTreeReaderArray<Float_t>(*fReader, "Tau_rawDeepTau2018v2p5VSjet")),
+                               Tau_rawDeepTau2018v2p5VSmu(TTreeReaderArray<Float_t>(*fReader, "Tau_rawDeepTau2018v2p5VSmu")),
+                               Tau_rawIso(TTreeReaderArray<Float_t>(*fReader, "Tau_rawIso")),
+                               Tau_rawIsodR03(TTreeReaderArray<Float_t>(*fReader, "Tau_rawIsodR03")),
+                               Tau_rawPNetVSe(TTreeReaderArray<Float_t>(*fReader, "Tau_rawPNetVSe")),
+                               Tau_rawPNetVSjet(TTreeReaderArray<Float_t>(*fReader, "Tau_rawPNetVSjet")),
+                               Tau_rawPNetVSmu(TTreeReaderArray<Float_t>(*fReader, "Tau_rawPNetVSmu")),
+                               Tau_rawUParTVSe(TTreeReaderArray<Float_t>(*fReader, "Tau_rawUParTVSe")),
+                               Tau_rawUParTVSjet(TTreeReaderArray<Float_t>(*fReader, "Tau_rawUParTVSjet")),
+                               Tau_rawUParTVSmu(TTreeReaderArray<Float_t>(*fReader, "Tau_rawUParTVSmu")),
+                               Tau_refitSVchi2(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVchi2")),
+                               Tau_refitSVcov00(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov00")),
+                               Tau_refitSVcov10(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov10")),
+                               Tau_refitSVcov11(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov11")),
+                               Tau_refitSVcov20(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov20")),
+                               Tau_refitSVcov21(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov21")),
+                               Tau_refitSVcov22(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVcov22")),
+                               Tau_refitSVx(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVx")),
+                               Tau_refitSVy(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVy")),
+                               Tau_refitSVz(TTreeReaderArray<Float_t>(*fReader, "Tau_refitSVz")),
+                               Tau_svIdx1(TTreeReaderArray<Short_t>(*fReader, "Tau_svIdx1")),
+                               Tau_svIdx2(TTreeReaderArray<Short_t>(*fReader, "Tau_svIdx2")),
+                               nTau_Ptr(TTreeReaderValue<Int_t>(*fReader, "nTau")),
+                               nTau(*nTau_Ptr),
+
+                               // TauProd
+                               TauProd_eta(TTreeReaderArray<Float_t>(*fReader, "TauProd_eta")),
+                               TauProd_pdgId(TTreeReaderArray<Int_t>(*fReader, "TauProd_pdgId")),
+                               TauProd_phi(TTreeReaderArray<Float_t>(*fReader, "TauProd_phi")),
+                               TauProd_pt(TTreeReaderArray<Float_t>(*fReader, "TauProd_pt")),
+                               TauProd_tauIdx(TTreeReaderArray<Short_t>(*fReader, "TauProd_tauIdx")),
+                               nTauProd_Ptr(TTreeReaderValue<Int_t>(*fReader, "nTauProd")),
+                               nTauProd(*nTauProd_Ptr),
+
+                               // TauSpinner
+                               TauSpinner_weight_cp_0_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0")),
+                               TauSpinner_weight_cp_0(*TauSpinner_weight_cp_0_Ptr),
+                               TauSpinner_weight_cp_0_alt_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0_alt")),
+                               TauSpinner_weight_cp_0_alt(*TauSpinner_weight_cp_0_alt_Ptr),
+                               TauSpinner_weight_cp_0p25_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p25")),
+                               TauSpinner_weight_cp_0p25(*TauSpinner_weight_cp_0p25_Ptr),
+                               TauSpinner_weight_cp_0p25_alt_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p25_alt")),
+                               TauSpinner_weight_cp_0p25_alt(*TauSpinner_weight_cp_0p25_alt_Ptr),
+                               TauSpinner_weight_cp_0p375_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p375")),
+                               TauSpinner_weight_cp_0p375(*TauSpinner_weight_cp_0p375_Ptr),
+                               TauSpinner_weight_cp_0p375_alt_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p375_alt")),
+                               TauSpinner_weight_cp_0p375_alt(*TauSpinner_weight_cp_0p375_alt_Ptr),
+                               TauSpinner_weight_cp_0p5_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p5")),
+                               TauSpinner_weight_cp_0p5(*TauSpinner_weight_cp_0p5_Ptr),
+                               TauSpinner_weight_cp_0p5_alt_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_0p5_alt")),
+                               TauSpinner_weight_cp_0p5_alt(*TauSpinner_weight_cp_0p5_alt_Ptr),
+                               TauSpinner_weight_cp_minus0p25_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_minus0p25")),
+                               TauSpinner_weight_cp_minus0p25(*TauSpinner_weight_cp_minus0p25_Ptr),
+                               TauSpinner_weight_cp_minus0p25_alt_Ptr(TTreeReaderValue<Double_t>(*fReader, "TauSpinner_weight_cp_minus0p25_alt")),
+                               TauSpinner_weight_cp_minus0p25_alt(*TauSpinner_weight_cp_minus0p25_alt_Ptr),
+
+                               // TrackGenJetAK4
+                               TrackGenJetAK4_eta(TTreeReaderArray<Float_t>(*fReader, "TrackGenJetAK4_eta")),
+                               TrackGenJetAK4_phi(TTreeReaderArray<Float_t>(*fReader, "TrackGenJetAK4_phi")),
+                               TrackGenJetAK4_pt(TTreeReaderArray<Float_t>(*fReader, "TrackGenJetAK4_pt")),
+                               nTrackGenJetAK4_Ptr(TTreeReaderValue<Int_t>(*fReader, "nTrackGenJetAK4")),
+                               nTrackGenJetAK4(*nTrackGenJetAK4_Ptr),
+
+                               // TrigObj
+                               TrigObj_eta(TTreeReaderArray<Float_t>(*fReader, "TrigObj_eta")),
+                               TrigObj_filterBits(TTreeReaderArray<ULong64_t>(*fReader, "TrigObj_filterBits")),
+                               TrigObj_id(TTreeReaderArray<UShort_t>(*fReader, "TrigObj_id")),
+                               TrigObj_l1charge(TTreeReaderArray<Short_t>(*fReader, "TrigObj_l1charge")),
+                               TrigObj_l1iso(TTreeReaderArray<Int_t>(*fReader, "TrigObj_l1iso")),
+                               TrigObj_l1pt(TTreeReaderArray<Float_t>(*fReader, "TrigObj_l1pt")),
+                               TrigObj_l1pt_2(TTreeReaderArray<Float_t>(*fReader, "TrigObj_l1pt_2")),
+                               TrigObj_l2pt(TTreeReaderArray<Float_t>(*fReader, "TrigObj_l2pt")),
+                               TrigObj_phi(TTreeReaderArray<Float_t>(*fReader, "TrigObj_phi")),
+                               TrigObj_pt(TTreeReaderArray<Float_t>(*fReader, "TrigObj_pt")),
+                               nTrigObj_Ptr(TTreeReaderValue<Int_t>(*fReader, "nTrigObj")),
+                               nTrigObj(*nTrigObj_Ptr),
+
+                               // TrkMET
+                               TrkMET_phi_Ptr(TTreeReaderValue<Float_t>(*fReader, "TrkMET_phi")),
+                               TrkMET_phi(*TrkMET_phi_Ptr),
+                               TrkMET_pt_Ptr(TTreeReaderValue<Float_t>(*fReader, "TrkMET_pt")),
+                               TrkMET_pt(*TrkMET_pt_Ptr),
+                               TrkMET_sumEt_Ptr(TTreeReaderValue<Float_t>(*fReader, "TrkMET_sumEt")),
+                               TrkMET_sumEt(*TrkMET_sumEt_Ptr),
+
+                               // boostedTau
+                               boostedTau_charge(TTreeReaderArray<Int_t>(*fReader, "boostedTau_charge")),
+                               boostedTau_chargedIso(TTreeReaderArray<Float_t>(*fReader, "boostedTau_chargedIso")),
+                               boostedTau_decayMode(TTreeReaderArray<Int_t>(*fReader, "boostedTau_decayMode")),
+                               boostedTau_eta(TTreeReaderArray<Float_t>(*fReader, "boostedTau_eta")),
+                               boostedTau_genPartFlav(TTreeReaderArray<UChar_t>(*fReader, "boostedTau_genPartFlav")),
+                               boostedTau_genPartIdx(TTreeReaderArray<Short_t>(*fReader, "boostedTau_genPartIdx")),
+                               boostedTau_idAntiEle2018(TTreeReaderArray<UChar_t>(*fReader, "boostedTau_idAntiEle2018")),
+                               boostedTau_idAntiMu(TTreeReaderArray<UChar_t>(*fReader, "boostedTau_idAntiMu")),
+                               boostedTau_idMVAnewDM2017v2(TTreeReaderArray<UChar_t>(*fReader, "boostedTau_idMVAnewDM2017v2")),
+                               boostedTau_idMVAoldDM2017v2(TTreeReaderArray<UChar_t>(*fReader, "boostedTau_idMVAoldDM2017v2")),
+                               boostedTau_jetIdx(TTreeReaderArray<Short_t>(*fReader, "boostedTau_jetIdx")),
+                               boostedTau_leadTkDeltaEta(TTreeReaderArray<Float_t>(*fReader, "boostedTau_leadTkDeltaEta")),
+                               boostedTau_leadTkDeltaPhi(TTreeReaderArray<Float_t>(*fReader, "boostedTau_leadTkDeltaPhi")),
+                               boostedTau_leadTkPtOverTauPt(TTreeReaderArray<Float_t>(*fReader, "boostedTau_leadTkPtOverTauPt")),
+                               boostedTau_mass(TTreeReaderArray<Float_t>(*fReader, "boostedTau_mass")),
+                               boostedTau_neutralIso(TTreeReaderArray<Float_t>(*fReader, "boostedTau_neutralIso")),
+                               boostedTau_phi(TTreeReaderArray<Float_t>(*fReader, "boostedTau_phi")),
+                               boostedTau_photonsOutsideSignalCone(TTreeReaderArray<Float_t>(*fReader, "boostedTau_photonsOutsideSignalCone")),
+                               boostedTau_pt(TTreeReaderArray<Float_t>(*fReader, "boostedTau_pt")),
+                               boostedTau_puCorr(TTreeReaderArray<Float_t>(*fReader, "boostedTau_puCorr")),
+                               boostedTau_rawAntiEle2018(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawAntiEle2018")),
+                               boostedTau_rawAntiEleCat2018(TTreeReaderArray<Short_t>(*fReader, "boostedTau_rawAntiEleCat2018")),
+                               boostedTau_rawBoostedDeepTauRunIIv2p0VSe(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawBoostedDeepTauRunIIv2p0VSe")),
+                               boostedTau_rawBoostedDeepTauRunIIv2p0VSjet(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawBoostedDeepTauRunIIv2p0VSjet")),
+                               boostedTau_rawBoostedDeepTauRunIIv2p0VSmu(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawBoostedDeepTauRunIIv2p0VSmu")),
+                               boostedTau_rawIso(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawIso")),
+                               boostedTau_rawIsodR03(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawIsodR03")),
+                               boostedTau_rawMVAnewDM2017v2(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawMVAnewDM2017v2")),
+                               boostedTau_rawMVAoldDM2017v2(TTreeReaderArray<Float_t>(*fReader, "boostedTau_rawMVAoldDM2017v2")),
+                               nboostedTau_Ptr(TTreeReaderValue<Int_t>(*fReader, "nboostedTau")),
+                               nboostedTau(*nboostedTau_Ptr),
+
+                               // bunchCrossing
+                               bunchCrossing_Ptr(TTreeReaderValue<UInt_t>(*fReader, "bunchCrossing")),
+                               bunchCrossing(*bunchCrossing_Ptr),
+
+                               // event
+                               event_Ptr(TTreeReaderValue<ULong64_t>(*fReader, "event")),
+                               event(*event_Ptr),
+
+                               // genTtbarId
+                               genTtbarId_Ptr(TTreeReaderValue<Int_t>(*fReader, "genTtbarId")),
+                               genTtbarId(*genTtbarId_Ptr),
+
+                               // genWeight
+                               genWeight_Ptr(TTreeReaderValue<Float_t>(*fReader, "genWeight")),
+                               genWeight(*genWeight_Ptr),
+
+                               // luminosityBlock
+                               luminosityBlock_Ptr(TTreeReaderValue<UInt_t>(*fReader, "luminosityBlock")),
+                               luminosityBlock(*luminosityBlock_Ptr),
+
+                               // orbitNumber
+                               orbitNumber_Ptr(TTreeReaderValue<UInt_t>(*fReader, "orbitNumber")),
+                               orbitNumber(*orbitNumber_Ptr),
+
+                               // run
+                               RunNumber_Ptr(TTreeReaderValue<UInt_t>(*fReader, "run")),
+                               RunNumber(*RunNumber_Ptr)
+
+{
     MaxEvent = -1;
     NSkipEvent = 0;
     LogEvery = 1000;
@@ -16,25 +1059,34 @@ SKNanoLoader::SKNanoLoader() {
     Userflags.clear();
 }
 
-SKNanoLoader::~SKNanoLoader() {
-    for (auto& [key, value] : TriggerMap) {
+SKNanoLoader::~SKNanoLoader()
+{
+    for (auto &[key, value] : TriggerMap)
+    {
         delete value.first;
     }
-    if (!fChain) return;
-    if (fChain->GetCurrentFile()) fChain->GetCurrentFile()->Close();
+    if (!fChain)
+        return;
+    if (fChain->GetCurrentFile())
+        fChain->GetCurrentFile()->Close();
 }
 
-void SKNanoLoader::Loop() {
-    long nentries = fChain->GetEntries();
-    if (MaxEvent > 0) nentries = std::min(nentries, MaxEvent);
+void SKNanoLoader::Loop()
+{
+    long nentries = fReader->GetEntries();
+    if (MaxEvent > 0)
+        nentries = std::min(nentries, MaxEvent);
     auto startTime = std::chrono::steady_clock::now();
     cout << "[SKNanoLoader::Loop] Event Loop Started" << endl;
 
-    for (long jentry = 0; jentry < nentries; jentry++) {
-        if (jentry < NSkipEvent) continue;
-
+    int jentry = 0;
+    while(fReader->Next())
+    {
+        if (jentry < NSkipEvent)
+            continue;
         // Log progress for every LogEvery events
-        if (jentry % LogEvery == 0) {
+        if (jentry % LogEvery == 0)
+        {
             auto currentTime = std::chrono::steady_clock::now();
             std::chrono::duration<double> elapsedTime = currentTime - startTime;
             double timePerEvent = elapsedTime.count() / (jentry + 1);
@@ -43,1087 +1095,77 @@ void SKNanoLoader::Loop() {
             cout << "[SKNanoLoader::Loop] Processing " << jentry << " / " << nentries
                  << " | Elapsed: " << std::fixed << std::setprecision(2) << elapsedTime.count() << "s, Remaining: " << estimatedRemaining << "s" << endl;
         }
-
-        if (fChain->GetEntry(jentry) < 0) {
-            cerr << "[SKNanoLoader::Loop] Error reading event " << jentry << endl;
-            exit(1);
-        }
-        
-        // make sure Run2 and Run3 variables are in sync
-        if (Run == 2) {
-            nLHEPart = static_cast<UInt_t>(nLHEPart_RunII);
-            nGenPart = static_cast<UInt_t>(nGenPart_RunII);
-            nGenJet = static_cast<UInt_t>(nGenJet_RunII);
-            nGenJetAK8 = static_cast<UInt_t>(nGenJetAK8_RunII);
-            nGenIsolatedPhoton = static_cast<UInt_t>(nGenIsolatedPhoton_RunII);
-            nGenDressedLepton = static_cast<UInt_t>(nGenDressedLepton_RunII);
-            nGenVisTau = static_cast<UInt_t>(nGenVisTau_RunII);
-            nMuon = static_cast<UInt_t>(nMuon_RunII);
-            nElectron = static_cast<UInt_t>(nElectron_RunII);
-            nTau = static_cast<UInt_t>(nTau_RunII);
-            nPhoton = static_cast<UInt_t>(nPhoton_RunII);
-            nJet = static_cast<UInt_t>(nJet_RunII);
-            nFatJet = static_cast<UInt_t>(nFatJet_RunII);
-        }
-        
         executeEvent();
+        jentry++;
     }
-    cout << "[SKNanoLoader::Loop] Event Loop Finished"<< endl;
+    cout << "[SKNanoLoader::Loop] Event Loop Finished" << endl;
 }
 
-void SKNanoLoader::SetMaxLeafSize(){
-    auto getMaxBranchValue = [this](ROOT::RDataFrame &df, const TString &branchName) {
-        if (!fChain->GetBranch(branchName)) {
-            cout << "[SKNanoGenLoader::SetMaxLeafSize] Warning: Branch " << branchName << " not found" << endl;
-            return 0;
-        } 
-        auto maxValue = static_cast<int>(*(df.Max(branchName)));
-        cout << "[SKNanoLoader::SetMaxLeafSize] Branch: " << branchName << ", Max Value: " << maxValue << endl;
-        return maxValue;
-    };
-
-    //check how much time it takes to read the tree
-    //and set the maximum leaf size accordingly
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // Get Maximum length of arrays
-    ROOT::RDataFrame df = ROOT::RDataFrame(*fChain);
-    const UInt_t kMaxLHEPdfWeight = getMaxBranchValue(df, "nLHEPdfWeight");
-    const UInt_t kMaxLHEScaleWeight = getMaxBranchValue(df, "nLHEScaleWeight");
-    const UInt_t kMaxPSWeight = getMaxBranchValue(df, "nPSWeight");
-    const UInt_t kMaxLHEPart = getMaxBranchValue(df, "nLHEPart"); 
-    const UInt_t kMaxGenPart = getMaxBranchValue(df, "nGenPart");
-    const UInt_t kMaxGenJet = getMaxBranchValue(df, "nGenJet");
-    const UInt_t kMaxGenJetAK8 = getMaxBranchValue(df, "nGenJetAK8");
-    const UInt_t kMaxGenIsolatedPhoton = getMaxBranchValue(df, "nGenIsolatedPhoton");
-    const UInt_t kMaxGenDressedLepton = getMaxBranchValue(df, "nGenDressedLepton");
-    const UInt_t kMaxGenVisTau = getMaxBranchValue(df, "nGenVisTau");
-    const UInt_t kMaxPhoton = getMaxBranchValue(df, "nPhoton");
-    const UInt_t kMaxJet = getMaxBranchValue(df, "nJet");
-    const UInt_t kMaxMuon = getMaxBranchValue(df, "nMuon");
-    const UInt_t kMaxElectron = getMaxBranchValue(df, "nElectron");
-    const UInt_t kMaxTau = getMaxBranchValue(df, "nTau");
-    const UInt_t kMaxFatJet = getMaxBranchValue(df, "nFatJet");
-    cout << "[SKNanoLoader::SetMaxLeafSize] Maximum Leaf Size Set" << endl;
-    auto RDataFrameFinishTime = std::chrono::high_resolution_clock::now();
-    
-    // Now missing parts will automatically shrink
-    LHEPdfWeight.resize(kMaxLHEPdfWeight);
-    LHEScaleWeight.resize(kMaxLHEScaleWeight);
-    PSWeight.resize(kMaxPSWeight);
-
-    // LHEPart
-    LHEPart_pt.resize(kMaxLHEPart);
-    LHEPart_eta.resize(kMaxLHEPart);
-    LHEPart_phi.resize(kMaxLHEPart);
-    LHEPart_mass.resize(kMaxLHEPart);
-    LHEPart_incomingpz.resize(kMaxLHEPart);
-    LHEPart_pdgId.resize(kMaxLHEPart);
-    LHEPart_status.resize(kMaxLHEPart);
-    LHEPart_spin.resize(kMaxLHEPart);
-
-    // GenPart
-    GenPart_eta.resize(kMaxGenPart);
-    GenPart_mass.resize(kMaxGenPart);
-    GenPart_pdgId.resize(kMaxGenPart);
-    GenPart_phi.resize(kMaxGenPart);
-    GenPart_pt.resize(kMaxGenPart);
-    GenPart_status.resize(kMaxGenPart);
-    GenPart_genPartIdxMother.resize(kMaxGenPart);
-    GenPart_statusFlags.resize(kMaxGenPart);
-    GenPart_genPartIdxMother_RunII.resize(kMaxGenPart);
-    GenPart_statusFlags_RunII.resize(kMaxGenPart);
-
-    // GenJet
-    GenJet_pt.resize(kMaxGenJet);
-    GenJet_eta.resize(kMaxGenJet);
-    GenJet_phi.resize(kMaxGenJet);
-    GenJet_mass.resize(kMaxGenJet);
-    GenJet_partonFlavour.resize(kMaxGenJet);
-    GenJet_hadronFlavour.resize(kMaxGenJet);
-    GenJet_partonFlavour_RunII.resize(kMaxGenJet);
-    
-    // GenJetAK8
-    GenJetAK8_pt.resize(kMaxGenJetAK8);
-    GenJetAK8_eta.resize(kMaxGenJetAK8);
-    GenJetAK8_phi.resize(kMaxGenJetAK8);
-    GenJetAK8_mass.resize(kMaxGenJetAK8);
-    GenJetAK8_partonFlavour.resize(kMaxGenJetAK8);
-    GenJetAK8_hadronFlavour.resize(kMaxGenJetAK8);
-    GenJetAK8_partonFlavour_RunII.resize(kMaxGenJetAK8);
-
-    // GenDressedLepton
-    GenDressedLepton_pt.resize(kMaxGenDressedLepton);
-    GenDressedLepton_eta.resize(kMaxGenDressedLepton);
-    GenDressedLepton_phi.resize(kMaxGenDressedLepton);
-    GenDressedLepton_mass.resize(kMaxGenDressedLepton);
-    GenDressedLepton_pdgId.resize(kMaxGenDressedLepton);
-    GenDressedLepton_hasTauAnc.resize(kMaxGenDressedLepton);
-
-    // GenIsolatedPhoton
-    GenIsolatedPhoton_pt.resize(kMaxGenIsolatedPhoton);
-    GenIsolatedPhoton_eta.resize(kMaxGenIsolatedPhoton);
-    GenIsolatedPhoton_phi.resize(kMaxGenIsolatedPhoton);
-    GenIsolatedPhoton_mass.resize(kMaxGenIsolatedPhoton);
-
-    // GenVisTau
-    GenVisTau_pt.resize(kMaxGenVisTau);
-    GenVisTau_eta.resize(kMaxGenVisTau);
-    GenVisTau_phi.resize(kMaxGenVisTau);
-    GenVisTau_mass.resize(kMaxGenVisTau);
-    GenVisTau_charge.resize(kMaxGenVisTau);
-    GenVisTau_genPartIdxMother.resize(kMaxGenVisTau);
-    GenVisTau_status.resize(kMaxGenVisTau);
-
-    // Muon----------------------------
-    Muon_charge.resize(kMaxMuon);
-    Muon_dxy.resize(kMaxMuon);
-    Muon_dxyErr.resize(kMaxMuon);
-    Muon_dxybs.resize(kMaxMuon);
-    Muon_dz.resize(kMaxMuon);
-    Muon_dzErr.resize(kMaxMuon);
-    Muon_eta.resize(kMaxMuon);
-    Muon_highPtId.resize(kMaxMuon);
-    Muon_ip3d.resize(kMaxMuon);
-    Muon_isGlobal.resize(kMaxMuon);
-    Muon_isStandalone.resize(kMaxMuon);
-    Muon_isTracker.resize(kMaxMuon);
-    Muon_looseId.resize(kMaxMuon);
-    Muon_mass.resize(kMaxMuon);
-    Muon_mediumId.resize(kMaxMuon);
-    Muon_mediumPromptId.resize(kMaxMuon);
-    Muon_miniIsoId.resize(kMaxMuon);
-    Muon_miniPFRelIso_all.resize(kMaxMuon);
-    Muon_multiIsoId.resize(kMaxMuon);
-    Muon_mvaLowPt.resize(kMaxMuon);
-    Muon_mvaTTH.resize(kMaxMuon);
-    Muon_pfIsoId.resize(kMaxMuon);
-    Muon_pfRelIso03_all.resize(kMaxMuon);
-    Muon_pfRelIso04_all.resize(kMaxMuon);
-    Muon_phi.resize(kMaxMuon);
-    Muon_pt.resize(kMaxMuon);
-    Muon_puppiIsoId.resize(kMaxMuon);
-    Muon_sip3d.resize(kMaxMuon);
-    Muon_softId.resize(kMaxMuon);
-    Muon_softMva.resize(kMaxMuon);
-    Muon_softMvaId.resize(kMaxMuon);
-    Muon_tightId.resize(kMaxMuon);
-    Muon_tkIsoId.resize(kMaxMuon);
-    Muon_tkRelIso.resize(kMaxMuon);
-    Muon_triggerIdLoose.resize(kMaxMuon);
-    if(Run == 3){ 
-        Muon_mvaMuID_WP.resize(kMaxMuon);
-        Muon_mvaId.resize(0);
-    }
-    else if(Run == 2){
-        Muon_mvaMuID_WP.resize(0);
-        Muon_mvaId.resize(kMaxMuon);
-    }
-    // Electron----------------------------
-    Electron_charge.resize(kMaxElectron);
-    Electron_convVeto.resize(kMaxElectron);
-    Electron_cutBased_HEEP.resize(kMaxElectron);
-    Electron_deltaEtaSC.resize(kMaxElectron);
-    Electron_dr03EcalRecHitSumEt.resize(kMaxElectron);
-    Electron_dr03HcalDepth1TowerSumEt.resize(kMaxElectron);
-    Electron_dr03TkSumPt.resize(kMaxElectron);
-    Electron_dr03TkSumPtHEEP.resize(kMaxElectron);
-    Electron_dxy.resize(kMaxElectron);
-    Electron_dxyErr.resize(kMaxElectron);
-    Electron_dz.resize(kMaxElectron);
-    Electron_dzErr.resize(kMaxElectron);
-    Electron_eInvMinusPInv.resize(kMaxElectron);
-    Electron_energyErr.resize(kMaxElectron);
-    Electron_eta.resize(kMaxElectron);
-    Electron_genPartFlav.resize(kMaxElectron);
-    Electron_hoe.resize(kMaxElectron);
-    Electron_ip3d.resize(kMaxElectron);
-    Electron_isPFcand.resize(kMaxElectron);
-    Electron_jetNDauCharged.resize(kMaxElectron);
-    Electron_jetPtRelv2.resize(kMaxElectron);
-    Electron_jetRelIso.resize(kMaxElectron);
-    Electron_lostHits.resize(kMaxElectron);
-    Electron_mass.resize(kMaxElectron);
-    Electron_miniPFRelIso_all.resize(kMaxElectron);
-    Electron_miniPFRelIso_chg.resize(kMaxElectron);
-    Electron_mvaTTH.resize(kMaxElectron);
-    Electron_pdgId.resize(kMaxElectron);
-    Electron_pfRelIso03_all.resize(kMaxElectron);
-    Electron_pfRelIso03_chg.resize(kMaxElectron);
-    Electron_phi.resize(kMaxElectron);
-    Electron_pt.resize(kMaxElectron);
-    Electron_r9.resize(kMaxElectron);
-    Electron_scEtOverPt.resize(kMaxElectron);
-    Electron_seedGain.resize(kMaxElectron);
-    Electron_sieie.resize(kMaxElectron);
-    Electron_sip3d.resize(kMaxElectron);
-    if(Run == 3){
-        Electron_cutBased.resize(kMaxElectron);
-        Electron_genPartIdx.resize(kMaxElectron);
-        Electron_jetIdx.resize(kMaxElectron);
-        Electron_mvaIso.resize(kMaxElectron);
-        Electron_mvaIso_WP80.resize(kMaxElectron);
-        Electron_mvaIso_WP90.resize(kMaxElectron);
-        Electron_mvaNoIso.resize(kMaxElectron);
-        Electron_mvaNoIso_WP80.resize(kMaxElectron);
-        Electron_mvaNoIso_WP90.resize(kMaxElectron);
-        Electron_cutBased_RunII.resize(0);
-        Electron_genPartIdx_RunII.resize(0);
-        Electron_jetIdx_RunII.resize(0);
-        Electron_mvaFall17V2Iso.resize(0);
-        Electron_mvaFall17V2Iso_WP80.resize(0);
-        Electron_mvaFall17V2Iso_WP90.resize(0);
-        Electron_mvaFall17V2noIso.resize(0);
-        Electron_mvaFall17V2noIso_WP80.resize(0);
-        Electron_mvaFall17V2noIso_WP90.resize(0);
-    }
-    else if(Run == 2){
-        Electron_cutBased.resize(0);
-        Electron_genPartIdx.resize(0);
-        Electron_jetIdx.resize(0);
-        Electron_mvaIso.resize(0);
-        Electron_mvaIso_WP80.resize(0);
-        Electron_mvaIso_WP90.resize(0);
-        Electron_mvaNoIso.resize(0);
-        Electron_mvaNoIso_WP80.resize(0);
-        Electron_mvaNoIso_WP90.resize(0);
-        Electron_cutBased_RunII.resize(kMaxElectron);
-        Electron_genPartIdx_RunII.resize(kMaxElectron);
-        Electron_jetIdx_RunII.resize(kMaxElectron);
-        Electron_mvaFall17V2Iso.resize(kMaxElectron);
-        Electron_mvaFall17V2Iso_WP80.resize(kMaxElectron);
-        Electron_mvaFall17V2Iso_WP90.resize(kMaxElectron);
-        Electron_mvaFall17V2noIso.resize(kMaxElectron);
-        Electron_mvaFall17V2noIso_WP80.resize(kMaxElectron);
-        Electron_mvaFall17V2noIso_WP90.resize(kMaxElectron);
-    } 
-    
-    //Photon----------------------------
-    Photon_energyErr.resize(kMaxPhoton);
-    Photon_eta.resize(kMaxPhoton);
-    Photon_hoe.resize(kMaxPhoton);
-    Photon_isScEtaEB.resize(kMaxPhoton);
-    Photon_isScEtaEE.resize(kMaxPhoton);
-    Photon_mvaID.resize(kMaxPhoton);
-    Photon_mvaID_WP80.resize(kMaxPhoton);
-    Photon_mvaID_WP90.resize(kMaxPhoton);
-    Photon_phi.resize(kMaxPhoton);
-    Photon_pt.resize(kMaxPhoton);
-    Photon_sieie.resize(kMaxPhoton);
-    if(Run == 3){
-        Photon_cutBased.resize(kMaxPhoton);
-        Photon_energyRaw.resize(kMaxPhoton);
-        Photon_cutBased_RunII.resize(kMaxPhoton);
-    }
-    else if(Run == 2){
-        Photon_cutBased.resize(0);
-        Photon_energyRaw.resize(0);
-        Photon_cutBased_RunII.resize(kMaxPhoton);
-    }
-
-    //Jet----------------------------
-    Jet_area.resize(kMaxJet);
-    Jet_btagDeepFlavB.resize(kMaxJet);
-    Jet_btagDeepFlavCvB.resize(kMaxJet);
-    Jet_btagDeepFlavCvL.resize(kMaxJet);
-    Jet_btagDeepFlavQG.resize(kMaxJet);
-    Jet_chEmEF.resize(kMaxJet);
-    Jet_chHEF.resize(kMaxJet);
-    Jet_eta.resize(kMaxJet);
-    Jet_hfadjacentEtaStripsSize.resize(kMaxJet);
-    Jet_hfcentralEtaStripSize.resize(kMaxJet);
-    Jet_hfsigmaEtaEta.resize(kMaxJet);
-    Jet_hfsigmaPhiPhi.resize(kMaxJet);
-    Jet_mass.resize(kMaxJet);
-    Jet_muEF.resize(kMaxJet);
-    Jet_muonSubtrFactor.resize(kMaxJet);
-    Jet_nConstituents.resize(kMaxJet);
-    Jet_neEmEF.resize(kMaxJet);
-    Jet_neHEF.resize(kMaxJet);
-    Jet_phi.resize(kMaxJet);
-    Jet_pt.resize(kMaxJet);
-    Jet_rawFactor.resize(kMaxJet);
-    if(Run == 3){
-        Jet_PNetRegPtRawCorr.resize(kMaxJet);
-        Jet_PNetRegPtRawCorrNeutrino.resize(kMaxJet);
-        Jet_PNetRegPtRawRes.resize(kMaxJet);
-        Jet_btagPNetB.resize(kMaxJet);
-        Jet_btagPNetCvB.resize(kMaxJet);
-        Jet_btagPNetCvL.resize(kMaxJet);
-        Jet_btagPNetQvG.resize(kMaxJet);
-        Jet_btagPNetTauVJet.resize(kMaxJet);
-        Jet_btagRobustParTAK4B.resize(kMaxJet);
-        Jet_btagRobustParTAK4CvB.resize(kMaxJet);
-        Jet_btagRobustParTAK4CvL.resize(kMaxJet);
-        Jet_btagRobustParTAK4QG.resize(kMaxJet);
-        Jet_electronIdx1.resize(kMaxJet);
-        Jet_electronIdx2.resize(kMaxJet);
-        Jet_genJetIdx.resize(kMaxJet);
-        Jet_hadronFlavour.resize(kMaxJet);
-        Jet_jetId.resize(kMaxJet);
-        Jet_muonIdx1.resize(kMaxJet);
-        Jet_muonIdx2.resize(kMaxJet);
-        Jet_nElectrons.resize(kMaxJet);
-        Jet_nMuons.resize(kMaxJet);
-        Jet_nSVs.resize(kMaxJet);
-        Jet_partonFlavour.resize(kMaxJet);
-        Jet_svIdx1.resize(kMaxJet);
-        Jet_svIdx2.resize(kMaxJet);
-        Jet_bRegCorr.resize(0);
-        Jet_bRegRes.resize(0);
-        Jet_btagCSVV2.resize(0);
-        //Jet_btagDeepB.resize(0);
-        //Jet_btagDeepCvB.resize(0);
-        //Jet_btagDeepCvL.resize(0);
-        Jet_cRegCorr.resize(0);
-        Jet_cRegRes.resize(0);
-        Jet_chFPV0EF.resize(0);
-        Jet_cleanmask.resize(0);
-        Jet_electronIdx1_RunII.resize(0);
-        Jet_electronIdx2_RunII.resize(0);
-        Jet_genJetIdx_RunII.resize(0);
-        Jet_hadronFlavour_RunII.resize(0);
-        Jet_jetId_RunII.resize(0);
-        Jet_muonIdx1_RunII.resize(0);
-        Jet_muonIdx2_RunII.resize(0);
-        Jet_nElectrons_RunII.resize(0);
-        Jet_nMuons_RunII.resize(0);
-        Jet_partonFlavour_RunII.resize(0);
-        Jet_puId.resize(0);
-        Jet_puIdDisc.resize(0);
-        Jet_qgl.resize(0);
-    }
-    else if(Run == 2){
-        Jet_PNetRegPtRawCorr.resize(0);
-        Jet_PNetRegPtRawCorrNeutrino.resize(0);
-        Jet_PNetRegPtRawRes.resize(0);
-        Jet_btagPNetB.resize(0);
-        Jet_btagPNetCvB.resize(0);
-        Jet_btagPNetCvL.resize(0);
-        Jet_btagPNetQvG.resize(0);
-        Jet_btagPNetTauVJet.resize(0);
-        Jet_btagRobustParTAK4B.resize(0);
-        Jet_btagRobustParTAK4CvB.resize(0);
-        Jet_btagRobustParTAK4CvL.resize(0);
-        Jet_btagRobustParTAK4QG.resize(0);
-        Jet_electronIdx1.resize(0);
-        Jet_electronIdx2.resize(0);
-        Jet_genJetIdx.resize(0);
-        Jet_hadronFlavour.resize(0);
-        Jet_jetId.resize(0);
-        Jet_muonIdx1.resize(0);
-        Jet_muonIdx2.resize(0);
-        Jet_nElectrons.resize(0);
-        Jet_nMuons.resize(0);
-        Jet_nSVs.resize(0);
-        Jet_partonFlavour.resize(0);
-        Jet_svIdx1.resize(0);
-        Jet_svIdx2.resize(0);
-        Jet_bRegCorr.resize(kMaxJet);
-        Jet_bRegRes.resize(kMaxJet);
-        Jet_btagCSVV2.resize(kMaxJet);
-        //Jet_btagDeepB.resize(kMaxJet);
-        //Jet_btagDeepCvB.resize(kMaxJet);
-        //Jet_btagDeepCvL.resize(kMaxJet);
-        Jet_cRegCorr.resize(kMaxJet);
-        Jet_cRegRes.resize(kMaxJet);
-        Jet_chFPV0EF.resize(kMaxJet);
-        Jet_cleanmask.resize(kMaxJet);
-        Jet_electronIdx1_RunII.resize(kMaxJet);
-        Jet_electronIdx2_RunII.resize(kMaxJet);
-        Jet_genJetIdx_RunII.resize(kMaxJet);
-        Jet_hadronFlavour_RunII.resize(kMaxJet);
-        Jet_jetId_RunII.resize(kMaxJet);
-        Jet_muonIdx1_RunII.resize(kMaxJet);
-        Jet_muonIdx2_RunII.resize(kMaxJet);
-        Jet_nElectrons_RunII.resize(kMaxJet);
-        Jet_nMuons_RunII.resize(kMaxJet);
-        Jet_partonFlavour_RunII.resize(kMaxJet);
-        Jet_puId.resize(kMaxJet);
-        Jet_puIdDisc.resize(kMaxJet);
-        Jet_qgl.resize(kMaxJet);
-    }
-
-    //Tau----------------------------
-    // Tau----------------------------
-    Tau_dxy.resize(kMaxTau);
-    Tau_dz.resize(kMaxTau);
-    Tau_eta.resize(kMaxTau);
-    Tau_genPartFlav.resize(kMaxTau);
-    Tau_idDeepTau2017v2p1VSe.resize(kMaxTau);
-    Tau_idDeepTau2017v2p1VSjet.resize(kMaxTau);
-    Tau_idDeepTau2017v2p1VSmu.resize(kMaxTau);
-    Tau_mass.resize(kMaxTau);
-    Tau_phi.resize(kMaxTau);
-    Tau_pt.resize(kMaxTau);
-    // Run3
-    if(Run == 3){
-        Tau_charge.resize(kMaxTau);
-        Tau_decayMode.resize(kMaxTau);
-        Tau_genPartIdx.resize(kMaxTau);
-        Tau_idDecayModeNewDMs.resize(kMaxTau);
-        Tau_idDeepTau2018v2p5VSe.resize(kMaxTau);
-        Tau_idDeepTau2018v2p5VSjet.resize(kMaxTau);
-        Tau_idDeepTau2018v2p5VSmu.resize(kMaxTau);
-        Tau_charge_RunII.resize(0);
-        Tau_decayMode_RunII.resize(0);
-        Tau_genPartIdx_RunII.resize(0);
-    }
-    else if(Run == 2){
-        Tau_charge.resize(0);
-        Tau_decayMode.resize(0);
-        Tau_genPartIdx.resize(0);
-        Tau_idDecayModeNewDMs.resize(0);
-        Tau_idDeepTau2018v2p5VSe.resize(0);
-        Tau_idDeepTau2018v2p5VSjet.resize(0);
-        Tau_idDeepTau2018v2p5VSmu.resize(0);
-        Tau_charge_RunII.resize(kMaxTau);
-        Tau_decayMode_RunII.resize(kMaxTau);
-        Tau_genPartIdx_RunII.resize(kMaxTau);
-    }
-
-    // FatJet----------------------------
-    FatJet_area.resize(kMaxFatJet);
-    FatJet_btagDDBvLV2.resize(kMaxFatJet);
-    FatJet_btagDDCvBV2.resize(kMaxFatJet);
-    FatJet_btagDDCvLV2.resize(kMaxFatJet);
-    FatJet_btagDeepB.resize(kMaxFatJet);
-    FatJet_btagHbb.resize(kMaxFatJet);
-    FatJet_eta.resize(kMaxFatJet);
-    FatJet_lsf3.resize(kMaxFatJet);
-    FatJet_mass.resize(kMaxFatJet);
-    FatJet_msoftdrop.resize(kMaxFatJet);
-    FatJet_nBHadrons.resize(kMaxFatJet);
-    FatJet_nCHadrons.resize(kMaxFatJet);
-    FatJet_nConstituents.resize(kMaxFatJet);
-    FatJet_particleNet_QCD.resize(kMaxFatJet);
-    FatJet_phi.resize(kMaxFatJet);
-    FatJet_pt.resize(kMaxFatJet);
-    FatJet_tau1.resize(kMaxFatJet);
-    FatJet_tau2.resize(kMaxFatJet);
-    FatJet_tau3.resize(kMaxFatJet);
-    FatJet_tau4.resize(kMaxFatJet);
-    if(Run == 3){
-        FatJet_jetId.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_H4qvsQCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_HbbvsQCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_HccvsQCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_QCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_TvsQCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_WvsQCD.resize(kMaxFatJet);
-        FatJet_particleNetWithMass_ZvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_QCD0HF.resize(kMaxFatJet);
-        FatJet_particleNet_QCD1HF.resize(kMaxFatJet);
-        FatJet_particleNet_QCD2HF.resize(kMaxFatJet);
-        FatJet_particleNet_XbbVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XccVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XggVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XqqVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XteVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XtmVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_XttVsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_massCorr.resize(kMaxFatJet);
-        FatJet_subJetIdx1.resize(kMaxFatJet);
-        FatJet_subJetIdx2.resize(kMaxFatJet);
-        FatJet_jetId_RunII.resize(0);
-        FatJet_particleNetMD_QCD.resize(0);
-        FatJet_particleNetMD_Xbb.resize(0);
-        FatJet_particleNetMD_Xcc.resize(0);
-        FatJet_particleNetMD_Xqq.resize(0);
-        FatJet_particleNet_H4qvsQCD.resize(0);
-        FatJet_particleNet_HbbvsQCD.resize(0);
-        FatJet_particleNet_HccvsQCD.resize(0);
-        FatJet_particleNet_TvsQCD.resize(0);
-        FatJet_particleNet_WvsQCD.resize(0);
-        FatJet_particleNet_ZvsQCD.resize(0);
-        FatJet_particleNet_mass.resize(0);
-        FatJet_subJetIdx1_RunII.resize(0);
-        FatJet_subJetIdx2_RunII.resize(0);
-    }
-    else if(Run == 2){
-        FatJet_jetId.resize(0);
-        FatJet_particleNetWithMass_H4qvsQCD.resize(0);
-        FatJet_particleNetWithMass_HbbvsQCD.resize(0);
-        FatJet_particleNetWithMass_HccvsQCD.resize(0);
-        FatJet_particleNetWithMass_QCD.resize(0);
-        FatJet_particleNetWithMass_TvsQCD.resize(0);
-        FatJet_particleNetWithMass_WvsQCD.resize(0);
-        FatJet_particleNetWithMass_ZvsQCD.resize(0);
-        FatJet_particleNet_QCD0HF.resize(0);
-        FatJet_particleNet_QCD1HF.resize(0);
-        FatJet_particleNet_QCD2HF.resize(0);
-        FatJet_particleNet_XbbVsQCD.resize(0);
-        FatJet_particleNet_XccVsQCD.resize(0);
-        FatJet_particleNet_XggVsQCD.resize(0);
-        FatJet_particleNet_XqqVsQCD.resize(0);
-        FatJet_particleNet_XteVsQCD.resize(0);
-        FatJet_particleNet_XtmVsQCD.resize(0);
-        FatJet_particleNet_XttVsQCD.resize(0);
-        FatJet_particleNet_massCorr.resize(0);
-        FatJet_subJetIdx1.resize(0);
-        FatJet_subJetIdx2.resize(0);
-        FatJet_jetId_RunII.resize(kMaxFatJet);
-        FatJet_particleNetMD_QCD.resize(kMaxFatJet);
-        FatJet_particleNetMD_Xbb.resize(kMaxFatJet);
-        FatJet_particleNetMD_Xcc.resize(kMaxFatJet);
-        FatJet_particleNetMD_Xqq.resize(kMaxFatJet);
-        FatJet_particleNet_H4qvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_HbbvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_HccvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_TvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_WvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_ZvsQCD.resize(kMaxFatJet);
-        FatJet_particleNet_mass.resize(kMaxFatJet);
-        FatJet_subJetIdx1_RunII.resize(kMaxFatJet);
-        FatJet_subJetIdx2_RunII.resize(kMaxFatJet);
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    auto RDataFrameDuration = std::chrono::duration_cast<std::chrono::milliseconds>(RDataFrameFinishTime - start);
-    auto resizingDuration = std::chrono::duration_cast<std::chrono::milliseconds>(end - RDataFrameFinishTime);
-    cout << "[SKNanoLoader::SetMaxLeafSize] Resizing Time: " << resizingDuration.count() << " ms" << endl;
-    cout << "[SKNanoLoader::SetMaxLeafSize] RDataFrame Finish Time: " << RDataFrameDuration.count() << " ms" << endl;
-    cout << "[SKNanoLoader::SetMaxLeafSize] Time taken: " << duration.count() << " ms" << endl;
-}
-
-void SKNanoLoader::Init() {
-    // Helper function to safely set branch address
-    auto SafeSetBranchAddress = [this](const TString &branchName, void* address) {
-        TBranch* branch = fChain->GetBranch(branchName);
-        if (!branch) {
+void SKNanoLoader::Init()
+{
+    auto SafeSetBranchAddress = [this](const TString &branchName, void *address)
+    {
+        TBranch *branch = fChain->GetBranch(branchName);
+        if (!branch)
+        {
             cout << "[SKNanoGenLoader::Init] Warning:Branch " << branchName << " not found" << endl;
             return;
         }
         fChain->SetBranchStatus(branchName, 1);
         fChain->SetBranchAddress(branchName, address);
     };
-    // For type conversion between Run2 and Run3
-    auto SetBranchWithRunCheck = [this, &SafeSetBranchAddress](const TString &branchName, Int_t &run3Var, UInt_t &runIIVar) {
-        if (Run == 3) {
-            SafeSetBranchAddress(branchName, &run3Var);
-        } else {
-            SafeSetBranchAddress(branchName, &runIIVar);
-        }
-    };
 
     cout << "[SKNanoLoader::Init] Initializing. Era = " << DataEra << " Run =  " << Run << endl;
-    if(fChain->GetEntries() == 0) {
+    if (fChain->GetEntries() == 0)
+    {
         cout << "[SKNanoLoader::Init] No Entries in the Tree" << endl;
         cout << "[SKNanoLoader::Init] Exiting without make output..." << endl;
         exit(0);
     }
-    
-    SetMaxLeafSize();
+
     fChain->SetBranchStatus("*", 0);
-
-    // Weights
-    SafeSetBranchAddress("genWeight", &genWeight);
-    SafeSetBranchAddress("LHEWeight_originalXWGTUP", &LHEWeight_originalXWGTUP);
-    SafeSetBranchAddress("Generator_weight", &Generator_weight);
-    SafeSetBranchAddress("nLHEPdfWeight", &nLHEPdfWeight);
-    SafeSetBranchAddress("nLHEScaleWeight", &nLHEScaleWeight);
-    SafeSetBranchAddress("nPSWeight", &nPSWeight);
-    SafeSetBranchAddress("LHEPdfWeight", LHEPdfWeight.data());
-    SafeSetBranchAddress("LHEScaleWeight", LHEScaleWeight.data());
-    SafeSetBranchAddress("PSWeight", PSWeight.data());
-
-    // PDFs
-    SafeSetBranchAddress("Generator_id1", &Generator_id1);
-    SafeSetBranchAddress("Generator_id2", &Generator_id2);
-    SafeSetBranchAddress("Generator_x1", &Generator_x1);
-    SafeSetBranchAddress("Generator_x2", &Generator_x2);
-    SafeSetBranchAddress("Generator_xpdf1", &Generator_xpdf1);
-    SafeSetBranchAddress("Generator_xpdf2", &Generator_xpdf2);
-    SafeSetBranchAddress("Generator_scalePDF", &Generator_scalePDF);
-
-    // LHE
-    SafeSetBranchAddress("LHE_HT", &LHE_HT);
-    SafeSetBranchAddress("LHE_HTIncoming", &LHE_HTIncoming);
-    SafeSetBranchAddress("LHE_Vpt", &LHE_Vpt);
-    SafeSetBranchAddress("LHE_AlphaS", &LHE_AlphaS);
-    SafeSetBranchAddress("LHE_Njets", &LHE_Njets);
-    SafeSetBranchAddress("LHE_Nb", &LHE_Nb);
-    SafeSetBranchAddress("LHE_Nc", &LHE_Nc);
-    SafeSetBranchAddress("LHE_Nuds", &LHE_Nuds);
-    SafeSetBranchAddress("LHE_Nglu", &LHE_Nglu);
-    SafeSetBranchAddress("LHE_NpLO", &LHE_NpLO);
-    SafeSetBranchAddress("LHE_NpNLO", &LHE_NpNLO);
-
-    // LHEPart
-    SetBranchWithRunCheck("nLHEPart", nLHEPart, nLHEPart_RunII); 
-    SafeSetBranchAddress("LHEPart_pt", LHEPart_pt.data());
-    SafeSetBranchAddress("LHEPart_eta", LHEPart_eta.data());
-    SafeSetBranchAddress("LHEPart_phi", LHEPart_phi.data());
-    SafeSetBranchAddress("LHEPart_mass", LHEPart_mass.data());
-    SafeSetBranchAddress("LHEPart_pdgId", LHEPart_pdgId.data());
-    SafeSetBranchAddress("LHEPart_status", LHEPart_status.data());
-    SafeSetBranchAddress("LHEPart_spin", LHEPart_spin.data());
-    SafeSetBranchAddress("LHEPart_incomingpz", LHEPart_incomingpz.data());
-
-    // GenPart
-    SetBranchWithRunCheck("nGenPart", nGenPart, nGenPart_RunII);
-    SafeSetBranchAddress("GenPart_eta", GenPart_eta.data());
-    SafeSetBranchAddress("GenPart_mass", GenPart_mass.data());
-    SafeSetBranchAddress("GenPart_pdgId", GenPart_pdgId.data());
-    SafeSetBranchAddress("GenPart_phi", GenPart_phi.data());
-    SafeSetBranchAddress("GenPart_pt", GenPart_pt.data());
-    SafeSetBranchAddress("GenPart_status", GenPart_status.data());
-    if(Run == 3) {
-        SafeSetBranchAddress("GenPart_genPartIdxMother", GenPart_genPartIdxMother.data());
-        SafeSetBranchAddress("GenPart_statusFlags", GenPart_statusFlags.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("GenPart_genPartIdxMother", GenPart_genPartIdxMother_RunII.data());
-        SafeSetBranchAddress("GenPart_statusFlags", GenPart_statusFlags_RunII.data());
-    }
-
-    // GenJet
-    SetBranchWithRunCheck("nGenJet", nGenJet, nGenJet_RunII);
-    SafeSetBranchAddress("GenJet_eta", GenJet_eta.data());
-    SafeSetBranchAddress("GenJet_hadronFlavour", GenJet_hadronFlavour.data());
-    SafeSetBranchAddress("GenJet_mass", GenJet_mass.data());
-    SafeSetBranchAddress("GenJet_phi", GenJet_phi.data());
-    SafeSetBranchAddress("GenJet_pt", GenJet_pt.data());
-    if(Run == 3){
-        SafeSetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("GenJet_partonFlavour", GenJet_partonFlavour_RunII.data());
-    }
-
-    // GenJetAK8
-    SetBranchWithRunCheck("nGenJetAK8", nGenJetAK8, nGenJetAK8_RunII);
-    SafeSetBranchAddress("GenJetAK8_eta", GenJetAK8_eta.data());
-    SafeSetBranchAddress("GenJetAK8_hadronFlavour", GenJetAK8_hadronFlavour.data());
-    SafeSetBranchAddress("GenJetAK8_mass", GenJetAK8_mass.data());
-    SafeSetBranchAddress("GenJetAK8_phi", GenJetAK8_phi.data());
-    SafeSetBranchAddress("GenJetAK8_pt", GenJetAK8_pt.data());
-
-    // GenMET
-    SafeSetBranchAddress("GenMet_pt", &GenMet_pt);
-    SafeSetBranchAddress("GenMet_phi", &GenMet_phi);
-
-    // GenDressedLepton
-    SetBranchWithRunCheck("nGenDressedLepton", nGenDressedLepton, nGenDressedLepton_RunII);
-    SafeSetBranchAddress("GenDressedLepton_pt", GenDressedLepton_pt.data());
-    SafeSetBranchAddress("GenDressedLepton_eta", GenDressedLepton_eta.data());
-    SafeSetBranchAddress("GenDressedLepton_phi", GenDressedLepton_phi.data());
-    SafeSetBranchAddress("GenDressedLepton_mass", GenDressedLepton_mass.data());
-    SafeSetBranchAddress("GenDressedLepton_pdgId", GenDressedLepton_pdgId.data());
-    SafeSetBranchAddress("GenDressedLepton_hasTauAnc", GenDressedLepton_hasTauAnc.data());
-    
-    // GenIsolatedPhoton
-    SetBranchWithRunCheck("nGenIsolatedPhoton", nGenIsolatedPhoton, nGenIsolatedPhoton_RunII);
-    SafeSetBranchAddress("GenIsolatedPhoton_pt", GenIsolatedPhoton_pt.data());
-    SafeSetBranchAddress("GenIsolatedPhoton_eta", GenIsolatedPhoton_eta.data());
-    SafeSetBranchAddress("GenIsolatedPhoton_phi", GenIsolatedPhoton_phi.data());
-    SafeSetBranchAddress("GenIsolatedPhoton_mass", GenIsolatedPhoton_mass.data());
-
-    // GenVisTau
-    SetBranchWithRunCheck("nGenVisTau", nGenVisTau, nGenVisTau_RunII);
-    SafeSetBranchAddress("GenVisTau_pt", GenVisTau_pt.data());
-    SafeSetBranchAddress("GenVisTau_eta", GenVisTau_eta.data());
-    SafeSetBranchAddress("GenVisTau_phi", GenVisTau_phi.data());
-    SafeSetBranchAddress("GenVisTau_mass", GenVisTau_mass.data());
-    SafeSetBranchAddress("GenVisTau_charge", GenVisTau_charge.data());
-    SafeSetBranchAddress("GenVisTau_genPartIdxMother", GenVisTau_genPartIdxMother.data());
-    SafeSetBranchAddress("GenVisTau_status", GenVisTau_status.data());
-
-    // GenVtx
-
-    // PileUp & others
-    SafeSetBranchAddress("Pileup_nPU", &Pileup_nPU);
-    SafeSetBranchAddress("Pileup_nTrueInt", &Pileup_nTrueInt); 
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
-    SafeSetBranchAddress("FatJet_nBHadrons",FatJet_nBHadrons.data());
-    SafeSetBranchAddress("FatJet_nCHadrons",FatJet_nCHadrons.data());
-    SafeSetBranchAddress("Tau_genPartFlav", Tau_genPartFlav.data());
-    SafeSetBranchAddress("genTtbarId", &genTtbarId);
-
-    // Muon----------------------------
-    SetBranchWithRunCheck("nMuon", nMuon, nMuon_RunII);
-    SafeSetBranchAddress("Muon_charge", Muon_charge.data());
-    SafeSetBranchAddress("Muon_dxy", Muon_dxy.data());
-    SafeSetBranchAddress("Muon_dxyErr", Muon_dxyErr.data());
-    SafeSetBranchAddress("Muon_dxybs", Muon_dxybs.data());
-    SafeSetBranchAddress("Muon_dz", Muon_dz.data());
-    SafeSetBranchAddress("Muon_dzErr", Muon_dzErr.data());
-    SafeSetBranchAddress("Muon_eta", Muon_eta.data());
-    SafeSetBranchAddress("Muon_ip3d", Muon_ip3d.data());
-    SafeSetBranchAddress("Muon_isGlobal", Muon_isGlobal.data());
-    SafeSetBranchAddress("Muon_isStandalone", Muon_isStandalone.data());
-    SafeSetBranchAddress("Muon_isTracker", Muon_isTracker.data());
-    SafeSetBranchAddress("Muon_looseId", Muon_looseId.data());
-    SafeSetBranchAddress("Muon_mass", Muon_mass.data());
-    SafeSetBranchAddress("Muon_mediumId", Muon_mediumId.data());
-    SafeSetBranchAddress("Muon_mediumPromptId", Muon_mediumPromptId.data());
-    SafeSetBranchAddress("Muon_miniIsoId", Muon_miniIsoId.data());
-    SafeSetBranchAddress("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all.data());
-    SafeSetBranchAddress("Muon_multiIsoId", Muon_multiIsoId.data());
-    SafeSetBranchAddress("Muon_mvaLowPt", Muon_mvaLowPt.data());
-    SafeSetBranchAddress("Muon_mvaTTH", Muon_mvaTTH.data());
-    SafeSetBranchAddress("Muon_pfIsoId", Muon_pfIsoId.data());
-    SafeSetBranchAddress("Muon_pfRelIso03_all", Muon_pfRelIso03_all.data());
-    SafeSetBranchAddress("Muon_pfRelIso04_all", Muon_pfRelIso04_all.data());
-    SafeSetBranchAddress("Muon_phi", Muon_phi.data());
-    SafeSetBranchAddress("Muon_pt", Muon_pt.data());
-    SafeSetBranchAddress("Muon_sip3d", Muon_sip3d.data());
-    SafeSetBranchAddress("Muon_softId", Muon_softId.data());
-    SafeSetBranchAddress("Muon_softMva", Muon_softMva.data());
-    SafeSetBranchAddress("Muon_softMvaId", Muon_softMvaId.data());
-    SafeSetBranchAddress("Muon_tightId", Muon_tightId.data());
-    SafeSetBranchAddress("Muon_tkIsoId", Muon_tkIsoId.data());
-    SafeSetBranchAddress("Muon_tkRelIso", Muon_tkRelIso.data());
-    SafeSetBranchAddress("Muon_triggerIdLoose", Muon_triggerIdLoose.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("Muon_mvaMuID_WP", Muon_mvaMuID_WP.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("Muon_mvaId", Muon_mvaId.data());
-    }
-
-    //Electron----------------------------
-    SetBranchWithRunCheck("nElectron", nElectron, nElectron_RunII);
-    SafeSetBranchAddress("Electron_charge", Electron_charge.data());
-    SafeSetBranchAddress("Electron_convVeto", Electron_convVeto.data());
-    SafeSetBranchAddress("Electron_cutBased_HEEP", Electron_cutBased_HEEP.data());
-    SafeSetBranchAddress("Electron_deltaEtaSC", Electron_deltaEtaSC.data());
-    SafeSetBranchAddress("Electron_dr03EcalRecHitSumEt", Electron_dr03EcalRecHitSumEt.data());
-    SafeSetBranchAddress("Electron_dr03HcalDepth1TowerSumEt", Electron_dr03HcalDepth1TowerSumEt.data());
-    SafeSetBranchAddress("Electron_dr03TkSumPt", Electron_dr03TkSumPt.data());
-    SafeSetBranchAddress("Electron_dr03TkSumPtHEEP", Electron_dr03TkSumPtHEEP.data());
-    SafeSetBranchAddress("Electron_dxy", Electron_dxy.data());
-    SafeSetBranchAddress("Electron_dxyErr", Electron_dxyErr.data());
-    SafeSetBranchAddress("Electron_dz", Electron_dz.data());
-    SafeSetBranchAddress("Electron_dzErr", Electron_dzErr.data());
-    SafeSetBranchAddress("Electron_eInvMinusPInv", Electron_eInvMinusPInv.data());
-    SafeSetBranchAddress("Electron_energyErr", Electron_energyErr.data());
-    SafeSetBranchAddress("Electron_eta", Electron_eta.data());
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
-    SafeSetBranchAddress("Electron_hoe", Electron_hoe.data());
-    SafeSetBranchAddress("Electron_ip3d", Electron_ip3d.data());
-    SafeSetBranchAddress("Electron_isPFcand", Electron_isPFcand.data());
-    SafeSetBranchAddress("Electron_jetNDauCharged", Electron_jetNDauCharged.data());
-    SafeSetBranchAddress("Electron_jetPtRelv2", Electron_jetPtRelv2.data());
-    SafeSetBranchAddress("Electron_jetRelIso", Electron_jetRelIso.data());
-    SafeSetBranchAddress("Electron_lostHits", Electron_lostHits.data());
-    SafeSetBranchAddress("Electron_mass", Electron_mass.data());
-    SafeSetBranchAddress("Electron_miniPFRelIso_all", Electron_miniPFRelIso_all.data());
-    SafeSetBranchAddress("Electron_miniPFRelIso_chg", Electron_miniPFRelIso_chg.data());
-    SafeSetBranchAddress("Electron_mvaTTH", Electron_mvaTTH.data());
-    SafeSetBranchAddress("Electron_pdgId", Electron_pdgId.data());
-    SafeSetBranchAddress("Electron_pfRelIso03_all", Electron_pfRelIso03_all.data());
-    SafeSetBranchAddress("Electron_pfRelIso03_chg", Electron_pfRelIso03_chg.data());
-    SafeSetBranchAddress("Electron_phi", Electron_phi.data());
-    SafeSetBranchAddress("Electron_pt", Electron_pt.data());
-    SafeSetBranchAddress("Electron_r9", Electron_r9.data());
-    SafeSetBranchAddress("Electron_scEtOverPt", Electron_scEtOverPt.data());
-    SafeSetBranchAddress("Electron_seedGain", Electron_seedGain.data());
-    SafeSetBranchAddress("Electron_sieie", Electron_sieie.data());
-    SafeSetBranchAddress("Electron_sip3d", Electron_sip3d.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("Electron_cutBased", Electron_cutBased.data());
-        SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx.data());
-        SafeSetBranchAddress("Electron_jetIdx", Electron_jetIdx.data());
-        SafeSetBranchAddress("Electron_mvaIso", Electron_mvaIso.data());
-        SafeSetBranchAddress("Electron_mvaIso_WP80", Electron_mvaIso_WP80.data());
-        SafeSetBranchAddress("Electron_mvaIso_WP90", Electron_mvaIso_WP90.data());
-        SafeSetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso.data());
-        SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
-        SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx_RunII.data());
-        SafeSetBranchAddress("Electron_jetIdx", Electron_jetIdx_RunII.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2Iso", Electron_mvaFall17V2Iso.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP80", Electron_mvaFall17V2Iso_WP80.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP90", Electron_mvaFall17V2Iso_WP90.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2noIso", Electron_mvaFall17V2noIso.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP80", Electron_mvaFall17V2noIso_WP80.data());
-        SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP90", Electron_mvaFall17V2noIso_WP90.data());
-    }
-
-    // Photon----------------------------
-    SetBranchWithRunCheck("nPhoton", nPhoton, nPhoton_RunII);
-    SafeSetBranchAddress("Photon_eta", Photon_eta.data());
-    SafeSetBranchAddress("Photon_hoe", Photon_hoe.data());
-    SafeSetBranchAddress("Photon_isScEtaEB", Photon_isScEtaEB.data());
-    SafeSetBranchAddress("Photon_isScEtaEE", Photon_isScEtaEE.data());
-    SafeSetBranchAddress("Photon_mvaID", Photon_mvaID.data());
-    SafeSetBranchAddress("Photon_mvaID_WP80", Photon_mvaID_WP80.data());
-    SafeSetBranchAddress("Photon_mvaID_WP90", Photon_mvaID_WP90.data());
-    SafeSetBranchAddress("Photon_phi", Photon_phi.data());
-    SafeSetBranchAddress("Photon_pt", Photon_pt.data());
-    SafeSetBranchAddress("Photon_sieie", Photon_sieie.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("Photon_energyRaw", Photon_energyRaw.data());
-        SafeSetBranchAddress("Photon_cutBased", Photon_cutBased.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("Photon_cutBased", Photon_cutBased_RunII.data());
-    }
-
-    //Jet----------------------------
-    SetBranchWithRunCheck("nJet", nJet, nJet_RunII);
-    SafeSetBranchAddress("Jet_area", Jet_area.data());
-    SafeSetBranchAddress("Jet_btagDeepFlavB", Jet_btagDeepFlavB.data());
-    SafeSetBranchAddress("Jet_btagDeepFlavCvB", Jet_btagDeepFlavCvB.data());
-    SafeSetBranchAddress("Jet_btagDeepFlavCvL", Jet_btagDeepFlavCvL.data());
-    SafeSetBranchAddress("Jet_btagDeepFlavQG", Jet_btagDeepFlavQG.data());
-    SafeSetBranchAddress("Jet_chEmEF", Jet_chEmEF.data());
-    SafeSetBranchAddress("Jet_chHEF", Jet_chHEF.data());
-    SafeSetBranchAddress("Jet_eta", Jet_eta.data());
-    SafeSetBranchAddress("Jet_hfadjacentEtaStripsSize", Jet_hfadjacentEtaStripsSize.data());
-    SafeSetBranchAddress("Jet_hfcentralEtaStripSize", Jet_hfcentralEtaStripSize.data());
-    SafeSetBranchAddress("Jet_hfsigmaEtaEta", Jet_hfsigmaEtaEta.data());
-    SafeSetBranchAddress("Jet_hfsigmaPhiPhi", Jet_hfsigmaPhiPhi.data());
-    SafeSetBranchAddress("Jet_mass", Jet_mass.data());
-    SafeSetBranchAddress("Jet_muEF", Jet_muEF.data());
-    SafeSetBranchAddress("Jet_muonSubtrFactor", Jet_muonSubtrFactor.data());
-    SafeSetBranchAddress("Jet_nConstituents", Jet_nConstituents.data());
-    SafeSetBranchAddress("Jet_neEmEF", Jet_neEmEF.data());
-    SafeSetBranchAddress("Jet_neHEF", Jet_neHEF.data());
-    SafeSetBranchAddress("Jet_phi", Jet_phi.data());
-    SafeSetBranchAddress("Jet_pt", Jet_pt.data());
-    SafeSetBranchAddress("Jet_rawFactor", Jet_rawFactor.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("Jet_PNetRegPtRawCorr", Jet_PNetRegPtRawCorr.data());
-        SafeSetBranchAddress("Jet_PNetRegPtRawCorrNeutrino", Jet_PNetRegPtRawCorrNeutrino.data());
-        SafeSetBranchAddress("Jet_PNetRegPtRawRes", Jet_PNetRegPtRawRes.data());
-        SafeSetBranchAddress("Jet_btagPNetB", Jet_btagPNetB.data());
-        SafeSetBranchAddress("Jet_btagPNetCvB", Jet_btagPNetCvB.data());
-        SafeSetBranchAddress("Jet_btagPNetCvL", Jet_btagPNetCvL.data());
-        SafeSetBranchAddress("Jet_btagPNetQvG", Jet_btagPNetQvG.data());
-        SafeSetBranchAddress("Jet_btagPNetTauVJet", Jet_btagPNetTauVJet.data());
-        SafeSetBranchAddress("Jet_btagRobustParTAK4B", Jet_btagRobustParTAK4B.data());
-        SafeSetBranchAddress("Jet_btagRobustParTAK4CvB", Jet_btagRobustParTAK4CvB.data());
-        SafeSetBranchAddress("Jet_btagRobustParTAK4CvL", Jet_btagRobustParTAK4CvL.data());
-        SafeSetBranchAddress("Jet_btagRobustParTAK4QG", Jet_btagRobustParTAK4QG.data());
-        SafeSetBranchAddress("Jet_electronIdx1", Jet_electronIdx1.data());
-        SafeSetBranchAddress("Jet_electronIdx2", Jet_electronIdx2.data());
-        SafeSetBranchAddress("Jet_genJetIdx", Jet_genJetIdx.data());
-        SafeSetBranchAddress("Jet_hadronFlavour", Jet_hadronFlavour.data());
-        SafeSetBranchAddress("Jet_jetId", Jet_jetId.data());
-        SafeSetBranchAddress("Jet_muonIdx1", Jet_muonIdx1.data());
-        SafeSetBranchAddress("Jet_muonIdx2", Jet_muonIdx2.data());
-        SafeSetBranchAddress("Jet_nElectrons", Jet_nElectrons.data());
-        SafeSetBranchAddress("Jet_nMuons", Jet_nMuons.data());
-        SafeSetBranchAddress("Jet_nSVs", Jet_nSVs.data());
-        SafeSetBranchAddress("Jet_partonFlavour", Jet_partonFlavour.data());
-        SafeSetBranchAddress("Jet_svIdx1", Jet_svIdx1.data());
-        SafeSetBranchAddress("Jet_svIdx2", Jet_svIdx2.data());
-    } else if (Run == 2) {
-        SafeSetBranchAddress("Jet_bRegCorr", Jet_bRegCorr.data());
-        SafeSetBranchAddress("Jet_bRegRes", Jet_bRegRes.data());
-        SafeSetBranchAddress("Jet_btagCSVV2", Jet_btagCSVV2.data());
-        //SafeSetBranchAddress("Jet_btagDeepB", Jet_btagDeepB.data());
-        //SafeSetBranchAddress("Jet_btagDeepCvB", Jet_btagDeepCvB.data());
-        //SafeSetBranchAddress("Jet_btagDeepCvL", Jet_btagDeepCvL.data());
-        SafeSetBranchAddress("Jet_cRegCorr", Jet_cRegCorr.data());
-        SafeSetBranchAddress("Jet_cRegRes", Jet_cRegRes.data());
-        SafeSetBranchAddress("Jet_chFPV0EF", Jet_chFPV0EF.data());
-        SafeSetBranchAddress("Jet_cleanmask", Jet_cleanmask.data());
-        SafeSetBranchAddress("Jet_electronIdx1", Jet_electronIdx1_RunII.data());
-        SafeSetBranchAddress("Jet_electronIdx2", Jet_electronIdx2_RunII.data());
-        SafeSetBranchAddress("Jet_genJetIdx", Jet_genJetIdx_RunII.data());
-        SafeSetBranchAddress("Jet_hadronFlavour", Jet_hadronFlavour_RunII.data());
-        SafeSetBranchAddress("Jet_jetId", Jet_jetId_RunII.data());
-        SafeSetBranchAddress("Jet_muonIdx1", Jet_muonIdx1_RunII.data());
-        SafeSetBranchAddress("Jet_muonIdx2", Jet_muonIdx2_RunII.data());
-        SafeSetBranchAddress("Jet_nElectrons", Jet_nElectrons_RunII.data());
-        SafeSetBranchAddress("Jet_nMuons", Jet_nMuons_RunII.data());
-        SafeSetBranchAddress("Jet_partonFlavour", Jet_partonFlavour_RunII.data());
-        SafeSetBranchAddress("Jet_puId", Jet_puId.data());
-        SafeSetBranchAddress("Jet_puIdDisc", Jet_puIdDisc.data());
-        SafeSetBranchAddress("Jet_qgl", Jet_qgl.data());
-    }
-
-    //Tau---------------------------- 
-    SetBranchWithRunCheck("nTau", nTau, nTau_RunII);
-    SafeSetBranchAddress("Tau_dxy", Tau_dxy.data());
-    SafeSetBranchAddress("Tau_dz", Tau_dz.data());
-    SafeSetBranchAddress("Tau_eta", Tau_eta.data());
-    SafeSetBranchAddress("Tau_genPartFlav", Tau_genPartFlav.data());
-    SafeSetBranchAddress("Tau_genPartidDeepTau2017v2p1VSe", Tau_idDeepTau2018v2p5VSe.data());
-    SafeSetBranchAddress("Tau_genPartidDeepTau2017v2p1VSjet", Tau_idDeepTau2018v2p5VSjet.data());
-    SafeSetBranchAddress("Tau_genPartidDeepTau2017v2p1VSmu", Tau_idDeepTau2018v2p5VSmu.data());
-    SafeSetBranchAddress("Tau_mass", Tau_mass.data());
-    SafeSetBranchAddress("Tau_phi", Tau_phi.data());
-    SafeSetBranchAddress("Tau_pt", Tau_pt.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("Tau_charge", Tau_charge.data());
-        SafeSetBranchAddress("Tau_decayMode", Tau_decayMode.data());
-        SafeSetBranchAddress("Tau_genPartIdx", Tau_genPartIdx.data());
-        SafeSetBranchAddress("Tau_idDecayModeNewDMs", Tau_idDecayModeNewDMs.data());
-        SafeSetBranchAddress("Tau_idDeepTau2018v2p5VSe", Tau_idDeepTau2018v2p5VSe.data());
-        SafeSetBranchAddress("Tau_idDeepTau2018v2p5VSjet", Tau_idDeepTau2018v2p5VSjet.data());
-        SafeSetBranchAddress("Tau_idDeepTau2018v2p5VSmu", Tau_idDeepTau2018v2p5VSmu.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("Tau_charge", Tau_charge_RunII.data());
-        SafeSetBranchAddress("Tau_decayMode", Tau_decayMode_RunII.data());
-        SafeSetBranchAddress("Tau_genPartIdx", Tau_genPartIdx_RunII.data());
-    }
-
-    //FatJet----------------------------
-    SetBranchWithRunCheck("nFatJet", nFatJet, nFatJet_RunII);
-    SafeSetBranchAddress("FatJet_area", FatJet_area.data());
-    SafeSetBranchAddress("FatJet_btagDDBvLV2", FatJet_btagDDBvLV2.data());
-    SafeSetBranchAddress("FatJet_btagDDCvBV2", FatJet_btagDDCvBV2.data());
-    SafeSetBranchAddress("FatJet_btagDDCvLV2", FatJet_btagDDCvLV2.data());
-    SafeSetBranchAddress("FatJet_btagDeepB", FatJet_btagDeepB.data());
-    SafeSetBranchAddress("FatJet_btagHbb", FatJet_btagHbb.data());
-    SafeSetBranchAddress("FatJet_eta", FatJet_eta.data());
-    SafeSetBranchAddress("FatJet_lsf3", FatJet_lsf3.data());
-    SafeSetBranchAddress("FatJet_mass", FatJet_mass.data());
-    SafeSetBranchAddress("FatJet_msoftdrop", FatJet_msoftdrop.data());
-    SafeSetBranchAddress("FatJet_nBHadrons", FatJet_nBHadrons.data());
-    SafeSetBranchAddress("FatJet_nCHadrons", FatJet_nCHadrons.data());
-    SafeSetBranchAddress("FatJet_nConstituents", FatJet_nConstituents.data());
-    SafeSetBranchAddress("FatJet_particleNet_QCD", FatJet_particleNet_QCD.data());
-    SafeSetBranchAddress("FatJet_phi", FatJet_phi.data());
-    SafeSetBranchAddress("FatJet_pt", FatJet_pt.data());
-    SafeSetBranchAddress("FatJet_tau1", FatJet_tau1.data());
-    SafeSetBranchAddress("FatJet_tau2", FatJet_tau2.data());
-    SafeSetBranchAddress("FatJet_tau3", FatJet_tau3.data());
-    SafeSetBranchAddress("FatJet_tau4", FatJet_tau4.data());
-    if (Run == 3) {
-        SafeSetBranchAddress("FatJet_genJetAK8Idx", FatJet_genJetAK8Idx.data());
-        SafeSetBranchAddress("FatJet_jetId", FatJet_jetId.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_H4qvsQCD", FatJet_particleNetWithMass_H4qvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_HbbvsQCD", FatJet_particleNetWithMass_HbbvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_HccvsQCD", FatJet_particleNetWithMass_HccvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_QCD", FatJet_particleNetWithMass_QCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_TvsQCD", FatJet_particleNetWithMass_TvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_WvsQCD", FatJet_particleNetWithMass_WvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNetWithMass_ZvsQCD", FatJet_particleNetWithMass_ZvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_QCD0HF", FatJet_particleNet_QCD0HF.data());
-        SafeSetBranchAddress("FatJet_particleNet_QCD1HF", FatJet_particleNet_QCD1HF.data());
-        SafeSetBranchAddress("FatJet_particleNet_QCD2HF", FatJet_particleNet_QCD2HF.data());
-        SafeSetBranchAddress("FatJet_particleNet_XbbVsQCD", FatJet_particleNet_XbbVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XccVsQCD", FatJet_particleNet_XccVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XggVsQCD", FatJet_particleNet_XggVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XqqVsQCD", FatJet_particleNet_XqqVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XteVsQCD", FatJet_particleNet_XteVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XtmVsQCD", FatJet_particleNet_XtmVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_XttVsQCD", FatJet_particleNet_XttVsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_massCorr", FatJet_particleNet_massCorr.data());
-        SafeSetBranchAddress("FatJet_subJetIdx1", FatJet_subJetIdx1.data());
-        SafeSetBranchAddress("FatJet_subJetIdx2", FatJet_subJetIdx2.data());
-    } else if(Run == 2) {
-        SafeSetBranchAddress("FatJet_genJetAK8Idx", FatJet_genJetAK8Idx_RunII.data());
-        SafeSetBranchAddress("FatJet_jetId", FatJet_jetId_RunII.data());
-        SafeSetBranchAddress("FatJet_particleNetMD_QCD", FatJet_particleNetMD_QCD.data());
-        SafeSetBranchAddress("FatJet_particleNetMD_Xbb", FatJet_particleNetMD_Xbb.data());
-        SafeSetBranchAddress("FatJet_particleNetMD_Xcc", FatJet_particleNetMD_Xcc.data());
-        SafeSetBranchAddress("FatJet_particleNetMD_Xqq", FatJet_particleNetMD_Xqq.data());
-        SafeSetBranchAddress("FatJet_particleNet_H4qvsQCD", FatJet_particleNet_H4qvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_HbbvsQCD", FatJet_particleNet_HbbvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_HccvsQCD", FatJet_particleNet_HccvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_TvsQCD", FatJet_particleNet_TvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_WvsQCD", FatJet_particleNet_WvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_ZvsQCD", FatJet_particleNet_ZvsQCD.data());
-        SafeSetBranchAddress("FatJet_particleNet_mass", FatJet_particleNet_mass.data());
-        SafeSetBranchAddress("FatJet_subJetIdx1", FatJet_subJetIdx1_RunII.data());
-        SafeSetBranchAddress("FatJet_subJetIdx2", FatJet_subJetIdx2_RunII.data());
-    }
-    //PuppiMET----------------------------
-    SafeSetBranchAddress("PuppiMET_phi", &PuppiMET_phi);
-    SafeSetBranchAddress("PuppiMET_pt", &PuppiMET_pt);
-    SafeSetBranchAddress("PuppiMET_sumEt", &PuppiMET_sumEt);
-    SafeSetBranchAddress("PuppiMET_ptJESUp", &PuppiMET_ptJESUp);
-    SafeSetBranchAddress("PuppiMET_ptJESDown", &PuppiMET_ptJESDown);
-    SafeSetBranchAddress("PuppiMET_phiJESUp", &PuppiMET_phiJESUp);
-    SafeSetBranchAddress("PuppiMET_phiJESDown", &PuppiMET_phiJESDown);
-    SafeSetBranchAddress("PuppiMET_ptJERUp", &PuppiMET_ptJERUp);
-    SafeSetBranchAddress("PuppiMET_ptJERDown", &PuppiMET_ptJERDown);
-    SafeSetBranchAddress("PuppiMET_phiJERUp", &PuppiMET_phiJERUp);
-    SafeSetBranchAddress("PuppiMET_phiJERDown", &PuppiMET_phiJERDown);
-    SafeSetBranchAddress("PuppiMET_ptUnclusteredUp", &PuppiMET_ptUnclusteredUp);
-    SafeSetBranchAddress("PuppiMET_ptUnclusteredDown", &PuppiMET_ptUnclusteredDown);
-    SafeSetBranchAddress("PuppiMET_phiUnclusteredUp", &PuppiMET_phiUnclusteredUp);
-    SafeSetBranchAddress("PuppiMET_phiUnclusteredDown", &PuppiMET_phiUnclusteredDown);
-
-    //MET----------------------------
-    SafeSetBranchAddress("MET_MetUnclustEnUpDeltaX", &MET_MetUnclustEnUpDeltaX);
-    SafeSetBranchAddress("MET_MetUnclustEnUpDeltaY", &MET_MetUnclustEnUpDeltaY);
-    SafeSetBranchAddress("MET_covXX", &MET_covXX);
-    SafeSetBranchAddress("MET_covXY", &MET_covXY);
-    SafeSetBranchAddress("MET_covYY", &MET_covYY);
-    SafeSetBranchAddress("MET_fiducialGenPhi", &MET_fiducialGenPhi);
-    SafeSetBranchAddress("MET_fiducialGenPt", &MET_fiducialGenPt);
-    SafeSetBranchAddress("MET_phi", &MET_phi);
-    SafeSetBranchAddress("MET_pt", &MET_pt);
-    SafeSetBranchAddress("MET_significance", &MET_significance);
-    SafeSetBranchAddress("MET_sumEt", &MET_sumEt);
-    SafeSetBranchAddress("MET_sumPtUnclustered", &MET_sumPtUnclustered);
-
-    //Rho----------------------------
-    if(Run == 3) {
-        SafeSetBranchAddress("Rho_fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll);
-    } else if(Run == 2) {
-        SafeSetBranchAddress("fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll);
-    }
-
-    // PV----------------------------
-    SafeSetBranchAddress("PV_chi2", &PV_chi2);
-    SafeSetBranchAddress("PV_ndof", &PV_ndof);
-    SafeSetBranchAddress("PV_score", &PV_score);
-    SafeSetBranchAddress("PV_x", &PV_x);
-    SafeSetBranchAddress("PV_y", &PV_y);
-    SafeSetBranchAddress("PV_z", &PV_z);
-    if (Run==3) { 
-        SafeSetBranchAddress("PV_npvs", &PV_npvs);
-        SafeSetBranchAddress("PV_npvsGood", &PV_npvsGood);
-    } else if(Run==2) {
-        SafeSetBranchAddress("PV_npvs", &PV_npvs_RunII);
-        SafeSetBranchAddress("PV_npvsGood", &PV_npvsGood_RunII);
-    }
-
-    //L1PreFireweight----------------------------
-    SafeSetBranchAddress("L1PreFiringWeight_Nom", &L1PreFiringWeight_Nom);
-    SafeSetBranchAddress("L1PreFiringWeight_Dn", &L1PreFiringWeight_Dn);
-    SafeSetBranchAddress("L1PreFiringWeight_Up", &L1PreFiringWeight_Up);
-
-    //Flags----------------------------
-    SafeSetBranchAddress("Flag_METFilters", &Flag_METFilters);
-    SafeSetBranchAddress("Flag_goodVertices", &Flag_goodVertices);
-    SafeSetBranchAddress("Flag_globalSuperTightHalo2016Filter", &Flag_globalSuperTightHalo2016Filter);
-    //SafeSetBranchAddress("Flag_ECalDeadCellTriggerPrimitiveFilter", &Flag_ECalDeadCellTriggerPrimitiveFilter);
-    //documented as this brach exist @ NanoAOD, but not in the file
-    SafeSetBranchAddress("Flag_BadPFMuonFilter", &Flag_BadPFMuonFilter);
-    SafeSetBranchAddress("Flag_BadPFMuonDzFilter", &Flag_BadPFMuonDzFilter);
-    SafeSetBranchAddress("Flag_hfNoisyHitsFilter", &Flag_hfNoisyHitsFilter);
-    SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
-    SafeSetBranchAddress("Flag_eeBadScFilter", &Flag_eeBadScFilter);
-    //SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
-    SafeSetBranchAddress("run", &RunNumber);
+    fReader = new TTreeReader(fChain);
 
     string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/HLT_Path.json";
     ifstream json_file(json_path);
-    if (json_file.is_open()) {
+    if (json_file.is_open())
+    {
         cout << "[SKNanoLoader::Init] Loading HLT Paths in" << json_path << endl;
         json j;
         json_file >> j;
         RVec<TString> not_in_tree;
-        for (auto& [key, value] : j.items()) {
+        for (auto &[key, value] : j.items())
+        {
             cout << "[SKNanoLoader::Init] HLT Path: " << key << endl;
-            Bool_t* passHLT = new Bool_t();
+            Bool_t *passHLT = new Bool_t();
             TString key_str = key;
             TriggerMap[key_str].first = passHLT;
             TriggerMap[key_str].second = value["lumi"];
-            //if key_str is in tree, set branch address
-            if (fChain->GetBranch(key_str)) {
+            // if key_str is in tree, set branch address
+            if (fChain->GetBranch(key_str))
+            {
                 SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
-            } else if(key_str=="Full") {
+            }
+            else if (key_str == "Full")
+            {
                 *TriggerMap[key_str].first = true;
-            } else{
+            }
+            else
+            {
                 not_in_tree.push_back(key_str);
                 TriggerMap.erase(key_str);
-            }   
+            }
         }
-        if (not_in_tree.size() > 0) {
-            //print in yellow color
+        if (not_in_tree.size() > 0)
+        {
+            // print in yellow color
             cout << "\033[1;33m[SKNanoLoader::Init] Following HLT Paths are not in the tree\033[0m" << endl;
-            for (auto &path : not_in_tree) {
+            for (auto &path : not_in_tree)
+            {
                 cout << "\033[1;33m" << path << "\033[0m" << endl;
             }
         }
     }
-    else cerr << "[SKNanoLoader::Init] Cannot open " << json_path << endl;
+    else
+        cerr << "[SKNanoLoader::Init] Cannot open " << json_path << endl;
 }
