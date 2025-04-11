@@ -519,7 +519,7 @@ float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 this_flav = 5;
             else if (abs(jet.hadronFlavour()) == 4)
                 this_flav = 4;
-            float this_score = jet.GetBTaggerResult(tagger);
+            float this_score = jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::B);
             if (this_score < 0.f)
                 continue; // defaulted jet
             if ((c_flav_source.find(source.Data()) != c_flav_source.end()))
@@ -564,7 +564,7 @@ float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 sf = cset_light->evaluate({syst_str, this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
             else
                 sf = cset->evaluate({syst_str, this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
-            if (jet.GetBTaggerResult(tagger) > this_cut)
+            if (jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::B) > this_cut)
             {
                 weight *= sf;
             }
@@ -705,7 +705,8 @@ float MyCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 this_flav = 5;
             else if (abs(jet.hadronFlavour()) == 4)
                 this_flav = 4;
-            pair<float, float> this_ctag = jet.GetCTaggerResult(tagger);
+            pair<float, float> this_ctag = make_pair(jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvB),
+                                          jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvL));
             if (this_ctag.first < 0.f || this_ctag.second < 0.f)
                 continue; // defaulted jet
             weight *= cset->evaluate({syst_str,
@@ -723,7 +724,8 @@ float MyCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
         pair<float, float> this_score;
         for (const auto &jet : jets)
         {
-            this_score = jet.GetCTaggerResult(tagger);
+            this_score = make_pair(jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvB),
+                                          jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvL));
             int this_flav = 0;
             if (abs(jet.hadronFlavour()) == 5)
                 this_flav = 5;

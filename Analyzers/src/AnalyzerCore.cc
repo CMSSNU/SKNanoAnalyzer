@@ -975,13 +975,13 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets()
 
         RVec<float> pnet;
         pnet = {FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
-            FatJet_particleNetWithMass_QCD[i], FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i], FatJet_particleNetWithMass_ZvsQCD};
+            FatJet_particleNetWithMass_QCD[i], FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i], FatJet_particleNetWithMass_ZvsQCD[i]};
         
         RVec<float> pnet_nomass;
         pnet_nomass = {FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i], FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i], 
             FatJet_particleNet_WVsQCD[i], FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
             FatJet_particleNet_XggVsQCD[i], FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i], FatJet_particleNet_XttVsQCD[i],
-            FatJet_particleNet_massCorr};
+            FatJet_particleNet_massCorr[i]};
 
         RVec<float> gloparT;
         gloparT = {FatJet_globalParT3_QCD[i], FatJet_globalParT3_TopbWev[i], FatJet_globalParT3_TopbWmv[i], FatJet_globalParT3_TopbWq[i], FatJet_globalParT3_TopbWqq[i], FatJet_globalParT3_TopbWtauhv[i],
@@ -989,7 +989,7 @@ RVec<FatJet> AnalyzerCore::GetAllFatJets()
                             FatJet_globalParT3_XWW3q[i], FatJet_globalParT3_XWW4q[i], FatJet_globalParT3_XWWqqev[i], FatJet_globalParT3_XWWqqmv[i],
                             FatJet_globalParT3_Xbb[i], FatJet_globalParT3_Xcc[i], FatJet_globalParT3_Xcs[i], FatJet_globalParT3_Xqq[i],
                             FatJet_globalParT3_Xtauhtaue[i], FatJet_globalParT3_Xtauhtauh[i], FatJet_globalParT3_Xtauhtaum[i],
-                            FatJet_globalParT3_withMassTopvsQCD[i], FatJet_globalParT3_withMassWvsQCD[i], FatJet_globalParT3_withMassZvsQCD};
+                            FatJet_globalParT3_withMassTopvsQCD[i], FatJet_globalParT3_withMassWvsQCD[i], FatJet_globalParT3_withMassZvsQCD[i]};
         
         fatjet.SetParticleNetResult(pnet);
         fatjet.SetParticleNetNoMassResult(pnet_nomass);
