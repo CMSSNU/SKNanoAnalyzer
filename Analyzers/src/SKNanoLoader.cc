@@ -83,6 +83,7 @@ void SKNanoLoader::Init()
 
     fChain->SetBranchStatus("*", 0);
     fReader = new TTreeReader(fChain);
+    InitBranch();
 
     string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/HLT_Path.json";
     ifstream json_file(json_path);
