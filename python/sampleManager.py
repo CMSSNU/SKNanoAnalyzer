@@ -256,6 +256,7 @@ if __name__ == '__main__':
     run3eras = ['2022','2022EE', '2023', '2023BPix']
     run2eras = ['2016preVFP','2016postVFP','2017','2018']
     eras = run3eras + run2eras
+    eras = ['2024']
     if args.era == '':
         for era in eras:
             if era in run3eras:

@@ -63,7 +63,7 @@ public:
             {
                 std::cerr << "[MyCorrection::MyCorrection] Error: Failed to load " << name
                           << " file (" << file << "): " << e.what() << std::endl;
-                throw;
+                throw e;
             }
         }
     }

@@ -181,6 +181,11 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era, string btagging_
         config.json_jetvetomap += "/2023_Summer23BPix/jetvetomaps.json.gz";
         config.json_met += "/2023_Summer23BPix/met.json.gz";
     }
+    else if(era == "2024")
+    {
+        config.json_jerc += "/2024_Winter24/jet_jerc.json.gz";
+        config.json_jetvetomap += "/2024_Winter24/jetvetomaps.json.gz";
+    }
     else
     {
         throw std::invalid_argument("[MyCorrection::GetEraConfig] Invalid era: " + era);
@@ -208,17 +213,18 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
 
     std::vector<CorrectionInfo> correction_loading_list = {
         //mandatory
-        {"muon SF", config.json_muon, cset_muon, false},
-        {"puWeights", config.json_puWeights, cset_puWeights, false},
-        {"btagging", config.json_btagging, cset_btagging, false},
-        {"ctagging", config.json_ctagging, cset_ctagging, false},
-        {"btagging eff", config.json_btagging_eff, cset_btagging_eff, false},
-        {"ctagging eff", config.json_ctagging_eff, cset_ctagging_eff, false},
-        {"electron", config.json_electron, cset_electron, false},
-        {"photon", config.json_photon, cset_photon, false},
-        {"jerc", config.json_jerc, cset_jerc, false},
-        {"jerc_fatjet", config.json_jerc_fatjet, cset_jerc_fatjet, false},
-        {"jetvetomap", config.json_jetvetomap, cset_jetvetomap, false},
+        //TODO: Temporary change to "true" because almost no correction available for 2024
+        {"muon SF", config.json_muon, cset_muon, true},
+        {"puWeights", config.json_puWeights, cset_puWeights, true},
+        {"btagging", config.json_btagging, cset_btagging, true},
+        {"ctagging", config.json_ctagging, cset_ctagging, true},
+        {"btagging eff", config.json_btagging_eff, cset_btagging_eff, true},
+        {"ctagging eff", config.json_ctagging_eff, cset_ctagging_eff, true},
+        {"electron", config.json_electron, cset_electron, true},
+        {"photon", config.json_photon, cset_photon, true},
+        {"jerc", config.json_jerc, cset_jerc, true},
+        {"jerc_fatjet", config.json_jerc_fatjet, cset_jerc_fatjet, true},
+        {"jetvetomap", config.json_jetvetomap, cset_jetvetomap, true},
         // Optional files
         {"muon trig eff", config.json_muon_trig_eff, cset_muon_trig_eff, true},
         {"electron hlt", config.json_electron_hlt, cset_electron_hlt, true},
