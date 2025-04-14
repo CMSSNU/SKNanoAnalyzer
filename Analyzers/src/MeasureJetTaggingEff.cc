@@ -71,10 +71,6 @@ void MeasureJetTaggingEff::executeEvent()
     RVec<Muon> AllMuons = GetAllMuons();
     if(!PassJetVetoMap(AllJets,AllMuons)) return;
 
-    RVec<Electron> AllElectrons =  GetAllElectrons();
-    AllElectrons = SelectElectrons(AllElectrons, Electron::ElectronID::POG_TIGHT, 30., 2.5);
-    myCorr->GetElectronRECOSF(AllElectrons);
-
     float JetPtCut = 25.;
     float JetEtaCut = 2.4;
 
@@ -113,9 +109,9 @@ void MeasureJetTaggingEff::executeEvent()
         //==== First, fill the denominator
         FillHist(string("tagging#b") + "##era#" + DataEra.Data() + "##flavor#" + string(flav) + "##systematic#central##den", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
         FillHist(string("tagging#c") + "##era#" + DataEra.Data() + "##flavor#" + string(flav) + "##systematic#central##den", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
-        FillHist("DeepJetBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::DeepJet), weight, 100, 0, 1);
-        FillHist("ParticleNetBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::ParticleNet), weight, 100, 0, 1);
-        FillHist("ParTBTaggingScore"+flav, jets.at(ij).GetBTaggerResult(JetTagging::JetFlavTagger::ParT), weight, 100, 0, 1);
+        FillHist("DeepJetBTaggingScore"+flav, jets.at(ij).GetTaggerResult(JetTagging::JetFlavTagger::DeepJet, JetTagging::JetFlavTaggerScoreType::B), weight, 100, 0, 1);
+        FillHist("ParticleNetBTaggingScore"+flav, jets.at(ij).GetTaggerResult(JetTagging::JetFlavTagger::ParticleNet, JetTagging::JetFlavTaggerScoreType::B), weight, 100, 0, 1);
+        FillHist("ParTBTaggingScore"+flav, jets.at(ij).GetTaggerResult(JetTagging::JetFlavTagger::ParT, JetTagging::JetFlavTaggerScoreType::B), weight, 100, 0, 1);
         for(unsigned int i_tag=0; i_tag < Taggers.size(); i_tag++){
             JetTagging::JetFlavTagger this_tagger = Taggers.at(i_tag);
             //============ b-tagging
@@ -124,7 +120,7 @@ void MeasureJetTaggingEff::executeEvent()
                 if (!isWPAvailable("b", JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data(), this_wp, Run)) continue;
                 myCorr->SetTaggingParam(this_tagger, this_wp);
                 float this_bTaggingCut = myCorr->GetBTaggingWP();
-                if (jets.at(ij).GetBTaggerResult(this_tagger) > this_bTaggingCut)
+                if (jets.at(ij).GetTaggerResult(this_tagger, JetTagging::JetFlavTaggerScoreType::B) > this_bTaggingCut)
                     FillHist(string("tagging#b") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
             }
             //============ c-tagging
@@ -134,7 +130,7 @@ void MeasureJetTaggingEff::executeEvent()
                 myCorr->SetTaggingParam(this_tagger, this_wp);
                 float this_CvBCut = myCorr->GetCTaggingWP().first;
                 float this_CvLCut = myCorr->GetCTaggingWP().second;
-                if (jets.at(ij).GetCTaggerResult(this_tagger).first > this_CvBCut && jets.at(ij).GetCTaggerResult(this_tagger).second > this_CvLCut)
+                if (jets.at(ij).GetTaggerResult(this_tagger, JetTagging::JetFlavTaggerScoreType::CvB) > this_CvBCut && jets.at(ij).GetTaggerResult(this_tagger, JetTagging::JetFlavTaggerScoreType::CvL) > this_CvLCut)
                     FillHist(string("tagging#c") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
             }
 

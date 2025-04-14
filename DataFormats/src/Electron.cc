@@ -29,7 +29,7 @@ Electron::Electron() {
     j_cutBased = 0;
     j_mvaIso = -999.;
     j_mvaNoIso = -999.;
-    j_mvaTTH = -999.;
+    j_mvaPrompt = -999.;
     // others
     j_r9 = -999.;
     j_genPartFlav = 0;
@@ -60,7 +60,7 @@ void Electron::SetMVA(MVATYPE type, float score) {
     switch (type) {
         case MVATYPE::MVAISO:                    j_mvaIso = score; break;
         case MVATYPE::MVANOISO:                  j_mvaNoIso = score; break;
-        case MVATYPE::MVATTH:                    j_mvaTTH = score; break;
+        case MVATYPE::MVAPROMPT:                    j_mvaPrompt = score; break;
         default: break;
     }
 }

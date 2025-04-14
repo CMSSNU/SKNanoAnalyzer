@@ -1,149 +1,212 @@
 #include "AnalyzerCore.h"
 
-AnalyzerCore::AnalyzerCore() {
+AnalyzerCore::AnalyzerCore()
+{
     myCorr = nullptr;
     outfile = nullptr;
+    if (HasFlag("useTH1F"))
+    {
+        cout << "[AnalyzerCore::AnalyzerCore] Using TH1F" << endl;
+        useTH1F = true;
+    }
+    else
+    {
+        cout << "[AnalyzerCore::AnalyzerCore] Using TH1D" << endl;
+        useTH1F = false;
+    }
     // pdfReweight = new PDFReweight();
 }
 
-AnalyzerCore::~AnalyzerCore() {
-    for (const auto &pair: histmap1d) delete pair.second; histmap1d.clear();
-    for (const auto &pair: histmap2d) delete pair.second; histmap2d.clear();
-    for (const auto &pair: histmap3d) delete pair.second; histmap3d.clear();
-    if (outfile) delete outfile;
-    if (myCorr) delete myCorr;
+AnalyzerCore::~AnalyzerCore()
+{
+    for (const auto &pair : histmap1d)
+        delete pair.second;
+    histmap1d.clear();
+    for (const auto &pair : histmap2d)
+        delete pair.second;
+    histmap2d.clear();
+    for (const auto &pair : histmap3d)
+        delete pair.second;
+    histmap3d.clear();
+    if (outfile)
+        delete outfile;
+    if (myCorr)
+        delete myCorr;
     // if (pdfReweight) delete pdfReweight;
 }
 
-bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
+bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type)
+{
     bool MetFilter = true;
     MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
     //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
-    if(!MetFilter) return false;
-    if(Run == 2) return MetFilter;
+    if (!MetFilter)
+        return false;
+    if (Run == 2)
+        return MetFilter;
     // Temporarily remove the ecalBadCalibFilter, Instead,
-    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
-    if (ev.GetMETVector(met_type).Pt() <= 100.) return MetFilter;
+    if (!(RunNumber <= 367144 && RunNumber >= 362433))
+        return MetFilter;
+    if (ev.GetMETVector(met_type).Pt() <= 100.)
+        return MetFilter;
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
-    for(const auto &jet: this_jet){
+    for (const auto &jet : this_jet)
+    {
         bool badEcal = (jet.Pt() > 50.);
-        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
+        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9);
         badEcal = badEcal && jet.DeltaR(ev.GetMETVector(met_type)) < 0.3;
         badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
         badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
-        if(badEcal) return false;
+        if (badEcal)
+            return false;
     }
     return true;
 }
 
-float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst) {
-    if(nLHEScaleWeight == 0) return 1.;
-    if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[0];
-    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[1];
-    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::down) return LHEScaleWeight[2];
-    else if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::nom) return LHEScaleWeight[3];
-    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::nom) return LHEScaleWeight[4];
-    else if(muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[5];
-    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[6];
-    else if(muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::up) return LHEScaleWeight[7];
-    else if(muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::nom) return 1.f;
-    else{
+float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst)
+{
+    if (nLHEScaleWeight == 0)
+        return 1.;
+    if (muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::down)
+        return LHEScaleWeight[0];
+    else if (muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::down)
+        return LHEScaleWeight[1];
+    else if (muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::down)
+        return LHEScaleWeight[2];
+    else if (muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::nom)
+        return LHEScaleWeight[3];
+    else if (muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::nom)
+        return LHEScaleWeight[4];
+    else if (muF_syst == MyCorrection::variation::down && muR_syst == MyCorrection::variation::up)
+        return LHEScaleWeight[5];
+    else if (muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::up)
+        return LHEScaleWeight[6];
+    else if (muF_syst == MyCorrection::variation::up && muR_syst == MyCorrection::variation::up)
+        return LHEScaleWeight[7];
+    else if (muF_syst == MyCorrection::variation::nom && muR_syst == MyCorrection::variation::nom)
+        return 1.f;
+    else
+    {
         cout << "[AnalyzerCore::GetScaleVariation] muF_syst = " << int(muF_syst) << " and muR_syst = " << int(muR_syst) << " is not implemented" << endl;
         exit(ENODATA);
     }
 }
 
-float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst){
+float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst)
+{
     //[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2[2] is ISR=0.5 FSR=1; [3] is ISR=1 FSR=0.5;
-    if(nPSWeight == 1) return 1.;
-    if(ISR_syst == MyCorrection::variation::up && FSR_syst == MyCorrection::variation::nom) return PSWeight[0];
-    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::up) return PSWeight[1];
-    else if(ISR_syst == MyCorrection::variation::down && FSR_syst == MyCorrection::variation::nom) return PSWeight[2];
-    else if(ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::down) return PSWeight[3];
-    else{
+    if (nPSWeight == 1)
+        return 1.;
+    if (ISR_syst == MyCorrection::variation::up && FSR_syst == MyCorrection::variation::nom)
+        return PSWeight[0];
+    else if (ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::up)
+        return PSWeight[1];
+    else if (ISR_syst == MyCorrection::variation::down && FSR_syst == MyCorrection::variation::nom)
+        return PSWeight[2];
+    else if (ISR_syst == MyCorrection::variation::nom && FSR_syst == MyCorrection::variation::down)
+        return PSWeight[3];
+    else
+    {
         cout << "[AnalyzerCore::GetPSWeight] ISR_syst = " << int(ISR_syst) << " and FSR_syst = " << int(FSR_syst) << " is not implemented" << endl;
         exit(ENODATA);
     }
 }
 
-float AnalyzerCore::GetHT(const RVec<Jet> &jets){
+float AnalyzerCore::GetHT(const RVec<Jet> &jets)
+{
     float HT = 0.;
-    for(const auto &jet: jets){
+    for (const auto &jet : jets)
+    {
         HT += jet.Pt();
     }
     return HT;
 }
 
-void AnalyzerCore::METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects){
-   Particle Typle1Correction;
-   Typle1Correction.SetPtEtaPhiM(0., 0., 0., 0.);
-   for(const auto &obj: original_objects){
-       Typle1Correction += obj;
-   }
-   for(const auto &obj: corrected_objects){
-       Typle1Correction -= obj;
-   }
+void AnalyzerCore::METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects)
+{
+    Particle Typle1Correction;
+    Typle1Correction.SetPtEtaPhiM(0., 0., 0., 0.);
+    for (const auto &obj : original_objects)
+    {
+        Typle1Correction += obj;
+    }
+    for (const auto &obj : corrected_objects)
+    {
+        Typle1Correction -= obj;
+    }
     MET += Typle1Correction;
 }
 
-float AnalyzerCore::GetL1PrefireWeight(MyCorrection::variation syst){
-    if(Run == 3) return 1.;
+float AnalyzerCore::GetL1PrefireWeight(MyCorrection::variation syst)
+{
+    if (Run == 3)
+        return 1.;
     if (IsDATA)
         return 1.;
     float weight = 1.;
-    switch(syst){
-        case MyCorrection::variation::nom:
-            weight = L1PreFiringWeight_Nom;
-            break;
-        case MyCorrection::variation::up:
-            weight = L1PreFiringWeight_Up;
-            break;
-        case MyCorrection::variation::down:
-            weight = L1PreFiringWeight_Dn;
-            break;
-        default:
-            exit(ENODATA);
-    }
-    return weight;
+    throw std::logic_error("[TODO] I cannot find L1Prefiring weight in the v15, please update");
+        // switch(syst){
+        //     case MyCorrection::variation::nom:
+        //         weight = L1PreFiringWeight_Nom;
+        //         break;
+        //     case MyCorrection::variation::up:
+        //         weight = L1PreFiringWeight_Up;
+        //         break;
+        //     case MyCorrection::variation::down:
+        //         weight = L1PreFiringWeight_Dn;
+        //         break;
+        //     default:
+        //         exit(ENODATA);
+        // }
+        return weight;
 }
 
-unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR, const float pTJerCut){
+unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR, const float pTJerCut)
+{
     unordered_map<int, int> matched_genjet_idx;
-    RVec<tuple<int,int,float,float>> possible_matches;
+    RVec<tuple<int, int, float, float>> possible_matches;
 
-    //All possible matches that pass the dR and pTJerCut
-    for(size_t i = 0; i < jets.size(); i++){
-        for(size_t j = 0; j < genjets.size(); j++){
+    // All possible matches that pass the dR and pTJerCut
+    for (size_t i = 0; i < jets.size(); i++)
+    {
+        for (size_t j = 0; j < genjets.size(); j++)
+        {
             float this_DeltaR = jets[i].DeltaR(genjets[j]);
             float this_pt_diff = fabs(jets[i].Pt() - genjets[j].Pt());
             float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
             this_jer *= jets[i].Pt();
-            if(jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut*this_jer){
+            if (jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut * this_jer)
+            {
                 possible_matches.emplace_back(i, j, this_DeltaR, this_pt_diff);
             }
         }
     }
-    //sort them by dR and then pt_diff
-    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<int,int,float,float> &a, const tuple<int,int,float,float> &b){
+    // sort them by dR and then pt_diff
+    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<int, int, float, float> &a, const tuple<int, int, float, float> &b)
+         {
         if(get<2>(a) == get<2>(b)) return get<3>(a) < get<3>(b);
-        return get<2>(a) < get<2>(b);
-    });
-    //greeedy matching
+        return get<2>(a) < get<2>(b); });
+    // greeedy matching
 
     RVec<bool> used_jet(jets.size(), false);
     RVec<bool> used_genjet(genjets.size(), false);
-    for(const auto &match: possible_matches){
+    for (const auto &match : possible_matches)
+    {
         int jet_idx = get<0>(match);
         int genjet_idx = get<1>(match);
-        if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
+        if (used_jet[jet_idx] || used_genjet[genjet_idx])
+            continue;
         matched_genjet_idx[jet_idx] = genjet_idx;
         used_jet[jet_idx] = true;
         used_genjet[genjet_idx] = true;
     }
     // assign -999 to unmatched jet
-    for(size_t i = 0; i < jets.size(); i++){
-        if(used_jet[i]) continue;
-        else matched_genjet_idx[i] = -999;
+    for (size_t i = 0; i < jets.size(); i++)
+    {
+        if (used_jet[i])
+            continue;
+        else
+            matched_genjet_idx[i] = -999;
     }
     return matched_genjet_idx;
 }
@@ -153,41 +216,49 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     RVec<tuple<size_t, size_t, float>> possible_matches;
     RVec<bool> used_obj1(objs1.size(), false);
     RVec<bool> used_obj2(objs2.size(), false);
-    for(size_t i = 0; i < objs1.size(); i++){
-        for(size_t j = 0; j < objs2.size(); j++){
+    for (size_t i = 0; i < objs1.size(); i++)
+    {
+        for (size_t j = 0; j < objs2.size(); j++)
+        {
             float this_dR = objs1[i].DeltaR(objs2[j]);
-            if(this_dR < dR){
+            if (this_dR < dR)
+            {
                 possible_matches.emplace_back(i, j, this_dR);
             }
         }
     }
-    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<size_t, size_t, float> &a, const tuple<size_t, size_t, float> &b){
-        return get<2>(a) < get<2>(b);
-    });
+    sort(possible_matches.begin(), possible_matches.end(), [](const tuple<size_t, size_t, float> &a, const tuple<size_t, size_t, float> &b)
+         { return get<2>(a) < get<2>(b); });
     unordered_map<int, int> matched_idx;
-    //print all
-    for(size_t i = 0; i < possible_matches.size(); i++){
+    // print all
+    for (size_t i = 0; i < possible_matches.size(); i++)
+    {
         int obj1_idx = get<0>(possible_matches[i]);
         int obj2_idx = get<1>(possible_matches[i]);
-        if(used_obj1[obj1_idx] || used_obj2[obj2_idx]) continue;
+        if (used_obj1[obj1_idx] || used_obj2[obj2_idx])
+            continue;
         matched_idx[obj1_idx] = obj2_idx;
         used_obj1[obj1_idx] = true;
         used_obj2[obj2_idx] = true;
     }
 
-    for(size_t i = 0; i < objs1.size(); i++){
-        if(used_obj1[i]) continue;
+    for (size_t i = 0; i < objs1.size(); i++)
+    {
+        if (used_obj1[i])
+            continue;
         matched_idx[i] = -999;
     }
 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source){
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source)
+{
     gRandom->SetSeed(0);
-    unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
+    unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, Rho_fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
-    for(size_t i = 0; i < jets.size(); i++){
+    for (size_t i = 0; i < jets.size(); i++)
+    {
         Jet this_jet = jets.at(i);
 
         // backward smearing for systematic variation
@@ -204,22 +275,26 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
         }
 
         float this_corr = 1.;
-        float this_jer = myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), fixedGridRhoFastjetAll);
+        float this_jer = myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), Rho_fixedGridRhoFastjetAll);
         float this_sf = myCorr->GetJERSF(this_jet.Eta(), this_jet.Pt(), syst, source);
         float MIN_JET_ENERGY = 1e-2;
 
-        if(matched_idx[i] < 0){
+        if (matched_idx[i] < 0)
+        {
             // if the jet is not matched to any genjet, do stochastic smearing
-            if(this_sf < 1.){
+            if (this_sf < 1.)
+            {
                 this_corr = MIN_JET_ENERGY / this_jet.E();
             }
-            else{
+            else
+            {
                 this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
                 float new_corr = MIN_JET_ENERGY / this_jet.E();
                 this_corr = max(this_corr, new_corr);
             }
         }
-        else{
+        else
+        {
             float this_genjet_pt = genjets[matched_idx[i]].Pt();
             this_corr += (this_sf - 1.) * (1. - this_genjet_pt / this_jet.Pt());
             float new_corr = MIN_JET_ENERGY / this_jet.E();
@@ -264,14 +339,16 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
                                   "SinglePionHCAL",
                                   "TimePtEta"};
 
-    if(syst == MyCorrection::variation::nom) return jets;
+    if (syst == MyCorrection::variation::nom)
+        return jets;
 
-
-    for(const auto &jet: jets){
+    for (const auto &jet : jets)
+    {
         Jet this_jet = jet;
 
         TLorentzVector this_unsmearedP4 = jet.GetUnsmearedP4();
-        if(this_unsmearedP4.E() < 0){
+        if (this_unsmearedP4.E() < 0)
+        {
             cerr << "[AnalyzerCore::ScaleJets] It seems the attribute UnsmearedP4 has never been set for this Jet." << endl;
             cerr << "[AnalyzerCore::ScaleJets] Since all jets in MC are smeared when calling GetAllJets(), UnsmearedP4 should have been set by AnalyzerCore::SmearJets at the same time." << endl;
             cerr << "[AnalyzerCore::ScaleJets] This may indicate spurious behavior in your code. For now, Jet.pt() is used for scaling, but I recommend inspecting your code." << endl;
@@ -279,13 +356,16 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
             this_unsmearedP4 = jet;
         }
 
-        if(source == "total"){
-            for(const auto &it: syst_sources){
+        if (source == "total")
+        {
+            for (const auto &it : syst_sources)
+            {
                 this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, it);
             }
             scaled_jets.push_back(this_jet);
         }
-        else{
+        else
+        {
             this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, source);
             scaled_jets.push_back(this_jet);
         }
@@ -299,43 +379,48 @@ void AnalyzerCore::SetOutfilePath(TString outpath)
 }
 
 // pdfs
-float AnalyzerCore::GetPDFWeight(LHAPDF::PDF *pdf) {
+float AnalyzerCore::GetPDFWeight(LHAPDF::PDF *pdf)
+{
     float pdf1 = pdf->xfxQ2(Generator_id1, Generator_x1, Generator_scalePDF);
     float pdf2 = pdf->xfxQ2(Generator_id2, Generator_x2, Generator_scalePDF);
     return pdf1 * pdf2;
 }
 
-float AnalyzerCore::GetPDFReweight() {
+float AnalyzerCore::GetPDFReweight()
+{
     return GetPDFWeight(pdfReweight->NewPDF) / GetPDFWeight(pdfReweight->ProdPDF);
 }
 
-float AnalyzerCore::GetPDFReweight(int member) {
+float AnalyzerCore::GetPDFReweight(int member)
+{
     return GetPDFWeight(pdfReweight->PDFErrorSet.at(member)) / GetPDFWeight(pdfReweight->ProdPDF);
 }
 
 // MC weights
-// TODO: Treat MiNNLO and Sherpa weights 
-float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
-    if (IsDATA) return 1.;
+// TODO: Treat MiNNLO and Sherpa weights
+float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const
+{
+    if (IsDATA)
+        return 1.;
     float weight = genWeight;
-      if (usesign){
+    if (usesign)
+    {
         if (weight > 0)
-        weight = 1.0;
+            weight = 1.0;
         else if (weight < 0)
-        weight = -1.0;
+            weight = -1.0;
         else
-        weight = 0.0;
+            weight = 0.0;
     }
 
     if (norm_1invpb)
     {
         if (usesign)
-        weight *= xsec / sumSign;
+            weight *= xsec / sumSign;
         else
-        weight *= xsec / sumW;
+            weight *= xsec / sumW;
     }
     return weight;
-
 }
 
 // Objects
@@ -344,25 +429,22 @@ Event AnalyzerCore::GetEvent()
     Event ev;
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
-    if(Run == 3){
-        ev.SetnPVsGood(PV_npvsGood);
-    }
-    else if(Run == 2){
-        ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
-    }
+    ev.SetnPVsGood(PV_npvsGood);
 
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
-    RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown, PuppiMET_ptJERUp, PuppiMET_ptJERDown, PuppiMET_ptJESUp, PuppiMET_ptJESDown};
-    RVec<float> MET_phis = {PuppiMET_phi, PuppiMET_phiUnclusteredUp, PuppiMET_phiUnclusteredDown, PuppiMET_phiJERUp, PuppiMET_phiJERDown, PuppiMET_phiJESUp, PuppiMET_phiJESDown};
+    RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown};
+    RVec<float> MET_phis = {PuppiMET_phi, PuppiMET_phiUnclusteredUp, PuppiMET_phiUnclusteredDown};
     ev.SetMET(MET_pts, MET_phis);
-    ev.setRho(fixedGridRhoFastjetAll);
+    ev.setRho(Rho_fixedGridRhoFastjetAll);
     return ev;
 }
 
-RVec<Muon> AnalyzerCore::GetAllMuons() {
+RVec<Muon> AnalyzerCore::GetAllMuons()
+{
     RVec<Muon> muons;
-    for (int i = 0; i < nMuon; i++) {
+    for (int i = 0; i < nMuon; i++)
+    {
         Muon muon;
         muon.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
         muon.SetCharge(Muon_charge[i]);
@@ -383,19 +465,15 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetWIDBit(Muon::WorkingPointID::HIGHPT, Muon_highPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::MINIISO, Muon_miniIsoId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
-        if(Run == 3){
-            muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
-        }
-        else if(Run == 2){
-            muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaId[i]);
-        }
-        //muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
+        muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
+
+        // muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PFISO, Muon_pfIsoId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PUPPIISO, Muon_puppiIsoId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::TKISO, Muon_tkIsoId[i]);
         muon.SetMVAID(Muon::MVAID::SOFTMVA, Muon_softMva[i]);
         muon.SetMVAID(Muon::MVAID::MVALOWPT, Muon_mvaLowPt[i]);
-        muon.SetMVAID(Muon::MVAID::MVATTH, Muon_mvaTTH[i]);
+        muon.SetMVAID(Muon::MVAID::MVAPROMPT, Muon_promptMVA[i]);
 
         muons.push_back(muon);
     }
@@ -403,24 +481,33 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     return muons;
 }
 
-RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const float fetamax) {
+RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const float fetamax)
+{
     RVec<Muon> muons = GetAllMuons();
     RVec<Muon> selected_muons;
-    for (const auto &muon: muons) {
-        if (! (muon.Pt() > ptmin)) continue;
-        if (! (fabs(muon.Eta()) < fetamax)) continue;
-        if (! muon.PassID(ID)) continue;
+    for (const auto &muon : muons)
+    {
+        if (!(muon.Pt() > ptmin))
+            continue;
+        if (!(fabs(muon.Eta()) < fetamax))
+            continue;
+        if (!muon.PassID(ID))
+            continue;
         selected_muons.push_back(muon);
     }
     return selected_muons;
 }
 
-RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) const {
+RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const TString ID, const float ptmin, const float fetamax) const
+{
     RVec<Muon> selected_muons;
 
-    for (const auto &muon: muons) {
-        if (! (muon.Pt() > ptmin)) continue;
-        if (! (fabs(muon.Eta()) < fetamax)) continue;
+    for (const auto &muon : muons)
+    {
+        if (!(muon.Pt() > ptmin))
+            continue;
+        if (!(fabs(muon.Eta()) < fetamax))
+            continue;
         if (ID.Contains("&&"))
         {
             TObjArray *IDs = ID.Tokenize("&&");
@@ -465,9 +552,11 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID
     return selected_muons;
 }
 
-RVec<Electron> AnalyzerCore::GetAllElectrons(){
+RVec<Electron> AnalyzerCore::GetAllElectrons()
+{
     RVec<Electron> electrons;
-    for (int i = 0; i < nElectron; i++){
+    for (int i = 0; i < nElectron; i++)
+    {
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
@@ -489,19 +578,19 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
         electron.SetDr03TkSumPt(Electron_dr03TkSumPt[i]);
         electron.SetDr03TkSumPtHEEP(Electron_dr03TkSumPtHEEP[i]);
         electron.SetR9(Electron_r9[i]);
-        if(Run == 3){
+        if (Run == 3)
+        {
             electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
-
         }
         electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
         electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
         electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
         electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
         electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
-        
+
         electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
-        electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
+        electron.SetMVA(Electron::MVATYPE::MVAPROMPT, Electron_promptMVA[i]);
         electron.SetGenPartFlav(Electron_genPartFlav[i]);
         electron.SetGenPartIdx(Electron_genPartIdx[i]);
 
@@ -511,62 +600,78 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
     return electrons;
 }
 
-RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, const float fetamax, bool vetoHEM) {
+RVec<Electron> AnalyzerCore::GetElectrons(const TString ID, const float ptmin, const float fetamax, bool vetoHEM)
+{
     RVec<Electron> electrons = GetAllElectrons();
     RVec<Electron> selected_electrons;
-    for (const auto &electron: electrons) {
-        if (! (electron.Pt() > ptmin)) continue;
-        if (! (fabs(electron.Eta()) < fetamax)) continue;
-        if (! electron.PassID(ID)) continue;
-        if (vetoHEM && IsHEMElectron(electron)) continue;
+    for (const auto &electron : electrons)
+    {
+        if (!(electron.Pt() > ptmin))
+            continue;
+        if (!(fabs(electron.Eta()) < fetamax))
+            continue;
+        if (!electron.PassID(ID))
+            continue;
+        if (vetoHEM && IsHEMElectron(electron))
+            continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax, bool vetoHEM) const {
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const TString ID, const float ptmin, const float fetamax, bool vetoHEM) const
+{
     RVec<Electron> selected_electrons;
-    for (const auto &electron: electrons) {
-        if (! (electron.Pt() > ptmin)) continue;
-        if (! (fabs(electron.Eta()) < fetamax)) continue;
-        if (! electron.PassID(ID)) continue;
-        if (vetoHEM && IsHEMElectron(electron)) continue;
+    for (const auto &electron : electrons)
+    {
+        if (!(electron.Pt() > ptmin))
+            continue;
+        if (!(fabs(electron.Eta()) < fetamax))
+            continue;
+        if (!electron.PassID(ID))
+            continue;
+        if (vetoHEM && IsHEMElectron(electron))
+            continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax, bool vetoHEM) const {
+RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, const Electron::ElectronID ID, const float ptmin, const float fetamax, bool vetoHEM) const
+{
     RVec<Electron> selected_electrons;
-    for (const auto &electron : electrons) {
-        if (!(electron.Pt() > ptmin)) continue;
-        if (!(fabs(electron.Eta()) < fetamax)) continue;
-        if (!electron.PassID(ID)) continue;
-        if (vetoHEM && IsHEMElectron(electron)) continue;
+    for (const auto &electron : electrons)
+    {
+        if (!(electron.Pt() > ptmin))
+            continue;
+        if (!(fabs(electron.Eta()) < fetamax))
+            continue;
+        if (!electron.PassID(ID))
+            continue;
+        if (vetoHEM && IsHEMElectron(electron))
+            continue;
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
 }
 
-RVec<Gen> AnalyzerCore::GetAllGens(){
+RVec<Gen> AnalyzerCore::GetAllGens()
+{
     RVec<Gen> Gens;
-    if(IsDATA) return Gens;
+    if (IsDATA)
+        return Gens;
 
-    for (int i = 0; i < nGenPart; i++){
+    for (int i = 0; i < nGenPart; i++)
+    {
 
         Gen gen;
 
         gen.SetIsEmpty(false);
         gen.SetPtEtaPhiM(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i]);
         gen.SetIndexPIDStatus(i, GenPart_pdgId[i], GenPart_status[i]);
-        if(Run == 3){
-            gen.SetMother(GenPart_genPartIdxMother[i]);
-            gen.SetGenStatusFlags(GenPart_statusFlags[i]);
-        }
-        else if(Run == 2){
-            gen.SetMother(static_cast<short>(GenPart_genPartIdxMother_RunII[i]));
-            gen.SetGenStatusFlags(static_cast<unsigned short>(GenPart_statusFlags_RunII[i])); 
-        }
+
+        gen.SetMother(GenPart_genPartIdxMother[i]);
+        gen.SetGenStatusFlags(GenPart_statusFlags[i]);
 
         Gens.push_back(gen);
     }
@@ -574,14 +679,18 @@ RVec<Gen> AnalyzerCore::GetAllGens(){
     return Gens;
 }
 
-RVec<LHE> AnalyzerCore::GetAllLHEs() {
+RVec<LHE> AnalyzerCore::GetAllLHEs()
+{
     RVec<LHE> lhes;
-    if (IsDATA) return lhes;
-    
-    // Safety check for array sizes
-    if (nLHEPart <= 0) return lhes;
+    if (IsDATA)
+        return lhes;
 
-    for (int i = 0; i < nLHEPart; i++) {
+    // Safety check for array sizes
+    if (nLHEPart <= 0)
+        return lhes;
+
+    for (int i = 0; i < nLHEPart; i++)
+    {
         LHE lhe;
         lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
         lhe.SetStatus(LHEPart_status[i]);
@@ -593,171 +702,151 @@ RVec<LHE> AnalyzerCore::GetAllLHEs() {
     return lhes;
 }
 
-RVec<Tau> AnalyzerCore::GetAllTaus(){
+RVec<Tau> AnalyzerCore::GetAllTaus()
+{
 
     RVec<Tau> taus;
-    
-    for (int i = 0; i < nTau; i++) {
+
+    for (int i = 0; i < nTau; i++)
+    {
 
         Tau tau;
         tau.SetPtEtaPhiM(Tau_pt[i], Tau_eta[i], Tau_phi[i], Tau_mass[i]);
         tau.SetdXY(Tau_dxy[i]);
         tau.SetdZ(Tau_dz[i]);
         tau.SetGenPartFlav(Tau_genPartFlav[i]);
-        if(Run == 3){
-            tau.SetCharge(Tau_charge[i]);
-            tau.SetDecayMode(Tau_decayMode[i]);
-            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
-            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
-            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
-            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx[i]);
-        }
-        else if(Run == 2){
-            tau.SetCharge(Tau_charge_RunII[i]);
-            tau.SetDecayMode(Tau_decayMode_RunII[i]);
-            tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2017v2p1VSjet[i]);
-            tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2017v2p1VSmu[i]);
-            tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2017v2p1VSe[i]);
-            if(!IsDATA)tau.SetGenPartIdx(Tau_genPartIdx_RunII[i]);
-        }
+        tau.SetCharge(Tau_charge[i]);
+        tau.SetDecayMode(Tau_decayMode[i]);
+        tau.SetIdDeepTau2018v2p5VSjet(Tau_idDeepTau2018v2p5VSjet[i]);
+        tau.SetIdDeepTau2018v2p5VSmu(Tau_idDeepTau2018v2p5VSmu[i]);
+        tau.SetIdDeepTau2018v2p5VSe(Tau_idDeepTau2018v2p5VSe[i]);
+        if (!IsDATA)
+            tau.SetGenPartIdx(Tau_genPartIdx[i]);
+
         tau.SetIdDecayModeNewDMs(Tau_idDecayModeNewDMs[i]);
         taus.push_back(tau);
-
     }
 
     return taus;
-
 }
 
-RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const{
-    
+RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, const float ptmin, const float absetamax) const
+{
+
     RVec<Tau> selected_taus;
-    
-    for (const auto &tau: taus) {
 
-        if (! (tau.Pt() > ptmin)) continue;
-        if (! (fabs(tau.Eta()) < absetamax)) continue;
-        if (! tau.PassID(ID)) continue;
+    for (const auto &tau : taus)
+    {
+
+        if (!(tau.Pt() > ptmin))
+            continue;
+        if (!(fabs(tau.Eta()) < absetamax))
+            continue;
+        if (!tau.PassID(ID))
+            continue;
         selected_taus.push_back(tau);
-
     }
 
     return selected_taus;
-
 }
 
-RVec<Jet> AnalyzerCore::GetAllJets() {
+RVec<Jet> AnalyzerCore::GetAllJets()
+{
     RVec<Jet> Jets;
     for (int i = 0; i < nJet; i++)
     {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
-        if(!IsDATA){
-            if(Run == 3)
-            jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
-            else if(Run == 2)
-            jet.SetJetFlavours(static_cast<short>(Jet_partonFlavour_RunII[i]) , static_cast<unsigned char>(Jet_hadronFlavour_RunII[i]));
+        if (!IsDATA)
+        {
+            jet.SetJetFlavours(Jet_partonFlavour[i], Jet_hadronFlavour[i]);
         }
-        RVec<float> tvs;
-        RVec<float> tvs2;
-        if(Run == 3){
-            tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
-                           Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
-                           Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
-            jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
-            if(!IsDATA){
-                jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
-            }
-            else{
-                jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
-            }
-            jet.SetJetID(Jet_jetId[i]);
-            jet.SetJetPuID(0b111);
-            tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
-        }
-        //for Run 2 DeepJet is only option
-        else if(Run == 2){
-            tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
-                   -999., -999., -999., -999.,
-                   -999., -999., -999., -999., -999.};
-            jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons_RunII[i], Jet_nMuons_RunII[i], 0);
-            if(!IsDATA){
-                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9, Jet_genJetIdx_RunII[i]);
-            }
-            else{
-                jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
-            }
-            jet.SetJetID(Jet_jetId_RunII[i]);
-            if (DataYear == 2016)
-            {
-                // due to the bug in the NanoAODv9, the puId is stored in a wrong way
-                int InterChanged = 0;
-                InterChanged = Jet_puId[i] >> 2 | ((Jet_puId[i] & 0b001) << 2) | (Jet_puId[i] & 0b010);
-                jet.SetJetPuID(InterChanged);
-            }
-            else
-            {
-                jet.SetJetPuID(Jet_puId[i]);
-            }
-            tvs2 = {-999.0, -999.0, -999.0, -999.0, Jet_rawFactor[i], Jet_bRegCorr[i], Jet_bRegRes[i], Jet_cRegCorr[i], Jet_cRegRes[i]};
+        RVec<float> tagger_deepjet;
+        tagger_deepjet = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i]};
+        RVec<float> tagger_pnet;
+        tagger_pnet = {Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetCvNotB[i], Jet_btagPNetQvG[i], Jet_btagPNetTauVJet[i]};
+        RVec<float> tagger_parT;
+        tagger_parT = {Jet_btagUParTAK4B[i], Jet_btagUParTAK4CvB[i], Jet_btagUParTAK4CvL[i],
+            Jet_btagUParTAK4CvNotB[i], Jet_btagUParTAK4Ele[i], Jet_btagUParTAK4Mu[i], Jet_btagUParTAK4QvG[i],
+            Jet_btagUParTAK4SvCB[i], Jet_btagUParTAK4SvUDG[i], Jet_btagUParTAK4TauVJet[i],
+            Jet_btagUParTAK4UDG[i], Jet_btagUParTAK4probb[i], Jet_btagUParTAK4probbb[i]};
 
+        jet.SetTaggerResults(tagger_deepjet, tagger_pnet, tagger_parT);
+        
+        jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
+        if (!IsDATA)
+        {
+            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
         }
-        jet.SetTaggerResults(tvs);
+        else
+        {
+            jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
+        }
+
+        RVec<float> corrs;
+        corrs = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_UParTAK4RegPtRawCorr[i], Jet_UParTAK4RegPtRawCorrNeutrino[i],
+                Jet_UParTAK4RegPtRawRes[i], Jet_UParTAK4V1RegPtRawCorr[i], Jet_UParTAK4V1RegPtRawCorrNeutrino[i], Jet_UParTAK4V1RegPtRawRes[i], Jet_rawFactor[i]};
+
+        
+        jet.SetJetPuIDScore(Jet_puIdDisc[i]);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
-        jet.SetCorrections(tvs2);
+        jet.SetCorrections(corrs);
         Jets.push_back(jet);
     }
-    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets());
+    if (!IsDATA)
+        Jets = SmearJets(Jets, GetAllGenJets());
     return Jets;
 }
 
-RVec<Photon> AnalyzerCore::GetAllPhotons() {
+RVec<Photon> AnalyzerCore::GetAllPhotons()
+{
     RVec<Photon> Photons;
-    for (int i = 0; i< nPhoton; i++) {
+    for (int i = 0; i < nPhoton; i++)
+    {
         Photon photon;
         photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
         float photon_theta = photon.Theta();
-        float photon_E = Photon_pt[i] / sin( photon_theta );
-        photon.SetPtEtaPhiE( Photon_pt[i], Photon_eta[i], Photon_phi[i], photon_E);
+        float photon_E = Photon_pt[i] / sin(photon_theta);
+        photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], photon_E);
         photon.SetEnergy(photon_E);
         photon.SetSigmaIetaIeta(Photon_sieie[i]);
         photon.SetHoe(Photon_hoe[i]);
-        if(Run == 3){
+        if (Run == 3)
+        {
             photon.SetEnergyRaw(Photon_energyRaw[i]);
         }
         photon.SetPixelSeed(Photon_pixelSeed[i]);
         photon.SetisScEtaEB(Photon_isScEtaEB[i]);
         photon.SetisScEtaEE(Photon_isScEtaEE[i]);
-//        Need to Add PV Info
-//        Photon.SetSCEta(Photon_eta[i], Photon_phi[i], PV_x, PV_y, PV_z, Photon_isScEtaEB[i], Photon_isScEtaEE[i]);  
-        photon.SetSCEta(Photon_eta[i], Photon_phi[i], 0, 0, 0, false, false); 
+        //        Need to Add PV Info
+        //        Photon.SetSCEta(Photon_eta[i], Photon_phi[i], PV_x, PV_y, PV_z, Photon_isScEtaEB[i], Photon_isScEtaEE[i]);
+        photon.SetSCEta(Photon_eta[i], Photon_phi[i], 0, 0, 0, false, false);
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP80, Photon_mvaID_WP80[i]);
         photon.SetBIDBit(Photon::BooleanID::MVAIDWP90, Photon_mvaID_WP90[i]);
-        if(Run == 3){
-            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
-        }
-        else if(Run == 2){
-            photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased_RunII[i]);
-        }
-
+        photon.SetCBIDBit(Photon::CutBasedID::CUTBASED, Photon_cutBased[i]);
 
         Photons.push_back(photon);
     }
     return Photons;
 }
 
-RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax) {
+RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax)
+{
     RVec<Photon> photons = GetAllPhotons();
     RVec<Photon> out;
-    for(unsigned int i=0; i<photons.size(); i++) {
-        if(!( photons.at(i).Pt()>ptmin )){
+    for (unsigned int i = 0; i < photons.size(); i++)
+    {
+        if (!(photons.at(i).Pt() > ptmin))
+        {
             continue;
         }
-        if (!( fabs(photons.at(i).scEta())<fetamax)) {
+        if (!(fabs(photons.at(i).scEta()) < fetamax))
+        {
             continue;
         }
-        if(!( photons.at(i).PassID(id))) {
+        if (!(photons.at(i).PassID(id)))
+        {
             continue;
         }
         out.push_back(photons.at(i));
@@ -765,24 +854,34 @@ RVec<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fetamax) 
     return out;
 }
 
-RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float fetamax) {
+RVec<Jet> AnalyzerCore::GetJets(const TString ID, const float ptmin, const float fetamax)
+{
     RVec<Jet> jets = GetAllJets();
     RVec<Jet> selected_jets;
-    for (const auto &jet: jets) {
-        if (jet.Pt() < ptmin) continue;
-        if (fabs(jet.Eta()) > fetamax) continue;
-        if (! jet.PassID(ID)) continue;
+    for (const auto &jet : jets)
+    {
+        if (jet.Pt() < ptmin)
+            continue;
+        if (fabs(jet.Eta()) > fetamax)
+            continue;
+        if (!jet.PassID(ID))
+            continue;
         selected_jets.push_back(jet);
     }
     return selected_jets;
 }
 
-RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, const float ptmin, const float fetamax) const{
+RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const TString ID, const float ptmin, const float fetamax) const
+{
     RVec<Jet> selected_jets;
-    for (const auto &jet: jets) {
-        if (jet.Pt() < ptmin) continue;
-        if (fabs(jet.Eta()) > fetamax) continue;
-        if (! jet.PassID(ID)) continue;
+    for (const auto &jet : jets)
+    {
+        if (jet.Pt() < ptmin)
+            continue;
+        if (fabs(jet.Eta()) > fetamax)
+            continue;
+        if (!jet.PassID(ID))
+            continue;
         selected_jets.push_back(jet);
     }
     return selected_jets;
@@ -804,156 +903,167 @@ RVec<Jet> AnalyzerCore::SelectJets(const RVec<Jet> &jets, const Jet::JetID ID, c
     return selected_jets;
 }
 
-RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR) const{
+RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<Electron> &electrons, const RVec<Muon> &muons, const float dR) const
+{
     RVec<Jet> selected_jets;
-    for(const auto &jet: jets){
+    for (const auto &jet : jets)
+    {
         bool isLeptonInside = false;
-        for(const auto &electron: electrons){
-            if(jet.DeltaR(electron) < dR){
+        for (const auto &electron : electrons)
+        {
+            if (jet.DeltaR(electron) < dR)
+            {
                 isLeptonInside = true;
                 break;
             }
         }
-        if(isLeptonInside) continue;
-        for(const auto &muon: muons){
-            if(jet.DeltaR(muon) < dR){
+        if (isLeptonInside)
+            continue;
+        for (const auto &muon : muons)
+        {
+            if (jet.DeltaR(muon) < dR)
+            {
                 isLeptonInside = true;
                 break;
             }
         }
-        if(isLeptonInside) continue;
+        if (isLeptonInside)
+            continue;
         selected_jets.push_back(jet);
     }
     return selected_jets;
 }
 
-bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory){
+bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory)
+{
     RVec<Jet> this_jet = SelectJets(AllJets, Jet::JetID::TIGHT, 15., 5.0);
     this_jet = SelectJets(AllJets, Jet::JetID::PUID_TIGHT, 15., 5.0);
     RVec<Jet> selected_jets;
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
-    for(const auto &jet: this_jet){
-        if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
+    for (const auto &jet : this_jet)
+    {
+        if (jet.EMFraction() < 0.9)
+            selected_jets.push_back(jet);
     }
-    for(const auto &jet: selected_jets){
-        if(myCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;
+    for (const auto &jet : selected_jets)
+    {
+        if (myCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory))
+            return false;
     }
     return true;
 }
 
-RVec<FatJet> AnalyzerCore::GetAllFatJets() {
-    
+RVec<FatJet> AnalyzerCore::GetAllFatJets()
+{
+
     RVec<FatJet> FatJets;
 
-    for (int i = 0; i < nFatJet; i++) {
+    for (int i = 0; i < nFatJet; i++)
+    {
 
         FatJet fatjet;
-
-        RVec<float> pnet_m;
-        RVec<float> pnet;
-
-        if(Run == 3){
-            pnet_m = {FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
-               FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_QCD[i],
-               FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i],
-               FatJet_particleNetWithMass_ZvsQCD[i]};
-
-            pnet = {FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i],
-                    FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i],
-                    FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
-                    FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XggVsQCD[i],
-                    FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i],
-                    FatJet_particleNet_XttVsQCD[i], FatJet_particleNet_massCorr[i]};
-
-            fatjet.SetJetID(FatJet_jetId[i]);
-            if(!IsDATA) fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
-        }
-        else if(Run == 2){
-            pnet_m = {FatJet_particleNet_H4qvsQCD[i], FatJet_particleNet_HccvsQCD[i],
-               FatJet_particleNet_HbbvsQCD[i], FatJet_particleNet_QCD[i],
-               FatJet_particleNet_TvsQCD[i], FatJet_particleNet_WvsQCD[i],
-               FatJet_particleNet_ZvsQCD[i]};
-            
-            pnet = {FatJet_particleNetMD_QCD[i], -999., -999., -999.,
-                    FatJet_particleNetMD_Xbb[i], FatJet_particleNetMD_Xcc[i],
-                    FatJet_particleNetMD_Xqq[i], -999., -999., -999., -999., -999.};
-            fatjet.SetJetID(static_cast<unsigned char>(FatJet_jetId_RunII[i]));
-            if(!IsDATA) fatjet.SetGenMatchIDs(static_cast<short>(FatJet_genJetAK8Idx_RunII[i]), static_cast<short>(FatJet_subJetIdx1_RunII[i]), static_cast<short>(FatJet_subJetIdx2_RunII[i]));
-        }
-
         fatjet.SetPtEtaPhiM(FatJet_pt[i], FatJet_eta[i], FatJet_phi[i], FatJet_mass[i]);
         fatjet.SetArea(FatJet_area[i]);
+        fatjet.SetRawFactor(FatJet_rawFactor[i]);
+        fatjet.SetEnergyFraction(FatJet_chEmEF[i], FatJet_chHEF[i], FatJet_hfEmEF[i], FatJet_hfHEF[i], FatJet_muEF[i], FatJet_neEmEF[i], FatJet_neHEF[i]);
+        fatjet.SetConstituents(FatJet_chMultiplicity[i], FatJet_neMultiplicity[i], FatJet_nConstituents[i]);
+        fatjet.SetGenMatchIDs(FatJet_genJetAK8Idx[i], FatJet_subJetIdx1[i], FatJet_subJetIdx2[i]);
         fatjet.SetSDMass(FatJet_msoftdrop[i]);
+        fatjet.SetSubjettiness(FatJet_tau1[i], FatJet_tau2[i], FatJet_tau3[i], FatJet_n2b1[i], FatJet_n3b1[i]);
         fatjet.SetLSF3(FatJet_lsf3[i]);
-        fatjet.SetConstituents(FatJet_nBHadrons[i], FatJet_nCHadrons[i], FatJet_nConstituents[i]);
-        fatjet.SetBTaggingInfo(FatJet_btagDDBvLV2[i], FatJet_btagDDCvBV2[i], FatJet_btagDDCvLV2[i], FatJet_btagDeepB[i], FatJet_btagHbb[i]);
-        fatjet.SetPNetwithMassResults(pnet_m);
-        fatjet.SetPNetResults(pnet);
-        fatjet.SetSubjettiness(FatJet_tau1[i], FatJet_tau2[i], FatJet_tau3[i], FatJet_tau4[i]);
 
+        RVec<float> pnet;
+        pnet = {FatJet_particleNetWithMass_H4qvsQCD[i], FatJet_particleNetWithMass_HbbvsQCD[i], FatJet_particleNetWithMass_HccvsQCD[i],
+            FatJet_particleNetWithMass_QCD[i], FatJet_particleNetWithMass_TvsQCD[i], FatJet_particleNetWithMass_WvsQCD[i], FatJet_particleNetWithMass_ZvsQCD[i]};
+        
+        RVec<float> pnet_nomass;
+        pnet_nomass = {FatJet_particleNet_QCD[i], FatJet_particleNet_QCD0HF[i], FatJet_particleNet_QCD1HF[i], FatJet_particleNet_QCD2HF[i], 
+            FatJet_particleNet_WVsQCD[i], FatJet_particleNet_XbbVsQCD[i], FatJet_particleNet_XccVsQCD[i],
+            FatJet_particleNet_XggVsQCD[i], FatJet_particleNet_XqqVsQCD[i], FatJet_particleNet_XteVsQCD[i], FatJet_particleNet_XtmVsQCD[i], FatJet_particleNet_XttVsQCD[i],
+            FatJet_particleNet_massCorr[i]};
+
+        RVec<float> gloparT;
+        gloparT = {FatJet_globalParT3_QCD[i], FatJet_globalParT3_TopbWev[i], FatJet_globalParT3_TopbWmv[i], FatJet_globalParT3_TopbWq[i], FatJet_globalParT3_TopbWqq[i], FatJet_globalParT3_TopbWtauhv[i],
+                            FatJet_globalParT3_WvsQCD[i],
+                            FatJet_globalParT3_XWW3q[i], FatJet_globalParT3_XWW4q[i], FatJet_globalParT3_XWWqqev[i], FatJet_globalParT3_XWWqqmv[i],
+                            FatJet_globalParT3_Xbb[i], FatJet_globalParT3_Xcc[i], FatJet_globalParT3_Xcs[i], FatJet_globalParT3_Xqq[i],
+                            FatJet_globalParT3_Xtauhtaue[i], FatJet_globalParT3_Xtauhtauh[i], FatJet_globalParT3_Xtauhtaum[i],
+                            FatJet_globalParT3_withMassTopvsQCD[i], FatJet_globalParT3_withMassWvsQCD[i], FatJet_globalParT3_withMassZvsQCD[i]};
+        
+        fatjet.SetParticleNetResult(pnet);
+        fatjet.SetParticleNetNoMassResult(pnet_nomass);
+        fatjet.SetGloParTResult(gloparT);
         FatJets.push_back(fatjet);
     }
 
     return FatJets;
 }
 
-RVec<GenJet> AnalyzerCore::GetAllGenJets() {
-    
-    RVec<GenJet> GenJets;
-    if(IsDATA) return GenJets;
+RVec<GenJet> AnalyzerCore::GetAllGenJets()
+{
 
-    for (int i = 0; i < nGenJet; i++) {
+    RVec<GenJet> GenJets;
+    if (IsDATA)
+        return GenJets;
+
+    for (int i = 0; i < nGenJet; i++)
+    {
 
         GenJet genjet;
 
         genjet.SetPtEtaPhiM(GenJet_pt[i], GenJet_eta[i], GenJet_phi[i], GenJet_mass[i]);
-        if(Run == 3)
         genjet.SetGenFlavours(GenJet_partonFlavour[i], GenJet_hadronFlavour[i]);
-        else if(Run == 2)
-        genjet.SetGenFlavours(static_cast<short>(GenJet_partonFlavour_RunII[i]), GenJet_hadronFlavour[i]); 
         GenJets.push_back(genjet);
     }
 
     return GenJets;
 }
 
-bool AnalyzerCore::IsHEMElectron(const Electron& electron) const {
-    if (DataYear != 2018) return false;
+bool AnalyzerCore::IsHEMElectron(const Electron &electron) const
+{
+    if (DataYear != 2018)
+        return false;
 
-    if (electron.Eta() < -1.25){
-        if((electron.Phi() < -0.82) && (electron.Phi() > -1.62)) return true;
+    if (electron.Eta() < -1.25)
+    {
+        if ((electron.Phi() < -0.82) && (electron.Phi() > -1.62))
+            return true;
     }
     return false;
 }
 
 // Gen Matching
-void AnalyzerCore::PrintGen(const RVec<Gen> &gens) {
+void AnalyzerCore::PrintGen(const RVec<Gen> &gens)
+{
     cout << "===========================================================" << endl;
-    //cout << "RunNumber:EventNumber = " << Run << ":" << event << endl;
+    // cout << "RunNumber:EventNumber = " << Run << ":" << event << endl;
     cout << "index\tPID\tStatus\tMIdx\tMPID\tStart\tPt\tEta\tPhi\tM" << endl;
-    for(unsigned int i=2; i<gens.size(); i++){
+    for (unsigned int i = 2; i < gens.size(); i++)
+    {
         Gen gen = gens.at(i);
         RVec<int> history = TrackGenSelfHistory(gen, gens);
-        cout << i << "\t" 
-             << gen.PID() << "\t" 
-             << gen.Status() << "\t" 
-             << gen.MotherIndex() << "\t" 
-             << gens.at(gen.MotherIndex()).PID() << "\t" 
-             << history[0] << "\t" 
-             << fixed << setprecision(2) 
-             << gen.Pt() << "\t" 
-             << gen.Eta() << "\t" 
-             << gen.Phi() << "\t" 
+        cout << i << "\t"
+             << gen.PID() << "\t"
+             << gen.Status() << "\t"
+             << gen.MotherIndex() << "\t"
+             << gens.at(gen.MotherIndex()).PID() << "\t"
+             << history[0] << "\t"
+             << fixed << setprecision(2)
+             << gen.Pt() << "\t"
+             << gen.Eta() << "\t"
+             << gen.Phi() << "\t"
              << gen.M() << endl;
     }
 }
 
-RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens) {
-    //returns {index of the first history of the gen, 
-    //         index of the last history of the gen's mother}
+RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens)
+{
+    // returns {index of the first history of the gen,
+    //          index of the last history of the gen's mother}
     int myindex = me.Index();
-    if(myindex<2){ // 0 and 1 are initial partons
+    if (myindex < 2)
+    { // 0 and 1 are initial partons
         RVec<int> out = {myindex, -1};
         return out;
     }
@@ -961,24 +1071,32 @@ RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens
     int currentidx = myindex;
     int motherindex = me.MotherIndex();
 
-    while(gens.at(motherindex).PID() == mypid){
+    while (gens.at(motherindex).PID() == mypid)
+    {
         // Go one generation up
         currentidx = motherindex;
         motherindex = gens.at(motherindex).MotherIndex();
-        if(motherindex<0) break;
+        if (motherindex < 0)
+            break;
     }
     RVec<int> out = {currentidx, motherindex};
     return out;
 }
 
-Gen AnalyzerCore::GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens){
+Gen AnalyzerCore::GetGenMatchedLepton(const Lepton &lep, const RVec<Gen> &gens)
+{
     //==== find status 1 lepton
     int reco_PID = -999;
-    if(lep.LeptonFlavour() == Lepton::ELECTRON) {
+    if (lep.LeptonFlavour() == Lepton::ELECTRON)
+    {
         reco_PID = 11;
-    } else if(lep.LeptonFlavour() == Lepton::MUON) {
+    }
+    else if (lep.LeptonFlavour() == Lepton::MUON)
+    {
         reco_PID = 13;
-    } else {
+    }
+    else
+    {
         cerr << "[AnalyzerCore::GetGenMatchedLepton] input lepton flavour not set" << endl;
         exit(EXIT_FAILURE);
     }
@@ -986,130 +1104,161 @@ Gen AnalyzerCore::GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens){
     float min_dR = 0.1;
     Gen gen_closest;
     bool found_match = false;
-    for(unsigned int i=2; i<gens.size(); i++){
+    for (unsigned int i = 2; i < gens.size(); i++)
+    {
         const Gen &gen = gens.at(i);
-        if( gen.Status() != 1 ) continue; 
-        if( abs( gen.PID() ) != reco_PID ) continue; 
-        if( gen.MotherIndex() < 0 ) continue; // reject ISR
-        if( gen.DeltaR( lep ) < min_dR ){ // dR matching
-            min_dR = gen.DeltaR( lep ) ;
+        if (gen.Status() != 1)
+            continue;
+        if (abs(gen.PID()) != reco_PID)
+            continue;
+        if (gen.MotherIndex() < 0)
+            continue; // reject ISR
+        if (gen.DeltaR(lep) < min_dR)
+        { // dR matching
+            min_dR = gen.DeltaR(lep);
             gen_closest = gen;
             found_match = true;
         }
     }
-    if(!found_match){
+    if (!found_match)
+    {
         // Return a Gen with invalid index if no match found
         Gen dummy;
-        dummy.SetIndexPIDStatus(-1, 0, -1); 
+        dummy.SetIndexPIDStatus(-1, 0, -1);
         return dummy;
     }
     return gen_closest;
 }
 
-Gen AnalyzerCore::GetGenMatchedPhoton(const Lepton& lep, const RVec<Gen>& gens){
-    //Find if there is a photon candidate for a source of external conversion (similar pt, direction of lepton)
-    //1) Validity of cuts are checked for electron with PT>10. Note that the previous dPtRel<0.2 cut in the CatNtuple analysis was optimized for PT(e)>25.
-    //   External conversion rate proportionate to M^{-2}, thus muon external conversion rate is negligible.
-    //2) As the algorithm targets stable photon near lepton, only status-1 photon should be investigated theoretically. 
-    //   However, in some events, last status in photon history is 23. This is believed to be due to skimming of GEN history between pythia & MiniAOD. 
-    //   This case is also covered here. Note that IsFinalPhotonSt23 has to analyze whole history, i.e. computationally heavier part in this function.
-    //   Therefore it is put at last part of criteria for efficient functioning.
-    //For more details about the optimization, ask J.B..
-    float min_dR = 0.2;//1)
+Gen AnalyzerCore::GetGenMatchedPhoton(const Lepton &lep, const RVec<Gen> &gens)
+{
+    // Find if there is a photon candidate for a source of external conversion (similar pt, direction of lepton)
+    // 1) Validity of cuts are checked for electron with PT>10. Note that the previous dPtRel<0.2 cut in the CatNtuple analysis was optimized for PT(e)>25.
+    //    External conversion rate proportionate to M^{-2}, thus muon external conversion rate is negligible.
+    // 2) As the algorithm targets stable photon near lepton, only status-1 photon should be investigated theoretically.
+    //    However, in some events, last status in photon history is 23. This is believed to be due to skimming of GEN history between pythia & MiniAOD.
+    //    This case is also covered here. Note that IsFinalPhotonSt23 has to analyze whole history, i.e. computationally heavier part in this function.
+    //    Therefore it is put at last part of criteria for efficient functioning.
+    // For more details about the optimization, ask J.B..
+    float min_dR = 0.2; // 1)
     Gen gen_closest;
     bool found_match = false;
-    float pt_min = 10., dPtRelmax=0.5, dRmax=0.2;//1)
-    for(unsigned int i=2; i<gens.size(); i++){
+    float pt_min = 10., dPtRelmax = 0.5, dRmax = 0.2; // 1)
+    for (unsigned int i = 2; i < gens.size(); i++)
+    {
         const Gen &gen = gens.at(i);
-        if( gen.MotherIndex() < 0 ) continue;
-        if( ! ( abs(gen.PID())==22 && (gen.Status()==1 || gen.Status()==23) ) ) continue;
-        if( gen.Pt() < pt_min ) continue;
-        if( !(lep.Pt()/gen.Pt()>(1.-dPtRelmax) && lep.Pt()/gen.Pt()<(1.+dPtRelmax)) ) continue;
-        if( gen.DeltaR( lep ) > dRmax ) continue;
-        if( gen.Status()==23 && !IsFinalPhotonSt23_Public(gens) ) continue;
+        if (gen.MotherIndex() < 0)
+            continue;
+        if (!(abs(gen.PID()) == 22 && (gen.Status() == 1 || gen.Status() == 23)))
+            continue;
+        if (gen.Pt() < pt_min)
+            continue;
+        if (!(lep.Pt() / gen.Pt() > (1. - dPtRelmax) && lep.Pt() / gen.Pt() < (1. + dPtRelmax)))
+            continue;
+        if (gen.DeltaR(lep) > dRmax)
+            continue;
+        if (gen.Status() == 23 && !IsFinalPhotonSt23_Public(gens))
+            continue;
 
-        if( gen.DeltaR( lep ) < min_dR ){
-            min_dR = gen.DeltaR( lep ) ;
+        if (gen.DeltaR(lep) < min_dR)
+        {
+            min_dR = gen.DeltaR(lep);
             gen_closest = gen;
             found_match = true;
         }
     }
-    if(!found_match){
+    if (!found_match)
+    {
         // Return a Gen with invalid index if no match found
         Gen dummy;
-        dummy.SetIndexPIDStatus(-1, 0, -1); 
+        dummy.SetIndexPIDStatus(-1, 0, -1);
         return dummy;
     }
     return gen_closest;
 }
 
-bool AnalyzerCore::IsFinalPhotonSt23_Public(const RVec<Gen>& gens){
-    //In Some XG proc events, it is observed that some of photons' last status is 23. Presumably due to skimming of generator history between pythia and MiniAOD.
-    //The function returns if this is the case.
-    //And this is designed only for 1 hard photon case as W+G or Z+G or TT+G
+bool AnalyzerCore::IsFinalPhotonSt23_Public(const RVec<Gen> &gens)
+{
+    // In Some XG proc events, it is observed that some of photons' last status is 23. Presumably due to skimming of generator history between pythia and MiniAOD.
+    // The function returns if this is the case.
+    // And this is designed only for 1 hard photon case as W+G or Z+G or TT+G
     bool IsFinalGammaStatus23 = false;
-    bool HasStatus23Photon    = false;
-    for(unsigned int i=2; i<gens.size(); i++){
+    bool HasStatus23Photon = false;
+    for (unsigned int i = 2; i < gens.size(); i++)
+    {
         const Gen &gen = gens.at(i);
-        int fpid  = fabs(gen.PID());
+        int fpid = fabs(gen.PID());
         int GenSt = gen.Status();
-        int MPID_direct= gens.at(gen.MotherIndex()).PID();
-        if( !((fpid!=22 && MPID_direct==22) || (fpid==22 && (GenSt==23||GenSt==1))) ) continue;
+        int MPID_direct = gens.at(gen.MotherIndex()).PID();
+        if (!((fpid != 22 && MPID_direct == 22) || (fpid == 22 && (GenSt == 23 || GenSt == 1))))
+            continue;
 
         RVec<int> my_history, mom_history;
-        my_history  = TrackGenSelfHistory(gen, gens);
-        int LastSelfIdx     = my_history[0];
-        int MotherIdx       = my_history[1];
-        int LastSelfSt      = gens.at(LastSelfIdx).Status();
-        int LastSelfMIdx=-1, MStatus_orig=-1;
-        if(MotherIdx!=-1){
-            mom_history  = TrackGenSelfHistory(gens.at(MotherIdx), gens);
+        my_history = TrackGenSelfHistory(gen, gens);
+        int LastSelfIdx = my_history[0];
+        int MotherIdx = my_history[1];
+        int LastSelfSt = gens.at(LastSelfIdx).Status();
+        int LastSelfMIdx = -1, MStatus_orig = -1;
+        if (MotherIdx != -1)
+        {
+            mom_history = TrackGenSelfHistory(gens.at(MotherIdx), gens);
             LastSelfMIdx = mom_history[0];
             MStatus_orig = gens.at(LastSelfMIdx).Status();
         }
 
-        if(fpid==22){
-            if(GenSt==23) {
-                HasStatus23Photon=true; 
-                IsFinalGammaStatus23=true;
-            } else if(GenSt==1 && LastSelfSt==23) {
-                IsFinalGammaStatus23=false;
-                break; //a
+        if (fpid == 22)
+        {
+            if (GenSt == 23)
+            {
+                HasStatus23Photon = true;
+                IsFinalGammaStatus23 = true;
             }
-        } else if( MPID_direct==22 && MStatus_orig==23 ){ 
-            IsFinalGammaStatus23=false; 
-            break; //b
+            else if (GenSt == 1 && LastSelfSt == 23)
+            {
+                IsFinalGammaStatus23 = false;
+                break; // a
+            }
+        }
+        else if (MPID_direct == 22 && MStatus_orig == 23)
+        {
+            IsFinalGammaStatus23 = false;
+            break; // b
         }
     }
-    if(!HasStatus23Photon) return false;
+    if (!HasStatus23Photon)
+        return false;
     return IsFinalGammaStatus23;
     //**footnotes
     // a) Status-23 photon's last is 1. Thus status-23 photon is not the last history.
-    // b) Daughter particle of status-23 photon is found. Thus status-23 photon is not the last history. 
+    // b) Daughter particle of status-23 photon is found. Thus status-23 photon is not the last history.
 }
 
-bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
+bool AnalyzerCore::IsFromHadron(const Gen &me, const RVec<Gen> &gens)
+{
     bool out = false;
     int myindex = me.Index();
-    if(myindex<2) return true;
+    if (myindex < 2)
+        return true;
     RVec<int> my_history = TrackGenSelfHistory(me, gens);
-    Gen          Start = gens.at( my_history[0] );
-    Gen MotherOf_Start = gens.at( my_history[1] );
+    Gen Start = gens.at(my_history[0]);
+    Gen MotherOf_Start = gens.at(my_history[1]);
 
     //==== Status 21~29 are from hardprocess
     //==== Means it's lepton from hardprocess
     //==== e.g., leptons from Z start their lives with status 23
-    if( 20 < Start.Status() && Start.Status() < 30 ) return false;
+    if (20 < Start.Status() && Start.Status() < 30)
+        return false;
 
-     Gen current_me = Start; // me will always be Start
-     Gen current_mother = Start; // initializing
-    while( current_mother.Index() >= 2 ){
+    Gen current_me = Start;     // me will always be Start
+    Gen current_mother = Start; // initializing
+    while (current_mother.Index() >= 2)
+    {
         RVec<int> current_history = TrackGenSelfHistory(current_me, gens);
 
         //==== Go one generation up
         current_me = gens.at(current_history[1]);
 
-       //==== Now look at mother of previous "me"
+        //==== Now look at mother of previous "me"
         current_mother = gens.at(current_history[1]);
 
         RVec<int> current_mother_history = TrackGenSelfHistory(current_mother, gens);
@@ -1117,26 +1266,31 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
         int current_mother_PID = current_mother.PID();
 
         //==== From Z,W,H,t
-        if( current_mother_PID==23 || current_mother_PID==24 || current_mother_PID==25 || current_mother_PID==6 ){
+        if (current_mother_PID == 23 || current_mother_PID == 24 || current_mother_PID == 25 || current_mother_PID == 6)
+        {
             out = false;
             break;
         }
-    
+
         //==== From Signal
-        if( IsSignalPID(current_mother_PID) ){
+        if (IsSignalPID(current_mother_PID))
+        {
             out = false;
             break;
         }
-        if( (current_mother_PID==11 || current_mother_PID==13 || current_mother_PID==15 || current_mother_PID==22) && (StartOf_current_mother.Status()>20 && StartOf_current_mother.Status()<30)){
+        if ((current_mother_PID == 11 || current_mother_PID == 13 || current_mother_PID == 15 || current_mother_PID == 22) && (StartOf_current_mother.Status() > 20 && StartOf_current_mother.Status() < 30))
+        {
             out = false;
             break;
         }
-        if( current_mother_PID>50 ){
-            out=true;
+        if (current_mother_PID > 50)
+        {
+            out = true;
             break;
         }
-        if( (current_mother_PID>=1 && current_mother_PID<=5) || current_mother_PID==21 ){
-            out=true; 
+        if ((current_mother_PID >= 1 && current_mother_PID <= 5) || current_mother_PID == 21)
+        {
+            out = true;
             break;
         }
     }
@@ -1144,13 +1298,16 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
     return out;
 }
 
-bool AnalyzerCore::IsSignalPID(const int &pid) {
+bool AnalyzerCore::IsSignalPID(const int &pid)
+{
     const unsigned int fpid = abs(pid);
 
     //==== HeavyNeutrino
-    if(fpid>=9900000) return true;
+    if (fpid >= 9900000)
+        return true;
     //==== CP-odd Higgs
-    if(fpid==36) return true;
+    if (fpid == 36)
+        return true;
     return false;
 }
 
@@ -1164,7 +1321,7 @@ bool AnalyzerCore::IsSignalPID(const int &pid) {
 //==== -1 : Unmatched & not EW Conversion candidate
 //==== -2 : Hadron daughter
 //==== -3 : Daughter of tau from hadron or parton
-//==== -4 : Internal conversion daughter(implicit,explicit) having hadronic origin 
+//==== -4 : Internal conversion daughter(implicit,explicit) having hadronic origin
 //==== -5 : External conversion candidate(Hard scattered photon)
 //==== -6 : External conversion from t/EWV/EWlep
 //==== (-4: Daughter of Non-hard scattered photon & has parton or hadron ancestor OR implicit Conv from quark)
@@ -1173,129 +1330,171 @@ bool AnalyzerCore::IsSignalPID(const int &pid) {
 //==== >0 : Non-fake; Non-hadronic origin
 //==== <0 : Fakes   ; Hadronic origin or external conversion
 
-int AnalyzerCore::GetLeptonType(const Gen& gen, const RVec<Gen>& gens) {
-    int LeptonType = GetLeptonType_Public(gen.Index(), gens);//4)
-    if(LeptonType>=4 && LeptonType<=5){//5)
+int AnalyzerCore::GetLeptonType(const Gen &gen, const RVec<Gen> &gens)
+{
+    int LeptonType = GetLeptonType_Public(gen.Index(), gens); // 4)
+    if (LeptonType >= 4 && LeptonType <= 5)
+    { // 5)
         int NearbyPrElType = GetPrElType_InSameSCRange_Public(gen.Index(), gens);
-        if(NearbyPrElType>0) LeptonType = NearbyPrElType;
+        if (NearbyPrElType > 0)
+            LeptonType = NearbyPrElType;
     }
     return LeptonType;
 }
 
-int AnalyzerCore::GetLeptonType(const Lepton& lep, const RVec<Gen>& gens) {
-    int LeptonType=0, MatchedTruthIdx=-1; 
+int AnalyzerCore::GetLeptonType(const Lepton &lep, const RVec<Gen> &gens)
+{
+    int LeptonType = 0, MatchedTruthIdx = -1;
     Gen gen_closest = GetGenMatchedLepton(lep, gens);
-    //cout << "[AnalyzerCore::GetLeptonType] [Reco] pt = " << lep.Pt() << "\t, eta = " << lep.Eta() << endl;
-    //cout << "[AnalyzerCore::GetLeptonType] [Gen] Index = " << gen_closest.Index() << endl;
+    // cout << "[AnalyzerCore::GetLeptonType] [Reco] pt = " << lep.Pt() << "\t, eta = " << lep.Eta() << endl;
+    // cout << "[AnalyzerCore::GetLeptonType] [Gen] Index = " << gen_closest.Index() << endl;
 
     //==== No matched gen lepton
-    if( gen_closest.IsEmpty() ){
+    if (gen_closest.IsEmpty())
+    {
         Gen gen_photon_closest = GetGenMatchedPhoton(lep, gens);
-        int NearPhotonType = GetGenPhotonType(gen_photon_closest,gens);
-        if     ( NearPhotonType<=0 ) LeptonType=-1;
-        else if( NearPhotonType==1 ) LeptonType=-5;
-        else if( NearPhotonType==2 ) LeptonType=-6;
-    } else { //==== Has macthed gen lepton
+        int NearPhotonType = GetGenPhotonType(gen_photon_closest, gens);
+        if (NearPhotonType <= 0)
+            LeptonType = -1;
+        else if (NearPhotonType == 1)
+            LeptonType = -5;
+        else if (NearPhotonType == 2)
+            LeptonType = -6;
+    }
+    else
+    { //==== Has macthed gen lepton
         MatchedTruthIdx = gen_closest.Index();
         LeptonType = GetLeptonType_Public(MatchedTruthIdx, gens);
-        if(LeptonType>=4 && LeptonType<=5){
+        if (LeptonType >= 4 && LeptonType <= 5)
+        {
             int NearbyPrElType = GetPrElType_InSameSCRange_Public(MatchedTruthIdx, gens);
-            if(NearbyPrElType>0) LeptonType = NearbyPrElType;
+            if (NearbyPrElType > 0)
+                LeptonType = NearbyPrElType;
         }
     }
     return LeptonType;
     //**footnote
-    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
+    // 1) matched to no gen-lepton nor gen-photon -> mis-reco.
     //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
-    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
-    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
-    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
-    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron,
+    // 2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
+    // 3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
+    // 4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
+    // 5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron,
     //   rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
     //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
 }
 
-int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens) {
-    //Type : 1:EW-Prompt / 2: BSM-Prompt / 3:EW/BSM-Prompt-Tau Daughter / 6: From Offshell W (mother == 37)
-    //       4:Internal Conversion from Soft QED Radiation (PS-level) / 5:Internal Conversion from Hard Process Photon (ME-level)
-    //      -1:Unmatched & not EW Conversion candidate (mis-reco. or external conversion within jets)
-    //      -2:Hadron Daughter / -3:Daughter of Tau from Hadron or Parton / -4:Internal Conversion Daughter having hadronic origin
-    //      -5:External Conversion from Hard process photon / -6:External conversion from t/EWV/EWlep
-    //      (-4:Daughter of Non-hard scattered photon & has parton or hadron ancestor OR implicit Conv from quark)
-    //       0:Error / >0: Non-fake: Non-hadronic origin / <0 : Fakes: Hadronic origin or external conversion
-    //Note: There is no physical distinction between type 4 vs. 5 and type -5 vs. -6. The distinction is only intended for straightforward debugging.
+int AnalyzerCore::GetLeptonType_Public(const int &genIdx, const RVec<Gen> &gens)
+{
+    // Type : 1:EW-Prompt / 2: BSM-Prompt / 3:EW/BSM-Prompt-Tau Daughter / 6: From Offshell W (mother == 37)
+    //        4:Internal Conversion from Soft QED Radiation (PS-level) / 5:Internal Conversion from Hard Process Photon (ME-level)
+    //       -1:Unmatched & not EW Conversion candidate (mis-reco. or external conversion within jets)
+    //       -2:Hadron Daughter / -3:Daughter of Tau from Hadron or Parton / -4:Internal Conversion Daughter having hadronic origin
+    //       -5:External Conversion from Hard process photon / -6:External conversion from t/EWV/EWlep
+    //       (-4:Daughter of Non-hard scattered photon & has parton or hadron ancestor OR implicit Conv from quark)
+    //        0:Error / >0: Non-fake: Non-hadronic origin / <0 : Fakes: Hadronic origin or external conversion
+    // Note: There is no physical distinction between type 4 vs. 5 and type -5 vs. -6. The distinction is only intended for straightforward debugging.
 
-    //Only consider Status 1 lepton
-    if (genIdx<2) return 0;
-    if (gens.at(genIdx).Status()!=1) return 0;
-    if( !(fabs(gens.at(genIdx).PID())==11 || fabs(gens.at(genIdx).PID())==13) ) return 0;
+    // Only consider Status 1 lepton
+    if (genIdx < 2)
+        return 0;
+    if (gens.at(genIdx).Status() != 1)
+        return 0;
+    if (!(fabs(gens.at(genIdx).PID()) == 11 || fabs(gens.at(genIdx).PID()) == 13))
+        return 0;
 
-
-    int LeptonType=0;
-    int MPID=0, GrMPID=0;
+    int LeptonType = 0;
+    int MPID = 0, GrMPID = 0;
     RVec<int> my_history, mom_history, grmom_history;
-    int LastSelfIdx=-1, MotherIdx=-1, LastSelfMIdx=-1, GrMotherIdx=-1, LastSelfGrMIdx=-1;
-    int Status_orig=0, MStatus_orig=0, MStatus_last=0, GrMStatus_orig=0, GrMStatus_last=0;
+    int LastSelfIdx = -1, MotherIdx = -1, LastSelfMIdx = -1, GrMotherIdx = -1, LastSelfGrMIdx = -1;
+    int Status_orig = 0, MStatus_orig = 0, MStatus_last = 0, GrMStatus_orig = 0, GrMStatus_last = 0;
     bool HadronicOrigin = false;
 
-    my_history      = TrackGenSelfHistory(gens.at(genIdx), gens);
-    LastSelfIdx     = my_history[0];
-    MotherIdx       = my_history[1];
-    Status_orig     = gens.at(LastSelfIdx).Status();
-    HadronicOrigin  = IsFromHadron(gens.at(genIdx), gens);
+    my_history = TrackGenSelfHistory(gens.at(genIdx), gens);
+    LastSelfIdx = my_history[0];
+    MotherIdx = my_history[1];
+    Status_orig = gens.at(LastSelfIdx).Status();
+    HadronicOrigin = IsFromHadron(gens.at(genIdx), gens);
 
-    if(   MotherIdx!=-1   ){ 
-        mom_history  = TrackGenSelfHistory(gens.at(MotherIdx), gens);
+    if (MotherIdx != -1)
+    {
+        mom_history = TrackGenSelfHistory(gens.at(MotherIdx), gens);
         LastSelfMIdx = mom_history[0];
-        GrMotherIdx  = mom_history[1];
-        MPID         = gens.at(MotherIdx).PID();
+        GrMotherIdx = mom_history[1];
+        MPID = gens.at(MotherIdx).PID();
         MStatus_orig = gens.at(LastSelfMIdx).Status();
         MStatus_last = gens.at(MotherIdx).Status();
     }
-    if(  GrMotherIdx!=-1  ){ 
-        grmom_history  = TrackGenSelfHistory(gens.at(GrMotherIdx), gens);
+    if (GrMotherIdx != -1)
+    {
+        grmom_history = TrackGenSelfHistory(gens.at(GrMotherIdx), gens);
         LastSelfGrMIdx = grmom_history[0];
-        GrMPID         = gens.at(GrMotherIdx).PID();
+        GrMPID = gens.at(GrMotherIdx).PID();
         GrMStatus_orig = gens.at(LastSelfGrMIdx).Status();
         GrMStatus_last = gens.at(GrMotherIdx).Status();
     }
 
-    if     ( genIdx==-1 )                                         LeptonType= 0;
-    else if( fabs(MPID)==23 || fabs(MPID)==24 || fabs(MPID)==25 ) LeptonType= 1;
-    else if( IsSignalPID(MPID) )                                  LeptonType= 2;
-    else if( abs(MPID) == 37 )                                    LeptonType= 6; 
-    else if( Status_orig>20 && Status_orig<30 )                   LeptonType= 1;//1)
-    else if( fabs(MPID)>50 )                                      LeptonType=-2;
-    else if( fabs(MPID)==15 && MStatus_last==2 ){
-        if     ( fabs(GrMPID)==23 || fabs(GrMPID)==24 || fabs(GrMPID)==25 )    LeptonType= 3;
-        else if( IsSignalPID(GrMPID) )                                         LeptonType= 3;
-        else if( MStatus_orig>20  && MStatus_orig<30  )                        LeptonType= 3;//1)
-        else if( HadronicOrigin )                                              LeptonType=-3;//2-a)
-        else if( fabs(GrMPID)==22  && GrMStatus_orig>20 && GrMStatus_orig<30 ) LeptonType= 5;//2-b)
-        else if( fabs(GrMPID)==22 )                                            LeptonType= 4;//2-c)
-        else if( (fabs(GrMPID)==11 || fabs(GrMPID)==13 || fabs(GrMPID)==15) && GrMStatus_last!=2 ) LeptonType= 4;//2-d)
-        else                                                                   LeptonType= 0;
+    if (genIdx == -1)
+        LeptonType = 0;
+    else if (fabs(MPID) == 23 || fabs(MPID) == 24 || fabs(MPID) == 25)
+        LeptonType = 1;
+    else if (IsSignalPID(MPID))
+        LeptonType = 2;
+    else if (abs(MPID) == 37)
+        LeptonType = 6;
+    else if (Status_orig > 20 && Status_orig < 30)
+        LeptonType = 1; // 1)
+    else if (fabs(MPID) > 50)
+        LeptonType = -2;
+    else if (fabs(MPID) == 15 && MStatus_last == 2)
+    {
+        if (fabs(GrMPID) == 23 || fabs(GrMPID) == 24 || fabs(GrMPID) == 25)
+            LeptonType = 3;
+        else if (IsSignalPID(GrMPID))
+            LeptonType = 3;
+        else if (MStatus_orig > 20 && MStatus_orig < 30)
+            LeptonType = 3; // 1)
+        else if (HadronicOrigin)
+            LeptonType = -3; // 2-a)
+        else if (fabs(GrMPID) == 22 && GrMStatus_orig > 20 && GrMStatus_orig < 30)
+            LeptonType = 5; // 2-b)
+        else if (fabs(GrMPID) == 22)
+            LeptonType = 4; // 2-c)
+        else if ((fabs(GrMPID) == 11 || fabs(GrMPID) == 13 || fabs(GrMPID) == 15) && GrMStatus_last != 2)
+            LeptonType = 4; // 2-d)
+        else
+            LeptonType = 0;
     }
-    else if( fabs(MPID)==22 ){
-        if( MStatus_orig>20 && MStatus_orig<30 )                            LeptonType= 5;//3-a)
-        else if( HadronicOrigin )                                           LeptonType=-4;//3-b)
-        else if( fabs(GrMPID)==24 || fabs(GrMPID)==23 || fabs(GrMPID)==6  ) LeptonType= 4;//3-c)
-        else if( fabs(GrMPID)==11 || fabs(GrMPID)==13 || fabs(GrMPID)==15 ) LeptonType= 4;//3-d)
-        else                                                                LeptonType= 0;
+    else if (fabs(MPID) == 22)
+    {
+        if (MStatus_orig > 20 && MStatus_orig < 30)
+            LeptonType = 5; // 3-a)
+        else if (HadronicOrigin)
+            LeptonType = -4; // 3-b)
+        else if (fabs(GrMPID) == 24 || fabs(GrMPID) == 23 || fabs(GrMPID) == 6)
+            LeptonType = 4; // 3-c)
+        else if (fabs(GrMPID) == 11 || fabs(GrMPID) == 13 || fabs(GrMPID) == 15)
+            LeptonType = 4; // 3-d)
+        else
+            LeptonType = 0;
     }
-    else if( (fabs(MPID)==11 || fabs(MPID)==13 || fabs(MPID)==15) && MStatus_last!=2 && !HadronicOrigin ) LeptonType= 4;//4-a)
-    else if( ((fabs(MPID)>=1 && fabs(MPID)<=5) || fabs(MPID)==21) && MStatus_last!=2 )                    LeptonType=-4;//4-b)
-    else if( fabs(MPID)==6 ) LeptonType=4;//4-c)
-    else LeptonType=0;
+    else if ((fabs(MPID) == 11 || fabs(MPID) == 13 || fabs(MPID) == 15) && MStatus_last != 2 && !HadronicOrigin)
+        LeptonType = 4; // 4-a)
+    else if (((fabs(MPID) >= 1 && fabs(MPID) <= 5) || fabs(MPID) == 21) && MStatus_last != 2)
+        LeptonType = -4; // 4-b)
+    else if (fabs(MPID) == 6)
+        LeptonType = 4; // 4-c)
+    else
+        LeptonType = 0;
 
     return LeptonType;
     //**footnote
-    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
+    // 1) matched to no gen-lepton nor gen-photon -> mis-reco.
     //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
-    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
-    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
-    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
-    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron, rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
+    // 2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
+    // 3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
+    // 4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
+    // 5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron, rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
     //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
 }
 
@@ -1303,179 +1502,249 @@ int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens)
 //====  0 : Invalid input or Error or HardScatter is input when hardscatter is not final state
 //====  1 : HardScatter / 2: Else prompt daughter(l,V,t)
 //==== -1 : Reserved for unmatched(Not used now) / -2: Hadronic origin
-int AnalyzerCore::GetGenPhotonType(const Gen& genph, const RVec<Gen>& gens) {
-    if(genph.IsEmpty()) return 0;
+int AnalyzerCore::GetGenPhotonType(const Gen &genph, const RVec<Gen> &gens)
+{
+    if (genph.IsEmpty())
+        return 0;
     int genph_index = genph.Index();
-    if( genph_index<2 ) return 0;
-    if( !(gens.at(genph_index).PID()==22 && (gens.at(genph_index).Status()==1 || gens.at(genph_index).Status()==23)) ) return 0;
+    if (genph_index < 2)
+        return 0;
+    if (!(gens.at(genph_index).PID() == 22 && (gens.at(genph_index).Status() == 1 || gens.at(genph_index).Status() == 23)))
+        return 0;
 
-    if(gens.at(genph_index).Status()==23){
-        if(IsFinalPhotonSt23_Public(gens)) return 1;
-        else                               return 0;
-    }//From this pt, only St1 Photon is treated.
+    if (gens.at(genph_index).Status() == 23)
+    {
+        if (IsFinalPhotonSt23_Public(gens))
+            return 1;
+        else
+            return 0;
+    } // From this pt, only St1 Photon is treated.
 
     RVec<int> phhist = TrackGenSelfHistory(genph, gens);
-    const Gen&          Start = gens.at(phhist[0]);
-    const Gen& MotherOf_Start = gens.at(phhist[1]);
-    const int& MotherOf_Start_PID = abs(MotherOf_Start.PID()); // |PID|
+    const Gen &Start = gens.at(phhist[0]);
+    const Gen &MotherOf_Start = gens.at(phhist[1]);
+    const int &MotherOf_Start_PID = abs(MotherOf_Start.PID()); // |PID|
     const bool fromhadron = IsFromHadron(genph, gens);
 
-    if     ( 20 < Start.Status() && Start.Status() < 30 ) return 1;//1)
-    else if( MotherOf_Start_PID==23 || MotherOf_Start_PID==25) return 1;//2)
-    else if( MotherOf_Start_PID==24 || MotherOf_Start_PID==6 || IsSignalPID(MotherOf_Start_PID) ) return 2;//3)
-    else if( fromhadron ) return -2;//4)
-    else if( MotherOf_Start_PID==11 || MotherOf_Start_PID==13 || MotherOf_Start_PID==15 ) return 2;//5)
-    else return 0;
+    if (20 < Start.Status() && Start.Status() < 30)
+        return 1; // 1)
+    else if (MotherOf_Start_PID == 23 || MotherOf_Start_PID == 25)
+        return 1; // 2)
+    else if (MotherOf_Start_PID == 24 || MotherOf_Start_PID == 6 || IsSignalPID(MotherOf_Start_PID))
+        return 2; // 3)
+    else if (fromhadron)
+        return -2; // 4)
+    else if (MotherOf_Start_PID == 11 || MotherOf_Start_PID == 13 || MotherOf_Start_PID == 15)
+        return 2; // 5)
+    else
+        return 0;
 
     //**footnote
-    //1) Hard process photon's original status is 20's, unless the history is skimmed in MiniAOD.
-    //2) If part of intermediate history is skimmed at MinoAOD, then last photon status is 1 without any preceding history lines.
+    // 1) Hard process photon's original status is 20's, unless the history is skimmed in MiniAOD.
+    // 2) If part of intermediate history is skimmed at MinoAOD, then last photon status is 1 without any preceding history lines.
     //   In that case, intermediate mother is written in history, and this line catches the case.
-    //3) top and charged bosons can radiate photons.
+    // 3) top and charged bosons can radiate photons.
     // - Note that distinction between 1 and 2 is not physical. You should use both 1 & 2 for prompt photons.
-    //4) this category does not include top, but photons from hadrons and quarks. Predominantly, in most of the cases they are daughter of pi0.
+    // 4) this category does not include top, but photons from hadrons and quarks. Predominantly, in most of the cases they are daughter of pi0.
     //   Rarer, but other mesons as eta, B, or even some quarks can also radiate energetic photons.
-    //5) Photons radiated from lepton FSR. Sometimes they are quite energetic.
+    // 5) Photons radiated from lepton FSR. Sometimes they are quite energetic.
 }
 
-int AnalyzerCore::GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen>& gens){
-    //Abbreviation: Get Prompt Electron Type In Same Supercluster Range (Public (shared) version of J.B.'s original gen-matching code)
-    //Prompt e>eee (int. conv.) case, collimated electrons can be merged in one SC & track is selected among them, and reconstructed as single electron. 
-    //In this case, still there will be a nearby prompt electron of LepType 1-3 within supercluster merging range.
-    //Supercluster merging range: |dphi|<0.3/0.3 (EB/EE), |deta|<0/0.07 (EB/EE) (additionally put 0.03 for marginal difference from size of crystals)
-    //Ref:JINST 10 (2015) P06005, arXiv:1502.02701
-    //Return Value: 1/2/3:LeptonType-1/2/3 electron found in same SC range
-    //             -1: No LeptonType-1/2/3 electron found in same SC range
-    //Note: Hadronic origins are not included in this algo. as I am not sure of effect of many nearby particles in jets on the ele-reco performance.
-    //      + it is not of my interest yet.
+int AnalyzerCore::GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen> &gens)
+{
+    // Abbreviation: Get Prompt Electron Type In Same Supercluster Range (Public (shared) version of J.B.'s original gen-matching code)
+    // Prompt e>eee (int. conv.) case, collimated electrons can be merged in one SC & track is selected among them, and reconstructed as single electron.
+    // In this case, still there will be a nearby prompt electron of LepType 1-3 within supercluster merging range.
+    // Supercluster merging range: |dphi|<0.3/0.3 (EB/EE), |deta|<0/0.07 (EB/EE) (additionally put 0.03 for marginal difference from size of crystals)
+    // Ref:JINST 10 (2015) P06005, arXiv:1502.02701
+    // Return Value: 1/2/3:LeptonType-1/2/3 electron found in same SC range
+    //              -1: No LeptonType-1/2/3 electron found in same SC range
+    // Note: Hadronic origins are not included in this algo. as I am not sure of effect of many nearby particles in jets on the ele-reco performance.
+    //       + it is not of my interest yet.
 
-    if(genIdx<2) return -1;
-    if(abs(gens.at(genIdx).PID())!=11) return -1;
-    if(gens.at(genIdx).Status()!=1) return -1;
+    if (genIdx < 2)
+        return -1;
+    if (abs(gens.at(genIdx).PID()) != 11)
+        return -1;
+    if (gens.at(genIdx).Status() != 1)
+        return -1;
 
-    float dPhiMax=0.3, dEtaMax=0.1;
-    int NearbyElType=-1;
+    float dPhiMax = 0.3, dEtaMax = 0.1;
+    int NearbyElType = -1;
 
-    for(unsigned int it_gen=2; it_gen<gens.size(); it_gen++){
-        if(gens.at(it_gen).Status()!=1) continue;
-        if(abs(gens.at(it_gen).PID())!=11) continue;
-        if(fabs(gens.at(genIdx).Eta()-gens.at(it_gen).Eta())>dEtaMax) continue;
-        if(gens.at(genIdx).DeltaPhi(gens.at(it_gen))>dPhiMax) continue;
+    for (unsigned int it_gen = 2; it_gen < gens.size(); it_gen++)
+    {
+        if (gens.at(it_gen).Status() != 1)
+            continue;
+        if (abs(gens.at(it_gen).PID()) != 11)
+            continue;
+        if (fabs(gens.at(genIdx).Eta() - gens.at(it_gen).Eta()) > dEtaMax)
+            continue;
+        if (gens.at(genIdx).DeltaPhi(gens.at(it_gen)) > dPhiMax)
+            continue;
 
         int LepType = GetLeptonType_Public(it_gen, gens);
-        if(!(LepType>=1 && LepType<=3)) continue;
-        NearbyElType  = LepType;
+        if (!(LepType >= 1 && LepType <= 3))
+            continue;
+        NearbyElType = LepType;
     }
     return NearbyElType;
 }
 
 // Histogram Handlers
-void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max) {
+void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float x_min, float x_max)
+{
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
-    if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, x_min, x_max);
+    if (it == histmap1d.end())
+    {
+        TH1 *this_hist;
+        if (useTH1F)
+            this_hist = new TH1F(histkey.c_str(), "", n_bin, x_min, x_max);
+        else
+            this_hist = new TH1D(histkey.c_str(), "", n_bin, x_min, x_max);
         this_hist->SetDirectory(nullptr);
         histmap1d[histkey] = this_hist;
         this_hist->Fill(value, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value, weight);
     }
 }
 
-void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins) {
+void AnalyzerCore::FillHist(const TString &histname, float value, float weight, int n_bin, float *xbins)
+{
     auto histkey = string(histname.Data());
     auto it = histmap1d.find(histkey);
-    if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, xbins);
+    if (it == histmap1d.end())
+    {
+        TH1 *this_hist;
+        if (useTH1F)
+            this_hist = new TH1F(histkey.c_str(), "", n_bin, xbins);
+        else
+            this_hist = new TH1D(histkey.c_str(), "", n_bin, xbins);
         this_hist->SetDirectory(nullptr);
         histmap1d[histkey] = this_hist;
         this_hist->Fill(value, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value, weight);
     }
 }
 
 void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float weight,
-                                                   int n_binx, float x_min, float x_max,
-                                                   int n_biny, float y_min, float y_max) {
+                            int n_binx, float x_min, float x_max,
+                            int n_biny, float y_min, float y_max)
+{
     auto histkey = string(histname);
     auto it = histmap2d.find(histkey);
-    if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
+    if (it == histmap2d.end())
+    {
+        TH2 *this_hist;
+        if (useTH1F)
+            this_hist = new TH2F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
+        else
+            this_hist = new TH2D(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
         this_hist->SetDirectory(nullptr);
         histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value_x, value_y, weight);
     }
 }
 
 void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float weight,
-                                                    int n_binx, float *xbins,
-                                                    int n_biny, float *ybins) {
+                            int n_binx, float *xbins,
+                            int n_biny, float *ybins)
+{
     auto histkey = string(histname);
     auto it = histmap2d.find(histkey);
-    if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
+    if (it == histmap2d.end())
+    {
+        TH2 *this_hist;
+        if (useTH1F)
+            this_hist = new TH2F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
+        else
+            this_hist = new TH2D(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
         this_hist->SetDirectory(nullptr);
         histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value_x, value_y, weight);
     }
 }
 
-void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z, 
-                                      float weight, int n_binx, float x_min, float x_max,
-                                                    int n_biny, float y_min, float y_max,
-                                                    int n_binz, float z_min, float z_max) {
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z,
+                            float weight, int n_binx, float x_min, float x_max,
+                            int n_biny, float y_min, float y_max,
+                            int n_binz, float z_min, float z_max)
+{
     auto histkey = string(histname);
     auto it = histmap3d.find(histkey);
-    if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
+    if (it == histmap3d.end())
+    {
+        TH3 *this_hist;
+        if (useTH1F)
+            this_hist = new TH3F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
+        else
+            this_hist = new TH3D(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
         this_hist->SetDirectory(nullptr);
         histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value_x, value_y, value_z, weight);
     }
 }
 
-void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z, 
-                                      float weight, int n_binx, float *xbins,
-                                                    int n_biny, float *ybins,
-                                                    int n_binz, float *zbins) {
+void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_y, float value_z,
+                            float weight, int n_binx, float *xbins,
+                            int n_biny, float *ybins,
+                            int n_binz, float *zbins)
+{
     auto histkey = string(histname);
     auto it = histmap3d.find(histkey);
-    if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
+    if (it == histmap3d.end())
+    {
+        TH3 *this_hist;
+        if (useTH1F)
+            this_hist = new TH3F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
+        else
+            this_hist = new TH3D(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
         this_hist->SetDirectory(nullptr);
         histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
     }
-    else {
+    else
+    {
         it->second->Fill(value_x, value_y, value_z, weight);
     }
 }
-TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps, const RVec<TString> &drops){
+TTree *AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps, const RVec<TString> &drops)
+{
     auto treekey = string(treename);
     auto it = treemap.find(treekey);
-    if (it == treemap.end()){
-        //if keeps and drops are empty, make new tree
-        if(keeps.size() == 0 && drops.size() == 0){
+    if (it == treemap.end())
+    {
+        // if keeps and drops are empty, make new tree
+        if (keeps.size() == 0 && drops.size() == 0)
+        {
             TTree *newtree = new TTree(treekey.c_str(), "");
             treemap[treekey] = newtree;
             return newtree;
         }
-        else{
-            //check tree is empty. 
-            if(fChain->GetEntries() == 0){
+        else
+        {
+            // check tree is empty.
+            if (fChain->GetEntries() == 0)
+            {
                 cout << "[AnalyzerCore::NewTree] fChain is empty." << endl;
                 exit(0);
             }
@@ -1490,44 +1759,51 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
                 newtree->SetBranchStatus(keep, 1);
             }
             treemap[treekey] = newtree;
-            unordered_map<string, TBranch*> this_branchmap;
+            unordered_map<string, TBranch *> this_branchmap;
             branchmaps[newtree] = this_branchmap;
             return newtree;
         }
     }
-    else{
+    else
+    {
         return it->second;
     }
 }
 
-TTree* AnalyzerCore::GetTree(const TString &treename){
+TTree *AnalyzerCore::GetTree(const TString &treename)
+{
     auto treekey = string(treename);
     auto it = treemap.find(treekey);
-    if (it == treemap.end()){
+    if (it == treemap.end())
+    {
         cout << "[AnalyzerCore::GetTree] Tree " << treename << " not found" << endl;
         exit(ENODATA);
     }
     return it->second;
 }
 
-void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist){
-    try{
-       void* this_address = address;
+void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist)
+{
+    try
+    {
+        void *this_address = address;
         TTree *tree = GetTree(treename);
-        
-        unordered_map<string, TBranch*>* this_branchmap = &branchmaps[tree];
+
+        unordered_map<string, TBranch *> *this_branchmap = &branchmaps[tree];
         auto it = this_branchmap->find(string(branchname));
 
-        if (it == this_branchmap->end()){
+        if (it == this_branchmap->end())
+        {
             auto br = tree->Branch(branchname, this_address, leaflist);
             this_branchmap->insert({string(branchname), br});
         }
-        else{
+        else
+        {
             it->second->SetAddress(this_address);
         }
-        
     }
-    catch(int e){
+    catch (int e)
+    {
         cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
         exit(e);
     }
@@ -1537,7 +1813,6 @@ template void AnalyzerCore::SetBranch_Vector<int>(const TString &, const TString
 template void AnalyzerCore::SetBranch_Vector<float>(const TString &, const TString &, std::vector<float> &);
 template void AnalyzerCore::SetBranch_Vector<double>(const TString &, const TString &, std::vector<double> &);
 template void AnalyzerCore::SetBranch_Vector<bool>(const TString &, const TString &, std::vector<bool> &);
-
 
 void AnalyzerCore::FillTrees(const TString &treename)
 {
@@ -1582,30 +1857,31 @@ void AnalyzerCore::FillTrees(const TString &treename)
     }
 }
 
-
-void AnalyzerCore::WriteHist() {
+void AnalyzerCore::WriteHist()
+{
     cout << "[AnalyzerCore::WriteHist] Writing histograms to " << outfile->GetName() << endl;
-    std::vector<std::pair<std::string, TH1F *>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
-    std::vector<std::pair<std::string, TH2F *>> sorted_histograms2d(histmap2d.begin(), histmap2d.end());
-    std::vector<std::pair<std::string, TH3F *>> sorted_histograms3d(histmap3d.begin(), histmap3d.end());
+    std::vector<std::pair<std::string, TH1 *>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
+    std::vector<std::pair<std::string, TH2 *>> sorted_histograms2d(histmap2d.begin(), histmap2d.end());
+    std::vector<std::pair<std::string, TH3 *>> sorted_histograms3d(histmap3d.begin(), histmap3d.end());
     std::sort(sorted_histograms1d.begin(), sorted_histograms1d.end(),
-              [](const std::pair<std::string, TH1F *> &a, const std::pair<std::string, TH1F *> &b)
+              [](const std::pair<std::string, TH1 *> &a, const std::pair<std::string, TH1 *> &b)
               {
                   return a.first < b.first;
               });
     std::sort(sorted_histograms2d.begin(), sorted_histograms2d.end(),
-              [](const std::pair<std::string, TH2F *> &a, const std::pair<std::string, TH2F *> &b)
+              [](const std::pair<std::string, TH2 *> &a, const std::pair<std::string, TH2 *> &b)
               {
                   return a.first < b.first;
               });
     std::sort(sorted_histograms3d.begin(), sorted_histograms3d.end(),
-              [](const std::pair<std::string, TH3F *> &a, const std::pair<std::string, TH3F *> &b)
+              [](const std::pair<std::string, TH3 *> &a, const std::pair<std::string, TH3 *> &b)
               {
                   return a.first < b.first;
               });
-    for (const auto &pair: sorted_histograms1d) {
+    for (const auto &pair : sorted_histograms1d)
+    {
         const string &histname = pair.first;
-        TH1F *hist = pair.second;
+        TH1 *hist = pair.second;
         cout << "[AnalyzerCore::WriteHist] Writing 1D histogram: " << histname << endl;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
@@ -1616,14 +1892,16 @@ void AnalyzerCore::WriteHist() {
         last_slash == string::npos ? this_name = histname : this_name = histname.substr(last_slash + 1);
 
         TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
-        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        if (!this_dir)
+            outfile->mkdir(this_prefix.c_str());
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
-    for (const auto &pair: sorted_histograms2d) {
+    for (const auto &pair : sorted_histograms2d)
+    {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 2D histogram: " << histname << endl;
-        TH2F *hist = pair.second;
+        TH2 *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -1633,14 +1911,16 @@ void AnalyzerCore::WriteHist() {
         last_slash == string::npos ? this_name = histname : this_name = histname.substr(last_slash + 1);
 
         TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
-        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        if (!this_dir)
+            outfile->mkdir(this_prefix.c_str());
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
-    for (const auto &pair: sorted_histograms3d) {
+    for (const auto &pair : sorted_histograms3d)
+    {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 3D histogram: " << histname << endl;
-        TH3F *hist = pair.second;
+        TH3 *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -1650,11 +1930,13 @@ void AnalyzerCore::WriteHist() {
         last_slash == string::npos ? this_name = histname : this_name = histname.substr(last_slash + 1);
 
         TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
-        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        if (!this_dir)
+            outfile->mkdir(this_prefix.c_str());
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
-    for (const auto &pair: treemap) {
+    for (const auto &pair : treemap)
+    {
         const string &treename = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing tree: " << treename << endl;
         TTree *tree = pair.second;
@@ -1665,9 +1947,10 @@ void AnalyzerCore::WriteHist() {
         last_slash == string::npos ? this_name = treename : this_name = treename.substr(last_slash + 1);
 
         TDirectory *this_dir = outfile->GetDirectory(this_prefix.c_str());
-        if (!this_dir) outfile->mkdir(this_prefix.c_str());
+        if (!this_dir)
+            outfile->mkdir(this_prefix.c_str());
         outfile->cd(this_prefix.c_str());
-        TTree* temptree = tree->CloneTree(-1);//this is because the tree contains lot of empty disabled branch. I don't know better way to handle this, so just keep memory-consuming way for now.
+        TTree *temptree = tree->CloneTree(-1); // this is because the tree contains lot of empty disabled branch. I don't know better way to handle this, so just keep memory-consuming way for now.
         temptree->Write();
         delete temptree;
         delete tree;
@@ -1675,4 +1958,3 @@ void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms done" << endl;
     outfile->Close();
 }
-

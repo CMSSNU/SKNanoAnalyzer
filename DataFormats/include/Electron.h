@@ -100,11 +100,11 @@ public:
     inline WORKINGPOINT CutBased() const {return (WORKINGPOINT)j_cutBased; }
 
     // MVA scores
-    enum class MVATYPE {NONE, MVAISO, MVANOISO, MVATTH};
+    enum class MVATYPE {NONE, MVAISO, MVANOISO, MVAPROMPT};
     void SetMVA(MVATYPE type, float score);
     inline float MvaIso() const { return j_mvaIso; }
     inline float MvaNoIso() const { return j_mvaNoIso; }
-    inline float MvaTTH() const { return j_mvaTTH; }
+    inline float MvaTTH() const { return j_mvaPrompt; }
 
     // ID helper functions
     bool PassID(const TString ID) const;
@@ -126,7 +126,7 @@ private:
     bool j_mvaIso_WP80, j_mvaIso_WP90, j_mvaNoIso_WP80, j_mvaNoIso_WP90, j_cutBased_HEEP;
     unsigned char j_cutBased;
     
-    float j_mvaIso, j_mvaNoIso, j_mvaTTH;
+    float j_mvaIso, j_mvaNoIso, j_mvaPrompt;
 
     // others
     float j_r9;

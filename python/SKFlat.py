@@ -35,7 +35,7 @@ SKNANO_INSTALLDIR = os.environ['SKNANO_INSTALLDIR']
 SKNANO_RUN3_NANOAODPATH = os.environ['SKNANO_RUN3_NANOAODPATH']
 SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
-Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3, '2023':3, '2023BPix':3}
+Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3, '2023':3, '2023BPix':3, '2024':3}
 TOKEN = os.environ['TOKEN_TELEGRAMBOT']
 chat_id = os.environ['USER_CHATID']
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}"
@@ -44,7 +44,11 @@ SKIMMING_MODE = False
 #Load commonSampleInfo.json at start
 sampleInfoJsons = {}
 for era in Run.keys():
-    sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
+    try:
+        sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
+    except:
+        print(f"\033[93mWarning: {era} CommonSampleInfo.json is not exist\033[0m")
+        sampleInfoJsons[era] = {}
 skimInfoJsons = {}
 
 

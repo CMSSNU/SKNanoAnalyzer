@@ -28,27 +28,33 @@ public:
     j_hadronFlavour = static_cast<short>(hf);
   };
 
-  inline void SetTaggerResults(RVec<float> ds)
+  inline void SetTaggerResults(RVec<float> deepjet, RVec<float> pnet, RVec<float> parT)
   {
-    //check nan. change to -1
-    for (auto &d : ds)
-    {
-      if (std::isnan(d))
-        d = -1;
-    }
-    j_btagDeepFlavB = ds[0];
-    j_btagDeepFlavCvB = ds[1];
-    j_btagDeepFlavCvL = ds[2];
-    j_btagDeepFlavQG = ds[3];
-    j_btagPNetB = ds[4];
-    j_btagPNetCvB = ds[5];
-    j_btagPNetCvL = ds[6];
-    j_btagPNetQvG = ds[7];
-    j_btagPNetTauVJet = ds[8];
-    j_btagRobustParTAK4B = ds[9];
-    j_btagRobustParTAK4CvB = ds[10];
-    j_btagRobustParTAK4CvL = ds[11];
-    j_btagRobustParTAK4QG = ds[12];
+    j_btagDeepFlav[JetTagging::JetFlavTaggerScoreType::B] = deepjet[0];
+    j_btagDeepFlav[JetTagging::JetFlavTaggerScoreType::CvB] = deepjet[1];
+    j_btagDeepFlav[JetTagging::JetFlavTaggerScoreType::CvL] = deepjet[2];
+    j_btagDeepFlav[JetTagging::JetFlavTaggerScoreType::QvG] = deepjet[3];
+
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::B] = pnet[0];
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::CvB] = pnet[1];
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::CvL] = pnet[2];
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::CvNotB] = pnet[3];
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::QvG] = pnet[4];
+    j_btagPNet[JetTagging::JetFlavTaggerScoreType::TauVJet] = pnet[5];
+
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::B] = parT[0];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::CvB] = parT[1];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::CvL] = parT[2];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::CvNotB] = parT[3];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::Ele] = parT[4];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::Mu] = parT[5];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::QvG] = parT[6];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::SvCB] = parT[7];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::SvUDG] = parT[8];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::TauVJet] = parT[9];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::probUDG] = parT[10];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::probB] = parT[11];
+    j_btagUParTAK4[JetTagging::JetFlavTaggerScoreType::probBB] = parT[12];
   };
   inline void SetEnergyFractions(float cH, float nH, float nEM, float cEM, float muE)
   {
@@ -88,29 +94,57 @@ public:
     j_svIdx2 = sv2;
   };
 
-  inline void SetJetID(unsigned char b)
+  inline void SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF = -1, float Jet_neEmEF = -1, float Jet_muEF = -1, float Jet_chEmEF = -1)
   {
     // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
-    j_looseJetId = (b & 1);
-    j_tightJetID = (b & 2);
-    j_tightLepVetoJetID = (b & 4);
+    if(Run == 2){
+      if(Jet_neHEF > 0.f || Jet_neEmEF > 0.f || Jet_muEF > 0.f || Jet_chEmEF > 0.f){
+        //for run2, we don't need this OTF calculation
+        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run2");
+      }
+      j_looseJetId = (b & 1);
+      j_tightJetID = (b & 2);
+      j_tightLepVetoJetID = (b & 4);
+    }
+    //due to the bug in the NanoAODv12, Below fix is necessary
+    //Please refer https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/117 or https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID13p6TeV#Recommendations_for_the_13_6_AN1
+    else if(Run == 3){
+      if(Jet_neHEF < 0.f || Jet_neEmEF < 0.f || Jet_muEF < 0.f || Jet_chEmEF < 0.f){
+        //for run3, we need this OTF calculation
+        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run3, please provide Jet_neHEF, Jet_neEmEF, Jet_muEF, Jet_chEmEF");
+      }
+
+      bool Jet_passJetIdTight = false;
+      if (abs(eta) <= 2.7) Jet_passJetIdTight = b & (1 << 1);
+      else if (abs(eta) > 2.7 && abs(eta) <= 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neHEF < 0.99);
+      else if (abs(eta) > 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neEmEF < 0.4);
+
+      bool Jet_passJetIdTightLepVeto = false;
+      if (abs(eta) <= 2.7) Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);
+      else Jet_passJetIdTightLepVeto = Jet_passJetIdTight;
+
+      j_looseJetId = (b & 1);
+      j_tightJetID = Jet_passJetIdTight;
+      j_tightLepVetoJetID = Jet_passJetIdTightLepVeto;
+    }
+
   };
-  inline void SetJetPuID(int puIDBit)
+  inline void SetJetPuIDScore(float puIDScore)
   {
-    j_loosePuId = (puIDBit & 1);
-    j_mediumPuId = (puIDBit & 2);
-    j_tightPuId = (puIDBit & 4);
+    j_puIDScore = puIDScore;
   };
   inline void SetCorrections(RVec<float> corrs)
   {
     j_PNetRegPtRawCorr = corrs[0];
     j_PNetRegPtRawCorrNeutrino = corrs[1];
     j_PNetRegPtRawRes = corrs[2];
-    j_rawFactor = corrs[3];
-    j_bRegCorr = corrs[4];
-    j_bRegRes = corrs[5];
-    j_cRegCorr = corrs[6];
-    j_cRegRes = corrs[7];
+    j_UParTAK4RegPtRawCorr = corrs[3];
+    j_UParTAK4RegPtRawCorrNeutrino = corrs[4];
+    j_UParTAK4RegPtRawRes = corrs[5];
+    j_UParTAK4V1RegPtRawCorr = corrs[6];
+    j_UParTAK4V1RegPtRawCorrNeutrino = corrs[7];
+    j_UParTAK4V1RegPtRawRes = corrs[8];
+    j_rawFactor = corrs[9];
   };
 
   inline void SetM(double jet_m)
@@ -132,9 +166,7 @@ public:
   inline float neutralHadronFraction() const { return j_neHEF; }
   inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
   inline float nConstituents() const { return j_nConstituents; }
-  float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
-  pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
-  float GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const;
+  float GetTaggerResult(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerScoreType) const;
   TLorentzVector GetUnsmearedP4() const;
 
   bool PassID(TString ID) const;
@@ -145,32 +177,25 @@ private:
   bool j_tightJetID;
   bool j_tightLepVetoJetID;
   // jetPuID
-  bool j_loosePuId;
-  bool j_mediumPuId;
-  bool j_tightPuId;
+  bool j_puIDScore;
   // corrections
   float j_PNetRegPtRawCorr;
   float j_PNetRegPtRawCorrNeutrino;
   float j_PNetRegPtRawRes;
+  float j_UParTAK4RegPtRawCorr;
+  float j_UParTAK4RegPtRawCorrNeutrino;
+  float j_UParTAK4RegPtRawRes;
+  float j_UParTAK4V1RegPtRawCorr;
+  float j_UParTAK4V1RegPtRawCorrNeutrino;
+  float j_UParTAK4V1RegPtRawRes;
   float j_rawFactor;
-  float j_bRegCorr;
-  float j_bRegRes;
-  float j_cRegCorr;
-  float j_cRegRes;
   // flav. tagging scores
-  float j_btagDeepFlavB;
-  float j_btagDeepFlavCvB;
-  float j_btagDeepFlavCvL;
-  float j_btagDeepFlavQG;
-  float j_btagPNetB;
-  float j_btagPNetCvB;
-  float j_btagPNetCvL;
-  float j_btagPNetQvG;
-  float j_btagPNetTauVJet;
-  float j_btagRobustParTAK4B;
-  float j_btagRobustParTAK4CvB;
-  float j_btagRobustParTAK4CvL;
-  float j_btagRobustParTAK4QG;
+  //deepjet
+  unordered_map<JetTagging::JetFlavTaggerScoreType, float> j_btagDeepFlav;
+  //pnet
+  unordered_map<JetTagging::JetFlavTaggerScoreType, float> j_btagPNet;
+  // part
+  unordered_map<JetTagging::JetFlavTaggerScoreType, float> j_btagUParTAK4;
   // jet substructure
   float j_chEmEF;
   float j_chHEF;

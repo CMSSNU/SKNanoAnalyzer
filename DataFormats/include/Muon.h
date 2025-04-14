@@ -77,12 +77,12 @@ public:
     inline WorkingPoint TkIsoId() const {return (WorkingPoint)j_tkIsoId;}
 
     // MVA ID scores
-    enum class MVAID {NONE, SOFTMVA, MVALOWPT, MVATTH};
+    enum class MVAID {NONE, SOFTMVA, MVALOWPT, MVAPROMPT};
 
     void SetMVAID(MVAID id, float score);
     inline float SoftMva() const {return j_softMva;}
     inline float MvaLowPt() const {return j_mvaLowPt;}
-    inline float MvaTTH() const {return j_mvaTTH;}
+    inline float MvaTTH() const {return j_mvaPrompt;}
 
     // ID helper functions
     bool PassID(const MuonID ID) const;
@@ -92,7 +92,7 @@ private:
     bool j_isTracker, j_isStandalone, j_isGlobal;
     bool j_looseId, j_mediumId, j_mediumPromptId, j_tightId, j_softId, j_softMvaId, j_triggerIdLoose;
     unsigned char j_highPtId, j_miniIsoId, j_multiIsoId, j_mvaMuId, j_pfIsoId, j_puppiIsoId, j_tkIsoId;
-    float j_softMva, j_mvaLowPt, j_mvaTTH;
+    float j_softMva, j_mvaLowPt, j_mvaPrompt;
 
     ClassDef(Muon, 1);
 };

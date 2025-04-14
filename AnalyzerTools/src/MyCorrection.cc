@@ -181,6 +181,11 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era, string btagging_
         config.json_jetvetomap += "/2023_Summer23BPix/jetvetomaps.json.gz";
         config.json_met += "/2023_Summer23BPix/met.json.gz";
     }
+    else if(era == "2024")
+    {
+        config.json_jerc += "/2024_Winter24/jet_jerc.json.gz";
+        config.json_jetvetomap += "/2024_Winter24/jetvetomaps.json.gz";
+    }
     else
     {
         throw std::invalid_argument("[MyCorrection::GetEraConfig] Invalid era: " + era);
@@ -208,17 +213,18 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
 
     std::vector<CorrectionInfo> correction_loading_list = {
         //mandatory
-        {"muon SF", config.json_muon, cset_muon, false},
-        {"puWeights", config.json_puWeights, cset_puWeights, false},
-        {"btagging", config.json_btagging, cset_btagging, false},
-        {"ctagging", config.json_ctagging, cset_ctagging, false},
-        {"btagging eff", config.json_btagging_eff, cset_btagging_eff, false},
-        {"ctagging eff", config.json_ctagging_eff, cset_ctagging_eff, false},
-        {"electron", config.json_electron, cset_electron, false},
-        {"photon", config.json_photon, cset_photon, false},
-        {"jerc", config.json_jerc, cset_jerc, false},
-        {"jerc_fatjet", config.json_jerc_fatjet, cset_jerc_fatjet, false},
-        {"jetvetomap", config.json_jetvetomap, cset_jetvetomap, false},
+        //TODO: Temporary change to "true" because almost no correction available for 2024
+        {"muon SF", config.json_muon, cset_muon, true},
+        {"puWeights", config.json_puWeights, cset_puWeights, true},
+        {"btagging", config.json_btagging, cset_btagging, true},
+        {"ctagging", config.json_ctagging, cset_ctagging, true},
+        {"btagging eff", config.json_btagging_eff, cset_btagging_eff, true},
+        {"ctagging eff", config.json_ctagging_eff, cset_ctagging_eff, true},
+        {"electron", config.json_electron, cset_electron, true},
+        {"photon", config.json_photon, cset_photon, true},
+        {"jerc", config.json_jerc, cset_jerc, true},
+        {"jerc_fatjet", config.json_jerc_fatjet, cset_jerc_fatjet, true},
+        {"jetvetomap", config.json_jetvetomap, cset_jetvetomap, true},
         // Optional files
         {"muon trig eff", config.json_muon_trig_eff, cset_muon_trig_eff, true},
         {"electron hlt", config.json_electron_hlt, cset_electron_hlt, true},
@@ -490,7 +496,7 @@ float MyCorrection::GetBTaggingEff(const float eta, const float pt, const int fl
     string this_taggerStr = JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
     string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
     correction::Correction::Ref cset = cset_btagging_eff->at(this_taggerStr);
-    return cset->evaluate({"eff", this_wpStr, flav, fabs(eta), pt});
+    return cset->evaluate({getSystString_BTV(syst), this_wpStr, flav, fabs(eta), pt});
 }
 
 float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source)
@@ -519,7 +525,7 @@ float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 this_flav = 5;
             else if (abs(jet.hadronFlavour()) == 4)
                 this_flav = 4;
-            float this_score = jet.GetBTaggerResult(tagger);
+            float this_score = jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::B);
             if (this_score < 0.f)
                 continue; // defaulted jet
             if ((c_flav_source.find(source.Data()) != c_flav_source.end()))
@@ -564,7 +570,7 @@ float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 sf = cset_light->evaluate({syst_str, this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
             else
                 sf = cset->evaluate({syst_str, this_wpStr, this_flav, fabs(jet.Eta()), jet.Pt()});
-            if (jet.GetBTaggerResult(tagger) > this_cut)
+            if (jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::B) > this_cut)
             {
                 weight *= sf;
             }
@@ -705,7 +711,8 @@ float MyCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
                 this_flav = 5;
             else if (abs(jet.hadronFlavour()) == 4)
                 this_flav = 4;
-            pair<float, float> this_ctag = jet.GetCTaggerResult(tagger);
+            pair<float, float> this_ctag = make_pair(jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvB),
+                                          jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvL));
             if (this_ctag.first < 0.f || this_ctag.second < 0.f)
                 continue; // defaulted jet
             weight *= cset->evaluate({syst_str,
@@ -723,7 +730,8 @@ float MyCorrection::GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFl
         pair<float, float> this_score;
         for (const auto &jet : jets)
         {
-            this_score = jet.GetCTaggerResult(tagger);
+            this_score = make_pair(jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvB),
+                                          jet.GetTaggerResult(tagger, JetTagging::JetFlavTaggerScoreType::CvL));
             int this_flav = 0;
             if (abs(jet.hadronFlavour()) == 5)
                 this_flav = 5;

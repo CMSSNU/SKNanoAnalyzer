@@ -13,16 +13,65 @@ using namespace std;
 #include "ROOT/RVec.hxx"
 #include "ROOT/RDataFrame.hxx"
 #include <nlohmann/json.hpp>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
 using namespace ROOT::VecOps;
 
-class SKNanoLoader {
+template <typename T>
+class TTreeReaderArrayWrapper
+{
+public:
+    TTreeReaderArrayWrapper() = default;
+
+    void init(TTreeReader &reader, const char *branchName)
+    {
+        myArray = std::make_unique<TTreeReaderArray<T>>(reader, branchName);
+    }
+
+    T operator[](std::size_t i) const
+    {
+        return (*myArray)[i];
+    }
+
+    std::size_t size() const
+    {
+        return myArray ? myArray->GetSize() : 0;
+    }
+
+private:
+    std::unique_ptr<TTreeReaderArray<T>> myArray;
+};
+
+template <typename T>
+class TTreeReaderValueWrapper
+{
+public:
+    TTreeReaderValueWrapper() = default;
+
+    void init(TTreeReader &reader, const char *branchName)
+    {
+        myValue = std::make_unique<TTreeReaderValue<T>>(reader, branchName);
+    }
+
+    operator T() const
+    {
+        return **myValue;
+    }
+
+private:
+    std::unique_ptr<TTreeReaderValue<T>> myValue;
+};
+
+class SKNanoLoader
+{
 public:
     SKNanoLoader();
     virtual ~SKNanoLoader();
 
-    //virtual long GetEntry(long entry);
+    // virtual long GetEntry(long entry);
     virtual void SetTreeName(TString tname) { fChain = new TChain(tname); }
     virtual int AddFile(TString filename) { return fChain->Add(filename, -1); }
+    virtual void InitBranch();
 
     long MaxEvent, NSkipEvent;
     int LogEvery;
@@ -30,7 +79,7 @@ public:
     TString DataStream;
     TString MCSample;
     TString Campaign;
-    //bool IsFastSim;
+    // bool IsFastSim;
     int DataYear;
     TString DataEra;
     int Run;
@@ -38,529 +87,920 @@ public:
     RVec<TString> Userflags;
 
     virtual void Init();
-    virtual void SetMaxLeafSize();
     virtual void Loop();
-    virtual void executeEvent(){};
+    virtual void executeEvent() {};
 
-    virtual void SetEra(TString era) {
-        DataEra=era;
-        DataYear=TString(era(0,4)).Atoi();
-        //2016, 2017, 2018 are Run2
-        if(DataYear == 2016 or DataYear == 2017 or DataYear == 2018) Run = 2;
-        else if(DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025) Run = 3;
+    virtual void SetEra(TString era)
+    {
+        DataEra = era;
+        DataYear = TString(era(0, 4)).Atoi();
+        // 2016, 2017, 2018 are Run2
+        if (DataYear == 2016 or DataYear == 2017 or DataYear == 2018)
+            Run = 2;
+        else if (DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025)
+            Run = 3;
     }
-    virtual void SetCampaign(TString campaign) { Campaign=campaign; }
+    virtual void SetCampaign(TString campaign) { Campaign = campaign; }
 
     virtual TString GetEra() const { return DataEra; }
     virtual TString GetCampaign() const { return Campaign; }
     virtual int GetYear() const { return DataYear; }
 
-    TChain *fChain=nullptr;
-    // ****** WARNING ******
-    // Do not mix RVec and Array while declaring variables
-    // It will cause a memory allocation issue - not be spotted while compiling
-    // ****** WARNING ******
-    // Weights
-    Float_t genWeight;
-    Float_t LHEWeight_originalXWGTUP;
-    Float_t Generator_weight;
-    Int_t nLHEPdfWeight;   // 325300 - 325402
-    Int_t nLHEScaleWeight; // 9
-    Int_t nPSWeight;       // 4
-    RVec<Float_t> LHEPdfWeight;
-    RVec<Float_t> LHEScaleWeight;
-    RVec<Float_t> PSWeight;
+    TChain *fChain = nullptr;
+    TTreeReader *fReader = nullptr;
 
-    // PDFs
-    Int_t Generator_id1;
-    Int_t Generator_id2;
-    Float_t Generator_x1;
-    Float_t Generator_x2;
-    Float_t Generator_xpdf1;
-    Float_t Generator_xpdf2;
-    Float_t Generator_scalePDF; 
+    // ==============================================================
+    //  _         _                         _       _    _         _     _
+    // | |__  ___| |_____ __ __  __ ___  __| |___  | |__| |___  __| |__ (_)___
+    // | '_ \/ -_) / _ \ V  V / / _/ _ \/ _` / -_) | '_ \ / _ \/ _| / / | (_-<
+    // |_.__/\___|_\___/\_/\_/  \__\___/\__,_\___| |_.__/_\___/\__|_\_\ |_/__/
 
-    // LHE
-    Float_t LHE_HT, LHE_HTIncoming;
-    Float_t LHE_Vpt;
-    Float_t LHE_AlphaS;
-    UChar_t LHE_Njets, LHE_Nb, LHE_Nc, LHE_Nuds, LHE_Nglu;
-    UChar_t LHE_NpLO, LHE_NpNLO;
+    //            _                                      _          _ _
+    //  __ _ _  _| |_ ___ ___ __ _ ___ _ _  ___ _ _ __ _| |_ ___ __| | |
+    // / _` | || |  _/ _ \___/ _` / -_) ' \/ -_) '_/ _` |  _/ -_) _` |_|
+    // \__,_|\_,_|\__\___/   \__, \___|_||_\___|_| \__,_|\__\___\__,_(_)
+    //                       |___/
+    //==============================================================
+    // Electron
+    TTreeReaderArrayWrapper<Float_t> Electron_IPx;
+    TTreeReaderArrayWrapper<Float_t> Electron_IPy;
+    TTreeReaderArrayWrapper<Float_t> Electron_IPz;
+    TTreeReaderArrayWrapper<Float_t> Electron_PreshowerEnergy;
+    TTreeReaderArrayWrapper<Int_t> Electron_charge;
+    TTreeReaderArrayWrapper<Bool_t> Electron_convVeto;
+    TTreeReaderArrayWrapper<UChar_t> Electron_cutBased;
+    TTreeReaderArrayWrapper<Bool_t> Electron_cutBased_HEEP;
+    TTreeReaderArrayWrapper<Float_t> Electron_deltaEtaSC;
+    TTreeReaderArrayWrapper<Float_t> Electron_dr03EcalRecHitSumEt;
+    TTreeReaderArrayWrapper<Float_t> Electron_dr03HcalDepth1TowerSumEt;
+    TTreeReaderArrayWrapper<Float_t> Electron_dr03TkSumPt;
+    TTreeReaderArrayWrapper<Float_t> Electron_dr03TkSumPtHEEP;
+    TTreeReaderArrayWrapper<Float_t> Electron_dxy;
+    TTreeReaderArrayWrapper<Float_t> Electron_dxyErr;
+    TTreeReaderArrayWrapper<Float_t> Electron_dz;
+    TTreeReaderArrayWrapper<Float_t> Electron_dzErr;
+    TTreeReaderArrayWrapper<Float_t> Electron_eInvMinusPInv;
+    TTreeReaderArrayWrapper<Float_t> Electron_ecalEnergy;
+    TTreeReaderArrayWrapper<Float_t> Electron_ecalEnergyError;
+    TTreeReaderArrayWrapper<Float_t> Electron_energyErr;
+    TTreeReaderArrayWrapper<Float_t> Electron_eta;
+    TTreeReaderArrayWrapper<Float_t> Electron_fbrem;
+    TTreeReaderArrayWrapper<Short_t> Electron_fsrPhotonIdx;
+    TTreeReaderArrayWrapper<UChar_t> Electron_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> Electron_genPartIdx;
+    TTreeReaderArrayWrapper<Float_t> Electron_gsfTrketaMode;
+    TTreeReaderArrayWrapper<Float_t> Electron_gsfTrkpMode;
+    TTreeReaderArrayWrapper<Float_t> Electron_gsfTrkpModeErr;
+    TTreeReaderArrayWrapper<Float_t> Electron_gsfTrkphiMode;
+    TTreeReaderArrayWrapper<Float_t> Electron_hoe;
+    TTreeReaderArrayWrapper<Float_t> Electron_ip3d;
+    TTreeReaderArrayWrapper<Float_t> Electron_ipLengthSig;
+    TTreeReaderArrayWrapper<Bool_t> Electron_isEB;
+    TTreeReaderArrayWrapper<Bool_t> Electron_isEcalDriven;
+    TTreeReaderArrayWrapper<Bool_t> Electron_isPFcand;
+    TTreeReaderArrayWrapper<Float_t> Electron_jetDF;
+    TTreeReaderArrayWrapper<Short_t> Electron_jetIdx;
+    TTreeReaderArrayWrapper<UChar_t> Electron_jetNDauCharged;
+    TTreeReaderArrayWrapper<Float_t> Electron_jetPtRelv2;
+    TTreeReaderArrayWrapper<Float_t> Electron_jetRelIso;
+    TTreeReaderArrayWrapper<UChar_t> Electron_lostHits;
+    TTreeReaderArrayWrapper<Float_t> Electron_mass;
+    TTreeReaderArrayWrapper<Float_t> Electron_miniPFRelIso_all;
+    TTreeReaderArrayWrapper<Float_t> Electron_miniPFRelIso_chg;
+    TTreeReaderArrayWrapper<Float_t> Electron_mvaHZZIso;
+    TTreeReaderArrayWrapper<Float_t> Electron_mvaIso;
+    TTreeReaderArrayWrapper<Bool_t> Electron_mvaIso_WP80;
+    TTreeReaderArrayWrapper<Bool_t> Electron_mvaIso_WP90;
+    TTreeReaderArrayWrapper<Bool_t> Electron_mvaIso_WPHZZ;
+    TTreeReaderArrayWrapper<Float_t> Electron_mvaNoIso;
+    TTreeReaderArrayWrapper<Bool_t> Electron_mvaNoIso_WP80;
+    TTreeReaderArrayWrapper<Bool_t> Electron_mvaNoIso_WP90;
+    TTreeReaderArrayWrapper<Int_t> Electron_pdgId;
+    TTreeReaderArrayWrapper<Float_t> Electron_pfRelIso03_all;
+    TTreeReaderArrayWrapper<Float_t> Electron_pfRelIso03_chg;
+    TTreeReaderArrayWrapper<Float_t> Electron_pfRelIso04_all;
+    TTreeReaderArrayWrapper<Float_t> Electron_phi;
+    TTreeReaderArrayWrapper<Short_t> Electron_photonIdx;
+    TTreeReaderArrayWrapper<Float_t> Electron_promptMVA;
+    TTreeReaderArrayWrapper<Float_t> Electron_pt;
+    TTreeReaderArrayWrapper<Float_t> Electron_r9;
+    TTreeReaderArrayWrapper<Float_t> Electron_rawEnergy;
+    TTreeReaderArrayWrapper<Float_t> Electron_scEtOverPt;
+    TTreeReaderArrayWrapper<UChar_t> Electron_seedGain;
+    TTreeReaderArrayWrapper<Short_t> Electron_seediEtaOriX;
+    TTreeReaderArrayWrapper<Short_t> Electron_seediPhiOriY;
+    TTreeReaderArrayWrapper<Float_t> Electron_sieie;
+    TTreeReaderArrayWrapper<Float_t> Electron_sip3d;
+    TTreeReaderArrayWrapper<Float_t> Electron_superclusterEta;
+    TTreeReaderArrayWrapper<Short_t> Electron_svIdx;
+    TTreeReaderArrayWrapper<UChar_t> Electron_tightCharge;
+    TTreeReaderArrayWrapper<Int_t> Electron_vidNestedWPBitmap;
+    TTreeReaderArrayWrapper<Int_t> Electron_vidNestedWPBitmapHEEP;
+    TTreeReaderValueWrapper<Int_t> nElectron;
 
-    // LHEPart
-    Int_t nLHEPart;
-    UInt_t nLHEPart_RunII;
-    RVec<Float_t> LHEPart_pt;
-    RVec<Float_t> LHEPart_eta;
-    RVec<Float_t> LHEPart_phi;
-    RVec<Float_t> LHEPart_mass;
-    RVec<Float_t> LHEPart_incomingpz;
-    RVec<Int_t> LHEPart_pdgId;
-    RVec<Int_t> LHEPart_status;
-    RVec<Int_t> LHEPart_spin;
-    
-    // GenPart
-    Int_t nGenPart;
-    UInt_t nGenPart_RunII;
-    RVec<Float_t> GenPart_eta;
-    RVec<Float_t> GenPart_mass;
-    RVec<Int_t> GenPart_pdgId;
-    RVec<Float_t> GenPart_phi;
-    RVec<Float_t> GenPart_pt;
-    RVec<Int_t> GenPart_status;
-    //Run3
-    RVec<Short_t> GenPart_genPartIdxMother;
-    RVec<UShort_t> GenPart_statusFlags;
-    //Run2
-    RVec<Int_t> GenPart_genPartIdxMother_RunII;
-    RVec<Int_t> GenPart_statusFlags_RunII;
+    // FatJet
+    TTreeReaderArrayWrapper<Float_t> FatJet_area;
+    TTreeReaderArrayWrapper<Float_t> FatJet_chEmEF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_chHEF;
+    TTreeReaderArrayWrapper<Short_t> FatJet_chMultiplicity;
+    TTreeReaderArrayWrapper<Short_t> FatJet_electronIdx3SJ;
+    TTreeReaderArrayWrapper<Float_t> FatJet_eta;
+    TTreeReaderArrayWrapper<Short_t> FatJet_genJetAK8Idx;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_QCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_TopbWev;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_TopbWmv;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_TopbWq;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_TopbWqq;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_TopbWtauhv;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_WvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_XWW3q;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_XWW4q;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_XWWqqev;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_XWWqqmv;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xbb;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xcc;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xcs;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xqq;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xtauhtaue;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xtauhtauh;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_Xtauhtaum;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_massCorrGeneric;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_massCorrX2p;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_withMassTopvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_withMassWvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_globalParT3_withMassZvsQCD;
+    TTreeReaderArrayWrapper<UChar_t> FatJet_hadronFlavour;
+    TTreeReaderArrayWrapper<Float_t> FatJet_hfEmEF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_hfHEF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_lsf3;
+    TTreeReaderArrayWrapper<Float_t> FatJet_mass;
+    TTreeReaderArrayWrapper<Float_t> FatJet_msoftdrop;
+    TTreeReaderArrayWrapper<Float_t> FatJet_muEF;
+    TTreeReaderArrayWrapper<Short_t> FatJet_muonIdx3SJ;
+    TTreeReaderArrayWrapper<Float_t> FatJet_n2b1;
+    TTreeReaderArrayWrapper<Float_t> FatJet_n3b1;
+    TTreeReaderArrayWrapper<UChar_t> FatJet_nConstituents;
+    TTreeReaderArrayWrapper<Float_t> FatJet_neEmEF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_neHEF;
+    TTreeReaderArrayWrapper<Short_t> FatJet_neMultiplicity;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetLegacy_QCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetLegacy_Xbb;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetLegacy_Xcc;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetLegacy_Xqq;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetLegacy_mass;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_H4qvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_HbbvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_HccvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_QCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_TvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_WvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNetWithMass_ZvsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_QCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_QCD0HF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_QCD1HF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_QCD2HF;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_WVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XbbVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XccVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XggVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XqqVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XteVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XtmVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_XttVsQCD;
+    TTreeReaderArrayWrapper<Float_t> FatJet_particleNet_massCorr;
+    TTreeReaderArrayWrapper<Float_t> FatJet_phi;
+    TTreeReaderArrayWrapper<Float_t> FatJet_pt;
+    TTreeReaderArrayWrapper<Float_t> FatJet_rawFactor;
+    TTreeReaderArrayWrapper<Short_t> FatJet_subJetIdx1;
+    TTreeReaderArrayWrapper<Short_t> FatJet_subJetIdx2;
+    TTreeReaderArrayWrapper<Float_t> FatJet_tau1;
+    TTreeReaderArrayWrapper<Float_t> FatJet_tau2;
+    TTreeReaderArrayWrapper<Float_t> FatJet_tau3;
+    TTreeReaderArrayWrapper<Float_t> FatJet_tau4;
+    TTreeReaderValueWrapper<Int_t> nFatJet;
 
-    // GenJet
-    Int_t nGenJet;
-    UInt_t nGenJet_RunII;
-    RVec<Float_t> GenJet_eta;
-    RVec<UChar_t> GenJet_hadronFlavour;
-    RVec<Float_t> GenJet_mass;
-    RVec<Float_t> GenJet_phi;
-    RVec<Float_t> GenJet_pt;
-    //Run3
-    RVec<Short_t> GenJet_partonFlavour;
-    //Run2
-    RVec<Int_t> GenJet_partonFlavour_RunII;
+    // FatJetPFCand
+    TTreeReaderArrayWrapper<Int_t> FatJetPFCand_jetIdx;
+    TTreeReaderArrayWrapper<Int_t> FatJetPFCand_pfCandIdx;
+    TTreeReaderValueWrapper<Int_t> nFatJetPFCand;
 
-    // GenJetAK8
-    Int_t nGenJetAK8;
-    UInt_t nGenJetAK8_RunII;
-    RVec<Float_t> GenJetAK8_eta;
-    RVec<UChar_t> GenJetAK8_hadronFlavour;
-    RVec<Float_t> GenJetAK8_mass;
-    RVec<Float_t> GenJetAK8_phi;
-    RVec<Float_t> GenJetAK8_pt;
-    //Run3
-    RVec<Short_t> GenJetAK8_partonFlavour;
-    //Run2
-    RVec<Int_t> GenJetAK8_partonFlavour_RunII;
+    // Flag
+    TTreeReaderValueWrapper<Bool_t> Flag_BadChargedCandidateFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_BadChargedCandidateSummer16Filter;
+    TTreeReaderValueWrapper<Bool_t> Flag_BadPFMuonDzFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_BadPFMuonFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_BadPFMuonSummer16Filter;
+    TTreeReaderValueWrapper<Bool_t> Flag_CSCTightHalo2015Filter;
+    TTreeReaderValueWrapper<Bool_t> Flag_CSCTightHaloFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_CSCTightHaloTrkMuUnvetoFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_EcalDeadCellBoundaryEnergyFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_EcalDeadCellTriggerPrimitiveFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_HBHENoiseFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_HBHENoiseIsoFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_HcalStripHaloFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_chargedHadronTrackResolutionFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_ecalBadCalibFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_ecalLaserCorrFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_eeBadScFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_globalSuperTightHalo2016Filter;
+    TTreeReaderValueWrapper<Bool_t> Flag_globalTightHalo2016Filter;
+    TTreeReaderValueWrapper<Bool_t> Flag_goodVertices;
+    TTreeReaderValueWrapper<Bool_t> Flag_hcalLaserEventFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_hfNoisyHitsFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_muonBadTrackFilter;
+    TTreeReaderValueWrapper<Bool_t> Flag_trkPOGFilters;
+    TTreeReaderValueWrapper<Bool_t> Flag_trkPOG_logErrorTooManyClusters;
+    TTreeReaderValueWrapper<Bool_t> Flag_trkPOG_manystripclus53X;
+    TTreeReaderValueWrapper<Bool_t> Flag_trkPOG_toomanystripclus53X;
 
-    // GenMet
-    Float_t GenMet_pt;
-    Float_t GenMet_phi;
+    // FsrPhoton
+    TTreeReaderArrayWrapper<Float_t> FsrPhoton_dROverEt2;
+    TTreeReaderArrayWrapper<Short_t> FsrPhoton_electronIdx;
+    TTreeReaderArrayWrapper<Float_t> FsrPhoton_eta;
+    TTreeReaderArrayWrapper<Short_t> FsrPhoton_muonIdx;
+    TTreeReaderArrayWrapper<Float_t> FsrPhoton_phi;
+    TTreeReaderArrayWrapper<Float_t> FsrPhoton_pt;
+    TTreeReaderArrayWrapper<Float_t> FsrPhoton_relIso03;
+    TTreeReaderValueWrapper<Int_t> nFsrPhoton;
 
     // GenDressedLepton
-    Int_t nGenDressedLepton;
-    UInt_t nGenDressedLepton_RunII;
-    RVec<Float_t> GenDressedLepton_pt;
-    RVec<Float_t> GenDressedLepton_eta;
-    RVec<Float_t> GenDressedLepton_phi;
-    RVec<Float_t> GenDressedLepton_mass;
-    RVec<Int_t> GenDressedLepton_pdgId;
-    RVec<Bool_t> GenDressedLepton_hasTauAnc;
+    TTreeReaderArrayWrapper<Float_t> GenDressedLepton_eta;
+    TTreeReaderArrayWrapper<Bool_t> GenDressedLepton_hasTauAnc;
+    TTreeReaderArrayWrapper<Float_t> GenDressedLepton_mass;
+    TTreeReaderArrayWrapper<Int_t> GenDressedLepton_pdgId;
+    TTreeReaderArrayWrapper<Float_t> GenDressedLepton_phi;
+    TTreeReaderArrayWrapper<Float_t> GenDressedLepton_pt;
+    TTreeReaderValueWrapper<Int_t> nGenDressedLepton;
 
-    // GenIsolatedPhotons
-    Int_t nGenIsolatedPhoton;
-    UInt_t nGenIsolatedPhoton_RunII;
-    RVec<Float_t> GenIsolatedPhoton_pt;
-    RVec<Float_t> GenIsolatedPhoton_eta;
-    RVec<Float_t> GenIsolatedPhoton_phi;
-    RVec<Float_t> GenIsolatedPhoton_mass;
-    
+    // GenIsolatedPhoton
+    TTreeReaderArrayWrapper<Float_t> GenIsolatedPhoton_eta;
+    TTreeReaderArrayWrapper<Float_t> GenIsolatedPhoton_mass;
+    TTreeReaderArrayWrapper<Float_t> GenIsolatedPhoton_phi;
+    TTreeReaderArrayWrapper<Float_t> GenIsolatedPhoton_pt;
+    TTreeReaderValueWrapper<Int_t> nGenIsolatedPhoton;
+
+    // GenJet
+    TTreeReaderArrayWrapper<Float_t> GenJet_eta;
+    TTreeReaderArrayWrapper<UChar_t> GenJet_hadronFlavour;
+    TTreeReaderArrayWrapper<Float_t> GenJet_mass;
+    TTreeReaderArrayWrapper<UChar_t> GenJet_nBHadrons;
+    TTreeReaderArrayWrapper<UChar_t> GenJet_nCHadrons;
+    TTreeReaderArrayWrapper<Short_t> GenJet_partonFlavour;
+    TTreeReaderArrayWrapper<Float_t> GenJet_phi;
+    TTreeReaderArrayWrapper<Float_t> GenJet_pt;
+    TTreeReaderValueWrapper<Int_t> nGenJet;
+
+    // GenJetAK8
+    TTreeReaderArrayWrapper<Float_t> GenJetAK8_eta;
+    TTreeReaderArrayWrapper<UChar_t> GenJetAK8_hadronFlavour;
+    TTreeReaderArrayWrapper<Float_t> GenJetAK8_mass;
+    TTreeReaderArrayWrapper<UChar_t> GenJetAK8_nBHadrons;
+    TTreeReaderArrayWrapper<UChar_t> GenJetAK8_nCHadrons;
+    TTreeReaderArrayWrapper<Short_t> GenJetAK8_partonFlavour;
+    TTreeReaderArrayWrapper<Float_t> GenJetAK8_phi;
+    TTreeReaderArrayWrapper<Float_t> GenJetAK8_pt;
+    TTreeReaderValueWrapper<Int_t> nGenJetAK8;
+
+    // GenMET
+    TTreeReaderValueWrapper<Float_t> GenMET_phi;
+    TTreeReaderValueWrapper<Float_t> GenMET_pt;
+
+    // GenPart
+    TTreeReaderArrayWrapper<Float_t> GenPart_eta;
+    TTreeReaderArrayWrapper<Short_t> GenPart_genPartIdxMother;
+    TTreeReaderArrayWrapper<Float_t> GenPart_iso;
+    TTreeReaderArrayWrapper<Float_t> GenPart_mass;
+    TTreeReaderArrayWrapper<Int_t> GenPart_pdgId;
+    TTreeReaderArrayWrapper<Float_t> GenPart_phi;
+    TTreeReaderArrayWrapper<Float_t> GenPart_pt;
+    TTreeReaderArrayWrapper<Int_t> GenPart_status;
+    TTreeReaderArrayWrapper<UShort_t> GenPart_statusFlags;
+    TTreeReaderValueWrapper<Int_t> nGenPart;
+
     // GenVisTau
-    Int_t nGenVisTau;
-    UInt_t nGenVisTau_RunII;
-    RVec<Float_t> GenVisTau_pt;
-    RVec<Float_t> GenVisTau_eta;
-    RVec<Float_t> GenVisTau_phi;
-    RVec<Float_t> GenVisTau_mass;
-    RVec<Int_t> GenVisTau_charge;
-    RVec<Int_t> GenVisTau_genPartIdxMother;
-    RVec<Int_t> GenVisTau_status;
+    TTreeReaderArrayWrapper<Short_t> GenVisTau_charge;
+    TTreeReaderArrayWrapper<Float_t> GenVisTau_eta;
+    TTreeReaderArrayWrapper<Short_t> GenVisTau_genPartIdxMother;
+    TTreeReaderArrayWrapper<Float_t> GenVisTau_mass;
+    TTreeReaderArrayWrapper<Float_t> GenVisTau_phi;
+    TTreeReaderArrayWrapper<Float_t> GenVisTau_pt;
+    TTreeReaderArrayWrapper<UChar_t> GenVisTau_status;
+    TTreeReaderValueWrapper<Int_t> nGenVisTau;
 
-    // GenVtx -> Need Update
+    // GenVtx
+    TTreeReaderValueWrapper<Float_t> GenVtx_t0;
+    TTreeReaderValueWrapper<Float_t> GenVtx_x;
+    TTreeReaderValueWrapper<Float_t> GenVtx_y;
+    TTreeReaderValueWrapper<Float_t> GenVtx_z;
 
-    //L1Prefire-------------------------
-    Float_t L1PreFiringWeight_Nom;
-    Float_t L1PreFiringWeight_Dn;
-    Float_t L1PreFiringWeight_Up;
-    // Event-------------------------
-    Int_t Pileup_nPU;
-    Float_t Pileup_nTrueInt;
-    Int_t genTtbarId;
+    // Generator
+    TTreeReaderValueWrapper<Float_t> Generator_binvar;
+    TTreeReaderValueWrapper<Int_t> Generator_id1;
+    TTreeReaderValueWrapper<Int_t> Generator_id2;
+    TTreeReaderValueWrapper<Float_t> Generator_scalePDF;
+    TTreeReaderValueWrapper<Float_t> Generator_weight;
+    TTreeReaderValueWrapper<Float_t> Generator_x1;
+    TTreeReaderValueWrapper<Float_t> Generator_x2;
+    TTreeReaderValueWrapper<Float_t> Generator_xpdf1;
+    TTreeReaderValueWrapper<Float_t> Generator_xpdf2;
 
-    // PV----------------------------
-    Float_t PV_chi2;
-    Float_t PV_ndof;
-    Float_t PV_score;
-    Float_t PV_x;
-    Float_t PV_y;
-    Float_t PV_z;
-    // Run3
-    UChar_t PV_npvs;
-    UChar_t PV_npvsGood;
-    // Run2
-    Int_t PV_npvs_RunII;
-    Int_t PV_npvsGood_RunII;
+    // IsoTrack
+    TTreeReaderArrayWrapper<Short_t> IsoTrack_charge;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_dxy;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_dz;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_eta;
+    TTreeReaderArrayWrapper<Short_t> IsoTrack_fromPV;
+    TTreeReaderArrayWrapper<Bool_t> IsoTrack_isFromLostTrack;
+    TTreeReaderArrayWrapper<Bool_t> IsoTrack_isHighPurityTrack;
+    TTreeReaderArrayWrapper<Bool_t> IsoTrack_isPFcand;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_miniPFRelIso_all;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_miniPFRelIso_chg;
+    TTreeReaderArrayWrapper<Int_t> IsoTrack_pdgId;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_pfRelIso03_all;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_pfRelIso03_chg;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_phi;
+    TTreeReaderArrayWrapper<Float_t> IsoTrack_pt;
+    TTreeReaderValueWrapper<Int_t> nIsoTrack;
 
-    // Muon----------------------------
-    Int_t nMuon;
-    UInt_t nMuon_RunII;
-    RVec<Int_t> Muon_charge;
-    RVec<Float_t> Muon_dxy;
-    RVec<Float_t> Muon_dxyErr;
-    RVec<Float_t> Muon_dxybs;
-    RVec<Float_t> Muon_dz;
-    RVec<Float_t> Muon_dzErr;
-    RVec<Float_t> Muon_eta;
-    RVec<UChar_t> Muon_highPtId;
-    RVec<Float_t> Muon_ip3d;
-    RVec<Bool_t> Muon_isGlobal;
-    RVec<Bool_t> Muon_isStandalone;
-    RVec<Bool_t> Muon_isTracker;
-    RVec<Bool_t> Muon_looseId;
-    RVec<Float_t> Muon_mass;
-    RVec<Bool_t> Muon_mediumId;
-    RVec<Bool_t> Muon_mediumPromptId;
-    RVec<UChar_t> Muon_miniIsoId;
-    RVec<Float_t> Muon_miniPFRelIso_all;
-    RVec<UChar_t> Muon_multiIsoId;
-    RVec<Float_t> Muon_mvaLowPt;
-    RVec<Float_t> Muon_mvaTTH;
-    RVec<UChar_t> Muon_pfIsoId;
-    RVec<Float_t> Muon_pfRelIso03_all;
-    RVec<Float_t> Muon_pfRelIso04_all;
-    RVec<Float_t> Muon_phi;
-    RVec<Float_t> Muon_pt;
-    RVec<UChar_t> Muon_puppiIsoId;
-    RVec<Float_t> Muon_sip3d;
-    RVec<Bool_t> Muon_softId;
-    RVec<Float_t> Muon_softMva;
-    RVec<Bool_t> Muon_softMvaId;
-    RVec<Bool_t> Muon_tightId;
-    RVec<UChar_t> Muon_tkIsoId;
-    RVec<Float_t> Muon_tkRelIso;
-    RVec<Bool_t> Muon_triggerIdLoose;
-    // Run3
-    RVec<UChar_t> Muon_mvaMuID_WP;
-    // Run2
-    RVec<UChar_t> Muon_mvaId; //this is in fact wp
+    // Jet
+    TTreeReaderArrayWrapper<Float_t> Jet_PNetRegPtRawCorr;
+    TTreeReaderArrayWrapper<Float_t> Jet_PNetRegPtRawCorrNeutrino;
+    TTreeReaderArrayWrapper<Float_t> Jet_PNetRegPtRawRes;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4RegPtRawCorr;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4RegPtRawCorrNeutrino;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4RegPtRawRes;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4V1RegPtRawCorr;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4V1RegPtRawCorrNeutrino;
+    TTreeReaderArrayWrapper<Float_t> Jet_UParTAK4V1RegPtRawRes;
+    TTreeReaderArrayWrapper<Float_t> Jet_area;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagDeepFlavB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagDeepFlavCvB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagDeepFlavCvL;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagDeepFlavQG;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetCvB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetCvL;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetCvNotB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetQvG;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagPNetTauVJet;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4B;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4CvB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4CvL;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4CvNotB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4Ele;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4Mu;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4QvG;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4SvCB;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4SvUDG;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4TauVJet;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4UDG;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4probb;
+    TTreeReaderArrayWrapper<Float_t> Jet_btagUParTAK4probbb;
+    TTreeReaderArrayWrapper<Float_t> Jet_chEmEF;
+    TTreeReaderArrayWrapper<Float_t> Jet_chHEF;
+    TTreeReaderArrayWrapper<UChar_t> Jet_chMultiplicity;
+    TTreeReaderArrayWrapper<Short_t> Jet_electronIdx1;
+    TTreeReaderArrayWrapper<Short_t> Jet_electronIdx2;
+    TTreeReaderArrayWrapper<Float_t> Jet_eta;
+    TTreeReaderArrayWrapper<Short_t> Jet_genJetIdx;
+    TTreeReaderArrayWrapper<UChar_t> Jet_hadronFlavour;
+    TTreeReaderArrayWrapper<Float_t> Jet_hfEmEF;
+    TTreeReaderArrayWrapper<Float_t> Jet_hfHEF;
+    TTreeReaderArrayWrapper<Int_t> Jet_hfadjacentEtaStripsSize;
+    TTreeReaderArrayWrapper<Int_t> Jet_hfcentralEtaStripSize;
+    TTreeReaderArrayWrapper<Float_t> Jet_hfsigmaEtaEta;
+    TTreeReaderArrayWrapper<Float_t> Jet_hfsigmaPhiPhi;
+    TTreeReaderArrayWrapper<Float_t> Jet_mass;
+    TTreeReaderArrayWrapper<Float_t> Jet_muEF;
+    TTreeReaderArrayWrapper<Short_t> Jet_muonIdx1;
+    TTreeReaderArrayWrapper<Short_t> Jet_muonIdx2;
+    TTreeReaderArrayWrapper<Float_t> Jet_muonSubtrDeltaEta;
+    TTreeReaderArrayWrapper<Float_t> Jet_muonSubtrDeltaPhi;
+    TTreeReaderArrayWrapper<Float_t> Jet_muonSubtrFactor;
+    TTreeReaderArrayWrapper<UChar_t> Jet_nConstituents;
+    TTreeReaderArrayWrapper<UChar_t> Jet_nElectrons;
+    TTreeReaderArrayWrapper<UChar_t> Jet_nMuons;
+    TTreeReaderArrayWrapper<UChar_t> Jet_nSVs;
+    TTreeReaderArrayWrapper<Float_t> Jet_neEmEF;
+    TTreeReaderArrayWrapper<Float_t> Jet_neHEF;
+    TTreeReaderArrayWrapper<UChar_t> Jet_neMultiplicity;
+    TTreeReaderArrayWrapper<Short_t> Jet_partonFlavour;
+    TTreeReaderArrayWrapper<Float_t> Jet_phi;
+    TTreeReaderArrayWrapper<Float_t> Jet_pt;
+    TTreeReaderArrayWrapper<Float_t> Jet_puIdDisc;
+    TTreeReaderArrayWrapper<Float_t> Jet_rawFactor;
+    TTreeReaderArrayWrapper<Short_t> Jet_svIdx1;
+    TTreeReaderArrayWrapper<Short_t> Jet_svIdx2;
+    TTreeReaderValueWrapper<Int_t> nJet;
 
-    //Electron----------------------------
-    Int_t nElectron;
-    UInt_t nElectron_RunII;
-    RVec<Int_t> Electron_charge;
-    RVec<Bool_t> Electron_convVeto;
-    RVec<Bool_t> Electron_cutBased_HEEP;
-    RVec<Float_t> Electron_deltaEtaSC;
-    RVec<Float_t> Electron_dr03EcalRecHitSumEt;
-    RVec<Float_t> Electron_dr03HcalDepth1TowerSumEt;
-    RVec<Float_t> Electron_dr03TkSumPt;
-    RVec<Float_t> Electron_dr03TkSumPtHEEP;
-    RVec<Float_t> Electron_dxy;
-    RVec<Float_t> Electron_dxyErr;
-    RVec<Float_t> Electron_dz;
-    RVec<Float_t> Electron_dzErr;
-    RVec<Float_t> Electron_eInvMinusPInv;
-    RVec<Float_t> Electron_energyErr;
-    RVec<Float_t> Electron_eta;
-    RVec<UChar_t> Electron_genPartFlav;
-    RVec<Float_t> Electron_hoe;
-    RVec<Float_t> Electron_ip3d;
-    RVec<Bool_t> Electron_isPFcand;
-    RVec<UChar_t> Electron_jetNDauCharged;
-    RVec<Float_t> Electron_jetPtRelv2;
-    RVec<Float_t> Electron_jetRelIso;
-    RVec<UChar_t> Electron_lostHits;
-    RVec<Float_t> Electron_mass;
-    RVec<Float_t> Electron_miniPFRelIso_all;
-    RVec<Float_t> Electron_miniPFRelIso_chg;
-    RVec<Float_t> Electron_mvaTTH;
-    RVec<Int_t> Electron_pdgId;
-    RVec<Float_t> Electron_pfRelIso03_all;
-    RVec<Float_t> Electron_pfRelIso03_chg;
-    RVec<Float_t> Electron_phi;
-    RVec<Float_t> Electron_pt;
-    RVec<Float_t> Electron_r9;
-    RVec<Float_t> Electron_scEtOverPt;
-    RVec<UChar_t> Electron_seedGain;
-    RVec<Float_t> Electron_sieie;
-    RVec<Float_t> Electron_sip3d;
-    //Run3
-    RVec<UChar_t> Electron_cutBased;
-    RVec<Short_t> Electron_fsrPhotonIdx;
-    RVec<Short_t> Electron_genPartIdx;
-    RVec<Short_t> Electron_jetIdx;
-    RVec<Float_t> Electron_mvaHZZIso;
-    RVec<Float_t> Electron_mvaIso;
-    RVec<Bool_t> Electron_mvaIso_WP80;
-    RVec<Bool_t> Electron_mvaIso_WP90;
-    RVec<Float_t> Electron_mvaNoIso;
-    RVec<Bool_t> Electron_mvaNoIso_WP80;
-    RVec<Bool_t> Electron_mvaNoIso_WP90;
-    RVec<Short_t> Electron_photonIdx;
-    RVec<Char_t> Electron_seediEtaOriX;
-    RVec<Int_t> Electron_seediPhiOriY;
-    RVec<Short_t> Electron_svIdx;
-    RVec<UChar_t> Electron_tightCharge;
-    //Run2
-    RVec<UChar_t> Electron_cleanmask;
-    RVec<Int_t> Electron_cutBased_RunII;
-    RVec<Int_t> Electron_genPartIdx_RunII;
-    RVec<Int_t> Electron_jetIdx_RunII;
-    RVec<Float_t> Electron_mvaFall17V2Iso;
-    RVec<Bool_t> Electron_mvaFall17V2Iso_WP80;
-    RVec<Bool_t> Electron_mvaFall17V2Iso_WP90;
-    RVec<Float_t> Electron_mvaFall17V2noIso;
-    RVec<Bool_t> Electron_mvaFall17V2noIso_WP80;
-    RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
+    // LHE
+    TTreeReaderValueWrapper<Float_t> LHE_AlphaS;
+    TTreeReaderValueWrapper<Float_t> LHE_HT;
+    TTreeReaderValueWrapper<Float_t> LHE_HTIncoming;
+    TTreeReaderValueWrapper<UChar_t> LHE_Nb;
+    TTreeReaderValueWrapper<UChar_t> LHE_Nc;
+    TTreeReaderValueWrapper<UChar_t> LHE_Nglu;
+    TTreeReaderValueWrapper<UChar_t> LHE_Njets;
+    TTreeReaderValueWrapper<UChar_t> LHE_NpLO;
+    TTreeReaderValueWrapper<UChar_t> LHE_NpNLO;
+    TTreeReaderValueWrapper<UChar_t> LHE_Nuds;
+    TTreeReaderValueWrapper<Float_t> LHE_Vpt;
 
-    //Photon----------------------------
-    Int_t nPhoton;
-    UInt_t nPhoton_RunII;
-    RVec<Float_t> Photon_energyErr;
-    RVec<Float_t> Photon_eta;
-    RVec<UChar_t> Photon_genPartFlav;
-    RVec<Float_t> Photon_hoe;
-    RVec<Bool_t> Photon_isScEtaEB;
-    RVec<Bool_t> Photon_isScEtaEE;
-    RVec<Float_t> Photon_mvaID;
-    RVec<Bool_t> Photon_mvaID_WP80;
-    RVec<Bool_t> Photon_mvaID_WP90;
-    RVec<Float_t> Photon_phi;
-    RVec<Bool_t> Photon_pixelSeed;
-    RVec<Float_t> Photon_pt;
-    RVec<Float_t> Photon_energyRaw;
-    RVec<Float_t> Photon_sieie;
-    //Run3
-    RVec<UChar_t> Photon_cutBased;
-    //Run2
-    RVec<Int_t> Photon_cutBased_RunII;
+    // LHEPart
+    TTreeReaderArrayWrapper<Float_t> LHEPart_eta;
+    TTreeReaderArrayWrapper<Short_t> LHEPart_firstMotherIdx;
+    TTreeReaderArrayWrapper<Float_t> LHEPart_incomingpz;
+    TTreeReaderArrayWrapper<Short_t> LHEPart_lastMotherIdx;
+    TTreeReaderArrayWrapper<Float_t> LHEPart_mass;
+    TTreeReaderArrayWrapper<Int_t> LHEPart_pdgId;
+    TTreeReaderArrayWrapper<Float_t> LHEPart_phi;
+    TTreeReaderArrayWrapper<Float_t> LHEPart_pt;
+    TTreeReaderArrayWrapper<Int_t> LHEPart_spin;
+    TTreeReaderArrayWrapper<Int_t> LHEPart_status;
+    TTreeReaderValueWrapper<Int_t> nLHEPart;
 
-    //Jet----------------------------
-    Int_t nJet;
-    UInt_t nJet_RunII;
-    RVec<Float_t> Jet_area;
-    RVec<Float_t> Jet_btagDeepFlavB;
-    RVec<Float_t> Jet_btagDeepFlavCvB;
-    RVec<Float_t> Jet_btagDeepFlavCvL;
-    RVec<Float_t> Jet_btagDeepFlavQG;
-    RVec<Float_t> Jet_chEmEF;
-    RVec<Float_t> Jet_chHEF;
-    RVec<Float_t> Jet_eta;
-    RVec<Int_t> Jet_hfadjacentEtaStripsSize;
-    RVec<Int_t> Jet_hfcentralEtaStripSize;
-    RVec<Float_t> Jet_hfsigmaEtaEta;
-    RVec<Float_t> Jet_hfsigmaPhiPhi;
-    RVec<Float_t> Jet_mass;
-    RVec<Float_t> Jet_muEF;
-    RVec<Float_t> Jet_muonSubtrFactor;
-    RVec<UChar_t> Jet_nConstituents;
-    RVec<Float_t> Jet_neEmEF;
-    RVec<Float_t> Jet_neHEF;
-    RVec<Float_t> Jet_phi;
-    RVec<Float_t> Jet_pt;
-    RVec<Float_t> Jet_rawFactor;
-    //Run3
-    RVec<Float_t> Jet_PNetRegPtRawCorr;
-    RVec<Float_t> Jet_PNetRegPtRawCorrNeutrino;
-    RVec<Float_t> Jet_PNetRegPtRawRes;
-    RVec<Float_t> Jet_btagPNetB;
-    RVec<Float_t> Jet_btagPNetCvB;
-    RVec<Float_t> Jet_btagPNetCvL;
-    RVec<Float_t> Jet_btagPNetQvG;
-    RVec<Float_t> Jet_btagPNetTauVJet;
-    RVec<Float_t> Jet_btagRobustParTAK4B;
-    RVec<Float_t> Jet_btagRobustParTAK4CvB;
-    RVec<Float_t> Jet_btagRobustParTAK4CvL;
-    RVec<Float_t> Jet_btagRobustParTAK4QG;
-    RVec<Short_t> Jet_electronIdx1;
-    RVec<Short_t> Jet_electronIdx2;
-    RVec<Short_t> Jet_genJetIdx;
-    RVec<UChar_t> Jet_hadronFlavour;
-    RVec<UChar_t> Jet_jetId;
-    RVec<Short_t> Jet_muonIdx1;
-    RVec<Short_t> Jet_muonIdx2;
-    RVec<UChar_t> Jet_nElectrons;
-    RVec<UChar_t> Jet_nMuons;
-    RVec<UChar_t> Jet_nSVs;
-    RVec<Short_t> Jet_partonFlavour;
-    RVec<Short_t> Jet_svIdx1;
-    RVec<Short_t> Jet_svIdx2;
-    //Run2
-    RVec<Float_t> Jet_bRegCorr;
-    RVec<Float_t> Jet_bRegRes;
-    RVec<Float_t> Jet_btagCSVV2;
-    //RVec<Float_t> Jet_btagDeepB;
-    //RVec<Float_t> Jet_btagDeepCvB;
-    //RVec<Float_t> Jet_btagDeepCvL;
-    RVec<Float_t> Jet_cRegCorr;
-    RVec<Float_t> Jet_cRegRes;
-    RVec<Float_t> Jet_chFPV0EF;
-    RVec<UChar_t> Jet_cleanmask;
-    RVec<Int_t> Jet_electronIdx1_RunII;
-    RVec<Int_t> Jet_electronIdx2_RunII;
-    RVec<Int_t> Jet_genJetIdx_RunII;
-    RVec<Int_t> Jet_hadronFlavour_RunII;
-    RVec<Int_t> Jet_jetId_RunII;
-    RVec<Int_t> Jet_muonIdx1_RunII;
-    RVec<Int_t> Jet_muonIdx2_RunII;
-    RVec<Int_t> Jet_nElectrons_RunII;
-    RVec<Int_t> Jet_nMuons_RunII;
-    RVec<Int_t> Jet_partonFlavour_RunII;
-    RVec<Int_t> Jet_puId;
-    RVec<Float_t> Jet_puIdDisc;
-    RVec<Float_t> Jet_qgl;
+    // LHEPdfWeight
+    TTreeReaderArrayWrapper<Float_t> LHEPdfWeight;
+    TTreeReaderValueWrapper<Int_t> nLHEPdfWeight;
 
-    //Tau---------------------------------------
-    Int_t nTau;
-    UInt_t nTau_RunII;
-    RVec<Float_t> Tau_dxy;
-    RVec<Float_t> Tau_dz;
-    RVec<Float_t> Tau_eta;
-    RVec<UChar_t> Tau_genPartFlav;
-    RVec<UChar_t> Tau_idDeepTau2017v2p1VSe;
-    RVec<UChar_t> Tau_idDeepTau2017v2p1VSjet;
-    RVec<UChar_t> Tau_idDeepTau2017v2p1VSmu;
-    RVec<Float_t> Tau_mass;
-    RVec<Float_t> Tau_phi;
-    RVec<Float_t> Tau_pt;
-    // Run3
-    RVec<Short_t> Tau_charge;
-    RVec<UChar_t> Tau_decayMode;
-    RVec<Short_t> Tau_genPartIdx;
-    RVec<Bool_t> Tau_idDecayModeNewDMs;
-    RVec<UChar_t> Tau_idDeepTau2018v2p5VSe;
-    RVec<UChar_t> Tau_idDeepTau2018v2p5VSjet;
-    RVec<UChar_t> Tau_idDeepTau2018v2p5VSmu;
-    // Run2
-    RVec<Int_t> Tau_charge_RunII;
-    RVec<Int_t> Tau_decayMode_RunII;
-    RVec<Int_t> Tau_genPartIdx_RunII;
+    // LHEReweightingWeight
+    TTreeReaderArrayWrapper<Float_t> LHEReweightingWeight;
+    TTreeReaderValueWrapper<Int_t> nLHEReweightingWeight;
 
-    // FatJet----------------------------
-    Int_t nFatJet;
-    UInt_t nFatJet_RunII;
-    RVec<Float_t> FatJet_area;
-    RVec<Float_t> FatJet_btagDDBvLV2;
-    RVec<Float_t> FatJet_btagDDCvBV2;
-    RVec<Float_t> FatJet_btagDDCvLV2;
-    RVec<Float_t> FatJet_btagDeepB;
-    RVec<Float_t> FatJet_btagHbb;
-    RVec<Float_t> FatJet_eta;
-    RVec<Float_t> FatJet_lsf3;
-    RVec<Float_t> FatJet_mass;
-    RVec<Float_t> FatJet_msoftdrop;
-    RVec<UChar_t> FatJet_nBHadrons;
-    RVec<UChar_t> FatJet_nCHadrons;
-    RVec<UChar_t> FatJet_nConstituents;
-    RVec<Float_t> FatJet_particleNet_QCD;
-    RVec<Float_t> FatJet_phi;
-    RVec<Float_t> FatJet_pt;
-    RVec<Float_t> FatJet_tau1;
-    RVec<Float_t> FatJet_tau2;
-    RVec<Float_t> FatJet_tau3;
-    RVec<Float_t> FatJet_tau4;
-    // Run3
-    RVec<Short_t> FatJet_genJetAK8Idx;
-    RVec<UChar_t> FatJet_jetId;
-    RVec<Float_t> FatJet_particleNetWithMass_H4qvsQCD;
-    RVec<Float_t> FatJet_particleNetWithMass_HbbvsQCD;
-    RVec<Float_t> FatJet_particleNetWithMass_HccvsQCD;
-    RVec<Float_t> FatJet_particleNetWithMass_QCD;
-    RVec<Float_t> FatJet_particleNetWithMass_TvsQCD;
-    RVec<Float_t> FatJet_particleNetWithMass_WvsQCD;
-    RVec<Float_t> FatJet_particleNetWithMass_ZvsQCD;
-    RVec<Float_t> FatJet_particleNet_QCD0HF;
-    RVec<Float_t> FatJet_particleNet_QCD1HF;
-    RVec<Float_t> FatJet_particleNet_QCD2HF;
-    RVec<Float_t> FatJet_particleNet_XbbVsQCD;
-    RVec<Float_t> FatJet_particleNet_XccVsQCD;
-    RVec<Float_t> FatJet_particleNet_XggVsQCD;
-    RVec<Float_t> FatJet_particleNet_XqqVsQCD;
-    RVec<Float_t> FatJet_particleNet_XteVsQCD;
-    RVec<Float_t> FatJet_particleNet_XtmVsQCD;
-    RVec<Float_t> FatJet_particleNet_XttVsQCD;
-    RVec<Float_t> FatJet_particleNet_massCorr;
-    RVec<Short_t> FatJet_subJetIdx1;
-    RVec<Short_t> FatJet_subJetIdx2;
-    // Run2
-    // I'll pass deepTag scores
-    // RVec<Float_t> FatJet_btagCSVV2;
-    // RVec<Float_t> FatJet_deepTagMD_H4qvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_HbbvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_TvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_WvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_ZHbbvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_ZHccvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_ZbbvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_ZvsQCD;
-    // RVec<Float_t> FatJet_deepTagMD_bbvsLight;
-    // RVec<Float_t> FatJet_deepTagMD_ccvsLight;
-    // RVec<Float_t> FatJet_deepTag_H;
-    // RVec<Float_t> FatJet_deepTag_QCD;
-    // RVec<Float_t> FatJet_deepTag_QCDothers;
-    // RVec<Float_t> FatJet_deepTag_TvsQCD;
-    // RVec<Float_t> FatJet_deepTag_WvsQCD;
-    // RVec<Float_t> FatJet_deepTag_ZvsQCD;
-    RVec<Int_t> FatJet_genJetAK8Idx_RunII;
-    RVec<Int_t> FatJet_jetId_RunII;
-    RVec<Float_t> FatJet_particleNetMD_QCD;
-    RVec<Float_t> FatJet_particleNetMD_Xbb;
-    RVec<Float_t> FatJet_particleNetMD_Xcc;
-    RVec<Float_t> FatJet_particleNetMD_Xqq;
-    RVec<Float_t> FatJet_particleNet_H4qvsQCD;
-    RVec<Float_t> FatJet_particleNet_HbbvsQCD;
-    RVec<Float_t> FatJet_particleNet_HccvsQCD;
-    RVec<Float_t> FatJet_particleNet_TvsQCD;
-    RVec<Float_t> FatJet_particleNet_WvsQCD;
-    RVec<Float_t> FatJet_particleNet_ZvsQCD;
-    RVec<Float_t> FatJet_particleNet_mass;
-    RVec<Int_t> FatJet_subJetIdx1_RunII;
-    RVec<Int_t> FatJet_subJetIdx2_RunII;
+    // LHEScaleWeight
+    TTreeReaderArrayWrapper<Float_t> LHEScaleWeight;
+    TTreeReaderValueWrapper<Int_t> nLHEScaleWeight;
 
-    //PuppiMET----------------------------
-    Float_t PuppiMET_pt;
-    Float_t PuppiMET_phi;
-    Float_t PuppiMET_sumEt;
-    Float_t PuppiMET_ptJERDown;
-    Float_t PuppiMET_phiJERDown;
-    Float_t PuppiMET_ptJERUp;
-    Float_t PuppiMET_phiJERUp;
-    Float_t PuppiMET_ptJESDown;
-    Float_t PuppiMET_phiJESDown;
-    Float_t PuppiMET_ptJESUp;
-    Float_t PuppiMET_phiJESUp;
-    Float_t PuppiMET_ptUnclusteredDown;
-    Float_t PuppiMET_phiUnclusteredDown;
-    Float_t PuppiMET_ptUnclusteredUp;
-    Float_t PuppiMET_phiUnclusteredUp;
+    // LHEWeight
+    TTreeReaderValueWrapper<Float_t> LHEWeight_originalXWGTUP;
 
-    //MET----------------------------
-    Float_t MET_MetUnclustEnUpDeltaX;
-    Float_t MET_MetUnclustEnUpDeltaY;
-    Float_t MET_covXX;
-    Float_t MET_covXY;
-    Float_t MET_covYY;
-    Float_t MET_fiducialGenPhi;
-    Float_t MET_fiducialGenPt;
-    Float_t MET_phi;
-    Float_t MET_pt;
-    Float_t MET_significance;
-    Float_t MET_sumEt;
-    Float_t MET_sumPtUnclustered;
+    // LowPtElectron
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_ID;
+    TTreeReaderArrayWrapper<Int_t> LowPtElectron_charge;
+    TTreeReaderArrayWrapper<Bool_t> LowPtElectron_convVeto;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_convVtxRadius;
+    TTreeReaderArrayWrapper<UChar_t> LowPtElectron_convWP;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_deltaEtaSC;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_dxy;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_dxyErr;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_dz;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_dzErr;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_eInvMinusPInv;
+    TTreeReaderArrayWrapper<Short_t> LowPtElectron_electronIdx;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_energyErr;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_eta;
+    TTreeReaderArrayWrapper<UChar_t> LowPtElectron_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> LowPtElectron_genPartIdx;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_hoe;
+    TTreeReaderArrayWrapper<UChar_t> LowPtElectron_lostHits;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_mass;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_miniPFRelIso_all;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_miniPFRelIso_chg;
+    TTreeReaderArrayWrapper<Int_t> LowPtElectron_pdgId;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_phi;
+    TTreeReaderArrayWrapper<Short_t> LowPtElectron_photonIdx;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_pt;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_ptbiased;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_r9;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_scEtOverPt;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_sieie;
+    TTreeReaderArrayWrapper<Float_t> LowPtElectron_unbiased;
+    TTreeReaderValueWrapper<Int_t> nLowPtElectron;
 
-    // rho
-    Float_t fixedGridRhoFastjetAll;
-    // Flag
-    Bool_t Flag_METFilters; // What is this?
-    Bool_t Flag_goodVertices;
-    Bool_t Flag_globalSuperTightHalo2016Filter;
-    Bool_t Flag_ECalDeadCellTriggerPrimitiveFilter;
-    Bool_t Flag_BadPFMuonFilter;
-    Bool_t Flag_BadPFMuonDzFilter;
-    Bool_t Flag_hfNoisyHitsFilter;
-    Bool_t Flag_ecalBadCalibFilter;
-    Bool_t Flag_eeBadScFilter;
-    //Bool_t Flag_ecalBadCalibFilter;
-    UInt_t RunNumber;
-    std::map<TString, pair<Bool_t*,float>> TriggerMap;
+    // Muon
+    TTreeReaderArrayWrapper<Float_t> Muon_IPx;
+    TTreeReaderArrayWrapper<Float_t> Muon_IPy;
+    TTreeReaderArrayWrapper<Float_t> Muon_IPz;
+    TTreeReaderArrayWrapper<Float_t> Muon_VXBS_Cov00;
+    TTreeReaderArrayWrapper<Float_t> Muon_VXBS_Cov03;
+    TTreeReaderArrayWrapper<Float_t> Muon_VXBS_Cov33;
+    TTreeReaderArrayWrapper<UChar_t> Muon_bestTrackType;
+    TTreeReaderArrayWrapper<Float_t> Muon_bsConstrainedChi2;
+    TTreeReaderArrayWrapper<Float_t> Muon_bsConstrainedPt;
+    TTreeReaderArrayWrapper<Float_t> Muon_bsConstrainedPtErr;
+    TTreeReaderArrayWrapper<Int_t> Muon_charge;
+    TTreeReaderArrayWrapper<Float_t> Muon_dxy;
+    TTreeReaderArrayWrapper<Float_t> Muon_dxyErr;
+    TTreeReaderArrayWrapper<Float_t> Muon_dxybs;
+    TTreeReaderArrayWrapper<Float_t> Muon_dxybsErr;
+    TTreeReaderArrayWrapper<Float_t> Muon_dz;
+    TTreeReaderArrayWrapper<Float_t> Muon_dzErr;
+    TTreeReaderArrayWrapper<Float_t> Muon_eta;
+    TTreeReaderArrayWrapper<Short_t> Muon_fsrPhotonIdx;
+    TTreeReaderArrayWrapper<UChar_t> Muon_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> Muon_genPartIdx;
+    TTreeReaderArrayWrapper<UChar_t> Muon_highPtId;
+    TTreeReaderArrayWrapper<Bool_t> Muon_highPurity;
+    TTreeReaderArrayWrapper<Bool_t> Muon_inTimeMuon;
+    TTreeReaderArrayWrapper<Float_t> Muon_ip3d;
+    TTreeReaderArrayWrapper<Float_t> Muon_ipLengthSig;
+    TTreeReaderArrayWrapper<Bool_t> Muon_isGlobal;
+    TTreeReaderArrayWrapper<Bool_t> Muon_isPFcand;
+    TTreeReaderArrayWrapper<Bool_t> Muon_isStandalone;
+    TTreeReaderArrayWrapper<Bool_t> Muon_isTracker;
+    TTreeReaderArrayWrapper<Float_t> Muon_jetDF;
+    TTreeReaderArrayWrapper<Short_t> Muon_jetIdx;
+    TTreeReaderArrayWrapper<UChar_t> Muon_jetNDauCharged;
+    TTreeReaderArrayWrapper<Float_t> Muon_jetPtRelv2;
+    TTreeReaderArrayWrapper<Float_t> Muon_jetRelIso;
+    TTreeReaderArrayWrapper<Bool_t> Muon_looseId;
+    TTreeReaderArrayWrapper<Float_t> Muon_mass;
+    TTreeReaderArrayWrapper<Bool_t> Muon_mediumId;
+    TTreeReaderArrayWrapper<Bool_t> Muon_mediumPromptId;
+    TTreeReaderArrayWrapper<UChar_t> Muon_miniIsoId;
+    TTreeReaderArrayWrapper<Float_t> Muon_miniPFRelIso_all;
+    TTreeReaderArrayWrapper<Float_t> Muon_miniPFRelIso_chg;
+    TTreeReaderArrayWrapper<UChar_t> Muon_multiIsoId;
+    TTreeReaderArrayWrapper<Float_t> Muon_mvaLowPt;
+    TTreeReaderArrayWrapper<Float_t> Muon_mvaMuID;
+    TTreeReaderArrayWrapper<UChar_t> Muon_mvaMuID_WP;
+    TTreeReaderArrayWrapper<UChar_t> Muon_nStations;
+    TTreeReaderArrayWrapper<UChar_t> Muon_nTrackerLayers;
+    TTreeReaderArrayWrapper<Int_t> Muon_pdgId;
+    TTreeReaderArrayWrapper<UChar_t> Muon_pfIsoId;
+    TTreeReaderArrayWrapper<Float_t> Muon_pfRelIso03_all;
+    TTreeReaderArrayWrapper<Float_t> Muon_pfRelIso03_chg;
+    TTreeReaderArrayWrapper<Float_t> Muon_pfRelIso04_all;
+    TTreeReaderArrayWrapper<Float_t> Muon_phi;
+    TTreeReaderArrayWrapper<Float_t> Muon_pnScore_heavy;
+    TTreeReaderArrayWrapper<Float_t> Muon_pnScore_light;
+    TTreeReaderArrayWrapper<Float_t> Muon_pnScore_prompt;
+    TTreeReaderArrayWrapper<Float_t> Muon_pnScore_tau;
+    TTreeReaderArrayWrapper<Float_t> Muon_promptMVA;
+    TTreeReaderArrayWrapper<Float_t> Muon_pt;
+    TTreeReaderArrayWrapper<Float_t> Muon_ptErr;
+    TTreeReaderArrayWrapper<UChar_t> Muon_puppiIsoId;
+    TTreeReaderArrayWrapper<Float_t> Muon_segmentComp;
+    TTreeReaderArrayWrapper<Float_t> Muon_sip3d;
+    TTreeReaderArrayWrapper<Bool_t> Muon_softId;
+    TTreeReaderArrayWrapper<Float_t> Muon_softMva;
+    TTreeReaderArrayWrapper<Bool_t> Muon_softMvaId;
+    TTreeReaderArrayWrapper<Float_t> Muon_softMvaRun3;
+    TTreeReaderArrayWrapper<Short_t> Muon_svIdx;
+    TTreeReaderArrayWrapper<UChar_t> Muon_tightCharge;
+    TTreeReaderArrayWrapper<Bool_t> Muon_tightId;
+    TTreeReaderArrayWrapper<UChar_t> Muon_tkIsoId;
+    TTreeReaderArrayWrapper<Float_t> Muon_tkRelIso;
+    TTreeReaderArrayWrapper<Bool_t> Muon_triggerIdLoose;
+    TTreeReaderArrayWrapper<Float_t> Muon_tuneP_charge;
+    TTreeReaderArrayWrapper<Float_t> Muon_tuneP_pterr;
+    TTreeReaderArrayWrapper<Float_t> Muon_tunepRelPt;
+    TTreeReaderValueWrapper<Int_t> nMuon;
+
+    // OtherPV
+    TTreeReaderArrayWrapper<Float_t> OtherPV_score;
+    TTreeReaderArrayWrapper<Float_t> OtherPV_z;
+    TTreeReaderValueWrapper<Int_t> nOtherPV;
+
+    // PFCand
+    TTreeReaderArrayWrapper<Float_t> PFCand_eta;
+    TTreeReaderArrayWrapper<Float_t> PFCand_mass;
+    TTreeReaderArrayWrapper<Int_t> PFCand_pdgId;
+    TTreeReaderArrayWrapper<Float_t> PFCand_phi;
+    TTreeReaderArrayWrapper<Float_t> PFCand_pt;
+    TTreeReaderValueWrapper<Int_t> nPFCand;
+
+    // PFMET
+    TTreeReaderValueWrapper<Float_t> PFMET_covXX;
+    TTreeReaderValueWrapper<Float_t> PFMET_covXY;
+    TTreeReaderValueWrapper<Float_t> PFMET_covYY;
+    TTreeReaderValueWrapper<Float_t> PFMET_phi;
+    TTreeReaderValueWrapper<Float_t> PFMET_phiUnclusteredDown;
+    TTreeReaderValueWrapper<Float_t> PFMET_phiUnclusteredUp;
+    TTreeReaderValueWrapper<Float_t> PFMET_pt;
+    TTreeReaderValueWrapper<Float_t> PFMET_ptUnclusteredDown;
+    TTreeReaderValueWrapper<Float_t> PFMET_ptUnclusteredUp;
+    TTreeReaderValueWrapper<Float_t> PFMET_significance;
+    TTreeReaderValueWrapper<Float_t> PFMET_sumEt;
+    TTreeReaderValueWrapper<Float_t> PFMET_sumPtUnclustered;
+
+    // PSWeight
+    TTreeReaderArrayWrapper<Float_t> PSWeight;
+    TTreeReaderValueWrapper<Int_t> nPSWeight;
+
+    // PV
+    TTreeReaderValueWrapper<Float_t> PV_chi2;
+    TTreeReaderValueWrapper<Float_t> PV_ndof;
+    TTreeReaderValueWrapper<UChar_t> PV_npvs;
+    TTreeReaderValueWrapper<UChar_t> PV_npvsGood;
+    TTreeReaderValueWrapper<Float_t> PV_score;
+    TTreeReaderValueWrapper<Float_t> PV_sumpt2;
+    TTreeReaderValueWrapper<Float_t> PV_sumpx;
+    TTreeReaderValueWrapper<Float_t> PV_sumpy;
+    TTreeReaderValueWrapper<Float_t> PV_x;
+    TTreeReaderValueWrapper<Float_t> PV_y;
+    TTreeReaderValueWrapper<Float_t> PV_z;
+
+    // Photon
+    TTreeReaderArrayWrapper<UChar_t> Photon_cutBased;
+    TTreeReaderArrayWrapper<Float_t> Photon_ecalPFClusterIso;
+    TTreeReaderArrayWrapper<Short_t> Photon_electronIdx;
+    TTreeReaderArrayWrapper<Bool_t> Photon_electronVeto;
+    TTreeReaderArrayWrapper<Float_t> Photon_energyErr;
+    TTreeReaderArrayWrapper<Float_t> Photon_energyRaw;
+    TTreeReaderArrayWrapper<Float_t> Photon_esEffSigmaRR;
+    TTreeReaderArrayWrapper<Float_t> Photon_esEnergyOverRawE;
+    TTreeReaderArrayWrapper<Float_t> Photon_eta;
+    TTreeReaderArrayWrapper<Float_t> Photon_etaWidth;
+    TTreeReaderArrayWrapper<UChar_t> Photon_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> Photon_genPartIdx;
+    TTreeReaderArrayWrapper<Float_t> Photon_haloTaggerMVAVal;
+    TTreeReaderArrayWrapper<Bool_t> Photon_hasConversionTracks;
+    TTreeReaderArrayWrapper<Float_t> Photon_hcalPFClusterIso;
+    TTreeReaderArrayWrapper<Float_t> Photon_hoe;
+    TTreeReaderArrayWrapper<Float_t> Photon_hoe_PUcorr;
+    TTreeReaderArrayWrapper<Float_t> Photon_hoe_Tower;
+    TTreeReaderArrayWrapper<Bool_t> Photon_isScEtaEB;
+    TTreeReaderArrayWrapper<Bool_t> Photon_isScEtaEE;
+    TTreeReaderArrayWrapper<Short_t> Photon_jetIdx;
+    TTreeReaderArrayWrapper<Float_t> Photon_mvaID;
+    TTreeReaderArrayWrapper<Bool_t> Photon_mvaID_WP80;
+    TTreeReaderArrayWrapper<Bool_t> Photon_mvaID_WP90;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfChargedIso;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfChargedIsoPFPV;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfChargedIsoWorstVtx;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfPhoIso03;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfRelIso03_all_quadratic;
+    TTreeReaderArrayWrapper<Float_t> Photon_pfRelIso03_chg_quadratic;
+    TTreeReaderArrayWrapper<Float_t> Photon_phi;
+    TTreeReaderArrayWrapper<Float_t> Photon_phiWidth;
+    TTreeReaderArrayWrapper<Bool_t> Photon_pixelSeed;
+    TTreeReaderArrayWrapper<Float_t> Photon_pt;
+    TTreeReaderArrayWrapper<Float_t> Photon_r9;
+    TTreeReaderArrayWrapper<Float_t> Photon_s4;
+    TTreeReaderArrayWrapper<UChar_t> Photon_seedGain;
+    TTreeReaderArrayWrapper<Short_t> Photon_seediEtaOriX;
+    TTreeReaderArrayWrapper<Short_t> Photon_seediPhiOriY;
+    TTreeReaderArrayWrapper<Float_t> Photon_sieie;
+    TTreeReaderArrayWrapper<Float_t> Photon_sieip;
+    TTreeReaderArrayWrapper<Float_t> Photon_sipip;
+    TTreeReaderArrayWrapper<Float_t> Photon_superclusterEta;
+    TTreeReaderArrayWrapper<Float_t> Photon_trkSumPtHollowConeDR03;
+    TTreeReaderArrayWrapper<Float_t> Photon_trkSumPtSolidConeDR04;
+    TTreeReaderArrayWrapper<Int_t> Photon_vidNestedWPBitmap;
+    TTreeReaderArrayWrapper<Float_t> Photon_x_calo;
+    TTreeReaderArrayWrapper<Float_t> Photon_y_calo;
+    TTreeReaderArrayWrapper<Float_t> Photon_z_calo;
+    TTreeReaderValueWrapper<Int_t> nPhoton;
+
+    // Pileup
+    TTreeReaderValueWrapper<Float_t> Pileup_gpudensity;
+    TTreeReaderValueWrapper<Int_t> Pileup_nPU;
+    TTreeReaderValueWrapper<Float_t> Pileup_nTrueInt;
+    TTreeReaderValueWrapper<Float_t> Pileup_pthatmax;
+    TTreeReaderValueWrapper<Float_t> Pileup_pudensity;
+    TTreeReaderValueWrapper<Int_t> Pileup_sumEOOT;
+    TTreeReaderValueWrapper<Int_t> Pileup_sumLOOT;
+
+    // PuppiMET
+    TTreeReaderValueWrapper<Float_t> PuppiMET_covXX;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_covXY;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_covYY;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_phi;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_phiUnclusteredDown;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_phiUnclusteredUp;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_pt;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_ptUnclusteredDown;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_ptUnclusteredUp;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_significance;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_sumEt;
+    TTreeReaderValueWrapper<Float_t> PuppiMET_sumPtUnclustered;
+
+    // Rho
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoAll;
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoFastjetAll;
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoFastjetCentral;
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoFastjetCentralCalo;
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoFastjetCentralChargedPileUp;
+    TTreeReaderValueWrapper<Float_t> Rho_fixedGridRhoFastjetCentralNeutral;
+
+    // SV
+    TTreeReaderArrayWrapper<Short_t> SV_charge;
+    TTreeReaderArrayWrapper<Float_t> SV_chi2;
+    TTreeReaderArrayWrapper<Float_t> SV_dlen;
+    TTreeReaderArrayWrapper<Float_t> SV_dlenSig;
+    TTreeReaderArrayWrapper<Float_t> SV_dxy;
+    TTreeReaderArrayWrapper<Float_t> SV_dxySig;
+    TTreeReaderArrayWrapper<Float_t> SV_eta;
+    TTreeReaderArrayWrapper<Float_t> SV_mass;
+    TTreeReaderArrayWrapper<Float_t> SV_ndof;
+    TTreeReaderArrayWrapper<UChar_t> SV_ntracks;
+    TTreeReaderArrayWrapper<Float_t> SV_pAngle;
+    TTreeReaderArrayWrapper<Float_t> SV_phi;
+    TTreeReaderArrayWrapper<Float_t> SV_pt;
+    TTreeReaderArrayWrapper<Float_t> SV_x;
+    TTreeReaderArrayWrapper<Float_t> SV_y;
+    TTreeReaderArrayWrapper<Float_t> SV_z;
+    TTreeReaderValueWrapper<Int_t> nSV;
+
+    // SubGenJetAK8
+    TTreeReaderArrayWrapper<Float_t> SubGenJetAK8_eta;
+    TTreeReaderArrayWrapper<Float_t> SubGenJetAK8_mass;
+    TTreeReaderArrayWrapper<Float_t> SubGenJetAK8_phi;
+    TTreeReaderArrayWrapper<Float_t> SubGenJetAK8_pt;
+    TTreeReaderValueWrapper<Int_t> nSubGenJetAK8;
+
+    // SubJet
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4RegPtRawCorr;
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4RegPtRawCorrNeutrino;
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4RegPtRawRes;
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4V1RegPtRawCorr;
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4V1RegPtRawCorrNeutrino;
+    TTreeReaderArrayWrapper<Float_t> SubJet_UParTAK4V1RegPtRawRes;
+    TTreeReaderArrayWrapper<Float_t> SubJet_area;
+    TTreeReaderArrayWrapper<Float_t> SubJet_btagDeepFlavB;
+    TTreeReaderArrayWrapper<Float_t> SubJet_btagUParTAK4B;
+    TTreeReaderArrayWrapper<Float_t> SubJet_eta;
+    TTreeReaderArrayWrapper<UChar_t> SubJet_hadronFlavour;
+    TTreeReaderArrayWrapper<Float_t> SubJet_mass;
+    TTreeReaderArrayWrapper<Float_t> SubJet_n2b1;
+    TTreeReaderArrayWrapper<Float_t> SubJet_n3b1;
+    TTreeReaderArrayWrapper<UChar_t> SubJet_nBHadrons;
+    TTreeReaderArrayWrapper<UChar_t> SubJet_nCHadrons;
+    TTreeReaderArrayWrapper<Float_t> SubJet_phi;
+    TTreeReaderArrayWrapper<Float_t> SubJet_pt;
+    TTreeReaderArrayWrapper<Float_t> SubJet_rawFactor;
+    TTreeReaderArrayWrapper<Short_t> SubJet_subGenJetAK8Idx;
+    TTreeReaderArrayWrapper<Float_t> SubJet_tau1;
+    TTreeReaderArrayWrapper<Float_t> SubJet_tau2;
+    TTreeReaderArrayWrapper<Float_t> SubJet_tau3;
+    TTreeReaderArrayWrapper<Float_t> SubJet_tau4;
+    TTreeReaderValueWrapper<Int_t> nSubJet;
+
+    // Tau
+    TTreeReaderArrayWrapper<Float_t> Tau_IPx;
+    TTreeReaderArrayWrapper<Float_t> Tau_IPy;
+    TTreeReaderArrayWrapper<Float_t> Tau_IPz;
+    TTreeReaderArrayWrapper<Short_t> Tau_charge;
+    TTreeReaderArrayWrapper<Float_t> Tau_chargedIso;
+    TTreeReaderArrayWrapper<UChar_t> Tau_decayMode;
+    TTreeReaderArrayWrapper<Short_t> Tau_decayModePNet;
+    TTreeReaderArrayWrapper<Short_t> Tau_decayModeUParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_dxy;
+    TTreeReaderArrayWrapper<Float_t> Tau_dz;
+    TTreeReaderArrayWrapper<Short_t> Tau_eleIdx;
+    TTreeReaderArrayWrapper<Float_t> Tau_eta;
+    TTreeReaderArrayWrapper<UChar_t> Tau_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> Tau_genPartIdx;
+    TTreeReaderArrayWrapper<Bool_t> Tau_hasRefitSV;
+    TTreeReaderArrayWrapper<Bool_t> Tau_idAntiEleDeadECal;
+    TTreeReaderArrayWrapper<UChar_t> Tau_idAntiMu;
+    TTreeReaderArrayWrapper<Bool_t> Tau_idDecayModeNewDMs;
+    TTreeReaderArrayWrapper<Bool_t> Tau_idDecayModeOldDMs;
+    TTreeReaderArrayWrapper<UChar_t> Tau_idDeepTau2018v2p5VSe;
+    TTreeReaderArrayWrapper<UChar_t> Tau_idDeepTau2018v2p5VSjet;
+    TTreeReaderArrayWrapper<UChar_t> Tau_idDeepTau2018v2p5VSmu;
+    TTreeReaderArrayWrapper<Float_t> Tau_ipLengthSig;
+    TTreeReaderArrayWrapper<Short_t> Tau_jetIdx;
+    TTreeReaderArrayWrapper<Float_t> Tau_leadTkDeltaEta;
+    TTreeReaderArrayWrapper<Float_t> Tau_leadTkDeltaPhi;
+    TTreeReaderArrayWrapper<Float_t> Tau_leadTkPtOverTauPt;
+    TTreeReaderArrayWrapper<Float_t> Tau_mass;
+    TTreeReaderArrayWrapper<Short_t> Tau_muIdx;
+    TTreeReaderArrayWrapper<UChar_t> Tau_nSVs;
+    TTreeReaderArrayWrapper<Float_t> Tau_neutralIso;
+    TTreeReaderArrayWrapper<Float_t> Tau_phi;
+    TTreeReaderArrayWrapper<Float_t> Tau_photonsOutsideSignalCone;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM0PNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM0UParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM10PNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM10UParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM11PNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM11UParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM1PNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM1UParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM2PNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_probDM2UParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_pt;
+    TTreeReaderArrayWrapper<Float_t> Tau_ptCorrPNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_ptCorrUParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_puCorr;
+    TTreeReaderArrayWrapper<Float_t> Tau_qConfPNet;
+    TTreeReaderArrayWrapper<Float_t> Tau_qConfUParT;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawDeepTau2018v2p5VSe;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawDeepTau2018v2p5VSjet;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawDeepTau2018v2p5VSmu;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawIso;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawIsodR03;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawPNetVSe;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawPNetVSjet;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawPNetVSmu;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawUParTVSe;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawUParTVSjet;
+    TTreeReaderArrayWrapper<Float_t> Tau_rawUParTVSmu;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVchi2;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov00;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov10;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov11;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov20;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov21;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVcov22;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVx;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVy;
+    TTreeReaderArrayWrapper<Float_t> Tau_refitSVz;
+    TTreeReaderArrayWrapper<Short_t> Tau_svIdx1;
+    TTreeReaderArrayWrapper<Short_t> Tau_svIdx2;
+    TTreeReaderValueWrapper<Int_t> nTau;
+
+    // TauProd
+    TTreeReaderArrayWrapper<Float_t> TauProd_eta;
+    TTreeReaderArrayWrapper<Int_t> TauProd_pdgId;
+    TTreeReaderArrayWrapper<Float_t> TauProd_phi;
+    TTreeReaderArrayWrapper<Float_t> TauProd_pt;
+    TTreeReaderArrayWrapper<Short_t> TauProd_tauIdx;
+    TTreeReaderValueWrapper<Int_t> nTauProd;
+
+    // TauSpinner
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0_alt;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p25;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p25_alt;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p375;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p375_alt;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p5;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_0p5_alt;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_minus0p25;
+    TTreeReaderValueWrapper<Double_t> TauSpinner_weight_cp_minus0p25_alt;
+
+    // TrackGenJetAK4
+    TTreeReaderArrayWrapper<Float_t> TrackGenJetAK4_eta;
+    TTreeReaderArrayWrapper<Float_t> TrackGenJetAK4_phi;
+    TTreeReaderArrayWrapper<Float_t> TrackGenJetAK4_pt;
+    TTreeReaderValueWrapper<Int_t> nTrackGenJetAK4;
+
+    // TrigObj
+    TTreeReaderArrayWrapper<Float_t> TrigObj_eta;
+    TTreeReaderArrayWrapper<ULong64_t> TrigObj_filterBits;
+    TTreeReaderArrayWrapper<UShort_t> TrigObj_id;
+    TTreeReaderArrayWrapper<Short_t> TrigObj_l1charge;
+    TTreeReaderArrayWrapper<Int_t> TrigObj_l1iso;
+    TTreeReaderArrayWrapper<Float_t> TrigObj_l1pt;
+    TTreeReaderArrayWrapper<Float_t> TrigObj_l1pt_2;
+    TTreeReaderArrayWrapper<Float_t> TrigObj_l2pt;
+    TTreeReaderArrayWrapper<Float_t> TrigObj_phi;
+    TTreeReaderArrayWrapper<Float_t> TrigObj_pt;
+    TTreeReaderValueWrapper<Int_t> nTrigObj;
+
+    // TrkMET
+    TTreeReaderValueWrapper<Float_t> TrkMET_phi;
+    TTreeReaderValueWrapper<Float_t> TrkMET_pt;
+    TTreeReaderValueWrapper<Float_t> TrkMET_sumEt;
+
+    // boostedTau
+    TTreeReaderArrayWrapper<Int_t> boostedTau_charge;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_chargedIso;
+    TTreeReaderArrayWrapper<Int_t> boostedTau_decayMode;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_eta;
+    TTreeReaderArrayWrapper<UChar_t> boostedTau_genPartFlav;
+    TTreeReaderArrayWrapper<Short_t> boostedTau_genPartIdx;
+    TTreeReaderArrayWrapper<UChar_t> boostedTau_idAntiEle2018;
+    TTreeReaderArrayWrapper<UChar_t> boostedTau_idAntiMu;
+    TTreeReaderArrayWrapper<UChar_t> boostedTau_idMVAnewDM2017v2;
+    TTreeReaderArrayWrapper<UChar_t> boostedTau_idMVAoldDM2017v2;
+    TTreeReaderArrayWrapper<Short_t> boostedTau_jetIdx;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_leadTkDeltaEta;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_leadTkDeltaPhi;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_leadTkPtOverTauPt;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_mass;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_neutralIso;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_phi;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_photonsOutsideSignalCone;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_pt;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_puCorr;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawAntiEle2018;
+    TTreeReaderArrayWrapper<Short_t> boostedTau_rawAntiEleCat2018;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawBoostedDeepTauRunIIv2p0VSe;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawBoostedDeepTauRunIIv2p0VSjet;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawBoostedDeepTauRunIIv2p0VSmu;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawIso;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawIsodR03;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawMVAnewDM2017v2;
+    TTreeReaderArrayWrapper<Float_t> boostedTau_rawMVAoldDM2017v2;
+    TTreeReaderValueWrapper<Int_t> nboostedTau;
+
+    // bunchCrossing
+    TTreeReaderValueWrapper<UInt_t> bunchCrossing;
+
+    // event
+    TTreeReaderValueWrapper<ULong64_t> event;
+
+    // genTtbarId
+    TTreeReaderValueWrapper<Int_t> genTtbarId;
+
+    // genWeight
+    TTreeReaderValueWrapper<Float_t> genWeight;
+
+    // luminosityBlock
+    TTreeReaderValueWrapper<UInt_t> luminosityBlock;
+
+    // orbitNumber
+    TTreeReaderValueWrapper<UInt_t> orbitNumber;
+
+    // run
+    TTreeReaderValueWrapper<UInt_t> RunNumber;
+
+    //=================================================
+    std::map<TString, pair<Bool_t *, float>> TriggerMap;
 };
 
 #endif

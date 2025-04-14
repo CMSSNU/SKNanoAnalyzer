@@ -96,7 +96,7 @@ void FullHadronicTriggerTnP::executeEventFromParameter(TString syst)
         int nBTag = 0;
         for (const auto &jet : this_systjet)
         {
-            if (jet.GetBTaggerResult(JetTagging::JetFlavTagger::DeepJet) > myCorr->GetBTaggingWP(JetTagging::JetFlavTagger::DeepJet, wp))
+            if (jet.GetTaggerResult(JetTagging::JetFlavTagger::DeepJet, JetTagging::JetFlavTaggerScoreType::B) > myCorr->GetBTaggingWP(JetTagging::JetFlavTagger::DeepJet, wp))
             {
                 nBTag++;
             }
