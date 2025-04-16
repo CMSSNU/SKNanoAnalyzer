@@ -35,9 +35,9 @@
         "isMC": 1,
         "PD": "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 990341000.0,
-        "sumsign": 982318336.0,
-        "sumW": 345118277632.0,
+        "nmc": 104393000.0,
+        "sumsign": 103547206.0,
+        "sumW": 36259126515.42438,
         "xsec": 419.6938241160001
     },
     "TTJJ_Vcb_powheg": {
@@ -53,54 +53,54 @@
         "isMC": 1,
         "PD": "TTto4Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 335962000.0,
-        "sumsign": 333234656.0,
-        "sumW": 119898365952.0,
+        "nmc": 44557000.0,
+        "sumsign": 44194980.0,
+        "sumW": 15903253616.281128,
         "xsec": 419.6938241160001
     },
     "TTJJ_powheg_mTop173p5": {
         "isMC": 1,
         "PD": "TTto4Q_MT-173p5_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 365042000.0,
-        "sumsign": 362101632.0,
-        "sumW": 123472551936.0,
+        "nmc": 45811000.0,
+        "sumsign": 45442094.0,
+        "sumW": 15486756608.14209,
         "xsec": 419.6938241160001
     },
     "TTJJ_powheg_hDampUp": {
         "isMC": 1,
         "PD": "TTto4Q_Hdamp-418_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 416063000.0,
-        "sumsign": 414143264.0,
-        "sumW": 144739876864.0,
+        "nmc": 45022000.0,
+        "sumsign": 44814284.0,
+        "sumW": 15639244191.091797,
         "xsec": 419.6938241160001
     },
     "TTJJ_powheg_hDampDown": {
         "isMC": 1,
         "PD": "TTto4Q_Hdamp-158_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 399039000.0,
-        "sumsign": 392521824.0,
-        "sumW": 138382606336.0,
+        "nmc": 45748000.0,
+        "sumsign": 45000454.0,
+        "sumW": 15887409735.378052,
         "xsec": 419.6938241160001
     },
     "TTJJ_powheg_CP5Up": {
         "isMC": 1,
         "PD": "TTto4Q_TuneCP5Up_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 572976984.0,
-        "sumsign": 568339456.0,
-        "sumW": 199768195072.0,
+        "nmc": 45873999.0,
+        "sumsign": 45502629.0,
+        "sumW": 15933656207.927216,
         "xsec": 419.6938241160001
     },
     "TTJJ_powheg_CP5Down": {
         "isMC": 1,
         "PD": "TTto4Q_TuneCP5Down_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*0.6741*0.6741",
-        "nmc": 487057000.0,
-        "sumsign": 483100640.0,
-        "sumW": 169767714816.0,
+        "nmc": 45262000.0,
+        "sumsign": 44894560.0,
+        "sumW": 15720728678.032227,
         "xsec": 419.6938241160001
     },
     "TTLJ_powheg": {
@@ -242,9 +242,9 @@
         "isMC": 1,
         "PD": "TBbartoLplusNuBbar-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8",
         "xsec_formula": "6.72748*0.1086*3",
-        "nmc": 24180000.0,
-        "sumsign": 14879624.0,
-        "sumW": 55063480.0,
+        "nmc": 2596000.0,
+        "sumsign": 1596784.0,
+        "sumW": 5907871.9889855385,
         "note": "NLO parmetrization @ 13.6TeV",
         "xsec": 2.191812984
     },
@@ -263,9 +263,9 @@
         "PD": "TTHto2B_M-125_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec": 0.331968,
         "xsec_formula": "0.57*0.5824",
-        "nmc": 71510000.0,
-        "sumsign": 69940144.0,
-        "sumW": 41057624.0
+        "nmc": 10846000.0,
+        "sumsign": 10607764.0,
+        "sumW": 6219299.951212645
     },
     "ttHtoNonbb_M125": {
         "isMC": 1,
@@ -382,9 +382,9 @@
         "isMC": 1,
         "PD": "TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8",
         "xsec": 145,
-        "nmc": 34352000.0,
-        "sumsign": 31613678.0,
-        "sumW": 4282880512.0
+        "nmc": 5786000.0,
+        "sumsign": 5324994.0,
+        "sumW": 720434409.3418579
     },
     "ST_tch_antitop": {
         "isMC": 1,
@@ -498,145 +498,145 @@
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-40to100_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 13050000,
-        "nmc": 552698639.0,
-        "sumsign": 552698752.0,
-        "sumW": 2.6515384328781824e+16
+        "nmc": 56297098.0,
+        "sumsign": 56297098.0,
+        "sumW": 2695396270315408.0
     },
     "QCDB_HT100to200": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-100to200_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 1196000,
-        "nmc": 613747821.0,
-        "sumsign": 613747584.0,
-        "sumW": 4221359878045696.0
+        "nmc": 59706665.0,
+        "sumsign": 59706665.0,
+        "sumW": 411054133069500.0
     },
     "QCDB_HT200to400": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-200to400_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 100800,
-        "nmc": 662100518.0,
-        "sumsign": 662100480.0,
-        "sumW": 497460258537472.0
+        "nmc": 54485362.0,
+        "sumsign": 54485362.0,
+        "sumW": 40835576614649.0
     },
     "QCDB_HT400to600": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-400to600_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 4904,
-        "nmc": 262324851.0,
-        "sumsign": 262324864.0,
-        "sumW": 11492081532928.0
+        "nmc": 25030968.0,
+        "sumsign": 25030968.0,
+        "sumW": 1095793327910.5586
     },
     "QCDB_HT600to800": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-400to600_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 656.1,
-        "nmc": 262324851.0,
-        "sumsign": 262324864.0,
-        "sumW": 11492081532928.0
+        "nmc": 25030968.0,
+        "sumsign": 25030968.0,
+        "sumW": 1095793327910.5586
     },
     "QCDB_HT800to1000": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-800to1000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 139.9,
-        "nmc": 30217458.0,
-        "sumsign": 30217456.0,
-        "sumW": 42856730624.0
+        "nmc": 5481202.0,
+        "sumsign": 5481202.0,
+        "sumW": 7774188281.912231
     },
     "QCDB_HT1000to1500": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-1000to1500_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 54.84,
-        "nmc": 1701480.0,
-        "sumsign": 1701480.0,
-        "sumW": 973559488.0
+        "nmc": 370851.0,
+        "sumsign": 370851.0,
+        "sumW": 212136761.2998047
     },
     "QCDB_HT1500to2000": {
         "isMC": 1,
         "PD": "QCDB-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 4.741,
-        "nmc": 1054451.0,
-        "sumsign": 1054451.0,
-        "sumW": 53594740.0
+        "nmc": 389252.0,
+        "sumsign": 389252.0,
+        "sumW": 19780078.218006134
     },
     "QCD_HT70to100": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-70to100_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 58500000,
-        "nmc": 431437798.0,
-        "sumsign": 431437856.0,
-        "sumW": 1.314898826011607e+17
+        "nmc": 39867446.0,
+        "sumsign": 39867446.0,
+        "sumW": 1.2173511518756288e+16
     },
     "QCD_HT100to200": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-100to200_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 0,
-        "nmc": 375801063.0,
-        "sumsign": 375801024.0,
-        "sumW": 6.156722661176115e+16
+        "nmc": 39447930.0,
+        "sumsign": 39447930.0,
+        "sumW": 6468912783159984.0
     },
     "QCD_HT200to400": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-200to400_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 1961000,
-        "nmc": 404309417.0,
-        "sumsign": 404309344.0,
-        "sumW": 6972225496285184.0
+        "nmc": 37041533.0,
+        "sumsign": 37041533.0,
+        "sumW": 637420053423600.0
     },
     "QCD_HT400to600": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-400to600_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 95620,
-        "nmc": 280142485.0,
-        "sumsign": 280142400.0,
-        "sumW": 293295666233344.0
+        "nmc": 36483071.0,
+        "sumsign": 36483071.0,
+        "sumW": 38149370434390.0
     },
     "QCD_HT600to800": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-600to800_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 13540,
-        "nmc": 270492110.0,
-        "sumsign": 270492128.0,
-        "sumW": 43592345190400.0
+        "nmc": 34513335.0,
+        "sumsign": 34513335.0,
+        "sumW": 5561806407387.719
     },
     "QCD_HT800to1000": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-800to1000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 3033,
-        "nmc": 340932063.0,
-        "sumsign": 340932096.0,
-        "sumW": 12936888188928.0
+        "nmc": 37794527.0,
+        "sumsign": 37794527.0,
+        "sumW": 1435573935115.5703
     },
     "QCD_HT1000to1200": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-1000to1200_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 883.7,
-        "nmc": 255399788.0,
-        "sumsign": 255399808.0,
-        "sumW": 2925473824768.0
+        "nmc": 32193981.0,
+        "sumsign": 32193981.0,
+        "sumW": 368580186944.6992
     },
     "QCD_HT1200to1500": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-1200to1500_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 383.5,
-        "nmc": 273571675.0,
-        "sumsign": 273571680.0,
-        "sumW": 1382948274176.0
+        "nmc": 40348927.0,
+        "sumsign": 40348927.0,
+        "sumW": 203972126954.2788
     },
     "QCD_HT1500to2000": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 25.14,
-        "nmc": 298743180.0,
-        "sumsign": 298743200.0,
-        "sumW": 501510209536.0
+        "nmc": 39490287.0,
+        "sumsign": 39490287.0,
+        "sumW": 66333042056.14282
     },
     "QCD_HT2000toInf": {
         "isMC": 1,
         "PD": "QCD-4Jets_HT-2000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "xsec": 25.14,
-        "nmc": 302036401.0,
-        "sumsign": 302036416.0,
-        "sumW": 105710067712.0
+        "nmc": 42353820.0,
+        "sumsign": 42353820.0,
+        "sumW": 14807156197.13736
     },
     "QCD_PT30to50": {
         "isMC": 1,
@@ -773,7 +773,7 @@
             "C"
         ],
         "NEvents": [
-            132477473.0
+            222932310.0
         ]
     },
     "Muon1": {
@@ -782,7 +782,7 @@
             "C"
         ],
         "NEvents": [
-            132451296.0
+            222882016.0
         ]
     },
     "EGamma0": {
@@ -791,7 +791,7 @@
             "C"
         ],
         "NEvents": [
-            154741477.0
+            259853349.0
         ]
     },
     "EGamma1": {
@@ -800,7 +800,7 @@
             "C"
         ],
         "NEvents": [
-            154703032.0
+            259806197.0
         ]
     },
     "JetMET0": {
@@ -809,7 +809,7 @@
             "C"
         ],
         "NEvents": [
-            102168507.0
+            188951019.0
         ]
     },
     "JetMET1": {
@@ -818,7 +818,7 @@
             "C"
         ],
         "NEvents": [
-            102145054.0
+            188910943.0
         ]
     }
 }
