@@ -10,30 +10,26 @@ namespace JetTagging
 {
 
     // Jet Tagging parameters
-    enum class JetFlavTagger
-    {
+    enum class JetFlavTagger {
         DeepJet,
         ParticleNet,
         ParT
     };
-    enum class JetFlavTaggerWP
-    {
+    enum class JetFlavTaggerWP {
         Loose,
         Medium,
         Tight,
         VeryTight,
         SuperTight
     };
-    enum class JetTaggingSFMethod
-    {
+    enum class JetTaggingSFMethod {
         comb,
         mujets,
         shape,
         wp
     };
     //string version of JetTaggingSFMethod
-    inline TString GetJetTaggingSFMethodStr(JetTaggingSFMethod method)
-    {
+    inline TString GetJetTaggingSFMethodStr(JetTaggingSFMethod method) {
         switch (method)
         {
         case JetTaggingSFMethod::comb:

@@ -8,7 +8,6 @@ external/libtorch/*
 config/config.*
 !config/config.default
 **/Skim*.json
-external/** 
 *.onnx
 !external/KinematicFitter
 templates/__pycache__/*

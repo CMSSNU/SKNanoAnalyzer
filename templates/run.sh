@@ -16,6 +16,7 @@ export LHAPDF_LIB_DIR=$SKNANO_HOME/external/lhapdf/redhat/lib
 export CORRECTION_INCLUDE_DIR=`correction config --incdir`
 export CORRECTION_LIB_DIR=`correction config --libdir`
 export JSONPOG_REPO_PATH=$SKNANO_HOME/external/jsonpog-integration
+export ROCCOR_PATH=$SKNANO_HOME/external/RoccoR
 export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
 export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
 

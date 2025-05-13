@@ -6,14 +6,15 @@
 #include <deque>
 
 #include "TFile.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH3F.h"
+#include "TH1.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
 #include "TTree.h"
 #include "TBranch.h"
 #include "TString.h"
 #include "TObjString.h"
-#include "TRandom3.h"
+#include "TMath.h"
 
 #include "SKNanoLoader.h"
 #include "Event.h"
@@ -40,6 +41,21 @@
 #include "JetTaggingParameter.h"
 #include "PhysicalConstants.h"
 
+class IDContainer {
+public:
+    IDContainer() {}
+    IDContainer(const TString &tight, const TString &loose):
+        j_tight(tight), j_loose(loose) {}
+
+    TString GetID(const TString &wp) const {
+        if (wp == "tight") return j_tight;
+        else if (wp == "loose") return j_loose;
+        else throw runtime_error("Invalid WP: " + wp);
+    }
+
+private:
+    TString j_tight, j_loose;
+};
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -56,7 +72,7 @@ public:
 
 
     //MetFilter
-    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
+    bool PassMETFilter(const Particle &METv, const RVec<Jet> &AllJets);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
@@ -127,16 +143,17 @@ public:
     float GetL1PrefireWeight(MyCorrection::variation syst = MyCorrection::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
     unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
-    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const TString &syst );
+    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const TString &syst);
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const TString &syst);
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source="total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source="total");
+    
     // Histogram Handlers
     void SetOutfilePath(TString outpath);
-    TH1F* GetHist1D(const string &histname);
+    TH1D* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
     inline void FillCutFlow(const int &val,const int &maxCutN=10){
         static int storedMaxCutN = maxCutN;
@@ -181,11 +198,11 @@ public:
     virtual void WriteHist();
 
 private:
-    unordered_map<string, TH1F*> histmap1d;
-    unordered_map<string, TH2F*> histmap2d;
-    unordered_map<string, TH3F*> histmap3d;
+    unordered_map<string, TH1D*> histmap1d;
+    unordered_map<string, TH2D*> histmap2d;
+    unordered_map<string, TH3D*> histmap3d;
     unordered_map<string, TTree*> treemap;
-    unordered_map<TTree*, unordered_map<string, TBranch*>> branchmaps; 
+    unordered_map<TTree*, unordered_map<string, TBranch*>> branchmaps;
     deque<float> this_floats;
     deque<int> this_ints;
     deque<char> this_bools;

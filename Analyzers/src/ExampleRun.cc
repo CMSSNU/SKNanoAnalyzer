@@ -194,10 +194,10 @@ void ExampleRun::executeEventFromParameter() {
     if (! (fabs(ZCand.M() - 91.2) < 15.)) return;
 
     // example of applying muon scale factors
-    auto mu_id_lambda = [&](MyCorrection::variation syst, TString source)
-    { return myCorr->GetMuonIDSF(this_muon_id_sf_key, muons, syst, source); };
-    weight_function_map["Muon_ID"] = mu_id_lambda;
-    systHelper->assignWeightFunctionMap(weight_function_map);
+    //auto mu_id_lambda = [&](MyCorrection::variation syst)
+    //{ return myCorr->GetMuonIDSF(this_muon_id_sf_key, muons, syst); };
+    //weight_function_map["Muon_ID"] = mu_id_lambda;
+    //systHelper->assignWeightFunctionMap(weight_function_map);
 
     // Event weight
     float weight = 1.;

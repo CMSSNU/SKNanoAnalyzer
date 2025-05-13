@@ -25,6 +25,10 @@ public:
     // Assignment operator
     Particle &operator=(const Particle &p);
 
+    // Comparison operators
+    bool operator<(const Particle &p) const;
+    bool operator>(const Particle &p) const;
+
     // destructor
     ~Particle();
 

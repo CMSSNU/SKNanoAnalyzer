@@ -124,8 +124,10 @@ public:
   inline double GetM() { return j_m; }
   inline int partonFlavour() const { return j_partonFlavour; };
   inline int hadronFlavour() const { return j_hadronFlavour; };
+  inline int genJetIdx() const { return j_genJetIdx; };
   inline bool Pass_tightJetID() const { return j_tightJetID; }
   inline bool Pass_tightLepVetoJetID() const { return j_tightLepVetoJetID; }
+
   inline float chargedEMFraction() const { return j_chEmEF; }
   inline float chargedHadronFraction() const { return j_chHEF; }
   inline float neutralEMFraction() const { return j_neEmEF; }

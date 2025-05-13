@@ -22,7 +22,7 @@ void FullHadronicTriggerTnP::executeEvent()
     DoubleBTagTrigger = "HLT_PFHT400_SixPFJet32_DoublePFBTagDeepJet_2p94";
     ev = GetEvent();
     // Met Filter
-    if (!PassMetFilter(AllJets, ev))
+    if (!PassMETFilter(ev.GetMETVector(Event::MET_Type::PUPPI), AllJets))
     {
         return;
     }

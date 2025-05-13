@@ -153,7 +153,8 @@
         "lumi": 41477.877400009
     },
     "HLT_Ele32_WPTight_Gsf_L1DoubleEG": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_HT450_Beamspot": {
         "lumi": 41477.877400009
@@ -207,10 +208,12 @@
         "lumi": 41477.877400009
     },
     "HLT_IsoMu27": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_IsoMu30": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_UncorrectedJetE30_NoBPTX": {
         "lumi": 41477.877400009
@@ -252,13 +255,15 @@
         "lumi": 41477.877400009
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL": {
         "lumi": 41477.877400009
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL_DZ": {
         "lumi": 41477.877400009
@@ -270,7 +275,8 @@
         "lumi": 41477.877400009
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL_DZ_Mass3p8": {
         "lumi": 41477.877400009
@@ -732,7 +738,8 @@
         "lumi": 41477.877400009
     },
     "HLT_Mu8_TrkIsoVVL": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu8_DiEle12_CaloIdL_TrackIdL_DZ": {
         "lumi": 41477.877400009
@@ -747,13 +754,16 @@
         "lumi": 41477.877400009
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL": {
         "lumi": 41477.877400009
@@ -789,10 +799,12 @@
         "lumi": 41477.877400009
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
         "lumi": 41477.877400009
@@ -1179,13 +1191,16 @@
         "lumi": 41477.877400009
     },
     "HLT_Ele8_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     },
     "HLT_Ele8_CaloIdM_TrackIdM_PFJet30": {
         "lumi": 41477.877400009
@@ -1707,6 +1722,7 @@
         "lumi": 41477.877400009
     },
     "Full": {
-        "lumi": 41477.877400009
+        "lumi": 41477.877400009,
+        "active": true
     }
 }

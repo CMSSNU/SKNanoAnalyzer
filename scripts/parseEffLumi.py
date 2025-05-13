@@ -43,10 +43,13 @@ def parseDataInfoFor(sample_name):
             json.dump(for_snu_info, f, indent=4)
 
 def parseMCInfoFor(sample_name):
+    nevts = 0
     sumsign = 0
     sumW = 0
     try:
         f = ROOT.TFile.Open(f"{SKNanoOutputDir}/GetEffLumi/{args.era}/{sample_name}.root")
+        h = f.Get("NEvents")
+        nevts = h.GetBinContent(1)
         h = f.Get("sumSign")
         sumsign = h.GetBinContent(1)
         h = f.Get("sumW")
@@ -56,12 +59,14 @@ def parseMCInfoFor(sample_name):
         print(f"Error opening file for {sample_name}")
         sumsign = -1
         sumW = -1
+    #common_info[sample_name]["nmc"] = nevts
     common_info[sample_name]["sumsign"] = sumsign
     common_info[sample_name]["sumW"] = sumW
 
     # add in ForSNU/$SAMPLE_NAME.json
     with open(f"{SKNanoDataDir}/{args.era}/Sample/ForSNU/{sample_name}.json", "r") as f:
         for_snu_info = json.load(f)
+    for_snu_info["nmc"] = nevts
     for_snu_info["sumsign"] = sumsign
     for_snu_info["sumW"] = sumW
     with open(f"{SKNanoDataDir}/{args.era}/Sample/ForSNU/{sample_name}.json", "w") as f:

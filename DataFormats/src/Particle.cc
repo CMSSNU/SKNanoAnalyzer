@@ -22,6 +22,14 @@ Particle &Particle::operator=(const Particle &p) {
     return *this;
 }
 
+bool Particle::operator<(const Particle &p) const {
+    return Pt() < p.Pt();
+}
+
+bool Particle::operator>(const Particle &p) const {
+    return Pt() > p.Pt();
+}
+
 void Particle::SetCharge(float q) {
     j_Charge = q;
 }

@@ -15,23 +15,24 @@ AnalyzerCore::~AnalyzerCore() {
     // if (pdfReweight) delete pdfReweight;
 }
 
-bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
-    bool MetFilter = true;
-    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
-    //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
-    if(!MetFilter) return false;
-    if(Run == 2) return MetFilter;
-    // Temporarily remove the ecalBadCalibFilter, Instead,
-    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
-    if (ev.GetMETVector(met_type).Pt() <= 100.) return MetFilter;
-    RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
-    for(const auto &jet: this_jet){
-        bool badEcal = (jet.Pt() > 50.);
-        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
-        badEcal = badEcal && jet.DeltaR(ev.GetMETVector(met_type)) < 0.3;
-        badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
-        badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
-        if(badEcal) return false;
+bool AnalyzerCore::PassMETFilter(const Particle &METv, const RVec<Jet> &AllJets) {
+    if (! Flag_goodVertices) return false;
+    if (! Flag_globalSuperTightHalo2016Filter) return false;
+    if (! Flag_BadPFMuonFilter) return false;
+    if (! Flag_BadPFMuonDzFilter) return false;
+    if (! Flag_hfNoisyHitsFilter) return false;
+    if (! Flag_ecalBadCalibFilter) return false;
+    if (! Flag_eeBadScFilter) return false;
+    // if (! Flag_ECalDeadCellTriggerPrimitiveFilter) return false;
+
+    // For BAD Ecal in 2022EE(?) 
+    if ((362433 <= RunNumber && RunNumber <= 367144) && METv.Pt() > 100.) {
+        for (const auto &jet: SelectJets(AllJets, "NOCUT", 50., 5.0)) {
+            if (! (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9)) return false;
+            if (! (jet.DeltaR(METv) < 0.3)) return false;
+            if (! (jet.Eta() > -0.5 && jet.Eta() < -0.1)) return false;
+            if (! (jet.Phi() > -2.1 && jet.Phi() < -1.8)) return false;
+        }
     }
     return true;
 }
@@ -110,15 +111,17 @@ float AnalyzerCore::GetL1PrefireWeight(MyCorrection::variation syst){
 unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR, const float pTJerCut){
     unordered_map<int, int> matched_genjet_idx;
     RVec<tuple<int,int,float,float>> possible_matches;
-
     //All possible matches that pass the dR and pTJerCut
     for(size_t i = 0; i < jets.size(); i++){
         for(size_t j = 0; j < genjets.size(); j++){
-            float this_DeltaR = jets[i].DeltaR(genjets[j]);
-            float this_pt_diff = fabs(jets[i].Pt() - genjets[j].Pt());
-            float this_jer = myCorr->GetJER(jets[i].Eta(), jets[i].Pt(), rho);
-            this_jer *= jets[i].Pt();
-            if(jets[i].DeltaR(genjets[j]) < dR && this_pt_diff < pTJerCut*this_jer){
+            const auto &this_jet = jets.at(i);
+            const auto &this_genjet = genjets.at(j);
+
+            float this_DeltaR = this_jet.DeltaR(this_genjet);
+            float this_pt_diff = fabs(this_jet.Pt() - this_genjet.Pt());
+            float this_jer = this_jet.Pt()*myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), rho);
+            
+            if (this_DeltaR < dR && this_pt_diff < pTJerCut*this_jer){
                 possible_matches.emplace_back(i, j, this_DeltaR, this_pt_diff);
             }
         }
@@ -129,17 +132,18 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
         return get<2>(a) < get<2>(b);
     });
     //greeedy matching
-
     RVec<bool> used_jet(jets.size(), false);
     RVec<bool> used_genjet(genjets.size(), false);
     for(const auto &match: possible_matches){
         int jet_idx = get<0>(match);
         int genjet_idx = get<1>(match);
         if(used_jet[jet_idx] || used_genjet[genjet_idx]) continue;
+
         matched_genjet_idx[jet_idx] = genjet_idx;
         used_jet[jet_idx] = true;
         used_genjet[genjet_idx] = true;
     }
+    
     // assign -999 to unmatched jet
     for(size_t i = 0; i < jets.size(); i++){
         if(used_jet[i]) continue;
@@ -183,21 +187,18 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source){
-    gRandom->SetSeed(0);
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source) {
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
+    gRandom->SetSeed(int(MET_pt)+953);
     for(size_t i = 0; i < jets.size(); i++){
         Jet this_jet = jets.at(i);
 
         // backward smearing for systematic variation
-
-        if (this_jet.GetUnsmearedP4().E() < 0) // never smeared yet
-        {
+        if (this_jet.GetUnsmearedP4().E() < 0) {
+            // never smeared yet
             this_jet.SetUnsmearedP4(this_jet);
-        }
-        else
-        {
+        } else {
             // already smeared
             float backward_factor = this_jet.GetUnsmearedP4().Pt() / this_jet.Pt();
             this_jet *= backward_factor;
@@ -207,19 +208,17 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
         float this_jer = myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), fixedGridRhoFastjetAll);
         float this_sf = myCorr->GetJERSF(this_jet.Eta(), this_jet.Pt(), syst, source);
         float MIN_JET_ENERGY = 1e-2;
-
-        if(matched_idx[i] < 0){
+        
+        if(matched_idx[i] < 0) {
             // if the jet is not matched to any genjet, do stochastic smearing
-            if(this_sf < 1.){
+            if(this_sf < 1.) {
                 this_corr = MIN_JET_ENERGY / this_jet.E();
-            }
-            else{
+            } else{
                 this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
                 float new_corr = MIN_JET_ENERGY / this_jet.E();
                 this_corr = max(this_corr, new_corr);
             }
-        }
-        else{
+        } else {
             float this_genjet_pt = genjets[matched_idx[i]].Pt();
             this_corr += (this_sf - 1.) * (1. - this_genjet_pt / this_jet.Pt());
             float new_corr = MIN_JET_ENERGY / this_jet.E();
@@ -231,8 +230,16 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
     return smeared_jets;
 }
 
-RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst, const TString &source)
-{
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source){
+    if (syst == "nominal") return jets;
+    else if (syst == "up") return SmearJets(jets, genjets, MyCorrection::variation::up, source);
+    else if (syst == "down") return SmearJets(jets, genjets, MyCorrection::variation::down, source);
+    else throw runtime_error("[AnalyzerCore::SmearJets] Invalid syst value");
+}
+
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst, const TString &source) {
+    if(syst == MyCorrection::variation::nom) return jets;
+    
     RVec<Jet> scaled_jets;
     RVec<TString> syst_sources = {"AbsoluteMPFBias",
                                   "AbsoluteScale",
@@ -264,9 +271,6 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
                                   "SinglePionHCAL",
                                   "TimePtEta"};
 
-    if(syst == MyCorrection::variation::nom) return jets;
-
-
     for(const auto &jet: jets){
         Jet this_jet = jet;
 
@@ -280,17 +284,23 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
         }
 
         if(source == "total"){
-            for(const auto &it: syst_sources){
+            for(const auto &it: syst_sources) {
                 this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, it);
             }
             scaled_jets.push_back(this_jet);
-        }
-        else{
+        } else{
             this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, source);
             scaled_jets.push_back(this_jet);
         }
     }
     return scaled_jets;
+}
+
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source){
+    if(syst == "nom") return jets;
+    else if (syst == "up") return ScaleJets(jets, MyCorrection::variation::up, source);
+    else if (syst == "down") return ScaleJets(jets, MyCorrection::variation::down, source);
+    else throw runtime_error("[AnalyzerCore::ScaleJets] Invalid syst value");
 }
 
 void AnalyzerCore::SetOutfilePath(TString outpath)
@@ -342,6 +352,7 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 Event AnalyzerCore::GetEvent()
 {
     Event ev;
+    ev.SetRunLumiEvent(Run, LumiBlock, EventNumber);
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
     if(Run == 3){
@@ -350,7 +361,7 @@ Event AnalyzerCore::GetEvent()
     else if(Run == 2){
         ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
     }
-
+    ev.SetGenMET(GenMET_pt, GenMET_phi);
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
     RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown, PuppiMET_ptJERUp, PuppiMET_ptJERDown, PuppiMET_ptJESUp, PuppiMET_ptJESDown};
@@ -362,10 +373,37 @@ Event AnalyzerCore::GetEvent()
 
 RVec<Muon> AnalyzerCore::GetAllMuons() {
     RVec<Muon> muons;
+    RVec<Gen> truth;
+    if (!IsDATA) truth = GetAllGens();
+
     for (int i = 0; i < nMuon; i++) {
         Muon muon;
         muon.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
         muon.SetCharge(Muon_charge[i]);
+        muon.SetNTrackerLayers(Muon_nTrackerLayers[i]);
+        float roccor = 1.;
+        float roccor_err = 0.;
+        if (IsDATA) {
+            roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom);
+            roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up) - roccor;
+        } else {
+            float matched_pt = -999.;
+            float min_dR = 0.2;
+            for (const auto &gen: truth) {
+                if (fabs(gen.PID()) != 13) continue;
+                if (gen.Status() != 1) continue;
+                float this_dR = muon.DeltaR(gen);
+                if (this_dR < min_dR) {
+                    min_dR = this_dR;
+                    matched_pt = gen.Pt();
+                }
+            }
+            roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom, matched_pt);
+            roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up, matched_pt) - roccor;
+        }
+        muon.SetMiniAODPt(muon.Pt());
+        muon.SetMomentumScaleUpDown(muon.Pt()*(roccor+roccor_err), muon.Pt()*(roccor-roccor_err)); 
+        muon.SetPtEtaPhiM(muon.Pt()*roccor, muon.Eta(), muon.Phi(), muon.M());
         muon.SetTkRelIso(Muon_tkRelIso[i]);
         muon.SetPfRelIso03(Muon_pfRelIso03_all[i]);
         muon.SetPfRelIso04(Muon_pfRelIso04_all[i]);
@@ -373,6 +411,7 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetdXY(Muon_dxy[i], Muon_dxyErr[i]);
         muon.SetdZ(Muon_dz[i], Muon_dzErr[i]);
         muon.SetIP3D(Muon_ip3d[i], Muon_sip3d[i]);
+        muon.SetNTrackerLayers(Muon_nTrackerLayers[i]);
         muon.SetBIDBit(Muon::BooleanID::LOOSE, Muon_looseId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUM, Muon_mediumId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUMPROMPT, Muon_mediumPromptId[i]);
@@ -401,6 +440,22 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     }
 
     return muons;
+}
+
+RVec<Muon> AnalyzerCore::ScaleMuons(const RVec<Muon> &muons, const TString &syst) {
+    RVec<Muon> scaled_muons;
+    for (const auto &muon: muons) {
+        Muon scaled_muon = muon;
+        if (syst == "up") {
+            scaled_muon.SetPtEtaPhiM(muon.MomentumScaleUp(), muon.Eta(), muon.Phi(), muon.M());
+        } else if (syst == "down") {
+            scaled_muon.SetPtEtaPhiM(muon.MomentumScaleDown(), muon.Eta(), muon.Phi(), muon.M());
+        } else {
+            throw runtime_error("[AnalyzerCore::ScaleMuons] Invalid variation");
+        }
+        scaled_muons.emplace_back(scaled_muon);
+    }
+    return scaled_muons;
 }
 
 RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const float fetamax) {
@@ -468,10 +523,19 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID
 RVec<Electron> AnalyzerCore::GetAllElectrons(){
     RVec<Electron> electrons;
     for (int i = 0; i < nElectron; i++){
+        // Reject GAP region electrons
+        const float fscEta = fabs(Electron_scEta[i]);
+        if (1.444 < fscEta && fscEta < 1.566) continue;
+
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
-        electron.SetDeltaEtaSC(Electron_deltaEtaSC[i]);
+        electron.SetScEta(Electron_scEta[i]);
+        electron.SetDeltaEtaInSC(Electron_deltaEtaInSC[i]);
+        electron.SetDeltaEtaInSeed(Electron_deltaEtaInSeed[i]);
+        electron.SetDeltaPhiInSC(Electron_deltaPhiInSC[i]);
+        electron.SetDeltaPhiInSeed(Electron_deltaPhiInSeed[i]);
+        electron.SetPFClusterIso(Electron_ecalPFClusterIso[i], Electron_hcalPFClusterIso[i]);
         electron.SetPfRelIso03(Electron_pfRelIso03_all[i]);
         electron.SetMiniPFRelIso(Electron_miniPFRelIso_all[i]);
         electron.SetdXY(Electron_dxy[i], Electron_dxyErr[i]);
@@ -489,21 +553,33 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
         electron.SetDr03TkSumPt(Electron_dr03TkSumPt[i]);
         electron.SetDr03TkSumPtHEEP(Electron_dr03TkSumPtHEEP[i]);
         electron.SetR9(Electron_r9[i]);
-        if(Run == 3){
-            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
-
-        }
-        electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+        electron.SetRho(fixedGridRhoFastjetAll);
+        electron.SetEnergyErr(Electron_energyErr[i]);
         electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
-        
-        electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
-        electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
         electron.SetGenPartFlav(Electron_genPartFlav[i]);
         electron.SetGenPartIdx(Electron_genPartIdx[i]);
+
+        if (Run == 2) {
+            electron.SetEnergyResUnc(Electron_dEsigmaUp[i], Electron_dEsigmaDown[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaFall17V2Iso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaFall17V2Iso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaFall17V2noIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaFall17V2noIso_WP90[i]);
+            electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaFall17V2Iso[i]);
+            electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaFall17V2noIso[i]);
+        } else if (Run == 3) {
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+            electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
+            electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]); 
+        } else {
+            throw runtime_error("[AnalyzerCore::GetAllElectrons] Invalid run number");
+        }
+
 
         electrons.push_back(electron);
     }
@@ -546,6 +622,47 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
+}
+
+RVec<Electron> AnalyzerCore::ScaleElectrons(const RVec<Electron> &electrons, const TString &syst) {
+    // This function is only for Run2
+    // As the scale uncertainty is not stored in NanoAODv9
+    // Should patch from https://github.com/cms-egamma/ScaleFactorsJSON
+    if (Run != 2) {
+        throw runtime_error("[AnalyzerCore::ScaleElectrons] This function is only for Run2");
+    }
+    RVec<Electron> scaled_electrons;
+    for (const auto &electron: electrons) {
+        float scale_variation = myCorr->GetElectronScaleUnc(electron.Eta(), electron.SeedGain(), syst);
+        Electron scaled_electron = electron;
+        scaled_electron.SetPtEtaPhiM(electron.Pt()*scale_variation, electron.Eta(), electron.Phi(), electron.M());
+        scaled_electrons.emplace_back(scaled_electron);
+    }
+    return scaled_electrons;
+}
+
+RVec<Electron> AnalyzerCore::SmearElectrons(const RVec<Electron> &electrons, const TString &syst) {
+    RVec<Electron> smeared_electrons;
+    if (Run != 2) {
+        throw runtime_error("[AnalyzerCore::SmearElectrons] Run3 is not supported yet");
+    }
+    for (const auto &electron: electrons) {
+        float smeared_pt = electron.Pt();
+        float corr = 1.0;
+        if (syst == "up") {
+            corr = (electron.Energy() - electron.dEsigmaUp())/electron.Energy();
+            smeared_pt = corr * electron.Pt();
+        } else if (syst == "down") {
+            corr = (electron.Energy() - electron.dEsigmaDown())/electron.Energy();
+            smeared_pt = corr * electron.Pt();
+        } else {
+            throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
+        }
+        Electron smeared_electron = electron;
+        smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
+        smeared_electrons.emplace_back(smeared_electron);
+    }
+    return smeared_electrons;
 }
 
 RVec<Gen> AnalyzerCore::GetAllGens(){
@@ -648,8 +765,7 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
-    for (int i = 0; i < nJet; i++)
-    {
+    for (int i = 0; i < nJet; i++) {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
@@ -675,29 +791,24 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             jet.SetJetID(Jet_jetId[i]);
             jet.SetJetPuID(0b111);
             tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
-        }
-        //for Run 2 DeepJet is only option
-        else if(Run == 2){
+        } else if (Run == 2) {
+            //for Run 2 DeepJet is the only option
             tvs = {Jet_btagDeepFlavB[i], Jet_btagDeepFlavCvB[i], Jet_btagDeepFlavCvL[i], Jet_btagDeepFlavQG[i],
                    -999., -999., -999., -999.,
                    -999., -999., -999., -999., -999.};
             jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons_RunII[i], Jet_nMuons_RunII[i], 0);
             if(!IsDATA){
                 jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9, Jet_genJetIdx_RunII[i]);
-            }
-            else{
+            } else{
                 jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
             }
             jet.SetJetID(Jet_jetId_RunII[i]);
-            if (DataYear == 2016)
-            {
+            if (DataYear == 2016) {
                 // due to the bug in the NanoAODv9, the puId is stored in a wrong way
                 int InterChanged = 0;
                 InterChanged = Jet_puId[i] >> 2 | ((Jet_puId[i] & 0b001) << 2) | (Jet_puId[i] & 0b010);
                 jet.SetJetPuID(InterChanged);
-            }
-            else
-            {
+            } else {
                 jet.SetJetPuID(Jet_puId[i]);
             }
             tvs2 = {-999.0, -999.0, -999.0, -999.0, Jet_rawFactor[i], Jet_bRegCorr[i], Jet_bRegRes[i], Jet_cRegCorr[i], Jet_cRegRes[i]};
@@ -1415,7 +1526,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value, float weight, 
     auto histkey = string(histname);
     auto it = histmap1d.find(histkey);
     if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, x_min, x_max);
+        TH1D *this_hist = new TH1D(histkey.c_str(), "", n_bin, x_min, x_max);
         this_hist->SetDirectory(nullptr);
         histmap1d[histkey] = this_hist;
         this_hist->Fill(value, weight);
@@ -1429,7 +1540,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value, float weight, 
     auto histkey = string(histname.Data());
     auto it = histmap1d.find(histkey);
     if (it == histmap1d.end()) {
-        TH1F *this_hist = new TH1F(histkey.c_str(), "", n_bin, xbins);
+        TH1D *this_hist = new TH1D(histkey.c_str(), "", n_bin, xbins);
         this_hist->SetDirectory(nullptr);
         histmap1d[histkey] = this_hist;
         this_hist->Fill(value, weight);
@@ -1445,7 +1556,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
     auto histkey = string(histname);
     auto it = histmap2d.find(histkey);
     if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
+        TH2D *this_hist = new TH2D(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max);
         this_hist->SetDirectory(nullptr);
         histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
@@ -1461,7 +1572,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
     auto histkey = string(histname);
     auto it = histmap2d.find(histkey);
     if (it == histmap2d.end()) {
-        TH2F *this_hist = new TH2F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
+        TH2D *this_hist = new TH2D(histkey.c_str(), "", n_binx, xbins, n_biny, ybins);
         this_hist->SetDirectory(nullptr);
         histmap2d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, weight);
@@ -1478,7 +1589,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
     auto histkey = string(histname);
     auto it = histmap3d.find(histkey);
     if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
+        TH3D *this_hist = new TH3D(histkey.c_str(), "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
         this_hist->SetDirectory(nullptr);
         histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
@@ -1495,7 +1606,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
     auto histkey = string(histname);
     auto it = histmap3d.find(histkey);
     if (it == histmap3d.end()) {
-        TH3F *this_hist = new TH3F(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
+        TH3D *this_hist = new TH3D(histkey.c_str(), "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
         this_hist->SetDirectory(nullptr);
         histmap3d[histkey] = this_hist;
         this_hist->Fill(value_x, value_y, value_z, weight);
@@ -1616,7 +1727,7 @@ void AnalyzerCore::FillTrees(const TString &treename)
             this_bools.shrink_to_fit(); // Mandatory;
         }
         else
-        {
+    {
             // Handle the case where the treeName is not found in the map
             throw std::runtime_error("[AnalyzerCore::FillTrees] Tree with name '" + treeNameStr + "' not found in treemap.");
         }
@@ -1626,27 +1737,28 @@ void AnalyzerCore::FillTrees(const TString &treename)
 
 void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms to " << outfile->GetName() << endl;
-    std::vector<std::pair<std::string, TH1F *>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
-    std::vector<std::pair<std::string, TH2F *>> sorted_histograms2d(histmap2d.begin(), histmap2d.end());
-    std::vector<std::pair<std::string, TH3F *>> sorted_histograms3d(histmap3d.begin(), histmap3d.end());
-    std::sort(sorted_histograms1d.begin(), sorted_histograms1d.end(),
-              [](const std::pair<std::string, TH1F *> &a, const std::pair<std::string, TH1F *> &b)
+    vector<pair<string, TH1D*>> sorted_histograms1d(histmap1d.begin(), histmap1d.end());
+    vector<pair<string, TH2D*>> sorted_histograms2d(histmap2d.begin(), histmap2d.end());
+    vector<pair<string, TH3D*>> sorted_histograms3d(histmap3d.begin(), histmap3d.end());
+
+    sort(sorted_histograms1d.begin(), sorted_histograms1d.end(),
+              [](const pair<string, TH1D*> &a, const pair<string, TH1D*> &b)
               {
                   return a.first < b.first;
               });
-    std::sort(sorted_histograms2d.begin(), sorted_histograms2d.end(),
-              [](const std::pair<std::string, TH2F *> &a, const std::pair<std::string, TH2F *> &b)
+    sort(sorted_histograms2d.begin(), sorted_histograms2d.end(),
+              [](const pair<string, TH2D*> &a, const pair<string, TH2D*> &b)
               {
                   return a.first < b.first;
               });
-    std::sort(sorted_histograms3d.begin(), sorted_histograms3d.end(),
-              [](const std::pair<std::string, TH3F *> &a, const std::pair<std::string, TH3F *> &b)
+    sort(sorted_histograms3d.begin(), sorted_histograms3d.end(),
+              [](const pair<string, TH3D*> &a, const pair<string, TH3D*> &b)
               {
                   return a.first < b.first;
               });
     for (const auto &pair: sorted_histograms1d) {
         const string &histname = pair.first;
-        TH1F *hist = pair.second;
+        TH1D *hist = pair.second;
         cout << "[AnalyzerCore::WriteHist] Writing 1D histogram: " << histname << endl;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
@@ -1664,7 +1776,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: sorted_histograms2d) {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 2D histogram: " << histname << endl;
-        TH2F *hist = pair.second;
+        TH2D *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -1681,7 +1793,7 @@ void AnalyzerCore::WriteHist() {
     for (const auto &pair: sorted_histograms3d) {
         const string &histname = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing 3D histogram: " << histname << endl;
-        TH3F *hist = pair.second;
+        TH3D *hist = pair.second;
         // Split the directory and name
         // e.g. "dir1/dir2/histname" -> "dir1/dir2", "histname"
         // e.g. "histname" -> "", "histname"
@@ -1695,6 +1807,7 @@ void AnalyzerCore::WriteHist() {
         outfile->cd(this_prefix.c_str());
         hist->Write(this_name.c_str());
     }
+    
     for (const auto &pair: treemap) {
         const string &treename = pair.first;
         cout << "[AnalyzerCore::WriteHist] Writing tree: " << treename << endl;
@@ -1716,4 +1829,3 @@ void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms done" << endl;
     outfile->Close();
 }
-

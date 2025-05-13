@@ -1,5 +1,9 @@
 #define SKNanoLoader_cxx
 #include "SKNanoLoader.h"
+#include "TChain.h"
+#include "TChainElement.h"
+#include "TFile.h"
+#include "TTree.h"
 using json = nlohmann::json;
 
 SKNanoLoader::SKNanoLoader() {
@@ -48,7 +52,7 @@ void SKNanoLoader::Loop() {
             cerr << "[SKNanoLoader::Loop] Error reading event " << jentry << endl;
             exit(1);
         }
-        
+
         // make sure Run2 and Run3 variables are in sync
         if (Run == 2) {
             nLHEPart = static_cast<UInt_t>(nLHEPart_RunII);
@@ -185,6 +189,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     Muon_eta.resize(kMaxMuon);
     Muon_highPtId.resize(kMaxMuon);
     Muon_ip3d.resize(kMaxMuon);
+    Muon_nTrackerLayers.resize(kMaxMuon);
     Muon_isGlobal.resize(kMaxMuon);
     Muon_isStandalone.resize(kMaxMuon);
     Muon_isTracker.resize(kMaxMuon);
@@ -223,7 +228,13 @@ void SKNanoLoader::SetMaxLeafSize(){
     Electron_charge.resize(kMaxElectron);
     Electron_convVeto.resize(kMaxElectron);
     Electron_cutBased_HEEP.resize(kMaxElectron);
-    Electron_deltaEtaSC.resize(kMaxElectron);
+    Electron_scEta.resize(kMaxElectron);
+    Electron_deltaEtaInSC.resize(kMaxElectron);
+    Electron_deltaEtaInSeed.resize(kMaxElectron);
+    Electron_deltaPhiInSC.resize(kMaxElectron);
+    Electron_deltaPhiInSeed.resize(kMaxElectron);
+    Electron_ecalPFClusterIso.resize(kMaxElectron);
+    Electron_hcalPFClusterIso.resize(kMaxElectron);
     Electron_dr03EcalRecHitSumEt.resize(kMaxElectron);
     Electron_dr03HcalDepth1TowerSumEt.resize(kMaxElectron);
     Electron_dr03TkSumPt.resize(kMaxElectron);
@@ -296,6 +307,8 @@ void SKNanoLoader::SetMaxLeafSize(){
         Electron_mvaFall17V2noIso.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP80.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP90.resize(kMaxElectron);
+        Electron_dEsigmaUp.resize(kMaxElectron);
+        Electron_dEsigmaDown.resize(kMaxElectron);
     } 
     
     //Photon----------------------------
@@ -445,7 +458,6 @@ void SKNanoLoader::SetMaxLeafSize(){
     }
 
     //Tau----------------------------
-    // Tau----------------------------
     Tau_dxy.resize(kMaxTau);
     Tau_dz.resize(kMaxTau);
     Tau_eta.resize(kMaxTau);
@@ -598,6 +610,24 @@ void SKNanoLoader::Init() {
         fChain->SetBranchStatus(branchName, 1);
         fChain->SetBranchAddress(branchName, address);
     };
+    // For some data files, the branch is not in all files, especially for triggers
+    auto SuperSafeSetBranchAddress = [this](const TString &branchName, void* address) {
+        TObjArray* fileElements = fChain->GetListOfFiles();
+        for (int i = 0; i < fileElements->GetEntries(); i++) {
+            TChainElement* element = (TChainElement*)fileElements->At(i);
+            TString fileName = element->GetTitle();
+            TFile* file = TFile::Open(fileName);
+            TTree* tree = (TTree*)file->Get("Events");
+            if (!tree->GetBranch(branchName)) {
+                cout << "[SKNanoGenLoader::Init] Warning: Branch " << branchName << " not found in file " << fileName << endl;
+                file->Close();
+                return;
+            }
+            file->Close();
+        }
+        fChain->SetBranchStatus(branchName, 1);
+        fChain->SetBranchAddress(branchName, address);
+    };
     // For type conversion between Run2 and Run3
     auto SetBranchWithRunCheck = [this, &SafeSetBranchAddress](const TString &branchName, Int_t &run3Var, UInt_t &runIIVar) {
         if (Run == 3) {
@@ -699,8 +729,8 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("GenJetAK8_pt", GenJetAK8_pt.data());
 
     // GenMET
-    SafeSetBranchAddress("GenMet_pt", &GenMet_pt);
-    SafeSetBranchAddress("GenMet_phi", &GenMet_phi);
+    SafeSetBranchAddress("GenMET_pt", &GenMET_pt);
+    SafeSetBranchAddress("GenMET_phi", &GenMET_phi);
 
     // GenDressedLepton
     SetBranchWithRunCheck("nGenDressedLepton", nGenDressedLepton, nGenDressedLepton_RunII);
@@ -749,6 +779,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Muon_dzErr", Muon_dzErr.data());
     SafeSetBranchAddress("Muon_eta", Muon_eta.data());
     SafeSetBranchAddress("Muon_ip3d", Muon_ip3d.data());
+    SafeSetBranchAddress("Muon_nTrackerLayers", Muon_nTrackerLayers.data());
     SafeSetBranchAddress("Muon_isGlobal", Muon_isGlobal.data());
     SafeSetBranchAddress("Muon_isStandalone", Muon_isStandalone.data());
     SafeSetBranchAddress("Muon_isTracker", Muon_isTracker.data());
@@ -785,7 +816,13 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_charge", Electron_charge.data());
     SafeSetBranchAddress("Electron_convVeto", Electron_convVeto.data());
     SafeSetBranchAddress("Electron_cutBased_HEEP", Electron_cutBased_HEEP.data());
-    SafeSetBranchAddress("Electron_deltaEtaSC", Electron_deltaEtaSC.data());
+    SafeSetBranchAddress("Electron_scEta", Electron_scEta.data());
+    SafeSetBranchAddress("Electron_deltaEtaInSC", Electron_deltaEtaInSC.data());
+    SafeSetBranchAddress("Electron_deltaEtaInSeed", Electron_deltaEtaInSeed.data());
+    SafeSetBranchAddress("Electron_deltaPhiInSC", Electron_deltaPhiInSC.data());
+    SafeSetBranchAddress("Electron_deltaPhiInSeed", Electron_deltaPhiInSeed.data());
+    SafeSetBranchAddress("Electron_ecalPFClusterIso", Electron_ecalPFClusterIso.data());
+    SafeSetBranchAddress("Electron_hcalPFClusterIso", Electron_hcalPFClusterIso.data());
     SafeSetBranchAddress("Electron_dr03EcalRecHitSumEt", Electron_dr03EcalRecHitSumEt.data());
     SafeSetBranchAddress("Electron_dr03HcalDepth1TowerSumEt", Electron_dr03HcalDepth1TowerSumEt.data());
     SafeSetBranchAddress("Electron_dr03TkSumPt", Electron_dr03TkSumPt.data());
@@ -838,6 +875,8 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Electron_mvaFall17V2noIso", Electron_mvaFall17V2noIso.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP80", Electron_mvaFall17V2noIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP90", Electron_mvaFall17V2noIso_WP90.data());
+        SafeSetBranchAddress("Electron_dEsigmaUp", Electron_dEsigmaUp.data());
+        SafeSetBranchAddress("Electron_dEsigmaDown", Electron_dEsigmaDown.data());
     }
 
     // Photon----------------------------
@@ -1093,6 +1132,8 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Flag_eeBadScFilter", &Flag_eeBadScFilter);
     //SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
     SafeSetBranchAddress("run", &RunNumber);
+    SafeSetBranchAddress("luminosityBlock", &LumiBlock);
+    SafeSetBranchAddress("event", &EventNumber);
 
     string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/HLT_Path.json";
     ifstream json_file(json_path);
@@ -1102,14 +1143,20 @@ void SKNanoLoader::Init() {
         json_file >> j;
         RVec<TString> not_in_tree;
         for (auto& [key, value] : j.items()) {
-            cout << "[SKNanoLoader::Init] HLT Path: " << key << endl;
+            if (!value.contains("active")) continue;
+            if (!value["active"]) continue;
             Bool_t* passHLT = new Bool_t();
             TString key_str = key;
             TriggerMap[key_str].first = passHLT;
             TriggerMap[key_str].second = value["lumi"];
             //if key_str is in tree, set branch address
             if (fChain->GetBranch(key_str)) {
-                SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                // In some data file, part of the trigger set is missing (changed during the run?)
+                if (IsDATA) {
+                    SuperSafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                } else {
+                    SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                }
             } else if(key_str=="Full") {
                 *TriggerMap[key_str].first = true;
             } else{
@@ -1118,8 +1165,7 @@ void SKNanoLoader::Init() {
             }   
         }
         if (not_in_tree.size() > 0) {
-            //print in yellow color
-            cout << "\033[1;33m[SKNanoLoader::Init] Following HLT Paths are not in the tree\033[0m" << endl;
+            cout << "[SKNanoLoader::Init] Following HLT Paths are not in the tree" << endl;
             for (auto &path : not_in_tree) {
                 cout << "\033[1;33m" << path << "\033[0m" << endl;
             }

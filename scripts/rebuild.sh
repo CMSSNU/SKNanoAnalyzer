@@ -1,8 +1,8 @@
 #!/bin/bash
 # Rebuild the project without clean
 # check if the build directory exists
-if [ -d "build" ]; then
-    cd build
+if [ -d "build/${SYSTEM}" ]; then
+    cd build/${SYSTEM}
     make && make install
     cd -
 else

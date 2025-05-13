@@ -13,6 +13,7 @@ target_include_directories(DataFormats PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../AnalyzerTools/include>
     $<BUILD_INTERFACE:$ENV{CORRECTION_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:$ENV{ROCCOR_PATH}>
     $<INSTALL_INTERFACE:include>
 )
 

@@ -11,7 +11,6 @@ add_library(MLHelper SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MLHelper.h
 )
 
-
 target_include_directories(MLHelper PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:$ENV{ONNXRUNTIME_INCLUDE_DIR}>
@@ -66,6 +65,7 @@ target_include_directories(AnalyzerTools PUBLIC
     $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:$ENV{LHAPDF_INCLUDE_DIR}>
     $<BUILD_INTERFACE:$ENV{CORRECTION_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:$ENV{ROCCOR_PATH}>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -77,6 +77,7 @@ target_link_libraries(AnalyzerTools PUBLIC
     DataFormats
     yaml-cpp::yaml-cpp
     MLHelper
+    RoccoR
 )
 
 include_directories($ENV{LHAPDF_INCLUDE_DIR})

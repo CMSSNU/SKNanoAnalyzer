@@ -1,9 +1,18 @@
 #!/bin/bash
-echo -e "\033[31m##################### WARNING ########################\033[0m"
-echo -e "\033[31m####         THIS IS DEVELOPMENT VERSION          ####\033[0m"
-echo -e "\033[31m######################################################\033[0m"
-echo ""
 HOSTNAME=`hostname`
+echo -e "\033[32m##################################################################################\033[0m"
+echo -e "\033[32m                                                                                  \033[0m"
+echo -e "\033[32m                ███████╗██╗  ██╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗              \033[0m"
+echo -e "\033[32m                ██╔════╝██║ ██╔╝████╗  ██║██╔══██╗████╗  ██║██╔═══██╗             \033[0m"
+echo -e "\033[32m                ███████╗█████╔╝ ██╔██╗ ██║███████║██╔██╗ ██║██║   ██║             \033[0m"
+echo -e "\033[32m                ╚════██║██╔═██╗ ██║╚██╗██║██╔══██║██║╚██╗██║██║   ██║             \033[0m"
+echo -e "\033[32m                ███████║██║  ██╗██║ ╚████║██║  ██║██║ ╚████║╚██████╔╝             \033[0m"
+echo -e "\033[32m                ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝              \033[0m"
+echo -e "\033[32m                                                                                  \033[0m"
+echo -e "\033[32m                                 Version 1.0.0                                    \033[0m"
+echo -e "\033[32m##################################################################################\033[0m"
+echo ""
+
 # check os
 if [[ "$(uname)" == "Darwin" ]]; then
     export SYSTEM="osx"
@@ -18,18 +27,18 @@ fi
 if [[ $HOSTNAME == *"tamsa"* ]]; then
     export SKNANO_HOME="/data9/Users/choij/Sync/workspace/SKNanoAnalyzer"
     export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
-    export SKNANO_OUTPUT="/data9/Users/choij/Sync/SKNanoOutput"
+    export SKNANO_OUTPUT="/data9/Users/choij/Sync/workspace/SKNanoOutput"
 else
     export SKNANO_HOME=`pwd`
-    export SKNANO_RUNLOG="/mnt/DUMP/$USER/SKNanoRunlog"
-    export SKNANO_OUTPUT="/mnt/DUMP/$USER/SKNanoOutput"
+    export SKNANO_RUNLOG="$HOME/Sync/workspace/SKNanoRunlog"
+    export SKNANO_OUTPUT="$HOME/Sync/workspace/SKNanoOutput"
 fi
 echo "@@@@ Working Directory: $SKNANO_HOME"
 
 # check configuration
 CONFIG_FILE=$SKNANO_HOME/config/config.$USER
 if [ -f "${CONFIG_FILE}" ]; then
-    echo -e "\033[33m@@@@ Reading configuration from $CONFIG_FILE\033[0m"
+    echo -e "\033[32m@@@@ Reading configuration from $CONFIG_FILE\033[0m"
     PACKAGE=$(grep '\[PACKAGE\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     export TOKEN_TELEGRAMBOT=$(grep '\[TOKEN_TELEGRAMBOT\]' "${CONFIG_FILE}" | cut -d' ' -f2)
     export USER_CHATID=$(grep '\[USER_CHATID\]' "${CONFIG_FILE}" | cut -d' ' -f2)
@@ -46,11 +55,11 @@ echo "@@@@ Using singularity image: $SINGULARITY_IMAGE"
 
 # ROOT Package Settings
 if [ $PACKAGE = "conda" ]; then
-    echo -e "\033[33m@@@@ Primary environment using conda\033[0m"
+    echo -e "\033[32m@@@@ Primary environment using conda\033[0m"
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
     if [[ -n "$IS_SINGULARITY" || -n "$GITHUB_ACTION" ]]; then
         # Building within Singularity image, will be used for batch jobs
-        echo -e "\033[33m@@@@ Detected Singularity environment\033[0m"
+        echo -e "\033[32m@@@@ Detected Singularity environment\033[0m"
         source /opt/conda/bin/activate
         conda activate torch
     else
@@ -58,11 +67,11 @@ if [ $PACKAGE = "conda" ]; then
         conda activate nano
     fi
 elif [ $PACKAGE = "mamba" ]; then
-    echo -e "\033[33m@@@@ Primary environment using mamba\033[0m"
+    echo -e "\033[32m@@@@ Primary environment using mamba\033[0m"
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
     if [[ -n "$IS_SINGULARITY" ||  -n "$GITHUB_ACTION" ]]; then
         # Building within Singularity image, will be used for batch jobs
-        echo -e "\033[33m@@@@ Detected Singularity environment\033[0m"
+        echo -e "\033[32m@@@@ Detected Singularity environment\033[0m"
         eval "$(micromamba shell hook -s zsh)"
     else
         export PATH="$HOME/micromamba/bin:${PATH}"
@@ -94,8 +103,8 @@ export SKNANO_INSTALLDIR=$SKNANO_HOME/install/$SYSTEM
 export PATH=$SKNANO_PYTHON:$PATH
 export PYTHONPATH=$PYTHONPATH:$SKNANO_PYTHON
 export SKNANO_LIB=$SKNANO_INSTALLDIR/lib
-export SKNANO_RUN3_NANOAODPATH="/gv0/Users/choij/SKNano"
-export SKNANO_RUN2_NANOAODPATH="/gv0/Users/choij/SKNano"
+export SKNANO_RUN3_NANOAODPATH="/gv0/DATA/SKNano/Run3NanoAODv12p1"
+export SKNANO_RUN2_NANOAODPATH="/gv0/DATA/SKNano/Run2NanoAODv9p1"
 #export SKNANO_RUN3_NANOAODPATH="/gv0/DATA/SKNano/Run3NanoAODv12/"
 #export SKNANO_RUN2_NANOAODPATH="/gv0/DATA/SKNano/Run2NanoAODv9/"
 #export ROOT_INCLUDE_DIRS=$ROOT_INCLUDE_DIRS:$SKNANO_INSTALLDIR/include
@@ -105,7 +114,7 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB
 
 # setting LHAPDFs
 if [[ ! -d "external/lhapdf/$SYSTEM" ]]; then
-    echo -e "\033[33m@@@@ Installing LHAPDF for conda environment\033[0m"
+    echo -e "\033[32m@@@@ Installing LHAPDF for conda environment\033[0m"
     ./scripts/install_lhapdf.sh
     if [ $? -ne 0 ]; then
         echo -e "\033[31m@@@@ LHAPDF installation failed\033[0m"
@@ -152,63 +161,67 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CORRECTION_LIB_DIR
 echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
-# JSONPOG integration auto-update
-echo -e "\033[33m@@@@ Checking for updates in jsonpog-integration repository...\033[0m"
-JSONPOG_REPO_PATH="$SKNANO_HOME/external/jsonpog-integration"
+# ROCCOR
+export ROCCOR_PATH=$SKNANO_HOME/external/RoccoR
 
-if [ ! -d "$JSONPOG_REPO_PATH" ]; then
-    echo -e "\033[31m@@@@ JSONPOG Repository not found\033[0m"
-else
+# JSONPOG integration auto-update
+check_jsonpog_updates() {
+    local auto_update=${1:-false}
+    echo -e "\033[32m@@@@ Checking for updates in jsonpog-integration repository...\033[0m"
+    export JSONPOG_REPO_PATH="$SKNANO_HOME/external/jsonpog-integration"
+
+    if [ "$auto_update" = false ]; then
+        echo -e "\033[32m@@@@ Auto-update is disabled. Skipping update check.\033[0m"
+        return 0
+    fi
+
+    if [ ! -d "$JSONPOG_REPO_PATH" ]; then
+        echo -e "\033[31m@@@@ JSONPOG Repository not found\033[0m"
+        return 1
+    fi
+    
     cd "$JSONPOG_REPO_PATH"
     git fetch origin
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
     if [ -z "$(git symbolic-ref -q HEAD)" ]; then
-        echo -e "\033[33m@@@@ HEAD is detached. Switching back to the previous branch: $CURRENT_BRANCH\033[0m"
+        echo -e "\033[32m@@@@ HEAD is detached. Switching back to the previous branch: $CURRENT_BRANCH\033[0m"
         git checkout "$CURRENT_BRANCH"
     fi
 
-    #Check the current version of local and jsonpog version
+    # Check the current version of local and jsonpog version
     LOCAL_COMMIT_HASH=$(git rev-parse HEAD)
     LOCAL_COMMIT_DATE=$(git log -1 --format=%ci)
-    echo -e "\033[33m@@@@ Current Local commit: $LOCAL_COMMIT_HASH\033[0m"
-    echo -e "\033[33m@@@@ Current Local commit date: $LOCAL_COMMIT_DATE\033[0m"
+    echo -e "\033[32m@@@@ Current Local commit: $LOCAL_COMMIT_HASH\033[0m"
+    echo -e "\033[32m@@@@ Current Local commit date: $LOCAL_COMMIT_DATE\033[0m"
     UPSTREAM_COMMIT_HASH=$(git ls-remote origin -h refs/heads/master | awk '{print $1}')
     UPSTREAM_COMMIT_DATE=$(git log -1 --format=%ci origin/master)
-    echo -e "\033[33m@@@@ Latest JSONPOG (origin/master) commit: $UPSTREAM_COMMIT_HASH\033[0m"
-    echo -e "\033[33m@@@@ Latest JSONPOG commit date: $UPSTREAM_COMMIT_DATE\033[0m"
+    echo -e "\033[32m@@@@ Latest JSONPOG (origin/master) commit: $UPSTREAM_COMMIT_HASH\033[0m"
+    echo -e "\033[32m@@@@ Latest JSONPOG commit date: $UPSTREAM_COMMIT_DATE\033[0m"
     
     # Check if the local repository is behind the remote repository
     BEHIND=$(git rev-list --count origin/master..HEAD)
 
     if [ "$BEHIND" -gt 0 ]; then
-        echo -e "\033[33m@@@@ Repository is $BEHIND commits behind origin/master.\033[0m"
+        echo -e "\033[32m@@@@ Repository is $BEHIND commits behind origin/master.\033[0m"
 
-        # Check if the user wants to update
-        while true; do
-            read -p "Do you want to update jsonpog correction? (Y/N): " USER_INPUT
-            case "$USER_INPUT" in
-                [Yy]* ) 
-                    echo -e "\033[33m@@@@ Updating jsonpog-integration repository...\033[0m"
-                    git merge origin/master
-                    echo -e "\033[33m@@@@ Update completed!\033[0m"
-                    break  
-                    ;;
-                [Nn]* ) 
-                    echo -e "\033[33m@@@@ Update skipped.\033[0m"
-                    break  
-                    ;;
-                * ) 
-                    echo -e "\033[31m@@@@ Invalid input. Please enter Y or N.\033[0m"
-                    ;;
-            esac
-        done
+        if [ "$auto_update" = true ]; then
+            echo -e "\033[32m@@@@ Auto-update is enabled. Updating jsonpog-integration repository...\033[0m"
+            git merge origin/master
+            echo -e "\033[32m@@@@ Update completed!\033[0m"
+        else
+            echo -e "\033[32m@@@@ Auto-update is disabled. Skipping update.\033[0m"
+        fi
     else
-        echo -e "\033[33m@@@@ jsonpog-integration repository is already up-to-date.\033[0m"
+        echo -e "\033[32m@@@@ jsonpog-integration repository is already up-to-date.\033[0m"
     fi
 
     cd "$SKNANO_HOME"
-fi
+}
+
+# Call the function with auto_update set to false by default
+# To enable auto-update, call with: check_jsonpog_updates true
+check_jsonpog_updates false
 
 # env for onnxruntime
 ONNXRUNTIME=$(conda list | grep "onnxruntime")

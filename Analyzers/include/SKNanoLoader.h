@@ -8,8 +8,11 @@ using namespace std;
 
 #include "TROOT.h"
 #include "TChain.h"
+#include "TChainElement.h"
 #include "TFile.h"
+#include "TTree.h"
 #include "TString.h"
+#include "TRandom3.h"
 #include "ROOT/RVec.hxx"
 #include "ROOT/RDataFrame.hxx"
 #include <nlohmann/json.hpp>
@@ -142,8 +145,8 @@ public:
     RVec<Int_t> GenJetAK8_partonFlavour_RunII;
 
     // GenMet
-    Float_t GenMet_pt;
-    Float_t GenMet_phi;
+    Float_t GenMET_pt;
+    Float_t GenMET_phi;
 
     // GenDressedLepton
     Int_t nGenDressedLepton;
@@ -211,6 +214,7 @@ public:
     RVec<Float_t> Muon_eta;
     RVec<UChar_t> Muon_highPtId;
     RVec<Float_t> Muon_ip3d;
+    RVec<Int_t> Muon_nTrackerLayers;
     RVec<Bool_t> Muon_isGlobal;
     RVec<Bool_t> Muon_isStandalone;
     RVec<Bool_t> Muon_isTracker;
@@ -248,7 +252,13 @@ public:
     RVec<Int_t> Electron_charge;
     RVec<Bool_t> Electron_convVeto;
     RVec<Bool_t> Electron_cutBased_HEEP;
-    RVec<Float_t> Electron_deltaEtaSC;
+    RVec<Float_t> Electron_scEta;
+    RVec<Float_t> Electron_deltaEtaInSC;
+    RVec<Float_t> Electron_deltaEtaInSeed;
+    RVec<Float_t> Electron_deltaPhiInSC;
+    RVec<Float_t> Electron_deltaPhiInSeed;
+    RVec<Float_t> Electron_ecalPFClusterIso;
+    RVec<Float_t> Electron_hcalPFClusterIso;
     RVec<Float_t> Electron_dr03EcalRecHitSumEt;
     RVec<Float_t> Electron_dr03HcalDepth1TowerSumEt;
     RVec<Float_t> Electron_dr03TkSumPt;
@@ -310,6 +320,8 @@ public:
     RVec<Float_t> Electron_mvaFall17V2noIso;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP80;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
+    RVec<Float_t> Electron_dEsigmaUp;
+    RVec<Float_t> Electron_dEsigmaDown;
 
     //Photon----------------------------
     Int_t nPhoton;
@@ -559,7 +571,9 @@ public:
     Bool_t Flag_ecalBadCalibFilter;
     Bool_t Flag_eeBadScFilter;
     //Bool_t Flag_ecalBadCalibFilter;
-    UInt_t RunNumber;
+    Int_t RunNumber;
+    Int_t LumiBlock;
+    Int_t EventNumber;
     std::map<TString, pair<Bool_t*,float>> TriggerMap;
 };
 

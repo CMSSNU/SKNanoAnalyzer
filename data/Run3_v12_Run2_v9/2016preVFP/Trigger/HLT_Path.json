@@ -237,7 +237,8 @@
         "lumi": 19517.523849863
     },
     "HLT_Ele27_WPTight_Gsf": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele27_WPTight_Gsf_L1JetTauSeeded": {
         "lumi": 19517.523849863
@@ -405,10 +406,12 @@
         "lumi": 19517.523849863
     },
     "HLT_IsoMu24": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_IsoMu27": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_IsoTkMu18": {
         "lumi": 19517.523849863
@@ -528,16 +531,20 @@
         "lumi": 19517.523849863
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu25_TkMu0_dEta18_Onia": {
         "lumi": 19517.523849863
@@ -564,10 +571,12 @@
         "lumi": 19517.523849863
     },
     "HLT_TkMu17_TrkIsoVVL_TkMu8_TrkIsoVVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_TkMu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_TkMu20": {
         "lumi": 19517.523849863
@@ -939,34 +948,44 @@
         "lumi": 19517.523849863
     },
     "HLT_QuadPFJet_BTagCSV_p016_p11_VBF_Mqq200": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadPFJet_BTagCSV_p016_VBF_Mqq460": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadPFJet_BTagCSV_p016_p11_VBF_Mqq240": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadPFJet_BTagCSV_p016_VBF_Mqq500": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadPFJet_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_L1_TripleJet_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadJet45_TripleBTagCSV_p087": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_QuadJet45_DoubleBTagCSV_p087": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJet90_Double30_TripleBTagCSV_p087": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJet90_Double30_DoubleBTagCSV_p087": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJetsC100_DoubleBTagCSV_p026_DoublePFJetsC160": {
         "lumi": 19517.523849863
@@ -981,130 +1000,172 @@
         "lumi": 19517.523849863
     },
     "HLT_DoubleJetsC100_SingleBTagCSV_p026": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJetsC100_SingleBTagCSV_p014": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJetsC100_SingleBTagCSV_p026_SinglePFJetC350": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_DoubleJetsC100_SingleBTagCSV_p014_SinglePFJetC350": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon135_PFMET100": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon20_CaloIdVL_IsoL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon22_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon22_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon250_NoHE": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon300_NoHE": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon26_R9Id85_OR_CaloId24b40e_Iso50T80L_Photon16_AND_HE10_R9Id65_Eta2_Mass60": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon36_R9Id85_OR_CaloId24b40e_Iso50T80L_Photon22_AND_HE10_R9Id65_Eta2_Mass15": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon36_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon36_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon50_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon50_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon75_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon75_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon90_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon90_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon120_R9Id90_HE10_Iso40_EBOnly_PFMET40": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Photon120_R9Id90_HE10_Iso40_EBOnly_VBF": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Mu8_TrkIsoVVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele8_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele17_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_BTagMu_DiJet20_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_DiJet40_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_DiJet70_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_DiJet110_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_DiJet170_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_Jet300_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_BTagMu_AK8Jet300_Mu5": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_L1JetTauSeeded": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": false
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
         "lumi": 19517.523849863
@@ -1116,16 +1177,18 @@
         "lumi": 19517.523849863
     },
     "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
     },
     "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Mu30_Ele30_CaloIdL_GsfTrkIdVL": {
         "lumi": 19517.523849863
@@ -1803,6 +1866,7 @@
         "lumi": 19517.523849863
     },
     "Full": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     }
 }
