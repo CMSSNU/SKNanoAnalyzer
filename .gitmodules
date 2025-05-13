@@ -1,3 +1,6 @@
 [submodule "external/RoccoR"]
 	path = external/RoccoR
 	url = https://gitlab.cern.ch/akhukhun/roccor.git
+[submodule "external/jsonpog-integration"]
+	path = external/jsonpog-integration
+	url = ssh://git@gitlab.cern.ch:7999/choij/jsonpog-integration.git
