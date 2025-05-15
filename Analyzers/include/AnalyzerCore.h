@@ -122,7 +122,7 @@ public:
     RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
     RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
     RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, int seed,const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
 
     // Histogram Handlers

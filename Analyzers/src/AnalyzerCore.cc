@@ -191,8 +191,8 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source){
-    gRandom->SetSeed(0);
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, int seed, const MyCorrection::variation &syst, const TString &source){
+    gRandom->SetSeed(seed);
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
     for(size_t i = 0; i < jets.size(); i++){
@@ -716,7 +716,9 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetCorrections(tvs2);
         Jets.push_back(jet);
     }
-    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets());
+    // Set Integer part of first Jet Pt as seed of smearing to ensure reproducibility
+    int seed = static_cast<int>(Jets[0].Pt());
+    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets(), seed);
     return Jets;
 }
 
