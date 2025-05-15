@@ -2,7 +2,7 @@
     "name": "WZtoLNu2Q",
     "isMC": 1,
     "PD": "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-    "xsec_formula": "(0.3459+0.2366)*3/(0.033658*0.69911)",
+    "xsec_formula": "(0.3459+0.2366)*3/0.033658*0.69911",
     "nmc": 30166518.0,
     "sumsign": 30153688.0,
     "sumW": 478750100.00496674,

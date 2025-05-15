@@ -51,7 +51,7 @@ void FullHadronicTriggerTnP::executeEventFromParameter(TString syst)
     RVec<Jet> this_jet = JetsVetoLeptonInside(AllJets, this_electron, this_muon, 0.3);
     if (!IsDATA)
     {
-        this_systjet = SmearJets(this_jet, AllGenJets);
+        this_systjet = SmearJets(this_jet, AllGenJets,0);
     }
     else
         this_systjet = this_jet;
