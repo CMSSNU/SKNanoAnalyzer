@@ -158,25 +158,31 @@ else
     if [ "$BEHIND" -gt 0 ]; then
         echo "@@@@ Repository is $BEHIND commits behind origin/master."
 
+    if [ -n "$CI" ]; then
+        echo "@@@@ CI environment detected. Auto-updating jsonpog-integration repository..."
+        git merge origin/master
+        echo "@@@@ Update completed!"
+    else
         # Check if the user wants to update
-        while true; do
-            read -p "Do you want to update jsonpog correction? (Y/N): " USER_INPUT
-            case "$USER_INPUT" in
-                [Yy]* ) 
-                    echo "@@@@ Updating jsonpog-integration repository..."
-                    git merge origin/master
-                    echo "@@@@ Update completed!"
-                    break  
-                    ;;
-                [Nn]* ) 
-                    echo "@@@@ Update skipped."
-                    break  
-                    ;;
-                * ) 
-                    echo "@@@@ Invalid input. Please enter Y or N."
-                    ;;
-            esac
-        done
+            while true; do
+                read -p "Do you want to update jsonpog correction? (Y/N): " USER_INPUT
+                case "$USER_INPUT" in
+                    [Yy]* ) 
+                        echo "@@@@ Updating jsonpog-integration repository..."
+                        git merge origin/master
+                        echo "@@@@ Update completed!"
+                        break  
+                        ;;
+                    [Nn]* ) 
+                        echo "@@@@ Update skipped."
+                        break  
+                        ;;
+                    * ) 
+                        echo "@@@@ Invalid input. Please enter Y or N."
+                        ;;
+                esac
+            done
+        fi
     else
         echo "@@@@ jsonpog-integration repository is already up-to-date."
     fi
