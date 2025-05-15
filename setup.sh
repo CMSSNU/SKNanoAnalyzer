@@ -126,13 +126,13 @@ echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
 # JSONPOG integration auto-update
-JSONPOG_REPO_PATH="$SKNANO_HOME/external/jsonpog-integration"
+JSONPOG_INTEGRATION_PATH="$SKNANO_HOME/external/jsonpog-integration"
 
-if [ ! -d "$JSONPOG_REPO_PATH" ]; then
+if [ ! -d "$JSONPOG_INTEGRATION_PATH" ]; then
     echo "@@@@ JSONPOG Repository not found"
 else
     echo "@@@@ Checking for updates in jsonpog-integration repository..."
-    cd "$JSONPOG_REPO_PATH"
+    cd "$JSONPOG_INTEGRATION_PATH"
     git fetch origin
 
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
