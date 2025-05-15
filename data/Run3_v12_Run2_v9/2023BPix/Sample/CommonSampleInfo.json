@@ -415,12 +415,12 @@
     "WZtoLNu2Q": {
         "isMC": 1,
         "PD": "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "(0.3459+0.2366)*3/(0.033658*0.69911)",
+        "xsec_formula": "(0.3459+0.2366)*3/0.033658*0.69911",
         "nmc": 8825000.0,
         "sumsign": 8821346.0,
         "sumW": 140056509.16327095,
         "note": "need check the xsec",
-        "xsec": 74.26485954992789
+        "xsec": 36.29730598966071
     },
     "ZZto4L": {
         "isMC": 1,
@@ -435,32 +435,32 @@
     "ZZto2Nu2Q": {
         "isMC": 1,
         "PD": "ZZto2Nu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2/(0.033658*0.69911)/(0.033658*0.2)",
+        "xsec_formula": "0.1633*2/0.033658*0.69911/0.033658*0.2",
         "nmc": 2979000.0,
         "sumsign": 2974354.0,
         "sumW": 14376599.35455513,
         "note": "need check the xsec",
-        "xsec": 2061.8831915347473
+        "xsec": 40.310211624522005
     },
     "ZZto2L2Q": {
         "isMC": 1,
         "PD": "ZZto2L2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2*3/(0.033658*0.69911)",
+        "xsec_formula": "0.1633*2*3/0.033658*0.69911",
         "nmc": 14907000.0,
         "sumsign": 14815682.0,
         "sumW": 101213332.37424278,
         "note": "need check the xsec",
-        "xsec": 41.63931867640592
+        "xsec": 20.351416542872425
     },
     "ZZto2L2Nu": {
         "isMC": 1,
         "PD": "ZZto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2*3/(0.033658*0.2)",
+        "xsec_formula": "0.1633*2*3/0.033658*0.2",
         "nmc": 14931000.0,
         "sumsign": 14897688.0,
         "sumW": 15390652.427155495,
         "note": "need check the xsec",
-        "xsec": 145.5523203993107
+        "xsec": 5.822092815972429
     },
     "QCDB_HT40to100": {
         "isMC": 1,
