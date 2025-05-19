@@ -7,7 +7,7 @@
     "sumsign": 30153688.0,
     "sumW": 478750100.00496674,
     "note": "need check the xsec",
-    "xsec": 74.26485954992789,
+    "xsec": 36.29730598966071,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/250407_090536/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/250407_090536/0000/tree_2.root",
