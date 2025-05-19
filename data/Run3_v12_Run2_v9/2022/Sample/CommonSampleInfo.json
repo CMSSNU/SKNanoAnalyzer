@@ -112,6 +112,7 @@
         "sumW": 25728073346.30786,
         "xsec": 405.685352016
     },
+<<<<<<< HEAD
     "TTLJ_powheg_mTop171p5": {
         "isMC": 1,
         "PD": "TTtoLNu2Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8",
@@ -166,6 +167,8 @@
         "sumW": 10810925338.957031,
         "xsec": 405.685352016
     },
+=======
+>>>>>>> 1f9c0dc (official vcb sample)
     "TTLJ_Vcb_powheg": {
         "isMC": 1,
         "PD": "TTtoLNuCB_TuneCP5_13p6TeV_powheg-pythia8",
@@ -450,7 +453,7 @@
         "xsec_formula": "(0.3459+0.2366)*3/0.033658*0.69911",
         "nmc": 8774784.0,
         "sumsign": 8771020.0,
-        "sumW": 139257483.26856613,
+        "sumW": 139361184.0,
         "note": "need check the xsec",
         "xsec": 36.29730598966071
     },
