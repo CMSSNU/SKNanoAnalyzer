@@ -75,6 +75,7 @@ bool Electron::PassID(const TString ID) const {
     if (etaRegion() == ETAREGION::GAP) return false;
 
     // POG
+    if (ID == "")                 return true;
     if (ID == "POGVeto")          return (int)(CutBased()) >= (int)(WORKINGPOINT::VETO);
     if (ID == "POGLoose")         return (int)(CutBased()) >= (int)(WORKINGPOINT::LOOSE);
     if (ID == "POGMedium")        return (int)(CutBased()) >= (int)(WORKINGPOINT::MEDIUM);

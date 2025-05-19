@@ -1112,7 +1112,7 @@ RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens
     int mypid = gens.at(myindex).PID();
     int currentidx = myindex;
     int motherindex = me.MotherIndex();
-
+    
     while(gens.at(motherindex).PID() == mypid){
         // Go one generation up
         currentidx = motherindex;
@@ -1615,6 +1615,7 @@ void AnalyzerCore::FillHist(const TString &histname, float value_x, float value_
         it->second->Fill(value_x, value_y, value_z, weight);
     }
 }
+
 TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps, const RVec<TString> &drops){
     auto treekey = string(treename);
     auto it = treemap.find(treekey);
@@ -1624,8 +1625,7 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             TTree *newtree = new TTree(treekey.c_str(), "");
             treemap[treekey] = newtree;
             return newtree;
-        }
-        else{
+        } else{
             //check tree is empty. 
             if(fChain->GetEntries() == 0){
                 cout << "[AnalyzerCore::NewTree] fChain is empty." << endl;
@@ -1633,12 +1633,10 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             }
             TTree *newtree = fChain->CloneTree(0);
             newtree->SetName(treekey.c_str());
-            for (const auto &drop : drops)
-            {
+            for (const auto &drop : drops) {
                 newtree->SetBranchStatus(drop, 0);
             }
-            for (const auto &keep : keeps)
-            {
+            for (const auto &keep : keeps) {
                 newtree->SetBranchStatus(keep, 1);
             }
             treemap[treekey] = newtree;
@@ -1646,8 +1644,7 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             branchmaps[newtree] = this_branchmap;
             return newtree;
         }
-    }
-    else{
+    } else{
         return it->second;
     }
 }
@@ -1670,14 +1667,12 @@ void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname,
         unordered_map<string, TBranch*>* this_branchmap = &branchmaps[tree];
         auto it = this_branchmap->find(string(branchname));
 
-        if (it == this_branchmap->end()){
+        if (it == this_branchmap->end()) {
             auto br = tree->Branch(branchname, this_address, leaflist);
             this_branchmap->insert({string(branchname), br});
-        }
-        else{
+        } else {
             it->second->SetAddress(this_address);
         }
-        
     }
     catch(int e){
         cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
@@ -1691,12 +1686,9 @@ template void AnalyzerCore::SetBranch_Vector<double>(const TString &, const TStr
 template void AnalyzerCore::SetBranch_Vector<bool>(const TString &, const TString &, std::vector<bool> &);
 
 
-void AnalyzerCore::FillTrees(const TString &treename)
-{
-    if (treename == "")
-    {
-        for (const auto &pair : treemap)
-        {
+void AnalyzerCore::FillTrees(const TString &treename) {
+    if (treename == "") {
+        for (const auto &pair : treemap) {
             const string &treename = pair.first;
             TTree *tree = pair.second;
             tree->Fill();
@@ -1707,15 +1699,12 @@ void AnalyzerCore::FillTrees(const TString &treename)
         this_floats.shrink_to_fit();
         this_ints.shrink_to_fit();
         this_bools.shrink_to_fit(); // Mandatory;
-    }
-    else
-    {
+    } else {
         // Convert treeName to std::string for comparison
         std::string treeNameStr(treename.Data());
 
         auto it = treemap.find(treeNameStr);
-        if (it != treemap.end())
-        {
+        if (it != treemap.end()) {
             // Tree with the given name exists, fill it
             TTree *tree = it->second;
             tree->Fill();
@@ -1725,9 +1714,7 @@ void AnalyzerCore::FillTrees(const TString &treename)
             this_floats.shrink_to_fit();
             this_ints.shrink_to_fit();
             this_bools.shrink_to_fit(); // Mandatory;
-        }
-        else
-    {
+        } else {
             // Handle the case where the treeName is not found in the map
             throw std::runtime_error("[AnalyzerCore::FillTrees] Tree with name '" + treeNameStr + "' not found in treemap.");
         }

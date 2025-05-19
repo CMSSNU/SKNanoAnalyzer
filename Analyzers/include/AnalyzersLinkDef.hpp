@@ -15,3 +15,4 @@
 #pragma link C++ class FullHadronicTriggerTnP+;
 #pragma link C++ class GeneratorBase+;
 #pragma link C++ class DiLeptonBase+;
+#pragma link C++ class ParseEleIDVariables+;

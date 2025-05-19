@@ -152,6 +152,7 @@ public:
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source="total");
     
     // Histogram Handlers
+    TFile *outfile;
     void SetOutfilePath(TString outpath);
     TH1D* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
@@ -185,11 +186,7 @@ public:
     inline void SetBranch(const TString &treename, const TString &branchname, float val) { this_floats.push_back(val); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, double val) { this_floats.push_back(float(val)); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, int val) { this_ints.push_back(val); SetBranch(treename, branchname, (void*)(&this_ints.back()), branchname + "/I"); };
-    inline void SetBranch(const TString &treename, const TString &branchname, bool val)
-    {
-        this_bools.push_back(val);
-        SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O");
-    }
+    inline void SetBranch(const TString &treename, const TString &branchname, bool val) { this_bools.push_back(val); SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O"); }
     //fill RVec to branch -> Not work do not use
     //template <typename T>
     //inline void SetBranch(const TString &treename, const TString &branchname, std::vector<T> &val) {SetBranch_Vector(treename, branchname, val);};
@@ -206,7 +203,6 @@ private:
     deque<float> this_floats;
     deque<int> this_ints;
     deque<char> this_bools;
-    TFile *outfile;
     void SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist);
     template <typename T>
     void SetBranch_Vector(const TString &treename, const TString &branchname, std::vector<T> &address)
