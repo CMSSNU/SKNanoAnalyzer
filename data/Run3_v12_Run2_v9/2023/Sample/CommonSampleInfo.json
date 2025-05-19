@@ -168,11 +168,11 @@
     },
     "TTLJ_Vcb_powheg": {
         "isMC": 1,
-        "PD": "TTtoLNu2Q_Vcb_TuneCP5_13p6TeV_powheg-pythia8",
+        "PD": "TTtoLNuCB_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741* 0.04183 * 0.04183 / 2",
-        "nmc": 9740400.0,
-        "sumsign": 9661274.0,
-        "sumW": 3256303389.5734863,
+        "nmc": 9982000.0,
+        "sumsign": 9900956.0,
+        "sumW": 3337087487.925293,
         "xsec": 0.35492374921805436
     },
     "TTLL_powheg": {
@@ -772,53 +772,41 @@
         "periods": [
             "C"
         ],
-        "NEvents": [
-            222932310.0
-        ]
+        "NEvents": []
     },
     "Muon1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": [
-            222882016.0
-        ]
+        "NEvents": []
     },
     "EGamma0": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": [
-            259853349.0
-        ]
+        "NEvents": []
     },
     "EGamma1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": [
-            259806197.0
-        ]
+        "NEvents": []
     },
     "JetMET0": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": [
-            188951019.0
-        ]
+        "NEvents": []
     },
     "JetMET1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": [
-            188910943.0
-        ]
+        "NEvents": []
     }
 }

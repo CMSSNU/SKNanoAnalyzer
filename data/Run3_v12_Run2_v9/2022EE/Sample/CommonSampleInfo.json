@@ -168,11 +168,11 @@
     },
     "TTLJ_Vcb_powheg": {
         "isMC": 1,
-        "PD": "TTtoLNu2Q_Vcb_TuneCP5_13p6TeV_powheg-pythia8",
+        "PD": "TTtoLNuCB_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741* 0.04183 * 0.04183 / 2",
-        "nmc": 11770800.0,
-        "sumsign": 11674926.0,
-        "sumW": 3940024576.0,
+        "nmc": 9979616.0,
+        "sumsign": 9898504.0,
+        "sumW": 3336261048.6884766,
         "xsec": 0.35492374921805436
     },
     "TTLL_powheg": {
@@ -282,7 +282,7 @@
         "xsec": 0.6603,
         "nmc": 1334574.0,
         "sumsign": 527226.0,
-        "sumW": 1710341.125
+        "sumW": 1710340.875
     },
     "ttZtoNuNu": {
         "isMC": 1,
@@ -450,7 +450,7 @@
         "xsec_formula": "(0.3459+0.2366)*3/0.033658*0.69911",
         "nmc": 30166518.0,
         "sumsign": 30153688.0,
-        "sumW": 478750100.00496674,
+        "sumW": 479959040.0,
         "note": "need check the xsec",
         "xsec": 36.29730598966071
     },
