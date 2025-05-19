@@ -126,7 +126,7 @@ echo "@@@@ Correction include: $CORRECTION_INCLUDE_DIR"
 echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
 # JSONPOG integration auto-update
-JSONPOG_INTEGRATION_PATH="$SKNANO_HOME/external/jsonpog-integration"
+export JSONPOG_INTEGRATION_PATH="$SKNANO_HOME/external/jsonpog-integration"
 
 if [ ! -d "$JSONPOG_INTEGRATION_PATH" ]; then
     echo "@@@@ JSONPOG Repository not found"
