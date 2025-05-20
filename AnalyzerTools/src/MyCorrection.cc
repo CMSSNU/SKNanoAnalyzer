@@ -593,6 +593,8 @@ float MyCorrection::GetBTaggingR(const RVec<Jet> &jets, const JetTagging::JetFla
 
     this_taggerStr += (string("_") + processName);
 
+    // First, check cset_btagging_R is loaded or nullptr
+    if(!cset_btagging_R) throw std::runtime_error("[MyCorrection::GetBTaggingR] cset_btagging_R is not loaded or nullptr");
     auto cset = cset_btagging_R->at(this_taggerStr);
 
     for (const auto &jet : jets)
