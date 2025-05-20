@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TbarWplustoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec_formula": "(87.9*0.5)*(2*3*0.1086*0.6741)",
-    "nmc": 4850663.0,
-    "sumsign": 4850487.0,
-    "sumW": 174752960.0,
+    "nmc": 17272926.0,
+    "sumsign": 17272268.0,
+    "sumW": 622096128.0,
     "xsec": 19.304754462000002,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TbarWplustoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/240702_154329/0000/tree_1.root",
