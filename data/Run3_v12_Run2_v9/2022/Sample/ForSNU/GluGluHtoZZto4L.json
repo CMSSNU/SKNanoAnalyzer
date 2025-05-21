@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "GluGluHtoZZto4L_M-125_TuneCP5_13p6TeV_powheg2-JHUGenV752-pythia8",
     "xsec_formula": "52.23*0.001672*3*0.033658*0.033658",
-    "nmc": 1666666.0,
-    "sumsign": 1666560.0,
-    "sumW": 38557072.0,
+    "nmc": 486643.0,
+    "sumsign": 486617.0,
+    "sumW": 11272239.14751625,
     "xsec": 0.00029679334999899555,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/GluGluHtoZZto4L_M-125_TuneCP5_13p6TeV_powheg2-JHUGenV752-pythia8/240807_041806/0000/tree_1.root",

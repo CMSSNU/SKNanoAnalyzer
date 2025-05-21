@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8",
     "xsec": 145,
-    "nmc": 10153433.0,
-    "sumsign": 9345833.0,
-    "sumW": 1266620032.0,
+    "nmc": 2973675.0,
+    "sumsign": 2737505.0,
+    "sumW": 370365261.95999146,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/240702_160225/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/240702_160225/0000/tree_2.root",
