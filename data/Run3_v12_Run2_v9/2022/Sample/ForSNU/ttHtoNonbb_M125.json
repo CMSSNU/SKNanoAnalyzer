@@ -4,9 +4,9 @@
     "PD": "TTHtoNon2B_M-125_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec": 0.23803199999999997,
     "xsec_formula": "0.57*(1-0.5824)",
-    "nmc": 13955780.0,
-    "sumsign": 13649278.0,
-    "sumW": 7998504.5,
+    "nmc": 3846525.0,
+    "sumsign": 3762217.0,
+    "sumW": 2205776.448698461,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TTHtoNon2B_M-125_TuneCP5_13p6TeV_powheg-pythia8/240702_160512/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TTHtoNon2B_M-125_TuneCP5_13p6TeV_powheg-pythia8/240702_160512/0000/tree_2.root",

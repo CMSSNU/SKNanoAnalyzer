@@ -1,9 +1,7 @@
 {
     "name": "EGamma1",
     "isMC": 0,
-    "NEvents": [
-        124686360.0
-    ],
+    "NEvents": [],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/EGamma1/PeriodD/22Sep2023_v2/250414_120740/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/EGamma1/PeriodD/22Sep2023_v1/250414_120753/0000/tree_1.root",

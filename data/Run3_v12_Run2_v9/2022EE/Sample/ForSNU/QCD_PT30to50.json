@@ -6,5 +6,10 @@
     "nmc": 169584000.0,
     "sumsign": 169584000.0,
     "sumW": 169584000.0,
-    "path": []
+    "path": [
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-30to50_TuneCP5_13p6TeV_pythia8/250520_065704/0000/tree_1.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-30to50_TuneCP5_13p6TeV_pythia8/250520_065704/0000/tree_2.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-30to50_TuneCP5_13p6TeV_pythia8/250520_065704/0000/tree_3.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-30to50_TuneCP5_13p6TeV_pythia8/250520_065704/0000/tree_4.root"
+    ]
 }

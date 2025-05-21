@@ -1,9 +1,7 @@
 {
     "name": "Muon0",
     "isMC": 0,
-    "NEvents": [
-        118926137.0
-    ],
+    "NEvents": [],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/Muon0/PeriodD/22Sep2023_v2/250414_105900/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/Muon0/PeriodD/22Sep2023_v1/250414_110333/0000/tree_1.root",
