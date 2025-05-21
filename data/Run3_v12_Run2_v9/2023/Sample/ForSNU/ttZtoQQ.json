@@ -6,5 +6,14 @@
     "nmc": 7755098.0,
     "sumsign": 3071208.0,
     "sumW": 9972901.0,
-    "path": []
+    "path": [
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_1.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_2.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_3.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_4.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_5.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_6.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_7.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_8.root"
+    ]
 }

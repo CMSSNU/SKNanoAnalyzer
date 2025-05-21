@@ -1,0 +1,10 @@
+{
+    "name": "ttZtoLL_MLL50toInf",
+    "isMC": 1,
+    "PD": "TTLL_MLL-50_TuneCP5_13p6TeV_amcatnlo-pythia8",
+    "xsec": 0.08646,
+    "nmc": 3710000.0,
+    "sumsign": 1929864.0,
+    "sumW": 320354.875,
+    "path": []
+}
