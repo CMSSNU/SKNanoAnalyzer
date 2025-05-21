@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "WWto4Q_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec_formula": "1.6741/0.1086/0.1086*0.6741*0.6741",
-    "nmc": 27640000.0,
-    "sumsign": 27634388.0,
-    "sumW": 1403829630.154068,
+    "nmc": 55526000.0,
+    "sumsign": 55514866.0,
+    "sumW": 2820160656.5281143,
     "note": "need check the xsec",
     "xsec": 64.50158700054943,
     "path": [

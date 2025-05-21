@@ -772,41 +772,53 @@
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            222932310.0
+        ]
     },
     "Muon1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            222882016.0
+        ]
     },
     "EGamma0": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            259853349.0
+        ]
     },
     "EGamma1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            259806197.0
+        ]
     },
     "JetMET0": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            188951019.0
+        ]
     },
     "JetMET1": {
         "isMC": 0,
         "periods": [
             "C"
         ],
-        "NEvents": []
+        "NEvents": [
+            188910943.0
+        ]
     }
 }
