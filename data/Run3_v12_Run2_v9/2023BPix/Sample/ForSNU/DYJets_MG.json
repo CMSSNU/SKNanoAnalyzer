@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "DYto2L-4Jets_MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8",
     "xsec": 6275.1,
-    "nmc": 69035447.0,
-    "sumsign": 69035447.0,
-    "sumW": 910593185592.5166,
+    "nmc": 128629893.0,
+    "sumsign": 128629893.0,
+    "sumW": 1696720808955.3994,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/MC/DYto2L-4Jets_MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8/250407_080800/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/MC/DYto2L-4Jets_MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8/250407_080800/0000/tree_2.root",
