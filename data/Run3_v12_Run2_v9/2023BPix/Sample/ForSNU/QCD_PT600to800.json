@@ -1,0 +1,10 @@
+{
+    "name": "QCD_PT600to800",
+    "isMC": 1,
+    "PD": "QCD_PT-600to800_TuneCP5_13p6TeV_pythia8",
+    "xsec": 178.6,
+    "nmc": 358194000.0,
+    "sumsign": 358193984.0,
+    "sumW": 358193984.0,
+    "path": []
+}
