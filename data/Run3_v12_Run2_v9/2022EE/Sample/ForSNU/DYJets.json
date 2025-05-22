@@ -4,8 +4,8 @@
     "PD": "DYto2L-2Jets_MLL-50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
     "xsec": 6275.1,
     "nmc": 319825084.0,
-    "sumsign": 212904560.0,
-    "sumW": 5725164142592.0,
+    "sumsign": 212904600.0,
+    "sumW": 5701587682975.781,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/DYto2L-2Jets_MLL-50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/240702_144835/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/DYto2L-2Jets_MLL-50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/240702_144835/0000/tree_2.root",

@@ -2,9 +2,9 @@
     "name": "Tau",
     "isMC": 0,
     "NEvents": [
-        28954142.0,
-        110894640.0,
-        17668270.0
+        28954148.0,
+        110894634.0,
+        17668268.0
     ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/DATA/Tau/PeriodE/240724_131240/0000/tree_1.root",

@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
     "xsec": 0.6603,
-    "nmc": 7755098.0,
-    "sumsign": 3071208.0,
-    "sumW": 9972901.0,
+    "nmc": 803622.0,
+    "sumsign": 318122.0,
+    "sumW": 1031478.9025273323,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023/MC/TTZ-ZtoQQ-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250520_071512/0000/tree_2.root",
