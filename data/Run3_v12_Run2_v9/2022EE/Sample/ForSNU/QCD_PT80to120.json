@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "QCD_PT-80to120_TuneCP5_13p6TeV_pythia8",
     "xsec": 2534000.0,
-    "nmc": 1289643817.0,
-    "sumsign": 1289643520.0,
-    "sumW": 1289757440.0,
+    "nmc": 29570284.0,
+    "sumsign": 29570284.0,
+    "sumW": 29573087.170908093,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/250520_065837/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/250520_065837/0000/tree_2.root",

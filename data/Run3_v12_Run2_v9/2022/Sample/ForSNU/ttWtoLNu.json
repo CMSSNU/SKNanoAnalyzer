@@ -3,8 +3,10 @@
     "isMC": 1,
     "PD": "TTLNu-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
     "xsec": 0.2505,
-    "nmc": 3520631.0,
-    "sumsign": 1826805.0,
-    "sumW": 1585799.875,
-    "path": []
+    "nmc": 111308.0,
+    "sumsign": 57810.0,
+    "sumW": 50239.482219815254,
+    "path": [
+        "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/TTLNu-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/250521_072248/0000/tree_1.root"
+    ]
 }

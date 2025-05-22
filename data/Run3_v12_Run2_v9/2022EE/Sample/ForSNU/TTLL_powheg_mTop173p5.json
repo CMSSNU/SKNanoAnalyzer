@@ -4,8 +4,8 @@
     "PD": "TTto2L2Nu_MT-173p5_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec_formula": "923.6*3*0.1086*3*0.1086",
     "nmc": 34942166.0,
-    "sumsign": 34661972.0,
-    "sumW": 2737936640.0,
+    "sumsign": 34661970.0,
+    "sumW": 2736014750.092392,
     "xsec": 98.03611310400001,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/TTto2L2Nu_MT-173p5_TuneCP5_13p6TeV_powheg-pythia8/240808_055655/0000/tree_1.root",
