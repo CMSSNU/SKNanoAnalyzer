@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TbarBtoLminusNuB-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8",
     "xsec_formula": "4.24192*0.1086*3",
-    "nmc": 6624000.0,
-    "sumsign": 4083338.0,
-    "sumW": 9463126.0,
+    "nmc": 788000.0,
+    "sumsign": 486358.0,
+    "sumW": 1128138.6538705826,
     "note": "NLO parmetrization @ 13.6TeV",
     "xsec": 1.3820175360000002,
     "path": [

@@ -3,9 +3,9 @@
     "isMC": 1,
     "PD": "TTto4Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec_formula": "923.6*0.6741*0.6741",
-    "nmc": 44557000.0,
-    "sumsign": 44194980.0,
-    "sumW": 15903253616.281128,
+    "nmc": 22886000.0,
+    "sumsign": 22699672.0,
+    "sumW": 8168317777.774658,
     "xsec": 419.6938241160001,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/MC/TTto4Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8/250408_070105/0000/tree_1.root",

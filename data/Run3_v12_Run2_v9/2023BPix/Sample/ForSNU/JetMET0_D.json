@@ -1,7 +1,9 @@
 {
     "name": "JetMET0",
     "isMC": 0,
-    "NEvents": [],
+    "NEvents": [
+        72722468.0
+    ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/JetMET0/PeriodD/22Sep2023_v2/250414_124235/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/DATA/JetMET0/PeriodD/22Sep2023_v1/250414_124502/0000/tree_1.root",

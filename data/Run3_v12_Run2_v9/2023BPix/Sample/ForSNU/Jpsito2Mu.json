@@ -2,9 +2,9 @@
     "name": "Jpsito2Mu",
     "isMC": 1,
     "PD": "Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8",
-    "nmc": 29971584.0,
-    "sumsign": 29971584.0,
-    "sumW": 29971584.0,
+    "nmc": 15060334.0,
+    "sumsign": 15060334.0,
+    "sumW": 15060334.0,
     "xsec": 0.0002,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2023BPix/MC/Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8/250404_160817/0000/tree_1.root",
