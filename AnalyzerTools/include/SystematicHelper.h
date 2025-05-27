@@ -121,7 +121,7 @@ public:
     std::vector<std::string> get_targets_from_name(const std::string &syst_name);
     std::vector<std::string> get_sources_from_name(const std::string &syst_name);
     MyCorrection::variation get_variation_from_name(const std::string &syst_name);
-    std::unordered_map<std::string, float> calculateWeight();
+    std::unordered_map<std::string, float> calculateWeight(bool dry_run = false);
     inline float safe_divide(float numerator, float denominator)
     {
         if (abs(denominator) < 1e-8)
