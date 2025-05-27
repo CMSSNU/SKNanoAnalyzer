@@ -256,7 +256,7 @@ void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, 
     weight_functions_assigned = true;
 }
 
-std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
+std::unordered_map<std::string, float> SystematicHelper::calculateWeight(bool dry_run)
 {
     if(!weight_functions_assigned)
     {
@@ -275,7 +275,7 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
         {
             float weight = 1.;
             auto weight_function = weight_functions_onesided[syst.target];
-            weight = weight_function();
+            if(!dry_run) weight = weight_function();
 
             weight_map_nominal[syst.target] = weight;
             weight_map_up[syst.syst] = 1.;
@@ -288,9 +288,12 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
             float weight_nominal = 1.;
 
             auto weight_function = weight_functions[syst.target];
-            weight_nominal = weight_function(MyCorrection::variation::nom, "total");
-            weight_up = weight_function(MyCorrection::variation::up, syst.source);
-            weight_down = weight_function(MyCorrection::variation::down, syst.source);
+            if(!dry_run)
+            {
+                weight_nominal = weight_function(MyCorrection::variation::nom, "total");
+                weight_up = weight_function(MyCorrection::variation::up, syst.source);
+                weight_down = weight_function(MyCorrection::variation::down, syst.source);
+            }
 
             weight_map_nominal[syst.target] = weight_nominal;
             weight_map_up[syst.syst] = weight_up;
