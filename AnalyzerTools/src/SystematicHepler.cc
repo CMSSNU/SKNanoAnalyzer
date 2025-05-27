@@ -258,7 +258,7 @@ void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, 
 
 std::unordered_map<std::string, float> SystematicHelper::calculateWeight(bool dry_run)
 {
-    if(!weight_functions_assigned)
+    if(!weight_functions_assigned && !dry_run)
     {
         std::cerr << "Weight functions are not assigned" << std::endl;
         exit(1);
