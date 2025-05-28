@@ -116,9 +116,9 @@
         "isMC": 1,
         "PD": "TTtoLNu2Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741",
-        "nmc": 643692000.0,
-        "sumsign": 638456768.0,
-        "sumW": 221146628096.0,
+        "nmc": 65751000.0,
+        "sumsign": 65216438.0,
+        "sumW": 22588169466.082397,
         "xsec": 405.685352016
     },
     "TTLJ_powheg_mTop173p5": {
@@ -134,18 +134,18 @@
         "isMC": 1,
         "PD": "TTtoLNu2Q_Hdamp-418_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741",
-        "nmc": 545334000.0,
-        "sumsign": 542818624.0,
-        "sumW": 182383837184.0,
+        "nmc": 63714000.0,
+        "sumsign": 63420206.0,
+        "sumW": 21302910677.539795,
         "xsec": 405.685352016
     },
     "TTLJ_powheg_hDampDown": {
         "isMC": 1,
         "PD": "TTtoLNu2Q_Hdamp-158_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741",
-        "nmc": 544116000.0,
-        "sumsign": 535262816.0,
-        "sumW": 181438955520.0,
+        "nmc": 65514000.0,
+        "sumsign": 64447504.0,
+        "sumW": 21900486377.510254,
         "xsec": 405.685352016
     },
     "TTLJ_powheg_CP5Up": {
