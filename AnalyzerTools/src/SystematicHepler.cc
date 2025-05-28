@@ -114,6 +114,18 @@ SystematicHelper::SYST *SystematicHelper::findSystematic(std::string syst_name)
         {
             return &syst;
         }
+
+        // Check if syst.syst ends with "_" + Era and the prefix matches
+        std::string suffix = "_" + Era;
+        if (syst.syst.size() > suffix.size() &&
+            syst.syst.compare(syst.syst.size() - suffix.size(), suffix.size(), suffix) == 0)
+        {
+            std::string prefix = syst.syst.substr(0, syst.syst.size() - suffix.size());
+            if (prefix == syst_name)
+            {
+                return &syst;
+            }
+        }
     }
     return nullptr;
 }
