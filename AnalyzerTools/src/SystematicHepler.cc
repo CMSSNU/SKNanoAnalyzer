@@ -1,8 +1,11 @@
 #include "SystematicHelper.h"
 #include <yaml-cpp/yaml.h>
 
-SystematicHelper::SystematicHelper(std::string yaml_path, TString sample, TString Era)
-{
+SystematicHelper::SystematicHelper(std::string yaml_path,
+    TString sample,
+    TString Era)
+: sample(sample.Data()),  
+Era(Era.Data()){
     variation_prefix = {
         {MyCorrection::variation::nom, ""},
         {MyCorrection::variation::up, "_Up"},
@@ -81,8 +84,6 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample, TStrin
     }
 
     make_map_dedicatedSample();
-    this->sample = sample.Data();
-    this->Era = Era.Data();
     isDedicatedSample = IsDedicatedSample();
     checkBadSystematics();
     make_Iter_obj_EvtLoopAgain();
