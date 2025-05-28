@@ -157,6 +157,6 @@ float Jet::GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const{
   return -999.0;
 }
 
-TLorentzVector Jet::GetUnsmearedP4() const{
+fLorentzVector Jet::GetUnsmearedP4() const{
   return j_unsmearedP4;
 }

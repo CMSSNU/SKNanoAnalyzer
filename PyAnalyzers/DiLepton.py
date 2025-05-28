@@ -37,11 +37,11 @@ class DiLepton(DiLeptonBase):
                 self.weightVariations.append(("PileupJetIDSFUp", "PileupJetIDSFDown"))
             if self.channel == "RunEMu":
                 self.weightVariations.append(("L1PrefireUp", "L1PrefireDown"))
-                self.weightVariations.append(("EMuTrigSFUp", "EMuTrigSFDown"))
+                #self.weightVariations.append(("EMuTrigSFUp", "EMuTrigSFDown"))
                 self.weightVariations.append(("PileupReweightUp", "PileupReweightDown"))
-                self.weightVariations.append(("MuonIDSFUp", "MuonIDSFDown"))
-                self.weightVariations.append(("ElectronIDSFUp", "ElectronIDSFDown"))
-                self.weightVariations.append(("PileupJetIDSFUp", "PileupJetIDSFDown"))
+                #self.weightVariations.append(("MuonIDSFUp", "MuonIDSFDown"))
+                #self.weightVariations.append(("ElectronIDSFUp", "ElectronIDSFDown"))
+                #self.weightVariations.append(("PileupJetIDSFUp", "PileupJetIDSFDown"))
         self.systematics = self.weightVariations + self.scaleVariations
 
     def executeEvent(self):
@@ -90,9 +90,9 @@ class DiLepton(DiLeptonBase):
 
         # Apply scale variations
         if syst == "ElectronEnUp":
-            allElectrons = self.ScaleElectrons(allElectrons, "up")
+            allElectrons = self.ScaleElectrons(ev, allElectrons, "up")
         elif syst == "ElectronEnDown":
-            allElectrons = self.ScaleElectrons(allElectrons, "down")
+            allElectrons = self.ScaleElectrons(ev, allElectrons, "down")
         elif syst == "ElectronResUp":
             allElectrons = self.SmearElectrons(allElectrons, "up")
         elif syst == "ElectronResDown":
@@ -217,28 +217,35 @@ class DiLepton(DiLeptonBase):
         if self.MCSample.Contains("TTLL") or self.MCSample.Contains("TTLJ"):
             topPtWeight = self.myCorr.GetTopPtReweight(genParts)
 
+
         muonRecoSF, muonIDSF = 1., 1.
         eleRecoSF, eleIDSF = 1., 1.
         trigSF = 1.
+
         electrons = recoObjects["tightElectrons"]
         muons = recoObjects["tightMuons"]
-
         muonRecoSF = self.myCorr.GetMuonRECOSF(muons)
+
+        """
         if syst == "MuonIDSFUp":
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons, myVar.up)
         elif syst == "MuonIDSFDown":
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons, myVar.down)
         else:
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons)
+        """
 
         eleRecoSF = self.myCorr.GetElectronRECOSF(electrons)
+        """
         if syst == "ElectronIDSFUp":
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons, myVar.up)
         elif syst == "ElectronIDSFDown":
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons, myVar.down)
         else:
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons)
+        """
 
+        """
         if "EMu" in channel:
             if syst == "EMuTrigSFUp":
                 trigSF = self.myCorr.GetEMuTriggerSF(electrons, muons, myVar.up)
@@ -255,8 +262,11 @@ class DiLepton(DiLeptonBase):
                 trigSF = self.myCorr.GetDblMuTriggerSF(muons)
         else:
             raise ValueError(f"[DiLepton::getWeights] Invalid channel: {channel}")
+        """
 
+        
         pileupIDSF, btagSF = 1., 1.
+        """
         jets = recoObjects["tightJets_vetoLep_loosePileupID"]
         genJets = recoObjects["genJets"]
         matched_idx = self.GenJetMatching(jets, genJets, self.fixedGridRhoFastjetAll, 0.4, 10.)
@@ -271,7 +281,8 @@ class DiLepton(DiLeptonBase):
             jets = recoObjects["tightJets_vetoLep_loosePileupID"]
             tagger, wp, method = JetTagging.JetFlavTagger.DeepJet, JetTagging.JetFlavTaggerWP.Medium, JetTagging.JetTaggingSFMethod.mujets
             btagSF = self.myCorr.GetBTaggingSF(jets, tagger, wp, method)
-        
+        """
+
         return {
             "genWeight": genWeight,
             "prefireWeight": prefireWeight,
@@ -366,7 +377,7 @@ if __name__ == "__main__":
     module.SetEra("2022")
     module.Userflags = RVec(TString)(["RunEMu", "RunSyst"])
     module.AddFile("NANOAOD_255.root")
-    module.MaxEvent = max(1, int(module.fChain.GetEntries()/100))
+    module.MaxEvent = max(1, int(module.fChain.GetEntries()))
     module.SetOutfilePath("hist.root")
     module.Init()
     module.initializePyAnalyzer()

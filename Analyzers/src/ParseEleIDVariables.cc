@@ -21,10 +21,12 @@ void ParseEleIDVariables::initializeAnalyzer() {
     Events->Branch("isMVANoIsoWP90", isMVANoIsoWP90, "isMVANoIsoWP90[nElectrons]/O");
     Events->Branch("convVeto",  convVeto, "convVeto[nElectrons]/O");
     Events->Branch("lostHits", lostHits, "lostHits[nElectrons]/I");
+    Events->Branch("dZ", dZ, "dZ[nElectrons]/F");
     Events->Branch("sip3d", sip3d, "sip3d[nElectrons]/F");
     Events->Branch("miniPFRelIso", miniPFRelIso, "miniPFRelIso[nElectrons]/F");
     Events->Branch("mvaNoIso", mvaNoIso, "mvaNoIso[nElectrons]/F");
     Events->Branch("nearestJetFlavour", nearestJetFlavour, "nearestJetFlavour[nElectrons]/I");
+    Events->Branch("isTrigMatched", isTrigMatched, "isTrigMatched[nElectrons]/O");
 
     if (DataEra == "2016preVFP") {
         EMuTriggers = {
@@ -61,19 +63,32 @@ void ParseEleIDVariables::initializeAnalyzer() {
 
 void ParseEleIDVariables::executeEvent() {
     Event ev = GetEvent();
-    const Particle METv = ev.GetMETVector(ev.MET_Type::PUPPI);
+    const Particle METv = ev.GetMETVector(Event::MET_Type::PUPPI);
     RVec<Jet> jets = GetAllJets();
 
     if (!PassMETFilter(METv, jets)) return;
 
     RVec<Electron> electrons = GetElectrons("", 15., 2.5);
-    RVec<Muon> muons = GetMuons("POGTight", 30., 2.4);
+    RVec<Muon> muons = GetMuons("POGTight", 25., 2.4);
     RVec<Gen> truth = GetAllGens();
+    RVec<TrigObj> trigObjs = GetAllTrigObjs();
 
     // Require event to pass EMu trigger
     // and hard muon for the tag
     if (! ev.PassTrigger(EMuTriggers)) return;
     if (!(muons.size() == 1)) return;
+    const auto &mu = muons.at(0);
+    // Require muon to match the trigger object
+    bool isMuonTrigMatched = false;
+    for (const auto &trigObj : trigObjs) {
+        if (trigObj.isMuon() && trigObj.DeltaR(mu) < 0.1) {
+            if (trigObj.hasBit(0)) {
+                isMuonTrigMatched = true;
+                break;
+            }
+        }
+    }
+    if (!isMuonTrigMatched) return;
     if (!(electrons.size() > 0)) return;
     
     // Update branches
@@ -100,6 +115,7 @@ void ParseEleIDVariables::executeEvent() {
         convVeto[i] = el.ConvVeto();
         lostHits[i] = el.LostHits();
         sip3d[i] = el.SIP3D();
+        dZ[i] = el.dZ();
         miniPFRelIso[i] = el.MiniPFRelIso();
         mvaNoIso[i] = el.MvaNoIso();
 
@@ -115,6 +131,19 @@ void ParseEleIDVariables::executeEvent() {
         } else {
             // No jets found, set a default value
             nearestJetFlavour[i] = -999; // or some other appropriate default value
+        }
+        
+        // Check trigger object matching for CaloIdL_TrackIdL_IsoVL filter
+        isTrigMatched[i] = false;
+        for (const auto &trigObj : trigObjs) {
+            // Check if trigger object is an electron and within deltaR < 0.3
+            if (trigObj.isElectron() && trigObj.DeltaR(el) < 0.1) {
+                // Check if it passes the CaloIdL_TrackIdL_IsoVL filter (bit 0)
+                if (trigObj.hasBit(0)) {
+                    isTrigMatched[i] = true;
+                    break; // Found a match, no need to check other trigger objects
+                }
+            }
         }
     }
     Events->Fill();

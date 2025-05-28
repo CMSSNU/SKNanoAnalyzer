@@ -27,10 +27,14 @@ private:
     bool isMVANoIsoWP90[20];
     bool convVeto[20];
     int  lostHits[20];
+    float dZ[20];
     float sip3d[20];
     float miniPFRelIso[20];
     float mvaNoIso[20];
     int   nearestJetFlavour[20];
+    
+    // Trigger matching variables
+    bool isTrigMatched[20];
 
     // For event selection
     RVec<TString> EMuTriggers;

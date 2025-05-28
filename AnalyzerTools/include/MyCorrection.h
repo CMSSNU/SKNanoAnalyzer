@@ -10,6 +10,7 @@ using namespace std;
 
 #include "TString.h"
 #include "TRandom3.h"
+#include "TMath.h"
 #include "correction.h"
 #include "RoccoR.h"
 #include "Jet.h"
@@ -55,11 +56,12 @@ public:
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom) const;
 
     // electron
-    float GetElectronScaleUnc(const float eta, const unsigned char seedGain, const TString &syst) const;
-    float GetElectronRECOSF(const float abseta, const float pt, const float phi, const variation syst = variation::nom, const TString &source = "total") const;
-    float GetElectronRECOSF(const RVec<Electron> &electrons, const variation syst = variation::nom, const TString &source = "total") const;
-    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const float phi, const variation syst = variation::nom, const TString &source = "total") const;
-    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVec<Electron> &electrons, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetElectronScaleUnc(const float scEta, const unsigned char seedGain, const unsigned int runNumber, const float r9, const float pt, const variation syst = variation::nom) const;
+    float GetElectronSmearUnc(const Electron &electron, const variation syst = variation::nom, const unsigned int seed=999) const;
+    float GetElectronRECOSF(const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronRECOSF(const RVec<Electron> &electrons, const variation syst = variation::nom) const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVec<Electron> &electrons, const variation syst = variation::nom) const;
     // photon
 
     // Trigger
@@ -146,7 +148,7 @@ private:
         string json_jetvetomap;
         string json_jmar;
         string json_met;
-        string text_roccor;
+        string txt_roccor;
         
         // Custom
         string json_muon_custom_TopHNT_idsf;

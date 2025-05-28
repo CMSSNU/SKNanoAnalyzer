@@ -118,6 +118,7 @@ bool Electron::PassID(ElectronID ID) const {
 
 // Private IDs
 bool Electron::Pass_CaloIdL_TrackIdL_IsoVL() const {
+    // checked in https://cmshltinfo.app.cern.ch/path/HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v
     const bool ApplyEA = true;
     
     // Check eta region first
@@ -130,7 +131,7 @@ bool Electron::Pass_CaloIdL_TrackIdL_IsoVL() const {
         if (! (hoe() < 0.13)) return false;
         if (! (max(0., ecalPFClusterIso() - rho()*(ApplyEA? 0.16544: 0.)) < 0.5*Pt())) return false;
         if (! (max(0., hcalPFClusterIso() - rho()*(ApplyEA? 0.05956: 0.)) < 0.3*Pt())) return false;
-        if (! (dr03TkSumPt() < 0.2 * Pt())) return false;
+        if (! (dr03TkSumPt() < 0.2*Pt())) return false;
         return true;
     } else {
         if (! (sieie() < 0.035)) return false;
@@ -139,7 +140,7 @@ bool Electron::Pass_CaloIdL_TrackIdL_IsoVL() const {
         if (! (hoe() < 0.13)) return false;
         if (! (max(0., ecalPFClusterIso() - rho()*(ApplyEA? 0.13212: 0.)) < 0.5*Pt())) return false;
         if (! (max(0., hcalPFClusterIso() - rho()*(ApplyEA? 0.13052: 0.)) < 0.3*Pt())) return false;
-        if (! (dr03TkSumPt() < 0.2 * Pt())) return false;
+        if (! (dr03TkSumPt() < 0.2*Pt())) return false;
         return true;
     }
 }
@@ -155,8 +156,8 @@ bool Electron::Pass_HcToWABaseline() const {
 bool Electron::Pass_HcToWA(const TString &era, const Electron::WORKINGPOINT &wp) const {
     if (wp == WORKINGPOINT::TIGHT) {
         if (! isMVANoIsoWP90()) return false;
-        if (! (fabs(SIP3D()) < 4.)) return false;
-        if (! (MiniPFRelIso() < 0.1)) return false;
+        if (! (SIP3D() < 4.)) return false;
+        if (! (MiniPFRelIso() < 0.1*Pt())) return false;
     } else if (wp == WORKINGPOINT::LOOSE) {
         const float cutIB=0.985, cutOB=0.96, cutEC=0.85;
         bool passMVAIDNoIsoCut = false;
@@ -175,8 +176,8 @@ bool Electron::Pass_HcToWA(const TString &era, const Electron::WORKINGPOINT &wp)
                 break;
         }
         if (! (isMVANoIsoWP90() || passMVAIDNoIsoCut)) return false;
-        if (! (fabs(SIP3D()) < 8.)) return false;
-        if (! (MiniPFRelIso() < 0.4)) return false;
+        if (! (SIP3D() < 8.)) return false;
+        if (! (MiniPFRelIso() < 0.4*Pt())) return false;
     } else {
         cerr << "[Electron::Pass_HcToWA] Only tight and loose WP are implemented" << endl;
         exit(EXIT_FAILURE);

@@ -36,7 +36,7 @@ public:
         POG_MVANOISO_WP80,
         POG_MVANOISO_WP90
     };
-    
+
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
     inline bool ConvVeto() const { return j_convVeto; }
 

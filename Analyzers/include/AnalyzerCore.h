@@ -34,6 +34,7 @@
 #include "GenDressedLepton.h"
 #include "GenIsolatedPhoton.h"
 #include "GenVisTau.h"
+#include "TrigObj.h"
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
@@ -104,6 +105,7 @@ public:
     RVec<GenVisTau> GetAllGenVisTaus();
     RVec<Photon> GetAllPhotons();
     RVec<Photon> GetPhotons(TString id, double ptmin, double fetamax);
+    RVec<TrigObj> GetAllTrigObjs();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax) const;
@@ -142,10 +144,11 @@ public:
     void METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects);
     float GetL1PrefireWeight(MyCorrection::variation syst = MyCorrection::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
-    unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
+    unordered_map<int, int> deltaRMatching(const RVec<Particle> &objs1, const RVec<Particle> &objs2, const float dR = 0.4);
     RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const TString &syst );
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const TString &syst);
+    RVec<Electron> ScaleElectrons(const Event &ev, const RVec<Electron> &electrons, const TString &syst);
     RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const TString &syst);
+
     RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
     RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source="total");
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");

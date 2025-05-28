@@ -870,7 +870,8 @@
         "lumi": 8077.009684657
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFDiJet30": {
         "lumi": 8077.009684657
@@ -885,7 +886,8 @@
         "lumi": 8077.009684657
     },
     "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_Mu17_TrkIsoVVL": {
         "lumi": 8077.009684657
@@ -930,10 +932,12 @@
         "lumi": 8077.009684657
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL": {
         "lumi": 8077.009684657
@@ -2262,6 +2266,7 @@
         "lumi": 8077.009684657
     },
     "Full": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     }
 }

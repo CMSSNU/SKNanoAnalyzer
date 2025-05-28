@@ -17,3 +17,5 @@ templates/__pycache__/*
 DataCOPY/** 
 MCCOPY/**
 .vscode/**
+.cursor/**
+

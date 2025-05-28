@@ -152,7 +152,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     return matched_genjet_idx;
 }
 
-unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR)
+unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<Particle> &objs1, const RVec<Particle> &objs2, const float dR)
 {
     RVec<tuple<size_t, size_t, float>> possible_matches;
     RVec<bool> used_obj1(objs1.size(), false);
@@ -274,7 +274,7 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
     for(const auto &jet: jets){
         Jet this_jet = jet;
 
-        TLorentzVector this_unsmearedP4 = jet.GetUnsmearedP4();
+        auto this_unsmearedP4 = jet.GetUnsmearedP4();
         if(this_unsmearedP4.E() < 0){
             cerr << "[AnalyzerCore::ScaleJets] It seems the attribute UnsmearedP4 has never been set for this Jet." << endl;
             cerr << "[AnalyzerCore::ScaleJets] Since all jets in MC are smeared when calling GetAllJets(), UnsmearedP4 should have been set by AnalyzerCore::SmearJets at the same time." << endl;
@@ -352,7 +352,7 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 Event AnalyzerCore::GetEvent()
 {
     Event ev;
-    ev.SetRunLumiEvent(Run, LumiBlock, EventNumber);
+    ev.SetRunLumiEvent(RunNumber, LumiBlock, EventNumber);
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
     if(Run == 3){
@@ -624,16 +624,19 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
     return selected_electrons;
 }
 
-RVec<Electron> AnalyzerCore::ScaleElectrons(const RVec<Electron> &electrons, const TString &syst) {
-    // This function is only for Run2
-    // As the scale uncertainty is not stored in NanoAODv9
-    // Should patch from https://github.com/cms-egamma/ScaleFactorsJSON
-    if (Run != 2) {
-        throw runtime_error("[AnalyzerCore::ScaleElectrons] This function is only for Run2");
-    }
+RVec<Electron> AnalyzerCore::ScaleElectrons(const Event &ev, const RVec<Electron> &electrons, const TString &syst) {
+    if (IsDATA || syst == "nom") return electrons;
+    
     RVec<Electron> scaled_electrons;
     for (const auto &electron: electrons) {
-        float scale_variation = myCorr->GetElectronScaleUnc(electron.Eta(), electron.SeedGain(), syst);
+        float scale_variation = 1.;
+        if (syst == "up") {
+            scale_variation = myCorr->GetElectronScaleUnc(electron.scEta(), electron.SeedGain(), ev.run(), electron.r9(), electron.Pt(), MyCorrection::variation::up);    
+        } else if (syst == "down") {
+            scale_variation = myCorr->GetElectronScaleUnc(electron.scEta(), electron.SeedGain(), ev.run(), electron.r9(), electron.Pt(), MyCorrection::variation::down);    
+        } else {
+            throw runtime_error("[AnalyzerCore::ScaleElectrons] Invalid variation");
+        }
         Electron scaled_electron = electron;
         scaled_electron.SetPtEtaPhiM(electron.Pt()*scale_variation, electron.Eta(), electron.Phi(), electron.M());
         scaled_electrons.emplace_back(scaled_electron);
@@ -643,24 +646,41 @@ RVec<Electron> AnalyzerCore::ScaleElectrons(const RVec<Electron> &electrons, con
 
 RVec<Electron> AnalyzerCore::SmearElectrons(const RVec<Electron> &electrons, const TString &syst) {
     RVec<Electron> smeared_electrons;
-    if (Run != 2) {
-        throw runtime_error("[AnalyzerCore::SmearElectrons] Run3 is not supported yet");
-    }
-    for (const auto &electron: electrons) {
-        float smeared_pt = electron.Pt();
-        float corr = 1.0;
-        if (syst == "up") {
-            corr = (electron.Energy() - electron.dEsigmaUp())/electron.Energy();
-            smeared_pt = corr * electron.Pt();
-        } else if (syst == "down") {
-            corr = (electron.Energy() - electron.dEsigmaDown())/electron.Energy();
-            smeared_pt = corr * electron.Pt();
-        } else {
-            throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
-        }
-        Electron smeared_electron = electron;
-        smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
-        smeared_electrons.emplace_back(smeared_electron);
+    switch(Run) {
+        case 2:
+            for (const auto &electron: electrons) {
+                float smeared_pt = electron.Pt();
+                if (syst == "up") {
+                    smeared_pt *= (electron.E() - electron.dEsigmaUp())/electron.E();
+                } else if (syst == "down") {
+                    smeared_pt *= (electron.E() - electron.dEsigmaDown())/electron.E();
+                } else {
+                    throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
+                }
+                Electron smeared_electron = electron;
+                smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
+                smeared_electrons.emplace_back(smeared_electron);
+            }
+            break;
+        case 3: 
+            for (const auto &electron: electrons) {
+                float smeared_pt = electron.Pt();
+                if (syst == "nom") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::nom, int(electron.Rho()));
+                } else if (syst == "up") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::up, int(electron.Rho()));
+                } else if (syst == "down") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::down, int(electron.Rho()));
+                } else {
+                    throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
+                }
+                Electron smeared_electron = electron;
+                smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
+                smeared_electrons.emplace_back(smeared_electron);
+            }
+            break;
+        default:
+            throw runtime_error("[AnalyzerCore::SmearElectrons] Run " + to_string(Run) + " is not supported");
     }
     return smeared_electrons;
 }
@@ -827,11 +847,7 @@ RVec<Photon> AnalyzerCore::GetAllPhotons() {
     RVec<Photon> Photons;
     for (int i = 0; i< nPhoton; i++) {
         Photon photon;
-        photon.SetPtEtaPhiE(Photon_pt[i], Photon_eta[i], Photon_phi[i], 1.0);
-        float photon_theta = photon.Theta();
-        float photon_E = Photon_pt[i] / sin( photon_theta );
-        photon.SetPtEtaPhiE( Photon_pt[i], Photon_eta[i], Photon_phi[i], photon_E);
-        photon.SetEnergy(photon_E);
+        photon.SetPtEtaPhiM(Photon_pt[i], Photon_eta[i], Photon_phi[i], 0.);
         photon.SetSigmaIetaIeta(Photon_sieie[i]);
         photon.SetHoe(Photon_hoe[i]);
         if(Run == 3){
@@ -1070,6 +1086,24 @@ RVec<GenVisTau> AnalyzerCore::GetAllGenVisTaus() {
     return GenVisTaus;
 }
 
+RVec<TrigObj> AnalyzerCore::GetAllTrigObjs() {
+    RVec<TrigObj> TrigObjs;
+    
+    for(int i = 0; i < nTrigObj; i++) {
+        TrigObj trigObj;
+        trigObj.SetRun(Run);
+        trigObj.SetPtEtaPhiM(TrigObj_pt[i], TrigObj_eta[i], TrigObj_phi[i], 0.0); // TrigObj mass is typically 0
+        if (Run == 3) {
+            trigObj.SetId(static_cast<Int_t>(TrigObj_id[i]));
+        } else {
+            trigObj.SetId(TrigObj_id_RunII[i]);
+        }
+        trigObj.SetFilterBits(TrigObj_filterBits[i]);
+        TrigObjs.push_back(trigObj);
+    }
+    return TrigObjs;
+}
+
 bool AnalyzerCore::IsHEMElectron(const Electron& electron) const {
     if (DataYear != 2018) return false;
 
@@ -1253,11 +1287,14 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
     //==== e.g., leptons from Z start their lives with status 23
     if( 20 < Start.Status() && Start.Status() < 30 ) return false;
 
-     Gen current_me = Start; // me will always be Start
-     Gen current_mother = Start; // initializing
+    Gen current_me = Start; // me will always be Start
+    Gen current_mother = Start; // initializing
     while( current_mother.Index() >= 2 ){
         RVec<int> current_history = TrackGenSelfHistory(current_me, gens);
-
+        if (current_history[1] == -1) { // current_me is the initial partons
+            out = true;
+            break;
+        }
         //==== Go one generation up
         current_me = gens.at(current_history[1]);
 
@@ -1344,9 +1381,9 @@ int AnalyzerCore::GetLeptonType(const Lepton& lep, const RVec<Gen>& gens) {
     if( gen_closest.IsEmpty() ){
         Gen gen_photon_closest = GetGenMatchedPhoton(lep, gens);
         int NearPhotonType = GetGenPhotonType(gen_photon_closest,gens);
-        if     ( NearPhotonType<=0 ) LeptonType=-1;
-        else if( NearPhotonType==1 ) LeptonType=-5;
-        else if( NearPhotonType==2 ) LeptonType=-6;
+        if (NearPhotonType == 1)      LeptonType = -5;
+        else if (NearPhotonType == 2) LeptonType = -6;
+        else                          LeptonType = -1; // NearPhotonType <= 0
     } else { //==== Has macthed gen lepton
         MatchedTruthIdx = gen_closest.Index();
         LeptonType = GetLeptonType_Public(MatchedTruthIdx, gens);
@@ -1381,7 +1418,6 @@ int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens)
     if (genIdx<2) return 0;
     if (gens.at(genIdx).Status()!=1) return 0;
     if( !(fabs(gens.at(genIdx).PID())==11 || fabs(gens.at(genIdx).PID())==13) ) return 0;
-
 
     int LeptonType=0;
     int MPID=0, GrMPID=0;

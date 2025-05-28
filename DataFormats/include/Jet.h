@@ -137,7 +137,7 @@ public:
   float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
   pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
   float GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const;
-  TLorentzVector GetUnsmearedP4() const;
+  fLorentzVector GetUnsmearedP4() const;
 
   bool PassID(TString ID) const;
   bool PassID(JetID id) const; 
@@ -203,7 +203,7 @@ private:
   // float j_hfsigmaEtaEta;
   // float j_hfsigmaPhiPhi;
   float j_m; // jet mass
-  TLorentzVector j_unsmearedP4; 
+  fLorentzVector j_unsmearedP4; 
   ClassDef(Jet, 1)
 };
 

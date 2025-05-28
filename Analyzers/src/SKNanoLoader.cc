@@ -55,19 +55,20 @@ void SKNanoLoader::Loop() {
 
         // make sure Run2 and Run3 variables are in sync
         if (Run == 2) {
-            nLHEPart = static_cast<UInt_t>(nLHEPart_RunII);
-            nGenPart = static_cast<UInt_t>(nGenPart_RunII);
-            nGenJet = static_cast<UInt_t>(nGenJet_RunII);
-            nGenJetAK8 = static_cast<UInt_t>(nGenJetAK8_RunII);
-            nGenIsolatedPhoton = static_cast<UInt_t>(nGenIsolatedPhoton_RunII);
-            nGenDressedLepton = static_cast<UInt_t>(nGenDressedLepton_RunII);
-            nGenVisTau = static_cast<UInt_t>(nGenVisTau_RunII);
-            nMuon = static_cast<UInt_t>(nMuon_RunII);
-            nElectron = static_cast<UInt_t>(nElectron_RunII);
-            nTau = static_cast<UInt_t>(nTau_RunII);
-            nPhoton = static_cast<UInt_t>(nPhoton_RunII);
-            nJet = static_cast<UInt_t>(nJet_RunII);
-            nFatJet = static_cast<UInt_t>(nFatJet_RunII);
+            nLHEPart = static_cast<Int_t>(nLHEPart_RunII);
+            nGenPart = static_cast<Int_t>(nGenPart_RunII);
+            nGenJet = static_cast<Int_t>(nGenJet_RunII);
+            nGenJetAK8 = static_cast<Int_t>(nGenJetAK8_RunII);
+            nGenIsolatedPhoton = static_cast<Int_t>(nGenIsolatedPhoton_RunII);
+            nGenDressedLepton = static_cast<Int_t>(nGenDressedLepton_RunII);
+            nGenVisTau = static_cast<Int_t>(nGenVisTau_RunII);
+            nMuon = static_cast<Int_t>(nMuon_RunII);
+            nElectron = static_cast<Int_t>(nElectron_RunII);
+            nTau = static_cast<Int_t>(nTau_RunII);
+            nPhoton = static_cast<Int_t>(nPhoton_RunII);
+            nJet = static_cast<Int_t>(nJet_RunII);
+            nFatJet = static_cast<Int_t>(nFatJet_RunII);
+            nTrigObj = static_cast<Int_t>(nTrigObj_RunII);
         }
         
         executeEvent();
@@ -108,6 +109,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     const UInt_t kMaxElectron = getMaxBranchValue(df, "nElectron");
     const UInt_t kMaxTau = getMaxBranchValue(df, "nTau");
     const UInt_t kMaxFatJet = getMaxBranchValue(df, "nFatJet");
+    const UInt_t kMaxTrigObj = getMaxBranchValue(df, "nTrigObj");
     cout << "[SKNanoLoader::SetMaxLeafSize] Maximum Leaf Size Set" << endl;
     auto RDataFrameFinishTime = std::chrono::high_resolution_clock::now();
     
@@ -589,6 +591,14 @@ void SKNanoLoader::SetMaxLeafSize(){
         FatJet_subJetIdx1_RunII.resize(kMaxFatJet);
         FatJet_subJetIdx2_RunII.resize(kMaxFatJet);
     }
+
+    // TrigObj----------------------------
+    TrigObj_pt.resize(kMaxTrigObj);
+    TrigObj_eta.resize(kMaxTrigObj);
+    TrigObj_phi.resize(kMaxTrigObj);
+    TrigObj_id.resize(kMaxTrigObj);
+    TrigObj_id_RunII.resize(kMaxTrigObj);
+    TrigObj_filterBits.resize(kMaxTrigObj);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
@@ -1134,6 +1144,18 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("run", &RunNumber);
     SafeSetBranchAddress("luminosityBlock", &LumiBlock);
     SafeSetBranchAddress("event", &EventNumber);
+
+    // TrigObj----------------------------
+    SetBranchWithRunCheck("nTrigObj", nTrigObj, nTrigObj_RunII);
+    SafeSetBranchAddress("TrigObj_pt", TrigObj_pt.data());
+    SafeSetBranchAddress("TrigObj_eta", TrigObj_eta.data());
+    SafeSetBranchAddress("TrigObj_phi", TrigObj_phi.data());
+    if (Run == 3) {
+        SafeSetBranchAddress("TrigObj_id", TrigObj_id.data());
+    } else {
+        SafeSetBranchAddress("TrigObj_id", TrigObj_id_RunII.data());
+    }
+    SafeSetBranchAddress("TrigObj_filterBits", TrigObj_filterBits.data());
 
     string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/HLT_Path.json";
     ifstream json_file(json_path);

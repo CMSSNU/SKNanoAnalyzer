@@ -20,3 +20,4 @@
 #pragma link C++ class GenVisTau+;
 #pragma link C++ class FatJet+;
 #pragma link C++ class JetTaggingParameter+;
+#pragma link C++ class TrigObj+;

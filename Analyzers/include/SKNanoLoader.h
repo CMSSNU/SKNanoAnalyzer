@@ -574,6 +574,16 @@ public:
     Int_t RunNumber;
     Int_t LumiBlock;
     Int_t EventNumber;
+
+    // TrigObj----------------------------
+    Int_t nTrigObj;
+    UInt_t nTrigObj_RunII;
+    RVec<Float_t> TrigObj_pt;
+    RVec<Float_t> TrigObj_eta;
+    RVec<Float_t> TrigObj_phi;
+    RVec<Int_t> TrigObj_id_RunII;
+    RVec<UShort_t> TrigObj_id;
+    RVec<Int_t> TrigObj_filterBits;
     std::map<TString, pair<Bool_t*,float>> TriggerMap;
 };
 

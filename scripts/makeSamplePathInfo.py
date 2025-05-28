@@ -35,6 +35,9 @@ else:
     raise ValueError(f"Unknown era: {args.era}")
 
 def parse_rootfiles_from(basePath):
+    if not os.path.exists(basePath):
+        print(f"No {basePath}")
+
     filePaths = []
     for root, _, files in os.walk(basePath):
         for file in files:

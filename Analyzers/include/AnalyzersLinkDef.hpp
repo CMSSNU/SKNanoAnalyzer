@@ -16,3 +16,4 @@
 #pragma link C++ class GeneratorBase+;
 #pragma link C++ class DiLeptonBase+;
 #pragma link C++ class ParseEleIDVariables+;
+#pragma link C++ class ParseMuIDVariables+;

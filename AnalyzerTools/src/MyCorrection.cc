@@ -23,16 +23,16 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     loadCorrectionSet("btagging eff", config.json_btagging_eff, cset_btagging_eff, false);
     loadCorrectionSet("ctagging eff", config.json_ctagging_eff, cset_ctagging_eff, false);
     loadCorrectionSet("electron", config.json_electron, cset_electron, false);
+    loadCorrectionSet("electron variation", config.json_electron_variation, cset_electron_variation, false);
     loadCorrectionSet("photon", config.json_photon, cset_photon, false);
     loadCorrectionSet("jerc", config.json_jerc, cset_jerc, false);
     loadCorrectionSet("jerc_fatjet", config.json_jerc_fatjet, cset_jerc_fatjet, false);
     loadCorrectionSet("jetvetomap", config.json_jetvetomap, cset_jetvetomap, false);
     // Optional files
-    loadRoccoR(config.text_roccor, true);
+    loadRoccoR(config.txt_roccor, true);
     loadCorrectionSet("jmar", config.json_jmar, cset_jmar, true);
     loadCorrectionSet("muon trig eff", config.json_muon_trig_eff, cset_muon_trig_eff, true);
     loadCorrectionSet("electron hlt", config.json_electron_hlt, cset_electron_hlt, true);
-    loadCorrectionSet("electron variation", config.json_electron_variation, cset_electron_variation, true);
     loadCorrectionSet("met", config.json_met, cset_met, true);
     loadCorrectionSet("btagging R", config.json_btagging_R, cset_btagging_R, true);
     loadCorrectionSet("ctagging R", config.json_ctagging_R, cset_ctagging_R, true);
@@ -58,7 +58,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     EGM_keys["2023BPix"] = "2023PromptD";
     EGM_keys["2023"] = "2023PromptC";
     EGM_keys["2022EE"] = "2022Re-recoE+PromptFG";
-    EGM_keys["2022"] = "2022ReRecoBCD";
+    EGM_keys["2022"] = "2022Re-recoBCD";
     EGM_keys["2016preVFP"] = "2016preVFP";
     EGM_keys["2016postVFP"] = "2016postVFP";
     EGM_keys["2017"] = "2017";
@@ -141,7 +141,7 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
     config.json_jetvetomap = json_pog_path_str + "/POG/JME";
     config.json_jmar = json_pog_path_str + "/POG/JME";
     config.json_met = json_pog_path_str + "/POG/JME";
-    config.text_roccor = external_roccor_str;
+    config.txt_roccor = external_roccor_str;
 
     config.json_muon_custom_TopHNT_idsf = sknano_data_str;
     config.json_muon_custom_dblmu_leg1_eff = sknano_data_str;
@@ -170,7 +170,7 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_jetvetomap += "/2016preVFP_UL/jetvetomaps.json.gz";
         config.json_jmar += "/2016preVFP_UL/jmar.json.gz";
         config.json_met += "/2016preVFP_UL/met.json.gz";
-        config.text_roccor += "/RoccoR2016aUL.txt";
+        config.txt_roccor += "/RoccoR2016aUL.txt";
 
         config.json_muon_custom_TopHNT_idsf += "/2016preVFP/MUO/efficiency_TopHNT.json";
         config.json_muon_custom_dblmu_leg1_eff += "/2016preVFP/MUO/efficiency_Mu17Leg1.json";
@@ -198,7 +198,7 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_jetvetomap += "/2016postVFP_UL/jetvetomaps.json.gz";
         config.json_jmar += "/2016postVFP_UL/jmar.json.gz";
         config.json_met += "/2016postVFP_UL/met.json.gz";
-        config.text_roccor += "/RoccoR2016bUL.txt";
+        config.txt_roccor += "/RoccoR2016bUL.txt";
 
         config.json_muon_custom_TopHNT_idsf += "/2016postVFP/MUO/efficiency_TopHNT.json";
         config.json_muon_custom_dblmu_leg1_eff += "/2016postVFP/MUO/efficiency_Mu17Leg1.json";
@@ -226,7 +226,7 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_jetvetomap += "/2017_UL/jetvetomaps.json.gz";
         config.json_jmar += "/2017_UL/jmar.json.gz";
         config.json_met += "/2017_UL/met.json.gz";
-        config.text_roccor += "/RoccoR2017UL.txt";
+        config.txt_roccor += "/RoccoR2017UL.txt";
 
         config.json_muon_custom_TopHNT_idsf += "/2017/MUO/efficiency_TopHNT.json";
         config.json_muon_custom_dblmu_leg1_eff += "/2017/MUO/efficiency_Mu17Leg1.json";
@@ -254,7 +254,7 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_jetvetomap += "/2018_UL/jetvetomaps.json.gz";
         config.json_jmar += "/2018_UL/jmar.json.gz";
         config.json_met += "/2018_UL/met.json.gz";
-        config.text_roccor += "/RoccoR2018UL.txt";
+        config.txt_roccor += "/RoccoR2018UL.txt";
 
         config.json_muon_custom_TopHNT_idsf += "/2018/MUO/efficiency_TopHNT.json";
         config.json_muon_custom_dblmu_leg1_eff += "/2018/MUO/efficiency_Mu17Leg1.json";
@@ -275,12 +275,14 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_btagging_R += "/2022/BTV/" + btagging_R_file;
         config.json_ctagging_R += "/2022/BTV/" + ctagging_R_file;
         config.json_electron += "/2022_Summer22/electron.json.gz";
+        config.json_electron_variation = json_pog_path_str + "/POG/EGM/2022_Summer22/electronSS.json.gz";
         config.json_electron_hlt += "/2022_Summer22/electronHlt.json.gz";
         config.json_photon += "/2022_Summer22/photon.json.gz";
         config.json_jerc += "/2022_Summer22/jet_jerc.json.gz";
         config.json_jerc_fatjet += "/2022_Summer22/fatJet_jerc.json.gz";
         config.json_jetvetomap += "/2022_Summer22/jetvetomaps.json.gz";
         config.json_met += "/2022_Summer22/met.json.gz";
+        config.txt_roccor += "/RoccoR2022.txt";
     } else if (era == "2022EE") {
         config.json_muon += "/2022_Summer22EE/muon_Z.json.gz";
         config.json_muon_trig_eff += "/2022EE/MUO/muon_trig.json";
@@ -292,12 +294,14 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_btagging_R += "/2022EE/BTV/" + btagging_R_file;
         config.json_ctagging_R += "/2022EE/BTV/" + ctagging_R_file;
         config.json_electron += "/2022_Summer22EE/electron.json.gz";
+        config.json_electron_variation = json_pog_path_str + "/POG/EGM/2022_Summer22EE/electronSS.json.gz";
         config.json_electron_hlt += "/2022_Summer22EE/electronHlt.json.gz";
         config.json_photon += "/2022_Summer22EE/photon.json.gz";
         config.json_jerc += "/2022_Summer22EE/jet_jerc.json.gz";
         config.json_jerc_fatjet += "/2022_Summer22EE/fatJet_jerc.json.gz";
         config.json_jetvetomap += "/2022_Summer22EE/jetvetomaps.json.gz";
         config.json_met += "/2022_Summer22EE/met.json.gz";
+        config.txt_roccor += "/RoccoR2022EE.txt";
     } else if (era == "2023") {
         config.json_muon += "/2023_Summer23/muon_Z.json.gz";
         config.json_muon_trig_eff += "/2023/MUO/muon_trig.json";
@@ -309,12 +313,14 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_btagging_R += "/2023/BTV/" + btagging_R_file;
         config.json_ctagging_R += "/2023/BTV/" + ctagging_R_file;
         config.json_electron += "/2023_Summer23/electron.json.gz";
+        config.json_electron_variation = json_pog_path_str + "/POG/EGM/2023_Summer23/electronSS.json.gz";
         config.json_electron_hlt += "/2023_Summer23/electronHlt.json.gz";
         config.json_photon += "/2023_Summer23/photon.json.gz";
         config.json_jerc += "/2023_Summer23/jet_jerc.json.gz";
         config.json_jerc_fatjet += "/2023_Summer23/fatJet_jerc.json.gz";
         config.json_jetvetomap += "/2023_Summer23/jetvetomaps.json.gz";
         config.json_met += "/2023_Summer23/met.json.gz";
+        config.txt_roccor += "/RoccoR2023.txt";
     } else if (era == "2023BPix") {
         config.json_muon += "/2023_Summer23BPix/muon_Z.json.gz";
         config.json_muon_trig_eff += "/2023BPix/MUO/muon_trig.json";
@@ -326,12 +332,14 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
         config.json_btagging_R += "/2023BPix/BTV/" + btagging_R_file;
         config.json_ctagging_R += "/2023BPix/BTV/" + ctagging_R_file;
         config.json_electron += "/2023_Summer23BPix/electron.json.gz";
+        config.json_electron_variation = json_pog_path_str + "/POG/EGM/2023_Summer23BPix/electronSS.json.gz";
         config.json_electron_hlt += "/2023_Summer23BPix/electronHlt.json.gz";
         config.json_photon += "/2023_Summer23BPix/photon.json.gz";
         config.json_jerc += "/2023_Summer23BPix/jet_jerc.json.gz";
         config.json_jerc_fatjet += "/2023_Summer23BPix/fatJet_jerc.json.gz";
         config.json_jetvetomap += "/2023_Summer23BPix/jetvetomaps.json.gz";
         config.json_met += "/2023_Summer23BPix/met.json.gz";
+        config.txt_roccor += "/RoccoR2023BPix.txt";
     } else {
         throw invalid_argument("[MyCorrection::GetEraConfig] Invalid era: " + era);
     }
@@ -345,6 +353,7 @@ float MyCorrection::GetMuonScaleSF(const Muon &muon, const variation syst, const
     float roccor_err = 0.;
 
     // few GeVs of muon shuold not use this correction, because the authors did not consider the radiations of low pt muons inside detectors
+    // still true for Run3?
     if (muon.Pt() < 10.) return 1.;
 
     if (IsDATA) {
@@ -352,7 +361,7 @@ float MyCorrection::GetMuonScaleSF(const Muon &muon, const variation syst, const
         roccor_err = rc.kScaleDTerror(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi());
     } else {
         // Random seed is initialized in SKNanoLoader::Init()
-        gRandom->SetSeed(int(muon.Pt())+953);
+        gRandom->SetSeed(int(muon.Pt()/muon.Eta()));
         float u = gRandom->Rndm();
         if (matched_pt > 0) { // matched
             roccor = rc.kSpreadMC(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), matched_pt, 0, 0);
@@ -418,36 +427,103 @@ float MyCorrection::GetMuonIDSF(const TString &Muon_ID_SF_Key, const RVec<Muon> 
 // Electron
 // For Run2, scale uncertainty is not stored in the NanoAODv9.
 // Should patch from https://github.com/cms-egamma/ScaleFactorsJSON
-float MyCorrection::GetElectronScaleUnc(const float eta, const unsigned char seedGain, const TString &syst) const{
-    string systString = "";
-    if (syst == "nom") return 1.;
-    else if (syst == "up") systString = "scaleup";
-    else if (syst == "down") systString = "scaledown";
-    else {
-        throw runtime_error("[MyCorrection::GetElectronScaleUnc] Invalid syst value");
+// https://twiki.cern.ch/twiki/bin/view/CMS/EgammSFandSSRun3
+float MyCorrection::GetElectronScaleUnc(const float scEta, const unsigned char seedGain, const unsigned int runNumber, const float r9, const float pt, const variation syst) const {
+    if (IsDATA) return 1.0;
+    
+    switch(Run) {
+        case 2:
+            if (syst == variation::nom) return 1.;
+            else {
+                auto cset = cset_electron_variation->at("UL-EGM_ScaleUnc");
+                vector<correction::Variable::Type> args = {
+                    GetEra().Data(),
+                    getSystString_EGM(syst),
+                    scEta,
+                    int(seedGain)
+                };
+                return cset->evaluate(args);
+            }
+            break;
+        case 3:
+            if (syst == variation::nom) return 1.;
+            else {
+                auto cset = cset_electron_variation->at("Scale");
+                vector<correction::Variable::Type> args = {
+                    "total_uncertainty",
+                    seedGain,
+                    static_cast<float>(runNumber),
+                    scEta,
+                    r9,
+                    pt
+                };
+                const float unc = cset->evaluate(args);
+                if (syst == variation::up) return 1.+unc;
+                else if (syst == variation::down) return 1.-unc;
+                else {
+                    throw runtime_error("[MyCorrection::GetElectronScaleUnc] Invalid syst value");
+                }
+            }
+            break;
+        default:
+            throw runtime_error("[MyCorrection::GetElectronScaleUnc] Invalid run number");
     }
-    auto cset = cset_electron_variation->at("UL-EGM_ScaleUnc");
+    
+    // This should never be reached, but added to avoid compiler warning
+    return 1.0;
+}
+    
+float MyCorrection::GetElectronSmearUnc(const Electron &electron, const variation syst, const unsigned int seed) const {
+    if (IsDATA) return 1.0; // No smearing for data, only applied to MC
+    if (Run == 2) throw runtime_error("[MyCorrection::GetElectronSmearUnc] Run2 is not supported by NanoAODv9");
+    
+    auto cset = cset_electron_variation->at("Smearing");
     vector<correction::Variable::Type> args = {
-        GetEra().Data(),
-        systString,
-        eta,
-        int(seedGain)
+        "rho",
+        electron.scEta(),
+        electron.r9()
     };
-    return cset->evaluate(args);
+    const float rho = cset->evaluate(args);
+    
+    TRandom3 rng(seed);
+    
+    // Handle different variation cases
+    if (syst == variation::nom) {
+        // For nominal case, apply normal smearing
+        return rng.Gaus(1.0, rho);
+    } else if (syst == variation::up) {
+        // For up variation, increase the width of the Gaussian
+        return rng.Gaus(1.0, rho + cset->evaluate({"err_rho", electron.scEta(), electron.r9()}));
+    } else if (syst == variation::down) {
+        // For down variation, decrease the width of the Gaussian
+        return rng.Gaus(1.0, rho - cset->evaluate({"err_rho", electron.scEta(), electron.r9()}));
+    } else {
+        throw runtime_error("[MyCorrection::GetElectronSmearUnc] Invalid syst value");
+    }
 }
 
-float MyCorrection::GetElectronRECOSF(const float eta, const float pt, const float phi,const variation syst, const TString &source) const {
-    if (pt < 20.)
-        return GetElectronIDSF("RecoBelow20", eta, pt, phi, syst);
-    else if (Run == 2)
-        return GetElectronIDSF("RecoAbove20", eta, pt, phi, syst);
-    else if (pt < 75.) // Run3 and 20to75
-        return GetElectronIDSF("Reco20to75", eta, pt, phi, syst);
-    else // Run3 and 75+
-        return GetElectronIDSF("RecoAbove75", eta, pt, phi, syst);
+float MyCorrection::GetElectronRECOSF(const float eta, const float pt, const float phi, const variation syst) const {
+    switch(Run) {
+        case 2:
+            if (pt < 20.)
+                return GetElectronIDSF("RecoBelow20", eta, pt, phi, syst);
+            else
+                return GetElectronIDSF("RecoAbove20", eta, pt, phi, syst);
+            break;
+        case 3:
+            if (pt < 20.)
+                return GetElectronIDSF("RecoBelow20", eta, pt, phi, syst);
+            else if (pt < 75.)
+                return GetElectronIDSF("Reco20to75", eta, pt, phi, syst);
+            else
+                return GetElectronIDSF("RecoAbove75", eta, pt, phi, syst);
+            break;
+        default:
+            throw runtime_error("[MyCorrection::GetElectronRECOSF] Invalid run number");
+    }
 }
 
-float MyCorrection::GetElectronRECOSF(const RVec<Electron> &electrons, const variation syst, const TString &source) const {
+float MyCorrection::GetElectronRECOSF(const RVec<Electron> &electrons, const variation syst) const {
     float weight = 1.;
     for (const auto &electron : electrons) {
         weight *= GetElectronRECOSF(fabs(electron.Eta()), electron.Pt(), electron.Phi(), syst);
@@ -455,7 +531,7 @@ float MyCorrection::GetElectronRECOSF(const RVec<Electron> &electrons, const var
     return weight;
 }
 
-float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst, const TString &source) const {
+float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst) const {
     if (Electron_ID_SF_Key == "TopHNT") {
         auto cset = cset_electron_custom_TopHNT_idsf->at("sf");
         if (syst == variation::nom) {
@@ -475,27 +551,22 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const flo
         else throw runtime_error("[MyCorrection::GetElectronIDSF] Invalid run number");
         
         auto cset = cset_electron->at(key);
-        try {
-            //NOTE: from 2023, It seems some SF depends on phi.
-            if(!isInputInCorrection("phi", cset)) {
-                return cset->evaluate({EGM_keys.at(GetEra().Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt});
-            } else {
-                return cset->evaluate({EGM_keys.at(GetEra().Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt, phi});
-            }
-        } catch (exception &e) {
-            cerr << "[MyCorrection::GetElectronIDSF] " << e.what() << endl;
-            throw e;
+        //NOTE: from 2023, It seems some SF depends on phi.
+        if(!isInputInCorrection("phi", cset)) {
+            return cset->evaluate({EGM_keys.at(GetEra().Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt});
+        } else {
+            return cset->evaluate({EGM_keys.at(GetEra().Data()), getSystString_EGM(syst), string(Electron_ID_SF_Key), eta, pt, phi});
         }
     }
 }
 
-float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVec<Electron> &electrons, const variation syst, const TString &source) const {
+float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const RVec<Electron> &electrons, const variation syst) const {
     float weight = 1.;
     for (const auto &electron : electrons) {
         if (Electron_ID_SF_Key == "TopHNT") {
             weight *= GetElectronIDSF(Electron_ID_SF_Key, electron.scEta(), electron.Pt(), 0., syst);
         } else {
-            weight *= GetElectronIDSF(Electron_ID_SF_Key, fabs(electron.Eta()), electron.Pt(), electron.Phi(), syst, source);
+            weight *= GetElectronIDSF(Electron_ID_SF_Key, fabs(electron.Eta()), electron.Pt(), electron.Phi(), syst);
         }
     }
     return weight;
@@ -1106,7 +1177,7 @@ bool MyCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCa
 
 void MyCorrection::METXYCorrection(Particle &Met, const int RunNumber, const int npvs, const XYCorrection_MetType MetType) {
     if (Run == 3) {
-        cout << "[MyCorrection::METXYCorrection] Run3 does not support METXYCorrection" << endl;
+        // No supprot in Run3
         return;
     }
     correction::Correction::Ref cset_pt = nullptr;
