@@ -52,11 +52,11 @@ void ExampleRun::initializeAnalyzer() {
     string SKNANO_HOME = getenv("SKNANO_HOME");
     if (IsDATA)
     {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream);
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream, DataEra);
     }
     else
     {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/ExampleSystematic.yaml", MCSample);
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/ExampleSystematic.yaml", MCSample, DataEra);
     }
 
     //==== Example 2

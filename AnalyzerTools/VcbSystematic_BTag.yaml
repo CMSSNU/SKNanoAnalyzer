@@ -4,6 +4,7 @@ systematics:
 
   - syst: Jet_Res
     evtLoopAgain: true
+    decorrelate_by_era: true
 
   - syst: UE
     evtLoopAgain: true

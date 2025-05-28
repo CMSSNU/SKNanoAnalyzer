@@ -1,7 +1,7 @@
 #include "SystematicHelper.h"
 #include <yaml-cpp/yaml.h>
 
-SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
+SystematicHelper::SystematicHelper(std::string yaml_path, TString sample, TString Era)
 {
     variation_prefix = {
         {MyCorrection::variation::nom, ""},
@@ -14,6 +14,13 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
         std::string syst_name = node["syst"].as<std::string>();
         SystematicHelper::SYST syst;
         syst.syst = syst_name;
+        if (node["decorrelate_by_era"].IsDefined())
+        {
+            syst.decorrelate_by_era = node["decorrelate_by_era"].as<bool>();
+        }
+        if(syst.decorrelate_by_era){
+            syst.syst = syst.syst + "_" + Era.Data();
+        }
         if (node["source"].IsDefined())
         {
             syst.source = node["source"].as<std::string>();
@@ -46,6 +53,7 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
         {
             syst.target = syst_name;
         }
+
         systematics.push_back(syst);
     }
 
@@ -74,6 +82,7 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
 
     make_map_dedicatedSample();
     this->sample = sample.Data();
+    this->Era = Era.Data();
     isDedicatedSample = IsDedicatedSample();
     checkBadSystematics();
     make_Iter_obj_EvtLoopAgain();
