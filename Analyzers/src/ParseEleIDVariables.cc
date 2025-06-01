@@ -19,6 +19,9 @@ void ParseEleIDVariables::initializeAnalyzer() {
     Events->Branch("rho", rho, "rho[nElectrons]/F");
     Events->Branch("dr03TkSumPt", dr03TkSumPt, "dr03TkSumPt[nElectrons]/F");
     Events->Branch("isMVANoIsoWP90", isMVANoIsoWP90, "isMVANoIsoWP90[nElectrons]/O");
+    Events->Branch("isMVANoIsoWPLoose", isMVANoIsoWPLoose, "isMVANoIsoWPLoose[nElectrons]/O");
+    Events->Branch("isPOGMedium", isPOGMedium, "isPOGMedium[nElectrons]/O");
+    Events->Branch("isPOGTight", isPOGTight, "isPOGTight[nElectrons]/O");
     Events->Branch("convVeto",  convVeto, "convVeto[nElectrons]/O");
     Events->Branch("lostHits", lostHits, "lostHits[nElectrons]/I");
     Events->Branch("dZ", dZ, "dZ[nElectrons]/F");
@@ -76,7 +79,7 @@ void ParseEleIDVariables::executeEvent() {
     // Require event to pass EMu trigger
     // and hard muon for the tag
     if (! ev.PassTrigger(EMuTriggers)) return;
-    if (!(muons.size() == 1)) return;
+    if (! (muons.size() == 1)) return;
     const auto &mu = muons.at(0);
     // Require muon to match the trigger object
     bool isMuonTrigMatched = false;
@@ -98,11 +101,11 @@ void ParseEleIDVariables::executeEvent() {
         const auto &el = electrons.at(i);
         pt[i] = el.Pt();
         scEta[i] = el.scEta();
-        try {
-            lepType[i] = GetLeptonType(el, truth);
-        } catch (const std::exception& e) {
-            lepType[i] = 0;
-        }
+        //try {
+        lepType[i] = GetLeptonType(el, truth);
+        //} catch (const std::exception& e) {
+        //    lepType[i] = 0;
+        //}
         sieie[i] = el.sieie();
         deltaEtaInSC[i] = el.deltaEtaInSC();
         deltaPhiInSeed[i] = el.deltaPhiInSeed();
@@ -112,6 +115,9 @@ void ParseEleIDVariables::executeEvent() {
         rho[i] = el.rho();
         dr03TkSumPt[i] = el.dr03TkSumPt();
         isMVANoIsoWP90[i] = el.PassID("POGMVANoIsoWP90");
+        isMVANoIsoWPLoose[i] = el.PassID("POGMVANoIsoWPLoose");
+        isPOGMedium[i] = el.PassID("POGMedium");
+        isPOGTight[i] = el.PassID("POGTight");
         convVeto[i] = el.ConvVeto();
         lostHits[i] = el.LostHits();
         sip3d[i] = el.SIP3D();

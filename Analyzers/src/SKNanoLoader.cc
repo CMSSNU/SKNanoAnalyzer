@@ -277,18 +277,22 @@ void SKNanoLoader::SetMaxLeafSize(){
         Electron_mvaIso.resize(kMaxElectron);
         Electron_mvaIso_WP80.resize(kMaxElectron);
         Electron_mvaIso_WP90.resize(kMaxElectron);
+        Electron_mvaIso_WPL.resize(kMaxElectron);
         Electron_mvaNoIso.resize(kMaxElectron);
         Electron_mvaNoIso_WP80.resize(kMaxElectron);
         Electron_mvaNoIso_WP90.resize(kMaxElectron);
+        Electron_mvaNoIso_WPL.resize(kMaxElectron);
         Electron_cutBased_RunII.resize(0);
         Electron_genPartIdx_RunII.resize(0);
         Electron_jetIdx_RunII.resize(0);
         Electron_mvaFall17V2Iso.resize(0);
         Electron_mvaFall17V2Iso_WP80.resize(0);
         Electron_mvaFall17V2Iso_WP90.resize(0);
+        Electron_mvaFall17V2Iso_WPL.resize(0);
         Electron_mvaFall17V2noIso.resize(0);
         Electron_mvaFall17V2noIso_WP80.resize(0);
         Electron_mvaFall17V2noIso_WP90.resize(0);
+        Electron_mvaFall17V2noIso_WPL.resize(0);
     }
     else if(Run == 2){
         Electron_cutBased.resize(0);
@@ -297,18 +301,22 @@ void SKNanoLoader::SetMaxLeafSize(){
         Electron_mvaIso.resize(0);
         Electron_mvaIso_WP80.resize(0);
         Electron_mvaIso_WP90.resize(0);
+        Electron_mvaIso_WPL.resize(0);
         Electron_mvaNoIso.resize(0);
         Electron_mvaNoIso_WP80.resize(0);
         Electron_mvaNoIso_WP90.resize(0);
+        Electron_mvaNoIso_WPL.resize(0);
         Electron_cutBased_RunII.resize(kMaxElectron);
         Electron_genPartIdx_RunII.resize(kMaxElectron);
         Electron_jetIdx_RunII.resize(kMaxElectron);
         Electron_mvaFall17V2Iso.resize(kMaxElectron);
         Electron_mvaFall17V2Iso_WP80.resize(kMaxElectron);
         Electron_mvaFall17V2Iso_WP90.resize(kMaxElectron);
+        Electron_mvaFall17V2Iso_WPL.resize(kMaxElectron);
         Electron_mvaFall17V2noIso.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP80.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP90.resize(kMaxElectron);
+        Electron_mvaFall17V2noIso_WPL.resize(kMaxElectron);
         Electron_dEsigmaUp.resize(kMaxElectron);
         Electron_dEsigmaDown.resize(kMaxElectron);
     } 
@@ -873,18 +881,23 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Electron_mvaIso", Electron_mvaIso.data());
         SafeSetBranchAddress("Electron_mvaIso_WP80", Electron_mvaIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaIso_WP90", Electron_mvaIso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaIso_WPL", Electron_mvaIso_WPL.data());
         SafeSetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso.data());
         SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaNoIso_WPLoose", Electron_mvaNoIso_WPL.data());
     } else if(Run == 2) {
+        SafeSetBranchAddress("Electron_cutBased", Electron_cutBased_RunII.data());
         SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx_RunII.data());
         SafeSetBranchAddress("Electron_jetIdx", Electron_jetIdx_RunII.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso", Electron_mvaFall17V2Iso.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP80", Electron_mvaFall17V2Iso_WP80.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP90", Electron_mvaFall17V2Iso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaFall17V2Iso_WPL", Electron_mvaFall17V2Iso_WPL.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso", Electron_mvaFall17V2noIso.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP80", Electron_mvaFall17V2noIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP90", Electron_mvaFall17V2noIso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaFall17V2noIso_WPLoose", Electron_mvaFall17V2noIso_WPL.data());
         SafeSetBranchAddress("Electron_dEsigmaUp", Electron_dEsigmaUp.data());
         SafeSetBranchAddress("Electron_dEsigmaDown", Electron_dEsigmaDown.data());
     }

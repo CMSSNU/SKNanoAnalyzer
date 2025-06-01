@@ -33,8 +33,10 @@ public:
         POG_HEEP,
         POG_MVAISO_WP80,
         POG_MVAISO_WP90,
+        POG_MVAISO_WPL,
         POG_MVANOISO_WP80,
-        POG_MVANOISO_WP90
+        POG_MVANOISO_WP90,
+        POG_MVANOISO_WPL,
     };
 
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
@@ -114,12 +116,14 @@ public:
     inline float dEsigmaDown() const { return j_dEsigmaDown; }
 
     // Boolean IDs
-    enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVANOISOWP80, MVANOISOWP90, CUTBASEDHEEP};
+    enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVAISOWPL, MVANOISOWP80, MVANOISOWP90, MVANOISOWPL, CUTBASEDHEEP};
     void SetBIDBit(BooleanID id, bool idbit);
     inline bool isMVAIsoWP80() const { return j_mvaIso_WP80; }
     inline bool isMVAIsoWP90() const { return j_mvaIso_WP90; }
+    inline bool isMVAIsoWPLoose() const { return j_mvaIso_WPL; }
     inline bool isMVANoIsoWP80() const { return j_mvaNoIso_WP80; }
     inline bool isMVANoIsoWP90() const { return j_mvaNoIso_WP90; }
+    inline bool isMVANoIsoWPLoose() const { return j_mvaNoIso_WPL; }
     inline bool isCutBasedHEEP() const { return j_cutBased_HEEP; }
 
 
@@ -130,17 +134,10 @@ public:
     inline WORKINGPOINT CutBased() const {return (WORKINGPOINT)j_cutBased; }
 
     // Private IDs
-    bool Pass_HcToWA(const TString &era, const WORKINGPOINT &wp) const;
     bool Pass_CaloIdL_TrackIdL_IsoVL() const;
     bool Pass_HcToWABaseline() const;
-    bool Pass_HcToWALoose16a() const;
-    bool Pass_HcToWALoose16b() const;
-    bool Pass_HcToWALoose17() const;
-    bool Pass_HcToWALoose18() const;
-    bool Pass_HcToWATight16a() const;
-    bool Pass_HcToWATight16b() const;
-    bool Pass_HcToWATight17() const;
-    bool Pass_HcToWATight18() const;
+    bool Pass_HcToWALoose() const;
+    bool Pass_HcToWATight() const;
 
     // MVA scores
     enum class MVATYPE {NONE, MVAISO, MVANOISO, MVATTH};
@@ -169,7 +166,7 @@ private:
     float j_ecalPFClusterIso, j_hcalPFClusterIso;
 
     // IDs
-    bool j_mvaIso_WP80, j_mvaIso_WP90, j_mvaNoIso_WP80, j_mvaNoIso_WP90, j_cutBased_HEEP;
+    bool j_mvaIso_WP80, j_mvaIso_WP90, j_mvaIso_WPL, j_mvaNoIso_WP80, j_mvaNoIso_WP90, j_mvaNoIso_WPL, j_cutBased_HEEP;
     unsigned char j_cutBased;
     
     float j_mvaIso, j_mvaNoIso, j_mvaTTH;

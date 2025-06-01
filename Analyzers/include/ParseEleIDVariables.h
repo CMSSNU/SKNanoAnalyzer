@@ -25,6 +25,9 @@ private:
     
     // ID variables
     bool isMVANoIsoWP90[20];
+    bool isMVANoIsoWPLoose[20];
+    bool isPOGMedium[20];
+    bool isPOGTight[20];
     bool convVeto[20];
     int  lostHits[20];
     float dZ[20];

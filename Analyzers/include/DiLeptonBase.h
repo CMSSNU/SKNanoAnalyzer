@@ -18,7 +18,7 @@ public:
     
     // IDs
     //RVec<TString> MuonIDs, ElectronIDs;
-    IDContainer MuonIDs, ElectronIDs;
+    IDContainer *MuonIDs, *ElectronIDs;
     // Trigger
     RVec<TString> DblMuTriggers, EMuTriggers;
     TString isoMuTriggerName;

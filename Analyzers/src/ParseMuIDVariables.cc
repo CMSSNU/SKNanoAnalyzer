@@ -14,7 +14,7 @@ void ParseMuIDVariables::initializeAnalyzer() {
     Events->Branch("isPOGMediumId", isPOGMediumId, "isPOGMediumId[nMuons]/F");
     Events->Branch("dZ", dZ, "dZ[nMuons]/F");
     Events->Branch("sip3d", sip3d, "sip3d[nMuons]/F");
-    Events->Branch("tkIso", tkIso, "tkIso[nMuons]/F");
+    Events->Branch("tkRelIso", tkRelIso, "tkRelIso[nMuons]/F");
     Events->Branch("miniPFRelIso", miniPFRelIso, "miniPFRelIso[nMuons]/F");
     Events->Branch("isTrigMatched", isTrigMatched, "isTrigMatched[nMuons]/O");
 
@@ -93,7 +93,7 @@ void ParseMuIDVariables::executeEvent() {
         } catch (const std::exception& e) {
             lepType[i] = 0;
         }
-        // Fine nearest jet
+        // Find nearest jet
         if (jets.size() > 0) {
             Jet nearest_jet = jets.at(0);
             for (const auto &j: jets) {

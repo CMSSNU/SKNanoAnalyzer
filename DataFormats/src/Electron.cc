@@ -85,14 +85,9 @@ bool Electron::PassID(const TString ID) const {
     if (ID == "POGMVAIsoWP90")    return isMVAIsoWP90();
     if (ID == "POGMVANoIsoWP80")  return isMVANoIsoWP80();
     if (ID == "POGMVANoIsoWP90")  return isMVANoIsoWP90();
-    if (ID == "HcToWATight_16a")   return Pass_HcToWATight16a();
-    if (ID == "HcToWATight_16b")   return Pass_HcToWATight16b();
-    if (ID == "HcToWATight_17")    return Pass_HcToWATight17();
-    if (ID == "HcToWATight_18")    return Pass_HcToWATight18();
-    if (ID == "HcToWALoose_16a")   return Pass_HcToWALoose16a();
-    if (ID == "HcToWALoose_16b")   return Pass_HcToWALoose16b();
-    if (ID == "HcToWALoose_17")    return Pass_HcToWALoose17();
-    if (ID == "HcToWALoose_18")    return Pass_HcToWALoose18();
+    if (ID == "POGMVANoIsoWPLoose") return isMVANoIsoWPLoose();
+    if (ID == "HcToWATight")   return Pass_HcToWATight();
+    if (ID == "HcToWALoose")   return Pass_HcToWALoose();
 
     cerr << "[Electron::PassID] " << ID << " is not implemented" << endl;
     exit(ENODATA);
@@ -153,84 +148,33 @@ bool Electron::Pass_HcToWABaseline() const {
     return true;
 }
 
-bool Electron::Pass_HcToWA(const TString &era, const Electron::WORKINGPOINT &wp) const {
-    if (wp == WORKINGPOINT::TIGHT) {
-        if (! isMVANoIsoWP90()) return false;
-        if (! (SIP3D() < 4.)) return false;
-        if (! (MiniPFRelIso() < 0.1*Pt())) return false;
-    } else if (wp == WORKINGPOINT::LOOSE) {
-        const float cutIB=0.985, cutOB=0.96, cutEC=0.85;
-        bool passMVAIDNoIsoCut = false;
-        switch(etaRegion()) {
-            case ETAREGION::IB:
-                if (! (MvaNoIso() > cutIB)) passMVAIDNoIsoCut = true;
-                break;
-            case ETAREGION::OB:
-                if (! (MvaNoIso() > cutOB)) passMVAIDNoIsoCut = true;
-                break;
-            case ETAREGION::EC:
-                if (! (MvaNoIso() > cutEC)) passMVAIDNoIsoCut = true;
-                break;
-            default:
-                // Other eta region are already rejected
-                break;
-        }
-        if (! (isMVANoIsoWP90() || passMVAIDNoIsoCut)) return false;
-        if (! (SIP3D() < 8.)) return false;
-        if (! (MiniPFRelIso() < 0.4*Pt())) return false;
-    } else {
-        cerr << "[Electron::Pass_HcToWA] Only tight and loose WP are implemented" << endl;
-        exit(EXIT_FAILURE);
+bool Electron::Pass_HcToWATight() const {
+    if (! Pass_HcToWABaseline()) return false;
+    if (! isMVANoIsoWP90()) return false;
+    if (! (SIP3D() < 4.)) return false;
+    if (! (MiniPFRelIso() < 0.1)) return false;
+    return true;
+}
+
+bool Electron::Pass_HcToWALoose() const {
+    if (! Pass_HcToWABaseline()) return false;
+    if (! (SIP3D() < 8.)) return false;
+    if (! (MiniPFRelIso() < 0.4)) return false;
+    const float cutIB=0.985, cutOB=0.96, cutEC=0.85;
+    bool passMVAIDNoIsoCut = false;
+    switch(etaRegion()) {
+        case ETAREGION::IB:
+            if (! (MvaNoIso() > cutIB)) passMVAIDNoIsoCut = true;
+            break;
+        case ETAREGION::OB:
+            if (! (MvaNoIso() > cutOB)) passMVAIDNoIsoCut = true;
+            break;
+        case ETAREGION::EC:
+            if (! (MvaNoIso() > cutEC)) passMVAIDNoIsoCut = true;
+            break;
+        default: break;
     }
-    return true;
-}
-
-bool Electron::Pass_HcToWATight16a() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2016a", WORKINGPOINT::TIGHT)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWALoose16a() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2016a", WORKINGPOINT::LOOSE)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWATight16b() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2016b", WORKINGPOINT::TIGHT)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWALoose16b() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2016b", WORKINGPOINT::LOOSE)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWATight17() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2017", WORKINGPOINT::TIGHT)) return false;
-    return true;
-}
-
-
-bool Electron::Pass_HcToWALoose17() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2017", WORKINGPOINT::LOOSE)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWATight18() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2018", WORKINGPOINT::TIGHT)) return false;
-    return true;
-}
-
-bool Electron::Pass_HcToWALoose18() const {
-    if (! Pass_HcToWABaseline()) return false;
-    if (! Pass_HcToWA("2018", WORKINGPOINT::LOOSE)) return false;
+    if (! (isMVANoIsoWP90() || passMVAIDNoIsoCut)) return false;
     return true;
 }
 

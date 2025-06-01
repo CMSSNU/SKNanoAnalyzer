@@ -105,8 +105,7 @@ bool Muon::PassID(const TString ID) const {
     return false;
 }
 
-bool Muon::PassID(const MuonID ID) const
-{
+bool Muon::PassID(const MuonID ID) const {
     switch(ID){
         case MuonID::NOCUT:
             return true;
@@ -177,7 +176,7 @@ bool Muon::Pass_HcToWATight() const {
     if (! (fabs(dZ()) < 0.1)) return false;
     if (! (SIP3D() < 3.)) return false;
     if (! (TkRelIso() < 0.4*Pt())) return false;
-    if (! (MiniPFRelIso() < 0.1*Pt())) return false;
+    if (! (MiniPFRelIso() < 0.1)) return false;
     return true;
 }
 
@@ -186,6 +185,6 @@ bool Muon::Pass_HcToWALoose() const {
     if (! (fabs(dZ()) < 0.1)) return false;
     if (! (SIP3D() < 5.)) return false;
     if (! (TkRelIso() < 0.4*Pt())) return false;
-    if (! (MiniPFRelIso() < 0.6*Pt())) return false;
+    if (! (MiniPFRelIso() < 0.6)) return false;
     return true;
 }

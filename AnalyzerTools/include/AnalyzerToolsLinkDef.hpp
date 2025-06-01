@@ -10,6 +10,7 @@
 #pragma link C++ class MyCorrection+;
 #pragma link C++ class AnalyzerParameter+;
 #pragma link C++ class ExampleParameter+;
+#pragma link C++ class NonpromptParameter+;
 #pragma link C++ class SystematicHelper+;
 
 #endif

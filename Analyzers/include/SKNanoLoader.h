@@ -301,9 +301,11 @@ public:
     RVec<Float_t> Electron_mvaIso;
     RVec<Bool_t> Electron_mvaIso_WP80;
     RVec<Bool_t> Electron_mvaIso_WP90;
+    RVec<Bool_t> Electron_mvaIso_WPL;
     RVec<Float_t> Electron_mvaNoIso;
     RVec<Bool_t> Electron_mvaNoIso_WP80;
     RVec<Bool_t> Electron_mvaNoIso_WP90;
+    RVec<Bool_t> Electron_mvaNoIso_WPL;
     RVec<Short_t> Electron_photonIdx;
     RVec<Char_t> Electron_seediEtaOriX;
     RVec<Int_t> Electron_seediPhiOriY;
@@ -317,9 +319,11 @@ public:
     RVec<Float_t> Electron_mvaFall17V2Iso;
     RVec<Bool_t> Electron_mvaFall17V2Iso_WP80;
     RVec<Bool_t> Electron_mvaFall17V2Iso_WP90;
+    RVec<Bool_t> Electron_mvaFall17V2Iso_WPL;
     RVec<Float_t> Electron_mvaFall17V2noIso;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP80;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
+    RVec<Bool_t> Electron_mvaFall17V2noIso_WPL;
     RVec<Float_t> Electron_dEsigmaUp;
     RVec<Float_t> Electron_dEsigmaDown;
 

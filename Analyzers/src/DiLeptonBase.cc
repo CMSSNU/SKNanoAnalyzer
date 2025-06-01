@@ -15,6 +15,8 @@ void DiLeptonBase::initializeAnalyzer() {
     RunSyst = HasFlag("RunSyst");
 
     // Lepton IDs and triggers
+    MuonIDs = new IDContainer("HcToWATight", "HcToWALoose");
+    ElectronIDs = new IDContainer("HcToWATight", "HcToWALoose");
     if (DataEra == "2016preVFP") {
         DblMuTriggers = {
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
@@ -27,8 +29,6 @@ void DiLeptonBase::initializeAnalyzer() {
         };
         isoMuTriggerName = "HLT_IsoMu24";
         triggerSafePtCut = 27.;
-        MuonIDs = IDContainer("HcToWATight", "HcToWALoose");
-        ElectronIDs = IDContainer("HcToWATight_16a", "HcToWALoose_16a");
     } else if (DataEra == "2016postVFP") {
         DblMuTriggers = {
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
@@ -41,8 +41,6 @@ void DiLeptonBase::initializeAnalyzer() {
         };
         isoMuTriggerName = "HLT_IsoMu24";
         triggerSafePtCut = 27.;
-        MuonIDs = IDContainer("HcToWATight", "HcToWALoose");
-        ElectronIDs = IDContainer("HcToWATight_16b", "HcToWALoose_16b");
     } else if (DataEra == "2017") {
         DblMuTriggers = {
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
@@ -54,8 +52,6 @@ void DiLeptonBase::initializeAnalyzer() {
         };
         isoMuTriggerName = "HLT_IsoMu27";
         triggerSafePtCut = 30.;
-        MuonIDs = IDContainer("HcToWATight", "HcToWALoose");
-        ElectronIDs = IDContainer("HcToWATight_17", "HcToWALoose_17");
     } else if (DataEra == "2018") {
         DblMuTriggers = {
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8",
@@ -66,9 +62,7 @@ void DiLeptonBase::initializeAnalyzer() {
         };
         isoMuTriggerName = "HLT_IsoMu24";
         triggerSafePtCut = 27.;
-        MuonIDs = IDContainer("HcToWATight", "HcToWALoose");
-        ElectronIDs = IDContainer("HcToWATight_18", "HcToWALoose_18");
-    } else if (DataEra == "2022") {
+    } else {
        DblMuTriggers = {
            "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8",
        };
@@ -78,9 +72,6 @@ void DiLeptonBase::initializeAnalyzer() {
        };
        isoMuTriggerName = "HLT_IsoMu24";
        triggerSafePtCut = 27.;
-    } else {
-        cerr << "[DiLeptonBase::initializeAnalyzer] " << DataEra << " is not implemented" << endl;
-        exit(EXIT_FAILURE);
     }
     
     // Correction

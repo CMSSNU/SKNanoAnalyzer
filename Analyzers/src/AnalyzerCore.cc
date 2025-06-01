@@ -564,15 +564,20 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
             electron.SetEnergyResUnc(Electron_dEsigmaUp[i], Electron_dEsigmaDown[i]);
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaFall17V2Iso_WP80[i]);
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaFall17V2Iso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWPL, Electron_mvaFall17V2Iso_WPL[i]);
             electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaFall17V2noIso_WP80[i]);
             electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaFall17V2noIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWPL, Electron_mvaFall17V2noIso_WPL[i]);
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaFall17V2Iso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaFall17V2noIso[i]);
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased_RunII[i]);
         } else if (Run == 3) {
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWPL, Electron_mvaIso_WPL[i]);
             electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
             electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWPL, Electron_mvaNoIso_WPL[i]);
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
             electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]); 
@@ -1139,13 +1144,12 @@ RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens
     //returns {index of the first history of the gen, 
     //         index of the last history of the gen's mother}
     int myindex = me.Index();
-    if(myindex<2){ // 0 and 1 are initial partons
-        RVec<int> out = {myindex, -1};
-        return out;
-    }
+    if (myindex < 2) return {myindex, -1};
+
     int mypid = gens.at(myindex).PID();
     int currentidx = myindex;
     int motherindex = me.MotherIndex();
+    if (motherindex < 0) return {myindex, -1};
     
     while(gens.at(motherindex).PID() == mypid){
         // Go one generation up
@@ -1267,7 +1271,9 @@ bool AnalyzerCore::IsFinalPhotonSt23_Public(const RVec<Gen>& gens){
             break; //b
         }
     }
-    if(!HasStatus23Photon) return false;
+    if(!HasStatus23Photon) {
+        return false;
+    }
     return IsFinalGammaStatus23;
     //**footnotes
     // a) Status-23 photon's last is 1. Thus status-23 photon is not the last history.
@@ -1477,14 +1483,6 @@ int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens)
     else LeptonType=0;
 
     return LeptonType;
-    //**footnote
-    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
-    //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
-    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
-    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
-    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
-    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron, rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
-    //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
 }
 
 //==== [Type]
