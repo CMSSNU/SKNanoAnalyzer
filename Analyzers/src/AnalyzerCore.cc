@@ -219,7 +219,7 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
         if(matched_idx[i] < 0){
             // if the jet is not matched to any genjet, do stochastic smearing
             if(this_sf < 1.){
-                this_corr = MIN_JET_ENERGY / this_jet.E();
+                this_corr = 1.f;
             }
             else{
                 this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
@@ -254,7 +254,6 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
                                   //"PileUpPtHF",
                                   //"PileUpPtRef",
                                   "PileUpEnvelope",
-                                  "RelativeFSR",
                                   "RelativeJEREC1",
                                   "RelativeJEREC2",
                                   "RelativeJERHF",
@@ -839,7 +838,7 @@ RVec<Jet> AnalyzerCore::JetsVetoLeptonInside(const RVec<Jet> &jets, const RVec<E
 
 bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory){
     RVec<Jet> this_jet = SelectJets(AllJets, Jet::JetID::TIGHT, 15., 5.0);
-    this_jet = SelectJets(AllJets, Jet::JetID::PUID_TIGHT, 15., 5.0);
+    this_jet = SelectJets(this_jet, Jet::JetID::PUID_TIGHT, 15., 5.0);
     RVec<Jet> selected_jets;
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
