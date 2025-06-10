@@ -63,6 +63,7 @@ def parse_rootfiles_from(basePath):
 def main():
     sampleInfoJson = os.path.join(os.environ['SKNANO_DATA'], args.era, 'Sample', 'CommonSampleInfo.json')
     sampleInfos = json.load(open(sampleInfoJson))
+    os.makedirs(os.path.join(os.environ['SKNANO_DATA'], args.era, 'Sample', 'ForSNU'), exist_ok=True)
     for alias, sampleInfo in sampleInfos.items():
         print(f"Processing {alias}...")
         # Check if the sample is MC or data

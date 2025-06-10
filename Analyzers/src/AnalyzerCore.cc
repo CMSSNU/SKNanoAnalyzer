@@ -1285,6 +1285,7 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
     int myindex = me.Index();
     if(myindex<2) return true;
     RVec<int> my_history = TrackGenSelfHistory(me, gens);
+    if (my_history[1] < 0) return true;
     Gen          Start = gens.at( my_history[0] );
     Gen MotherOf_Start = gens.at( my_history[1] );
 

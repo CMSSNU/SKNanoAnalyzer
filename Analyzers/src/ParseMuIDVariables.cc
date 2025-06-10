@@ -57,7 +57,8 @@ void ParseMuIDVariables::executeEvent() {
     RVec<Jet> jets = GetAllJets();
 
     if (!PassMETFilter(METv, jets)) return;
-    
+
+    jets = SelectJets(jets, "tight", 15., 2.5);
     RVec<Electron> electrons = GetElectrons("POGTight", 25., 2.5);
     RVec<Muon> muons = GetMuons("", 10., 2.4);
     RVec<Gen> truth = GetAllGens();
@@ -88,29 +89,31 @@ void ParseMuIDVariables::executeEvent() {
         const auto &mu = muons.at(i);
         pt[i] = mu.Pt();
         eta[i] = mu.Eta();
-        try {
-            lepType[i] = GetLeptonType(mu, truth);
-        } catch (const std::exception& e) {
-            lepType[i] = 0;
-        }
-        // Find nearest jet
-        if (jets.size() > 0) {
-            Jet nearest_jet = jets.at(0);
-            for (const auto &j: jets) {
-                if (j.DeltaR(mu) > nearest_jet.DeltaR(mu))
-                    continue;
-                nearest_jet = j;
-            }
-            nearestJetFlavour[i] = nearest_jet.hadronFlavour();
-        } else {
-            // No jets found, set a default value
-            nearestJetFlavour[i] = -999; // or some other appropriate default value
-        }
         isPOGMediumId[i] = mu.PassID("POGMedium");
         dZ[i] = mu.dZ();
         sip3d[i] = mu.SIP3D();
         tkRelIso[i] = mu.TkRelIso();
         miniPFRelIso[i] = mu.MiniPFRelIso();
+        lepType[i] = GetLeptonType(mu, truth);
+        
+        // Find nearest jet
+        // If no jet is found within 0.3, set nearestJetFlavour to -999
+        // If the jet is not from the hard process, set nearestJetFlavour to -1
+        // If the jet is from the hard process, set nearestJetFlavour to the hadronFlavour
+        float min_dR = 0.3;
+        int nearest_jet_idx = -1;
+        for (size_t j = 0; j < jets.size(); j++) {
+            if (jets.at(j).DeltaR(mu) < min_dR) {
+                min_dR = jets.at(j).DeltaR(mu);
+                nearest_jet_idx = j;
+            }
+        }
+        nearestJetFlavour[i] = -999; // Default value if no jet is found
+        if (nearest_jet_idx >= 0) {
+            const auto &jet = jets.at(nearest_jet_idx);
+            nearestJetFlavour[i] = jet.genJetIdx() < 0 ?  -1 : jet.hadronFlavour();
+        }
+
         isTrigMatched[i] = false;
         for (const auto &trigObj : trigObjs) {
             if (trigObj.isMuon() && trigObj.DeltaR(mu) < 0.1) {

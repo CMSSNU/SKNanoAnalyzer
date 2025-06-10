@@ -71,6 +71,7 @@ void ParseEleIDVariables::executeEvent() {
 
     if (!PassMETFilter(METv, jets)) return;
 
+    jets = SelectJets(jets, "tight", 15., 2.5);
     RVec<Electron> electrons = GetElectrons("", 15., 2.5);
     RVec<Muon> muons = GetMuons("POGTight", 25., 2.4);
     RVec<Gen> truth = GetAllGens();
@@ -101,11 +102,6 @@ void ParseEleIDVariables::executeEvent() {
         const auto &el = electrons.at(i);
         pt[i] = el.Pt();
         scEta[i] = el.scEta();
-        //try {
-        lepType[i] = GetLeptonType(el, truth);
-        //} catch (const std::exception& e) {
-        //    lepType[i] = 0;
-        //}
         sieie[i] = el.sieie();
         deltaEtaInSC[i] = el.deltaEtaInSC();
         deltaPhiInSeed[i] = el.deltaPhiInSeed();
@@ -124,19 +120,24 @@ void ParseEleIDVariables::executeEvent() {
         dZ[i] = el.dZ();
         miniPFRelIso[i] = el.MiniPFRelIso();
         mvaNoIso[i] = el.MvaNoIso();
+        lepType[i] = GetLeptonType(el, truth);
 
-        // Find the nearest jet
-        if (jets.size() > 0) {
-            Jet nearest_jet = jets.at(0);
-            for (const auto &j: jets) {
-                if (j.DeltaR(el) > nearest_jet.DeltaR(el))
-                    continue;
-                nearest_jet = j;
+        // Find nearest jet
+        // If no jet is found within 0.3, set nearestJetFlavour to -999
+        // If the jet is not from the hard process, set nearestJetFlavour to -1
+        // If the jet is from the hard process, set nearestJetFlavour to the hadronFlavour
+        float min_dR = 0.3;
+        int nearest_jet_idx = -1;
+        for (size_t j = 0; j < jets.size(); j++) {
+            if (jets.at(j).DeltaR(el) < min_dR) {
+                min_dR = jets.at(j).DeltaR(el);
+                nearest_jet_idx = j;
             }
-            nearestJetFlavour[i] = nearest_jet.hadronFlavour();
-        } else {
-            // No jets found, set a default value
-            nearestJetFlavour[i] = -999; // or some other appropriate default value
+        }
+        nearestJetFlavour[i] = -999; // Default value if no jet is found
+        if (nearest_jet_idx >= 0) {
+            const auto &jet = jets.at(nearest_jet_idx);
+            nearestJetFlavour[i] = jet.genJetIdx() < 0 ? -1 : jet.hadronFlavour();
         }
         
         // Check trigger object matching for CaloIdL_TrackIdL_IsoVL filter
