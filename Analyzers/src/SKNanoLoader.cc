@@ -220,11 +220,15 @@ void SKNanoLoader::SetMaxLeafSize(){
     Muon_triggerIdLoose.resize(kMaxMuon);
     if(Run == 3){ 
         Muon_mvaMuID_WP.resize(kMaxMuon);
+        Muon_jetIdx.resize(kMaxMuon);
         Muon_mvaId.resize(0);
+        Muon_jetIdx_RunII.resize(0);
     }
     else if(Run == 2){
         Muon_mvaMuID_WP.resize(0);
+        Muon_jetIdx.resize(0);
         Muon_mvaId.resize(kMaxMuon);
+        Muon_jetIdx_RunII.resize(kMaxMuon);
     }
     // Electron----------------------------
     Electron_charge.resize(kMaxElectron);
@@ -825,8 +829,10 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Muon_triggerIdLoose", Muon_triggerIdLoose.data());
     if (Run == 3) {
         SafeSetBranchAddress("Muon_mvaMuID_WP", Muon_mvaMuID_WP.data());
+        SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx.data());
     } else if(Run == 2) {
         SafeSetBranchAddress("Muon_mvaId", Muon_mvaId.data());
+        SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx_RunII.data());
     }
 
     //Electron----------------------------

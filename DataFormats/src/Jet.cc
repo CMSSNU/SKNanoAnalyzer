@@ -60,6 +60,7 @@ Jet::Jet() : Particle() {
 
   // Others
   j_area = -999.0;
+  j_originalIndex = -1;
   // j_hfadjacentEtaStripsSize = -999;
   // j_hfcentralEtaStripSize = -999;
   // j_hfsigmaEtaEta = -999.0;

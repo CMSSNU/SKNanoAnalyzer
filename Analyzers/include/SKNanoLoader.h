@@ -243,8 +243,10 @@ public:
     RVec<Bool_t> Muon_triggerIdLoose;
     // Run3
     RVec<UChar_t> Muon_mvaMuID_WP;
+    RVec<Short_t> Muon_jetIdx;
     // Run2
     RVec<UChar_t> Muon_mvaId; //this is in fact wp
+    RVec<Int_t> Muon_jetIdx_RunII;
 
     //Electron----------------------------
     Int_t nElectron;

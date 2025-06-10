@@ -122,22 +122,33 @@ void ParseEleIDVariables::executeEvent() {
         mvaNoIso[i] = el.MvaNoIso();
         lepType[i] = GetLeptonType(el, truth);
 
-        // Find nearest jet
-        // If no jet is found within 0.3, set nearestJetFlavour to -999
-        // If the jet is not from the hard process, set nearestJetFlavour to -1
-        // If the jet is from the hard process, set nearestJetFlavour to the hadronFlavour
-        float min_dR = 0.3;
-        int nearest_jet_idx = -1;
-        for (size_t j = 0; j < jets.size(); j++) {
-            if (jets.at(j).DeltaR(el) < min_dR) {
-                min_dR = jets.at(j).DeltaR(el);
-                nearest_jet_idx = j;
+        // Use jetIdx for efficient jet matching
+        nearestJetFlavour[i] = -999; // Default: no jet match
+        
+        short jetIdx = el.JetIdx();
+        FillHist("electronJetIdx", jetIdx, 1.0, 100, -10., 90.);
+        
+        if (jetIdx >= 0) {
+            // Find the jet with matching original index
+            const Jet* matchedJet = nullptr;
+            for (const auto &jet : jets) {
+                if (jet.OriginalIndex() == jetIdx) {
+                    matchedJet = &jet;
+                    break;
+                }
             }
-        }
-        nearestJetFlavour[i] = -999; // Default value if no jet is found
-        if (nearest_jet_idx >= 0) {
-            const auto &jet = jets.at(nearest_jet_idx);
-            nearestJetFlavour[i] = jet.genJetIdx() < 0 ? -1 : jet.hadronFlavour();
+            
+            if (matchedJet) {
+                // Calculate and fill validation plots
+                float deltaR = matchedJet->DeltaR(el);
+                float ptRatio = matchedJet->Pt() / el.Pt();
+                
+                FillHist("jetEleDeltaR", deltaR, 1.0, 100, 0., 0.5);
+                FillHist("jetElePtRatio", ptRatio, 1.0, 100, 0., 5.0);
+                
+                // Set jet flavour (keep original logic)
+                nearestJetFlavour[i] = matchedJet->genJetIdx() < 0 ? -1 : matchedJet->hadronFlavour();
+            }
         }
         
         // Check trigger object matching for CaloIdL_TrackIdL_IsoVL filter

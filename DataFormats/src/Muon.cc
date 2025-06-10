@@ -27,6 +27,9 @@ Muon::Muon() {
     j_softMva = -999.;
     j_mvaLowPt = -999.;
     j_mvaTTH = -999.;
+    
+    // jet matching
+    j_jetIdx = -1;
 }
 
 Muon::~Muon() {}

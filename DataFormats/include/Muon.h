@@ -91,6 +91,9 @@ public:
     inline float MvaLowPt() const {return j_mvaLowPt;}
     inline float MvaTTH() const {return j_mvaTTH;}
 
+    void SetJetIdx(short jetIdx) { j_jetIdx = jetIdx; }
+    inline short JetIdx() const { return j_jetIdx; }
+
     // ID helper functions
     bool PassID(const MuonID ID) const;
     bool PassID(const TString ID) const;
@@ -106,6 +109,7 @@ private:
     float j_softMva, j_mvaLowPt, j_mvaTTH;
     int j_nTrackerLayers;
     float j_miniAODPt, j_momentumScaleUp, j_momentumScaleDown;
+    short j_jetIdx;
     ClassDef(Muon, 1);
 };
 

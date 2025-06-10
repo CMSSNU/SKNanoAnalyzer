@@ -38,6 +38,7 @@ Electron::Electron() {
     j_rho = -999.;
     j_genPartFlav = 0;
     j_genPartIdx = -1;
+    j_jetIdx = -1;
 }
 
 Electron::~Electron() {}

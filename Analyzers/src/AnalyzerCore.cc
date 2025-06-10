@@ -424,9 +424,11 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
         if(Run == 3){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
+            muon.SetJetIdx(Muon_jetIdx[i]);
         }
         else if(Run == 2){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaId[i]);
+            muon.SetJetIdx(Muon_jetIdx_RunII[i]);
         }
         //muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PFISO, Muon_pfIsoId[i]);
@@ -571,6 +573,7 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaFall17V2Iso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaFall17V2noIso[i]);
             electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased_RunII[i]);
+            electron.SetJetIdx(Electron_jetIdx_RunII[i]);
         } else if (Run == 3) {
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
@@ -580,7 +583,8 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
             electron.SetBIDBit(Electron::BooleanID::MVANOISOWPL, Electron_mvaNoIso_WPL[i]);
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
-            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]); 
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+            electron.SetJetIdx(Electron_jetIdx[i]); 
         } else {
             throw runtime_error("[AnalyzerCore::GetAllElectrons] Invalid run number");
         }
@@ -794,6 +798,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
+        jet.SetOriginalIndex(i);
         if(!IsDATA){
             if(Run == 3)
             jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);

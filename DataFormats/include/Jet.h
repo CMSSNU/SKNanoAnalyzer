@@ -88,6 +88,9 @@ public:
     j_svIdx2 = sv2;
   };
 
+  inline void SetOriginalIndex(int idx) { j_originalIndex = idx; };
+  inline int OriginalIndex() const { return j_originalIndex; };
+
   inline void SetJetID(unsigned char b)
   {
     // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
@@ -203,7 +206,8 @@ private:
   // float j_hfsigmaEtaEta;
   // float j_hfsigmaPhiPhi;
   float j_m; // jet mass
-  TLorentzVector j_unsmearedP4; 
+  TLorentzVector j_unsmearedP4;
+  int j_originalIndex; 
   ClassDef(Jet, 1)
 };
 

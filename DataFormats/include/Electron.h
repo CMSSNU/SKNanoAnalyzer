@@ -102,6 +102,9 @@ public:
     void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
     inline short GenPartIdx() const { return j_genPartIdx; }
 
+    void SetJetIdx(short jetIdx) { j_jetIdx = jetIdx; }
+    inline short JetIdx() const { return j_jetIdx; }
+
     void SetRho(float rho) { j_rho = rho; }
     inline float rho() const { return j_rho; }
 
@@ -176,6 +179,7 @@ private:
     float j_rho;
     unsigned char j_genPartFlav;
     short j_genPartIdx;
+    short j_jetIdx;
     ClassDef(Electron, 1);
 };
 
