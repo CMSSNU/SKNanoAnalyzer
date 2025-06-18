@@ -35,7 +35,7 @@ private:
     float miniPFRelIso[20];
     float mvaNoIso[20];
     int   nearestJetFlavour[20];
-    
+
     // Trigger matching variables
     bool isTrigMatched[20];
 

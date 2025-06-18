@@ -19,7 +19,7 @@ private:
     float sip3d[20];
     float tkRelIso[20];
     float miniPFRelIso[20];
-    
+
     // Trigger matching variables
     bool isTrigMatched[20];
     

@@ -59,7 +59,7 @@ def parseMCInfoFor(sample_name):
         print(f"Error opening file for {sample_name}")
         sumsign = -1
         sumW = -1
-    #common_info[sample_name]["nmc"] = nevts
+    common_info[sample_name]["nmc"] = nevts
     common_info[sample_name]["sumsign"] = sumsign
     common_info[sample_name]["sumW"] = sumW
 
@@ -80,7 +80,7 @@ def main():
             parseDataInfoFor(sample_name)
     
     # dump the updated sample_info
-    with open(f"data/Run3_v12_Run2_v9/{args.era}/Sample/CommonSampleInfo.json", "w") as f:
+    with open(f"{SKNanoDataDir}/{args.era}/Sample/CommonSampleInfo.json", "w") as f:
         json.dump(common_info, f, indent=4)
 
 if __name__ == "__main__":

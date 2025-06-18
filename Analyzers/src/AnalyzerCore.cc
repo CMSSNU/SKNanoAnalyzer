@@ -412,6 +412,7 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetdZ(Muon_dz[i], Muon_dzErr[i]);
         muon.SetIP3D(Muon_ip3d[i], Muon_sip3d[i]);
         muon.SetNTrackerLayers(Muon_nTrackerLayers[i]);
+        muon.SetGenPartFlav(Muon_genPartFlav[i]);
         muon.SetBIDBit(Muon::BooleanID::LOOSE, Muon_looseId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUM, Muon_mediumId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUMPROMPT, Muon_mediumPromptId[i]);
@@ -424,10 +425,12 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
         if(Run == 3){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
+            muon.SetGenPartIdx(Muon_genPartIdx[i]);
             muon.SetJetIdx(Muon_jetIdx[i]);
         }
         else if(Run == 2){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaId[i]);
+            muon.SetGenPartIdx(static_cast<short>(Muon_genPartIdx_RunII[i]));
             muon.SetJetIdx(Muon_jetIdx_RunII[i]);
         }
         //muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
@@ -560,7 +563,6 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
         electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
         electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
         electron.SetGenPartFlav(Electron_genPartFlav[i]);
-        electron.SetGenPartIdx(Electron_genPartIdx[i]);
 
         if (Run == 2) {
             electron.SetEnergyResUnc(Electron_dEsigmaUp[i], Electron_dEsigmaDown[i]);
@@ -573,6 +575,7 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaFall17V2Iso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaFall17V2noIso[i]);
             electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased_RunII[i]);
+            electron.SetGenPartIdx(static_cast<short>(Electron_genPartIdx_RunII[i]));
             electron.SetJetIdx(Electron_jetIdx_RunII[i]);
         } else if (Run == 3) {
             electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
@@ -584,6 +587,7 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
             electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
             electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
             electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+            electron.SetGenPartIdx(Electron_genPartIdx[i]);
             electron.SetJetIdx(Electron_jetIdx[i]); 
         } else {
             throw runtime_error("[AnalyzerCore::GetAllElectrons] Invalid run number");

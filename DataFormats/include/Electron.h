@@ -177,8 +177,8 @@ private:
     // others
     float j_r9;
     float j_rho;
-    unsigned char j_genPartFlav;
     short j_genPartIdx;
+    unsigned char j_genPartFlav;
     short j_jetIdx;
     ClassDef(Electron, 1);
 };

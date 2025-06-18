@@ -71,7 +71,6 @@ void ParseEleIDVariables::executeEvent() {
 
     if (!PassMETFilter(METv, jets)) return;
 
-    jets = SelectJets(jets, "tight", 15., 2.5);
     RVec<Electron> electrons = GetElectrons("", 15., 2.5);
     RVec<Muon> muons = GetMuons("POGTight", 25., 2.4);
     RVec<Gen> truth = GetAllGens();
@@ -123,7 +122,7 @@ void ParseEleIDVariables::executeEvent() {
         lepType[i] = GetLeptonType(el, truth);
 
         // Use jetIdx for efficient jet matching
-        nearestJetFlavour[i] = -999; // Default: no jet match
+        nearestJetFlavour[i] = -1; // Default: no jet match
         
         short jetIdx = el.JetIdx();
         FillHist("electronJetIdx", jetIdx, 1.0, 100, -10., 90.);
@@ -137,16 +136,7 @@ void ParseEleIDVariables::executeEvent() {
                     break;
                 }
             }
-            
             if (matchedJet) {
-                // Calculate and fill validation plots
-                float deltaR = matchedJet->DeltaR(el);
-                float ptRatio = matchedJet->Pt() / el.Pt();
-                
-                FillHist("jetEleDeltaR", deltaR, 1.0, 100, 0., 0.5);
-                FillHist("jetElePtRatio", ptRatio, 1.0, 100, 0., 5.0);
-                
-                // Set jet flavour (keep original logic)
                 nearestJetFlavour[i] = matchedJet->genJetIdx() < 0 ? -1 : matchedJet->hadronFlavour();
             }
         }

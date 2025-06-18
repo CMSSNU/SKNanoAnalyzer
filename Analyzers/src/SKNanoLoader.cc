@@ -218,17 +218,22 @@ void SKNanoLoader::SetMaxLeafSize(){
     Muon_tkIsoId.resize(kMaxMuon);
     Muon_tkRelIso.resize(kMaxMuon);
     Muon_triggerIdLoose.resize(kMaxMuon);
+    Muon_genPartFlav.resize(kMaxMuon);
     if(Run == 3){ 
         Muon_mvaMuID_WP.resize(kMaxMuon);
+        Muon_genPartIdx.resize(kMaxMuon);
         Muon_jetIdx.resize(kMaxMuon);
-        Muon_mvaId.resize(0);
+        Muon_genPartIdx_RunII.resize(0);
         Muon_jetIdx_RunII.resize(0);
+        Muon_mvaId.resize(0);
     }
     else if(Run == 2){
         Muon_mvaMuID_WP.resize(0);
         Muon_jetIdx.resize(0);
-        Muon_mvaId.resize(kMaxMuon);
+        Muon_genPartIdx.resize(0);
+        Muon_genPartIdx_RunII.resize(kMaxMuon);
         Muon_jetIdx_RunII.resize(kMaxMuon);
+        Muon_mvaId.resize(kMaxMuon);
     }
     // Electron----------------------------
     Electron_charge.resize(kMaxElectron);
@@ -252,7 +257,6 @@ void SKNanoLoader::SetMaxLeafSize(){
     Electron_eInvMinusPInv.resize(kMaxElectron);
     Electron_energyErr.resize(kMaxElectron);
     Electron_eta.resize(kMaxElectron);
-    Electron_genPartFlav.resize(kMaxElectron);
     Electron_hoe.resize(kMaxElectron);
     Electron_ip3d.resize(kMaxElectron);
     Electron_isPFcand.resize(kMaxElectron);
@@ -274,6 +278,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     Electron_seedGain.resize(kMaxElectron);
     Electron_sieie.resize(kMaxElectron);
     Electron_sip3d.resize(kMaxElectron);
+    Electron_genPartFlav.resize(kMaxElectron);
     if(Run == 3){
         Electron_cutBased.resize(kMaxElectron);
         Electron_genPartIdx.resize(kMaxElectron);
@@ -785,10 +790,8 @@ void SKNanoLoader::Init() {
     // PileUp & others
     SafeSetBranchAddress("Pileup_nPU", &Pileup_nPU);
     SafeSetBranchAddress("Pileup_nTrueInt", &Pileup_nTrueInt); 
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     SafeSetBranchAddress("FatJet_nBHadrons",FatJet_nBHadrons.data());
     SafeSetBranchAddress("FatJet_nCHadrons",FatJet_nCHadrons.data());
-    SafeSetBranchAddress("Tau_genPartFlav", Tau_genPartFlav.data());
     SafeSetBranchAddress("genTtbarId", &genTtbarId);
 
     // Muon----------------------------
@@ -827,12 +830,15 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Muon_tkIsoId", Muon_tkIsoId.data());
     SafeSetBranchAddress("Muon_tkRelIso", Muon_tkRelIso.data());
     SafeSetBranchAddress("Muon_triggerIdLoose", Muon_triggerIdLoose.data());
+    SafeSetBranchAddress("Muon_genPartFlav", Muon_genPartFlav.data());
     if (Run == 3) {
         SafeSetBranchAddress("Muon_mvaMuID_WP", Muon_mvaMuID_WP.data());
         SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx.data());
+        SafeSetBranchAddress("Muon_genPartIdx", Muon_genPartIdx.data());
     } else if(Run == 2) {
         SafeSetBranchAddress("Muon_mvaId", Muon_mvaId.data());
         SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx_RunII.data());
+        SafeSetBranchAddress("Muon_genPartIdx", Muon_genPartIdx_RunII.data());
     }
 
     //Electron----------------------------
@@ -858,7 +864,6 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_eInvMinusPInv", Electron_eInvMinusPInv.data());
     SafeSetBranchAddress("Electron_energyErr", Electron_energyErr.data());
     SafeSetBranchAddress("Electron_eta", Electron_eta.data());
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     SafeSetBranchAddress("Electron_hoe", Electron_hoe.data());
     SafeSetBranchAddress("Electron_ip3d", Electron_ip3d.data());
     SafeSetBranchAddress("Electron_isPFcand", Electron_isPFcand.data());
@@ -880,6 +885,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_seedGain", Electron_seedGain.data());
     SafeSetBranchAddress("Electron_sieie", Electron_sieie.data());
     SafeSetBranchAddress("Electron_sip3d", Electron_sip3d.data());
+    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     if (Run == 3) {
         SafeSetBranchAddress("Electron_cutBased", Electron_cutBased.data());
         SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx.data());

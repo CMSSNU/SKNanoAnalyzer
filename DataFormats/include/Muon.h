@@ -91,6 +91,12 @@ public:
     inline float MvaLowPt() const {return j_mvaLowPt;}
     inline float MvaTTH() const {return j_mvaTTH;}
 
+    void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
+    inline short GenPartIdx() const { return j_genPartIdx; }
+
+    void SetGenPartFlav(unsigned char genPartFlav) { j_genPartFlav = genPartFlav; }
+    inline unsigned char GenPartFlav() const { return j_genPartFlav; }
+
     void SetJetIdx(short jetIdx) { j_jetIdx = jetIdx; }
     inline short JetIdx() const { return j_jetIdx; }
 
@@ -109,6 +115,8 @@ private:
     float j_softMva, j_mvaLowPt, j_mvaTTH;
     int j_nTrackerLayers;
     float j_miniAODPt, j_momentumScaleUp, j_momentumScaleDown;
+    short j_genPartIdx;
+    unsigned char j_genPartFlav;
     short j_jetIdx;
     ClassDef(Muon, 1);
 };

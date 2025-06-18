@@ -241,11 +241,14 @@ public:
     RVec<UChar_t> Muon_tkIsoId;
     RVec<Float_t> Muon_tkRelIso;
     RVec<Bool_t> Muon_triggerIdLoose;
+    RVec<UChar_t> Muon_genPartFlav;
     // Run3
     RVec<UChar_t> Muon_mvaMuID_WP;
+    RVec<Short_t> Muon_genPartIdx;
     RVec<Short_t> Muon_jetIdx;
     // Run2
     RVec<UChar_t> Muon_mvaId; //this is in fact wp
+    RVec<Int_t> Muon_genPartIdx_RunII;
     RVec<Int_t> Muon_jetIdx_RunII;
 
     //Electron----------------------------
@@ -272,7 +275,6 @@ public:
     RVec<Float_t> Electron_eInvMinusPInv;
     RVec<Float_t> Electron_energyErr;
     RVec<Float_t> Electron_eta;
-    RVec<UChar_t> Electron_genPartFlav;
     RVec<Float_t> Electron_hoe;
     RVec<Float_t> Electron_ip3d;
     RVec<Bool_t> Electron_isPFcand;
@@ -294,6 +296,7 @@ public:
     RVec<UChar_t> Electron_seedGain;
     RVec<Float_t> Electron_sieie;
     RVec<Float_t> Electron_sip3d;
+    RVec<UChar_t> Electron_genPartFlav;
     //Run3
     RVec<UChar_t> Electron_cutBased;
     RVec<Short_t> Electron_fsrPhotonIdx;

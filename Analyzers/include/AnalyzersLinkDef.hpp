@@ -17,3 +17,4 @@
 #pragma link C++ class DiLeptonBase+;
 #pragma link C++ class ParseEleIDVariables+;
 #pragma link C++ class ParseMuIDVariables+;
+#pragma link C++ class TestGetLeptonType+;
