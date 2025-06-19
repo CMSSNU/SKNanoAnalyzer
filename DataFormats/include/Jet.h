@@ -88,49 +88,17 @@ public:
     j_svIdx2 = sv2;
   };
 
-  inline void SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF = -1, float Jet_neEmEF = -1, float Jet_muEF = -1, float Jet_chEmEF = -1)
-  {
-    // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
-    if(Run == 2){
-      if(Jet_neHEF > 0.f || Jet_neEmEF > 0.f || Jet_muEF > 0.f || Jet_chEmEF > 0.f){
-        //for run2, we don't need this OTF calculation
-        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run2");
-      }
-      j_looseJetId = (b & 1);
-      j_tightJetID = (b & 2);
-      j_tightLepVetoJetID = (b & 4);
-    }
-    //due to the bug in the NanoAODv12, Below fix is necessary
-    //Please refer https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/117 or https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID13p6TeV#Recommendations_for_the_13_6_AN1
-    else if(Run == 3){
-      if(Jet_neHEF < 0.f || Jet_neEmEF < 0.f || Jet_muEF < 0.f || Jet_chEmEF < 0.f){
-        //for run3, we need this OTF calculation
-        throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run3, please provide Jet_neHEF, Jet_neEmEF, Jet_muEF, Jet_chEmEF");
-      }
+  void SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF = -1, float Jet_neEmEF = -1, float Jet_muEF = -1, float Jet_chEmEF = -1);
+  inline void SetOriginalIndex(int idx) { j_originalIndex = idx; };
+  inline int OriginalIndex() const { return j_originalIndex; };
 
-      bool Jet_passJetIdTight = false;
-      if (abs(eta) <= 2.7) Jet_passJetIdTight = b & (1 << 1);
-      else if (abs(eta) > 2.7 && abs(eta) <= 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neHEF < 0.99);
-      else if (abs(eta) > 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neEmEF < 0.4);
-
-      bool Jet_passJetIdTightLepVeto = false;
-      if (abs(eta) <= 2.7) Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);
-      else Jet_passJetIdTightLepVeto = Jet_passJetIdTight;
-
-      j_looseJetId = (b & 1);
-      j_tightJetID = Jet_passJetIdTight;
-      j_tightLepVetoJetID = Jet_passJetIdTightLepVeto;
-    }
-
-  };
-  inline void SetJetPuID(int puIDBit)
-  {
+  inline void SetJetPuID(int puIDBit) {
     j_loosePuId = (puIDBit & 1);
     j_mediumPuId = (puIDBit & 2);
     j_tightPuId = (puIDBit & 4);
   };
-  inline void SetCorrections(RVec<float> corrs)
-  {
+
+  inline void SetCorrections(RVec<float> corrs) {
     j_PNetRegPtRawCorr = corrs[0];
     j_PNetRegPtRawCorrNeutrino = corrs[1];
     j_PNetRegPtRawRes = corrs[2];
@@ -141,19 +109,20 @@ public:
     j_cRegRes = corrs[7];
   };
 
-  inline void SetM(double jet_m)
-  {
+  inline void SetM(double jet_m) {
     j_m = jet_m;
   };
-  inline void SetUnsmearedP4(Jet jet)
-  {
+  
+  inline void SetUnsmearedP4(Jet jet) {
     j_unsmearedP4 = jet;
   };
   inline double GetM() { return j_m; }
   inline int partonFlavour() const { return j_partonFlavour; };
   inline int hadronFlavour() const { return j_hadronFlavour; };
+  inline int genJetIdx() const { return j_genJetIdx; };
   inline bool Pass_tightJetID() const { return j_tightJetID; }
   inline bool Pass_tightLepVetoJetID() const { return j_tightLepVetoJetID; }
+
   inline float chargedEMFraction() const { return j_chEmEF; }
   inline float chargedHadronFraction() const { return j_chHEF; }
   inline float neutralEMFraction() const { return j_neEmEF; }
@@ -168,6 +137,8 @@ public:
   bool PassID(TString ID) const;
   bool PassID(JetID id) const; 
 private:
+  // For matching indices in leptons
+  int j_originalIndex;  
   // jetID
   bool j_looseJetId;
   bool j_tightJetID;
@@ -229,7 +200,7 @@ private:
   // float j_hfsigmaEtaEta;
   // float j_hfsigmaPhiPhi;
   float j_m; // jet mass
-  TLorentzVector j_unsmearedP4; 
+  TLorentzVector j_unsmearedP4;
   ClassDef(Jet, 1)
 };
 

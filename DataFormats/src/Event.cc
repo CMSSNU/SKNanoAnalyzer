@@ -12,33 +12,24 @@ Event::Event() {
 
 Event::~Event() {}
 
-const void Event::SetTrigger(const std::map<TString, pair<Bool_t*,float>>& TriggerMap) {
+void Event::SetTrigger(const std::map<TString, pair<Bool_t*,float>>& TriggerMap) {
     j_HLT_TriggerMapPtr = &(TriggerMap);
 }
-/*bool Event::PassTrigger(TString trig) {
-    RVec<TString> tmp_vec;
-    tmp_vec.push_back(trig);
-    return PassTrigger(tmp_vec);
-}
 
-bool Event::PassTrigger(RVec<TString> trigs) {
-    for (auto trig : trigs) {
-        if (find(j_HLT_TriggerName.begin(), j_HLT_TriggerName.end(), trig) != j_HLT_TriggerName.end()) {
-            return true;
-        }
-    }
-    return false;
-}
-*/
-const bool Event::PassTrigger(TString trig) {
-
+bool Event::PassTrigger(const TString trig) const {
     if (j_HLT_TriggerMapPtr->find(trig) == j_HLT_TriggerMapPtr->end()) {
-        cerr << "[Event::PassTrigger] Trigger " << trig << " not found" << endl;
-        exit(ENODATA);
+        cout << "[Event::PassTrigger] WARNING:Trigger " << trig << " not found" << endl;
+        return false;
     }
     return *((j_HLT_TriggerMapPtr->at(trig)).first);
 }
 
+bool Event::PassTrigger(const RVec<TString> trigs) const {
+    for (const auto &trig: trigs) {
+        if (PassTrigger(trig)) return true;
+    }
+    return false;
+}
 
 // NOTE
 // trigger lumi calcuated from brilcalc

@@ -7,11 +7,14 @@
 
 #include "TFile.h"
 #include "TH1.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
 #include "TTree.h"
 #include "TBranch.h"
 #include "TString.h"
 #include "TObjString.h"
-#include "TRandom3.h"
+#include "TMath.h"
 
 #include "SKNanoLoader.h"
 #include "Event.h"
@@ -22,11 +25,16 @@
 #include "Muon.h"
 #include "Electron.h"
 #include "Jet.h"
-#include "GenJet.h"
-#include "Tau.h"
 #include "FatJet.h"
+#include "Tau.h"
 #include "Photon.h"
 #include "Gen.h"
+#include "Jet.h"
+#include "GenJet.h"
+#include "GenDressedLepton.h"
+#include "GenIsolatedPhoton.h"
+#include "GenVisTau.h"
+#include "TrigObj.h"
 
 #include "LHAPDFHandler.h"
 #include "PDFReweight.h"
@@ -34,6 +42,21 @@
 #include "JetTaggingParameter.h"
 #include "PhysicalConstants.h"
 
+class IDContainer {
+public:
+    IDContainer() {}
+    IDContainer(const TString &tight, const TString &loose):
+        j_tight(tight), j_loose(loose) {}
+
+    TString GetID(const TString &wp) const {
+        if (wp == "tight") return j_tight;
+        else if (wp == "loose") return j_loose;
+        else throw runtime_error("Invalid WP: " + wp);
+    }
+
+private:
+    TString j_tight, j_loose;
+};
 
 class AnalyzerCore: public SKNanoLoader {
 public:
@@ -77,8 +100,12 @@ public:
     RVec<Tau> GetAllTaus();
     RVec<FatJet> GetAllFatJets();
     RVec<GenJet> GetAllGenJets();
+    RVec<GenDressedLepton> GetAllGenDressedLeptons();
+    RVec<GenIsolatedPhoton> GetAllGenIsolatedPhotons();
+    RVec<GenVisTau> GetAllGenVisTaus();
     RVec<Photon> GetAllPhotons();
     RVec<Photon> GetPhotons(TString id, double ptmin, double fetamax);
+    RVec<TrigObj> GetAllTrigObjs();
 
     // Select objects
     RVec<Muon> SelectMuons(const RVec<Muon> &muons, TString ID, const float ptmin, const float absetamax) const;
@@ -111,23 +138,26 @@ public:
     int GetLeptonType(const Gen& gen, const RVec<Gen>& gens);
     int GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens);
     int GetGenPhotonType(const Gen& genph, const RVec<Gen>& gens);
-    int  GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen>& gens);
+    int GetPrElType_InSameSCRange_Public(int genIdx, const RVec<Gen>& gens);
 
     // Scale and smear
     void METType1Propagation(Particle &MET, RVec<Particle> &original_objects, RVec<Particle> &corrected_objects);
     float GetL1PrefireWeight(MyCorrection::variation syst = MyCorrection::variation::nom);
     unordered_map<int, int> GenJetMatching(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const float &rho, const float dR = 0.2, const float pTJerCut = 3.);
-    unordered_map<int, int> deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR = 0.4);
-    RVec<Muon> SmearMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Electron> ScaleElectrons(const RVec<Electron> &electrons, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, int seed,const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
-    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst = MyCorrection::variation::nom, const TString &source = "total");
+    unordered_map<int, int> deltaRMatching(const RVec<Particle> &objs1, const RVec<Particle> &objs2, const float dR = 0.4);
+    RVec<Muon> ScaleMuons(const RVec<Muon> &muons, const TString &syst );
+    RVec<Electron> ScaleElectrons(const Event &ev, const RVec<Electron> &electrons, const TString &syst);
+    RVec<Electron> SmearElectrons(const RVec<Electron> &electrons, const TString &syst);
 
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source="total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
+    RVec<Jet> ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source="total");
+    
     // Histogram Handlers
-    void SetOutfilePath(TString outpath);
-    TH1* GetHist1D(const string &histname);
+    TFile* GetOutfile() { return outfile; }
+    inline void SetOutfilePath(const TString &outpath) { outfile = new TFile(outpath, "RECREATE"); }
+    TH1D* GetHist1D(const string &histname);
     bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
     inline void FillCutFlow(const int &val,const int &maxCutN=10){
         static int storedMaxCutN = maxCutN;
@@ -159,11 +189,7 @@ public:
     inline void SetBranch(const TString &treename, const TString &branchname, float val) { this_floats.push_back(val); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, double val) { this_floats.push_back(float(val)); SetBranch(treename, branchname, (void*)(&this_floats.back()), branchname + "/F"); };
     inline void SetBranch(const TString &treename, const TString &branchname, int val) { this_ints.push_back(val); SetBranch(treename, branchname, (void*)(&this_ints.back()), branchname + "/I"); };
-    inline void SetBranch(const TString &treename, const TString &branchname, bool val)
-    {
-        this_bools.push_back(val);
-        SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O");
-    }
+    inline void SetBranch(const TString &treename, const TString &branchname, bool val) { this_bools.push_back(val); SetBranch(treename, branchname, (void *)(&this_bools.back()), branchname + "/O"); }
     //fill RVec to branch -> Not work do not use
     //template <typename T>
     //inline void SetBranch(const TString &treename, const TString &branchname, std::vector<T> &val) {SetBranch_Vector(treename, branchname, val);};
@@ -172,7 +198,7 @@ public:
     virtual void WriteHist();
 
 private:
-    bool useTH1F;
+    bool useTH1F = false;
     unordered_map<string, TH1*> histmap1d;
     unordered_map<string, TH2*> histmap2d;
     unordered_map<string, TH3*> histmap3d;
@@ -184,11 +210,9 @@ private:
     TFile *outfile;
     void SetBranch(const TString &treename, const TString &branchname, void *address, const TString &leaflist);
     template <typename T>
-    void SetBranch_Vector(const TString &treename, const TString &branchname, std::vector<T> &address)
-    {
+    void SetBranch_Vector(const TString &treename, const TString &branchname, std::vector<T> &address) {
         //Not work do not use
-        try
-        {
+        try {
             TTree *tree = GetTree(treename);
 
             unordered_map<string, TBranch *> *this_branchmap = &branchmaps[tree];
@@ -205,9 +229,7 @@ private:
                 //void TBranch::SetAddress(void *add)
                 it -> second->SetAddress(&address);
             }
-        }
-        catch (int e)
-        {
+        } catch (int e) {
             cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
             exit(e);
         }

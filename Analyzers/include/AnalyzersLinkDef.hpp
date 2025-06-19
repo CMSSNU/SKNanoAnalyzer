@@ -13,4 +13,8 @@
 #pragma link C++ class Vcb_SL+;
 #pragma link C++ class Vcb_DL+;
 #pragma link C++ class FullHadronicTriggerTnP+;
-#pragma link C++ class GeneratorStudy+;
+#pragma link C++ class GeneratorBase+;
+#pragma link C++ class DiLeptonBase+;
+#pragma link C++ class ParseEleIDVariables+;
+#pragma link C++ class ParseMuIDVariables+;
+#pragma link C++ class TestGetLeptonType+;

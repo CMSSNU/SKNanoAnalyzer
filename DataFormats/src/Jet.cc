@@ -60,6 +60,7 @@ Jet::Jet() : Particle() {
 
   // Others
   j_area = -999.0;
+  j_originalIndex = -1;
   // j_hfadjacentEtaStripsSize = -999;
   // j_hfcentralEtaStripSize = -999;
   // j_hfsigmaEtaEta = -999.0;
@@ -93,6 +94,57 @@ bool Jet::PassID(TString ID) const {
   exit(ENODATA);
 
   return false;
+}
+
+void Jet::SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF, float Jet_neEmEF, float Jet_muEF, float Jet_chEmEF) {
+  // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
+  if(Run == 2) {
+    if (Jet_neHEF > 0.f || Jet_neEmEF > 0.f || Jet_muEF > 0.f || Jet_chEmEF > 0.f) {
+      //for run2, we don't need this OTF calculation
+      throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run2");
+    }
+    j_looseJetId = (b & 1);
+    j_tightJetID = (b & 2);
+    j_tightLepVetoJetID = (b & 4);
+  }
+  // due to the bug in the NanoAODv12, Below fix is necessary
+  // Please refer https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/117 or https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID13p6TeV#Recommendations_for_the_13_6_AN1
+  // We are moving to NanoAODv13 for Run3, need different implementation
+  else { // Run == 3
+    if (Jet_neHEF < 0.f || Jet_neEmEF < 0.f || Jet_muEF < 0.f || Jet_chEmEF < 0.f) {
+      //for run3, we need this OTF calculation
+      throw std::invalid_argument("[Jet::SetJetID] Invalid arguments for Run3, please provide Jet_neHEF, Jet_neEmEF, Jet_muEF, Jet_chEmEF");
+    }
+
+    bool Jet_passJetIdTight = false;
+    if (abs(eta) <= 2.6) 
+      Jet_passJetIdTight = (Jet_neHEF < 0.99) && (Jet_neEmEF < 0.9) && (Jet_chMultiplicity+Jet_neMultiplicity > 1) && (Jet_chHEF > 0.01) && (Jet_chMultiplicity > 0);
+    else if (abs(eta) > 2.6 && abs(eta) <= 2.7) 
+      Jet_passJetIdTight = (Jet_neHEF < 0.90) && (Jet_neEmEF < 0.99);
+    else if (abs(eta) > 2.7 && abs(eta) <= 3.0) 
+      Jet_passJetIdTight = (Jet_neHEF < 0.99);
+    else // abs(eta) > 3.0
+      Jet_passJetIdTight = (Jet_neMultiplicity >= 2) && (Jet_neEmEF < 0.4);
+
+    bool Jet_passJetIdTightLepVeto = false;
+    if (abs(Jet_eta) <= 2.7) 
+      Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);
+    else 
+      Jet_passJetIdTightLepVeto = Jet_passJetIdTight;
+
+    /* This is for NanoAODv12
+    if (abs(eta) <= 2.7) Jet_passJetIdTight = b & (1 << 1);
+    else if (abs(eta) > 2.7 && abs(eta) <= 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neHEF < 0.99);
+    else if (abs(eta) > 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neEmEF < 0.4);      
+    
+    bool Jet_passJetIdTightLepVeto = false;      
+    if (abs(eta) <= 2.7) Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);      
+    else Jet_passJetIdTightLepVeto = Jet_passJetIdTight;      
+    j_looseJetId = (b & 1);      
+    j_tightJetID = Jet_passJetIdTight;      
+    j_tightLepVetoJetID = Jet_passJetIdTightLepVeto;      
+    */
+  }
 }
 
 bool Jet::PassID(JetID id) const {

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-
 # Find packages
 find_package(ROOT REQUIRED)
 # Find libraries with more robust method
@@ -12,7 +10,6 @@ add_library(MLHelper SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MLHelper.cc 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MLHelper.h
 )
-
 
 target_include_directories(MLHelper PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -68,6 +65,7 @@ target_include_directories(AnalyzerTools PUBLIC
     $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:$ENV{LHAPDF_INCLUDE_DIR}>
     $<BUILD_INTERFACE:$ENV{CORRECTION_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:$ENV{ROCCOR_PATH}>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -79,8 +77,10 @@ target_link_libraries(AnalyzerTools PUBLIC
     DataFormats
     yaml-cpp::yaml-cpp
     MLHelper
+    RoccoR
 )
 
+include_directories($ENV{LHAPDF_INCLUDE_DIR})
 # Generate ROOT dictionary
 ROOT_GENERATE_DICTIONARY(G__AnalyzerTools
     ${DICTIONARY_HEADERS}
@@ -88,13 +88,9 @@ ROOT_GENERATE_DICTIONARY(G__AnalyzerTools
     LINKDEF include/AnalyzerToolsLinkDef.hpp
 )
 
-
-
 # Installation
 install(TARGETS AnalyzerTools DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
-
-
 
 # Install ROOT dictionary files if they exist
 set(ROOTMAP "libAnalyzerTools.rootmap")

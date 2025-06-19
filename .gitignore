@@ -11,9 +11,13 @@ config/config.*
 external/** 
 *.onnx
 !external/KinematicFitter
+!external/jsonpog-integration
+!external/RoccoR
 templates/__pycache__/*
+.DS_Store/*
 
 #Temporary Added to my personal temp files
 DataCOPY/** 
 MCCOPY/**
 .vscode/**
+.cursor/**

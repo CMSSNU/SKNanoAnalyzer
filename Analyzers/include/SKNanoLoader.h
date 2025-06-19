@@ -8,8 +8,11 @@ using namespace std;
 
 #include "TROOT.h"
 #include "TChain.h"
+#include "TChainElement.h"
 #include "TFile.h"
+#include "TTree.h"
 #include "TString.h"
+#include "TRandom3.h"
 #include "ROOT/RVec.hxx"
 #include "ROOT/RDataFrame.hxx"
 #include <nlohmann/json.hpp>
@@ -142,8 +145,8 @@ public:
     RVec<Int_t> GenJetAK8_partonFlavour_RunII;
 
     // GenMet
-    Float_t GenMet_pt;
-    Float_t GenMet_phi;
+    Float_t GenMET_pt;
+    Float_t GenMET_phi;
 
     // GenDressedLepton
     Int_t nGenDressedLepton;
@@ -211,6 +214,7 @@ public:
     RVec<Float_t> Muon_eta;
     RVec<UChar_t> Muon_highPtId;
     RVec<Float_t> Muon_ip3d;
+    RVec<Int_t> Muon_nTrackerLayers;
     RVec<Bool_t> Muon_isGlobal;
     RVec<Bool_t> Muon_isStandalone;
     RVec<Bool_t> Muon_isTracker;
@@ -237,10 +241,15 @@ public:
     RVec<UChar_t> Muon_tkIsoId;
     RVec<Float_t> Muon_tkRelIso;
     RVec<Bool_t> Muon_triggerIdLoose;
+    RVec<UChar_t> Muon_genPartFlav;
     // Run3
     RVec<UChar_t> Muon_mvaMuID_WP;
+    RVec<Short_t> Muon_genPartIdx;
+    RVec<Short_t> Muon_jetIdx;
     // Run2
     RVec<UChar_t> Muon_mvaId; //this is in fact wp
+    RVec<Int_t> Muon_genPartIdx_RunII;
+    RVec<Int_t> Muon_jetIdx_RunII;
 
     //Electron----------------------------
     Int_t nElectron;
@@ -248,7 +257,13 @@ public:
     RVec<Int_t> Electron_charge;
     RVec<Bool_t> Electron_convVeto;
     RVec<Bool_t> Electron_cutBased_HEEP;
-    RVec<Float_t> Electron_deltaEtaSC;
+    RVec<Float_t> Electron_scEta;
+    RVec<Float_t> Electron_deltaEtaInSC;
+    RVec<Float_t> Electron_deltaEtaInSeed;
+    RVec<Float_t> Electron_deltaPhiInSC;
+    RVec<Float_t> Electron_deltaPhiInSeed;
+    RVec<Float_t> Electron_ecalPFClusterIso;
+    RVec<Float_t> Electron_hcalPFClusterIso;
     RVec<Float_t> Electron_dr03EcalRecHitSumEt;
     RVec<Float_t> Electron_dr03HcalDepth1TowerSumEt;
     RVec<Float_t> Electron_dr03TkSumPt;
@@ -260,7 +275,6 @@ public:
     RVec<Float_t> Electron_eInvMinusPInv;
     RVec<Float_t> Electron_energyErr;
     RVec<Float_t> Electron_eta;
-    RVec<UChar_t> Electron_genPartFlav;
     RVec<Float_t> Electron_hoe;
     RVec<Float_t> Electron_ip3d;
     RVec<Bool_t> Electron_isPFcand;
@@ -282,6 +296,7 @@ public:
     RVec<UChar_t> Electron_seedGain;
     RVec<Float_t> Electron_sieie;
     RVec<Float_t> Electron_sip3d;
+    RVec<UChar_t> Electron_genPartFlav;
     //Run3
     RVec<UChar_t> Electron_cutBased;
     RVec<Short_t> Electron_fsrPhotonIdx;
@@ -291,9 +306,11 @@ public:
     RVec<Float_t> Electron_mvaIso;
     RVec<Bool_t> Electron_mvaIso_WP80;
     RVec<Bool_t> Electron_mvaIso_WP90;
+    RVec<Bool_t> Electron_mvaIso_WPL;
     RVec<Float_t> Electron_mvaNoIso;
     RVec<Bool_t> Electron_mvaNoIso_WP80;
     RVec<Bool_t> Electron_mvaNoIso_WP90;
+    RVec<Bool_t> Electron_mvaNoIso_WPL;
     RVec<Short_t> Electron_photonIdx;
     RVec<Char_t> Electron_seediEtaOriX;
     RVec<Int_t> Electron_seediPhiOriY;
@@ -307,9 +324,13 @@ public:
     RVec<Float_t> Electron_mvaFall17V2Iso;
     RVec<Bool_t> Electron_mvaFall17V2Iso_WP80;
     RVec<Bool_t> Electron_mvaFall17V2Iso_WP90;
+    RVec<Bool_t> Electron_mvaFall17V2Iso_WPL;
     RVec<Float_t> Electron_mvaFall17V2noIso;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP80;
     RVec<Bool_t> Electron_mvaFall17V2noIso_WP90;
+    RVec<Bool_t> Electron_mvaFall17V2noIso_WPL;
+    RVec<Float_t> Electron_dEsigmaUp;
+    RVec<Float_t> Electron_dEsigmaDown;
 
     //Photon----------------------------
     Int_t nPhoton;
@@ -559,7 +580,19 @@ public:
     Bool_t Flag_ecalBadCalibFilter;
     Bool_t Flag_eeBadScFilter;
     //Bool_t Flag_ecalBadCalibFilter;
-    UInt_t RunNumber;
+    Int_t RunNumber;
+    Int_t LumiBlock;
+    Int_t EventNumber;
+
+    // TrigObj----------------------------
+    Int_t nTrigObj;
+    UInt_t nTrigObj_RunII;
+    RVec<Float_t> TrigObj_pt;
+    RVec<Float_t> TrigObj_eta;
+    RVec<Float_t> TrigObj_phi;
+    RVec<Int_t> TrigObj_id_RunII;
+    RVec<UShort_t> TrigObj_id;
+    RVec<Int_t> TrigObj_filterBits;
     std::map<TString, pair<Bool_t*,float>> TriggerMap;
 };
 

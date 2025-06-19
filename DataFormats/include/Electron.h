@@ -7,10 +7,9 @@
 // Need update
 // Missing variables (compared to SKFlat)
 // energy / resolution corrections & errors
-// ID variables: j_dEtaSeed, j_dPhiIn, j_e2x5OverE5x5, j_e1x5OverE5x5, j_calPFClusterIso, j_hcalPFClusterIso, j_dr03HcalTowerSumEt
+// ID variables: j_e2x5OverE5x5, j_e1x5OverE5x5, j_ecalPFClusterIso, j_hcalPFClusterIso, j_dr03HcalTowerSumEt
 // SuperCluster: phi, E
-// IDs: j_mvaIso_Loose, j_mvaNoIso_Loose
-// others: j_ea, j_rho
+// others: j_ea
 
 class Electron : public Lepton {
 public:
@@ -34,19 +33,39 @@ public:
         POG_HEEP,
         POG_MVAISO_WP80,
         POG_MVAISO_WP90,
+        POG_MVAISO_WPL,
         POG_MVANOISO_WP80,
         POG_MVANOISO_WP90,
+        POG_MVANOISO_WPL,
     };
-    
+
     void SetConvVeto(bool convVeto) { j_convVeto = convVeto; }
     inline bool ConvVeto() const { return j_convVeto; }
 
-    void SetDeltaEtaSC(float deltaEtaSC) { j_deltaEtaSC = deltaEtaSC; }
-    inline float scEta() const { return Eta() + j_deltaEtaSC; }
+    void SetScEta(float scEta) { j_scEta = scEta; }
+    inline float scEta() const { return j_scEta; }
 
+    void SetDeltaEtaInSC(float deltaEtaInSC) { j_deltaEtaInSC = deltaEtaInSC; }
+    inline float deltaEtaInSC() const { return j_deltaEtaInSC; }
+
+    void SetDeltaPhiInSC(float deltaPhiInSC) { j_deltaPhiInSC = deltaPhiInSC; }
+    inline float deltaPhiInSC() const { return j_deltaPhiInSC; }
+
+    void SetDeltaEtaInSeed(float deltaEtaInSeed) { j_deltaEtaInSeed = deltaEtaInSeed; }
+    inline float deltaEtaInSeed() const { return j_deltaEtaInSeed; }
+
+    void SetDeltaPhiInSeed(float deltaPhiInSeed) { j_deltaPhiInSeed = deltaPhiInSeed; }
+    inline float deltaPhiInSeed() const { return j_deltaPhiInSeed; }
+    
     void SetLostHits(unsigned char lostHits) { j_lostHits = lostHits; }
     inline unsigned char LostHits() const { return j_lostHits; }
 
+    void SetPFClusterIso(float ecalPFClusterIso, float hcalPFClusterIso) {
+        j_ecalPFClusterIso = ecalPFClusterIso;
+        j_hcalPFClusterIso = hcalPFClusterIso;
+    }
+    inline float ecalPFClusterIso() const { return j_ecalPFClusterIso; }
+    inline float hcalPFClusterIso() const { return j_hcalPFClusterIso; }
     void SetSeedGain(unsigned char seedGain) { j_seedGain = seedGain; }
     inline unsigned char SeedGain() const { return j_seedGain; }
 
@@ -83,13 +102,31 @@ public:
     void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
     inline short GenPartIdx() const { return j_genPartIdx; }
 
+    void SetJetIdx(short jetIdx) { j_jetIdx = jetIdx; }
+    inline short JetIdx() const { return j_jetIdx; }
+
+    void SetRho(float rho) { j_rho = rho; }
+    inline float rho() const { return j_rho; }
+
+    void SetEnergyErr(float energyErr) { j_energyErr = energyErr; }
+    inline float energyErr() const { return j_energyErr; }
+
+    void SetEnergyResUnc(float dEsigmaUp, float dEsigmaDown) {
+        j_dEsigmaUp = dEsigmaUp;
+        j_dEsigmaDown = dEsigmaDown;
+    }
+    inline float dEsigmaUp() const { return j_dEsigmaUp; }
+    inline float dEsigmaDown() const { return j_dEsigmaDown; }
+
     // Boolean IDs
-    enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVANOISOWP80, MVANOISOWP90, CUTBASEDHEEP};
+    enum class BooleanID {NONE, MVAISOWP80, MVAISOWP90, MVAISOWPL, MVANOISOWP80, MVANOISOWP90, MVANOISOWPL, CUTBASEDHEEP};
     void SetBIDBit(BooleanID id, bool idbit);
     inline bool isMVAIsoWP80() const { return j_mvaIso_WP80; }
     inline bool isMVAIsoWP90() const { return j_mvaIso_WP90; }
+    inline bool isMVAIsoWPLoose() const { return j_mvaIso_WPL; }
     inline bool isMVANoIsoWP80() const { return j_mvaNoIso_WP80; }
     inline bool isMVANoIsoWP90() const { return j_mvaNoIso_WP90; }
+    inline bool isMVANoIsoWPLoose() const { return j_mvaNoIso_WPL; }
     inline bool isCutBasedHEEP() const { return j_cutBased_HEEP; }
 
 
@@ -99,6 +136,11 @@ public:
     void SetCBIDBit(CutBasedID id, unsigned int value);
     inline WORKINGPOINT CutBased() const {return (WORKINGPOINT)j_cutBased; }
 
+    // Private IDs
+    bool Pass_CaloIdL_TrackIdL_IsoVL() const;
+    bool Pass_HcToWABaseline() const;
+    bool Pass_HcToWALoose() const;
+    bool Pass_HcToWATight() const;
     // MVA scores
     enum class MVATYPE {NONE, MVAISO, MVANOISO, MVATTH};
     void SetMVA(MVATYPE type, float score);
@@ -112,26 +154,31 @@ public:
 
 private:
     // uncertainties
-    float j_energyErr; // resErr?
+    float j_energyErr; 
+    float j_dEsigmaUp, j_dEsigmaDown;
     // ID variables
     bool j_convVeto;
     unsigned char j_lostHits, j_seedGain, j_tightCharge;
-    float j_sieie, j_hoe, j_eInvMinusPInv; // no j_dEtaSeed, j_dPhiIn
+    float j_sieie, j_hoe, j_eInvMinusPInv;
     float j_dr03EcalRecHitSumEt, j_dr03HcalDepth1TowerSumEt, j_dr03TkSumPt, j_dr03TkSumPtHEEP; // no j_e2x5OverE5x5, j_e1x5OverE5x5, j_calPFClusterIso, j_hcalPFClusterIso, j_dr03HcalTowerSumEt
 
     // SuperCluster
-    float j_deltaEtaSC; // missing phi and E?
+    float j_scEta;
+    float j_deltaEtaInSC, j_deltaEtaInSeed, j_deltaPhiInSC, j_deltaPhiInSeed; // missing phi and E?
+    float j_ecalPFClusterIso, j_hcalPFClusterIso;
 
     // IDs
-    bool j_mvaIso_WP80, j_mvaIso_WP90, j_mvaNoIso_WP80, j_mvaNoIso_WP90, j_cutBased_HEEP;
+    bool j_mvaIso_WP80, j_mvaIso_WP90, j_mvaIso_WPL, j_mvaNoIso_WP80, j_mvaNoIso_WP90, j_mvaNoIso_WPL, j_cutBased_HEEP;
     unsigned char j_cutBased;
     
     float j_mvaIso, j_mvaNoIso, j_mvaTTH;
 
     // others
     float j_r9;
-    unsigned char j_genPartFlav;
+    float j_rho;
     short j_genPartIdx;
+    unsigned char j_genPartFlav;
+    short j_jetIdx;
     ClassDef(Electron, 1);
 };
 
