@@ -20,12 +20,9 @@ include(${ROOT_USE_FILE})
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-# correctionlibs
-find_package(correctionlib REQUIRED)
-
 # Add subdirectories
-add_subdirectory(external/RoccoR)
 add_subdirectory(external/KinematicFitter)
+add_subdirectory(external/RoccoR)
 add_subdirectory(DataFormats)
 add_subdirectory(AnalyzerTools)
 add_subdirectory(Analyzers)

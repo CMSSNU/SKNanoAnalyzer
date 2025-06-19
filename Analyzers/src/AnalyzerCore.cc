@@ -35,7 +35,7 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Even
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
         bool badEcal = (jet.Pt() > 50.);
-        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
+        badEcal = badEcal && (jet.neEmEF() > 0.9 || jet.chEmEF() > 0.9) ;
         badEcal = badEcal && jet.DeltaR(ev.GetMETVector(met_type)) < 0.3;
         badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
         badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
@@ -155,7 +155,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     return matched_genjet_idx;
 }
 
-unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR) {
+unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<Particle> &objs1, const RVec<Particle> &objs2, const float dR) {
     RVec<tuple<size_t, size_t, float>> possible_matches;
     RVec<bool> used_obj1(objs1.size(), false);
     RVec<bool> used_obj2(objs2.size(), false);
@@ -800,6 +800,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
         jet.SetOriginalIndex(i);
+        jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         if(!IsDATA){
             if(Run == 3)
             jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
@@ -813,13 +814,14 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
                            Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
                            Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
             jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
+            jet.SetHadronMultiplicities(Jet_chMultiplicity[i], Jet_neMultiplicity[i]);
             if(!IsDATA){
                 jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
             }
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
             }
-            jet.SetJetID(Jet_jetId[i], Jet_eta[i], 3, Jet_neHEF[i], Jet_neEmEF[i], Jet_muEF[i], Jet_chEmEF[i]);
+            jet.SetJetID(Jet_jetId[i], 3);
             jet.SetJetPuID(0b111);
             tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
         }
@@ -835,7 +837,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
             }
-            jet.SetJetID(Jet_jetId_RunII[i], Jet_eta[i], 2);
+            jet.SetJetID(Jet_jetId_RunII[i], 2);
             if (DataYear == 2016) {
                 // due to the bug in the NanoAODv9, the puId is stored in a wrong way
                 int InterChanged = 0;
@@ -848,7 +850,6 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
 
         }
         jet.SetTaggerResults(tvs);
-        jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetCorrections(tvs2);
         Jets.push_back(jet);
     }
@@ -978,7 +979,7 @@ bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &Al
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
     for(const auto &jet: this_jet){
-        if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
+        if(jet.chEmEF() + jet.neEmEF() < 0.9) selected_jets.push_back(jet);
     }
     for(const auto &jet: selected_jets){
         if(myCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;

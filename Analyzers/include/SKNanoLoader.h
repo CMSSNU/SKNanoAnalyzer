@@ -404,6 +404,8 @@ public:
     RVec<Short_t> Jet_partonFlavour;
     RVec<Short_t> Jet_svIdx1;
     RVec<Short_t> Jet_svIdx2;
+    RVec<UInt_t> Jet_chMultiplicity;
+    RVec<UInt_t> Jet_neMultiplicity;
     //Run2
     RVec<Float_t> Jet_bRegCorr;
     RVec<Float_t> Jet_bRegRes;

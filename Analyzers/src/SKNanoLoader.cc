@@ -420,6 +420,8 @@ void SKNanoLoader::SetMaxLeafSize(){
         Jet_puId.resize(0);
         Jet_puIdDisc.resize(0);
         Jet_qgl.resize(0);
+        Jet_chMultiplicity.resize(0);
+        Jet_neMultiplicity.resize(0);
     }
     else if(Run == 2){
         Jet_PNetRegPtRawCorr.resize(0);
@@ -982,6 +984,8 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Jet_partonFlavour", Jet_partonFlavour.data());
         SafeSetBranchAddress("Jet_svIdx1", Jet_svIdx1.data());
         SafeSetBranchAddress("Jet_svIdx2", Jet_svIdx2.data());
+        SafeSetBranchAddress("Jet_chMultiplicity", Jet_chMultiplicity.data());
+        SafeSetBranchAddress("Jet_neMultiplicity", Jet_neMultiplicity.data());
     } else if (Run == 2) {
         SafeSetBranchAddress("Jet_bRegCorr", Jet_bRegCorr.data());
         SafeSetBranchAddress("Jet_bRegRes", Jet_bRegRes.data());

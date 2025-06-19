@@ -22,7 +22,7 @@ else
     cmake -DCMAKE_INSTALL_PREFIX=$SKNANO_INSTALLDIR $CORRECTION_CMAKE_PREFIX \
           -DCMAKE_PREFIX_PATH=$LIBTORCH_INSTALL_DIR \
           -DCMAKE_BUILD_TYPE=Release \
-          $SKNANO_HOME \
+          $SKNANO_HOME 
     echo @@@@ make -j6
     make -j6
 

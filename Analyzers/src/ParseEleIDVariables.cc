@@ -156,7 +156,7 @@ void ParseEleIDVariables::executeEvent() {
 }
 
 void ParseEleIDVariables::WriteHist() {
-    outfile->cd();
+    TFile* outfile = GetOutfile();
     Events->Write();
     outfile->Close();
 }

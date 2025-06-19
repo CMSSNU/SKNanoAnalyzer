@@ -126,7 +126,7 @@ void ParseMuIDVariables::executeEvent() {
 }
 
 void ParseMuIDVariables::WriteHist() {
-    outfile->cd();
+    TFile* outfile = GetOutfile();
     Events->Write();
     outfile->Close();
 }

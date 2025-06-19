@@ -37,7 +37,7 @@ public:
     inline float nTrueInt() const { return j_nTrueInt; }
     void SetnPVsGood(int nPVsGood) { j_nPVsGood = nPVsGood;}
     inline int nPVsGood() const { return j_nPVsGood; }
-    const void SetTrigger(const std::map<TString, pair<Bool_t *, float>>& TriggerMap);
+    void SetTrigger(const std::map<TString, pair<Bool_t *, float>>& TriggerMap);
     void setRho(float rho) { j_fixedGridRhoFastjetAll = rho; }
     inline float GetRho() const { return j_fixedGridRhoFastjetAll; }
     //void SetTrigger(RVec<TString> HLT_TriggerName) { j_HLT_TriggerName = HLT_TriggerName; }

@@ -849,7 +849,7 @@ float MyCorrection::GetBTaggingEff(const float eta, const float pt, const int fl
     return cset->evaluate({"central", this_wpStr, flav, fabs(eta), pt});
 }
 
-float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod method, const variation syst, const TString &source) {
+float MyCorrection::GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source) {
     if (Run == 2 && tagger != JetTagging::JetFlavTagger::DeepJet) {
         cerr << "[MyCorrection::GetBTaggingSF] DeepJet is the only supported tagger for 2016preVFP, 2016postVFP, 2017, 2018, and 2018UL" << endl;
         return 1.;

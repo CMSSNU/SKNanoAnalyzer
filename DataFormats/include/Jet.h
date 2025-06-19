@@ -58,14 +58,31 @@ public:
     j_chEmEF = cEM;
     j_muEF = muE;
   };
-  inline void SetMultiplicities(unsigned char nC, unsigned char nEl, unsigned char nM, unsigned char nSV)
-  {
+  inline float chHEF() const { return j_chHEF; }
+  inline float neHEF() const { return j_neHEF; }
+  inline float neEmEF() const { return j_neEmEF; }
+  inline float chEmEF() const { return j_chEmEF; }
+  inline float muEF() const { return j_muEF; }
+
+  inline void SetMultiplicities(unsigned char nC, unsigned char nEl, unsigned char nM, unsigned char nSV) {
     // typecast before assign
     j_nConstituents = short(nC);
     j_nElectrons = short(nEl);
     j_nMuons = short(nM);
     j_nSVs = short(nSV);
   };
+  inline short nConstituents() const { return j_nConstituents; }
+  inline short nElectrons() const { return j_nElectrons; }
+  inline short nMuons() const { return j_nMuons; }
+  inline short nSVs() const { return j_nSVs; }
+
+  // For NanoAODv13
+  inline void SetHadronMultiplicities(unsigned char chMult, unsigned char neMult){
+    j_chMultiplicity = chMult;
+    j_neMultiplicity = neMult;
+  };
+  inline unsigned char chMultiplicity() const { return j_chMultiplicity; }
+  inline unsigned char neMultiplicity() const { return j_neMultiplicity; }
 
   inline void SetMatchingIndices(short e1, short e2, short m1, short m2, short sv1, short sv2, short gj)
   {
@@ -88,7 +105,7 @@ public:
     j_svIdx2 = sv2;
   };
 
-  void SetJetID(unsigned char b, float eta, int Run, float Jet_neHEF = -1, float Jet_neEmEF = -1, float Jet_muEF = -1, float Jet_chEmEF = -1);
+  void SetJetID(unsigned char IDBit, int Run);
   inline void SetOriginalIndex(int idx) { j_originalIndex = idx; };
   inline int OriginalIndex() const { return j_originalIndex; };
 
@@ -123,12 +140,6 @@ public:
   inline bool Pass_tightJetID() const { return j_tightJetID; }
   inline bool Pass_tightLepVetoJetID() const { return j_tightLepVetoJetID; }
 
-  inline float chargedEMFraction() const { return j_chEmEF; }
-  inline float chargedHadronFraction() const { return j_chHEF; }
-  inline float neutralEMFraction() const { return j_neEmEF; }
-  inline float neutralHadronFraction() const { return j_neHEF; }
-  inline float EMFraction() const { return j_chEmEF + j_neEmEF; }
-  inline float nConstituents() const { return j_nConstituents; }
   float GetBTaggerResult(JetTagging::JetFlavTagger tagger) const;
   pair<float,float> GetCTaggerResult(JetTagging::JetFlavTagger tagger) const;
   float GetQvGTaggerResult(JetTagging::JetFlavTagger tagger) const;
@@ -181,6 +192,8 @@ private:
   short j_nElectrons;
   short j_nMuons;
   short j_nSVs;
+  short j_chMultiplicity;
+  short j_neMultiplicity;
 
   // matching information
   short j_electronIdx1;
