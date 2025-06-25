@@ -35,7 +35,7 @@ bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Even
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
         bool badEcal = (jet.Pt() > 50.);
-        badEcal = badEcal && (jet.neutralEMFraction() > 0.9 || jet.chargedEMFraction() > 0.9) ;
+        badEcal = badEcal && (jet.neEmEF() > 0.9 || jet.chEmEF() > 0.9) ;
         badEcal = badEcal && jet.DeltaR(ev.GetMETVector(met_type)) < 0.3;
         badEcal = badEcal && jet.Eta() > -0.5 && jet.Eta() < -0.1;
         badEcal = badEcal && jet.Phi() > -2.1 && jet.Phi() < -1.8;
@@ -137,7 +137,6 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
         return get<2>(a) < get<2>(b);
     });
     //greeedy matching
-
     RVec<bool> used_jet(jets.size(), false);
     RVec<bool> used_genjet(genjets.size(), false);
     for(const auto &match: possible_matches){
@@ -156,8 +155,7 @@ unordered_map<int, int> AnalyzerCore::GenJetMatching(const RVec<Jet> &jets, cons
     return matched_genjet_idx;
 }
 
-unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> &objs1, const RVec<TLorentzVector> &objs2, const float dR)
-{
+unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<Particle> &objs1, const RVec<Particle> &objs2, const float dR) {
     RVec<tuple<size_t, size_t, float>> possible_matches;
     RVec<bool> used_obj1(objs1.size(), false);
     RVec<bool> used_obj2(objs2.size(), false);
@@ -191,21 +189,18 @@ unordered_map<int, int> AnalyzerCore::deltaRMatching(const RVec<TLorentzVector> 
     return matched_idx;
 }
 
-RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, int seed, const MyCorrection::variation &syst, const TString &source){
-    gRandom->SetSeed(seed);
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const MyCorrection::variation &syst, const TString &source) {
     unordered_map<int, int> matched_idx = GenJetMatching(jets, genjets, fixedGridRhoFastjetAll);
     RVec<Jet> smeared_jets;
+    gRandom->SetSeed(int(MET_pt*1e6));
     for(size_t i = 0; i < jets.size(); i++){
         Jet this_jet = jets.at(i);
 
         // backward smearing for systematic variation
-
-        if (this_jet.GetUnsmearedP4().E() < 0) // never smeared yet
-        {
+        if (this_jet.GetUnsmearedP4().E() < 0) {
+            // never smeared yet
             this_jet.SetUnsmearedP4(this_jet);
-        }
-        else
-        {
+        } else {
             // already smeared
             float backward_factor = this_jet.GetUnsmearedP4().Pt() / this_jet.Pt();
             this_jet *= backward_factor;
@@ -215,19 +210,17 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
         float this_jer = myCorr->GetJER(this_jet.Eta(), this_jet.Pt(), fixedGridRhoFastjetAll);
         float this_sf = myCorr->GetJERSF(this_jet.Eta(), this_jet.Pt(), syst, source);
         float MIN_JET_ENERGY = 1e-2;
-
-        if(matched_idx[i] < 0){
+        
+        if(matched_idx[i] < 0) {
             // if the jet is not matched to any genjet, do stochastic smearing
-            if(this_sf < 1.){
+            if(this_sf < 1.) {
                 this_corr = MIN_JET_ENERGY / this_jet.E();
-            }
-            else{
+            } else{
                 this_corr += (gRandom->Gaus(0, this_jer)) * sqrt(max(this_sf * this_sf - 1., 0.0));
                 float new_corr = MIN_JET_ENERGY / this_jet.E();
                 this_corr = max(this_corr, new_corr);
             }
-        }
-        else{
+        } else {
             float this_genjet_pt = genjets[matched_idx[i]].Pt();
             this_corr += (this_sf - 1.) * (1. - this_genjet_pt / this_jet.Pt());
             float new_corr = MIN_JET_ENERGY / this_jet.E();
@@ -239,8 +232,16 @@ RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &gen
     return smeared_jets;
 }
 
-RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst, const TString &source)
-{
+RVec<Jet> AnalyzerCore::SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source){
+    if (syst == "nominal") return jets;
+    else if (syst == "up") return SmearJets(jets, genjets, MyCorrection::variation::up, source);
+    else if (syst == "down") return SmearJets(jets, genjets, MyCorrection::variation::down, source);
+    else throw runtime_error("[AnalyzerCore::SmearJets] Invalid syst value");
+}
+
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst, const TString &source) {
+    if(syst == MyCorrection::variation::nom) return jets;
+    
     RVec<Jet> scaled_jets;
     RVec<TString> syst_sources = {"AbsoluteMPFBias",
                                   "AbsoluteScale",
@@ -272,9 +273,6 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
                                   "SinglePionHCAL",
                                   "TimePtEta"};
 
-    if(syst == MyCorrection::variation::nom) return jets;
-
-
     for(const auto &jet: jets){
         Jet this_jet = jet;
 
@@ -288,12 +286,11 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
         }
 
         if(source == "total"){
-            for(const auto &it: syst_sources){
+            for(const auto &it: syst_sources) {
                 this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, it);
             }
             scaled_jets.push_back(this_jet);
-        }
-        else{
+        } else{
             this_jet *= myCorr->GetJESUncertainty(this_unsmearedP4.Eta(), this_unsmearedP4.Pt(), syst, source);
             scaled_jets.push_back(this_jet);
         }
@@ -301,9 +298,11 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
     return scaled_jets;
 }
 
-void AnalyzerCore::SetOutfilePath(TString outpath)
-{
-    outfile = new TFile(outpath, "RECREATE");
+RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source){
+    if(syst == "nom") return jets;
+    else if (syst == "up") return ScaleJets(jets, MyCorrection::variation::up, source);
+    else if (syst == "down") return ScaleJets(jets, MyCorrection::variation::down, source);
+    else throw runtime_error("[AnalyzerCore::ScaleJets] Invalid syst value");
 }
 
 // pdfs
@@ -350,6 +349,7 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 Event AnalyzerCore::GetEvent()
 {
     Event ev;
+    ev.SetRunLumiEvent(RunNumber, LumiBlock, EventNumber);
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
     if(Run == 3){
@@ -358,7 +358,7 @@ Event AnalyzerCore::GetEvent()
     else if(Run == 2){
         ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
     }
-
+    ev.SetGenMET(GenMET_pt, GenMET_phi);
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
     RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown, PuppiMET_ptJERUp, PuppiMET_ptJERDown, PuppiMET_ptJESUp, PuppiMET_ptJESDown};
@@ -370,10 +370,37 @@ Event AnalyzerCore::GetEvent()
 
 RVec<Muon> AnalyzerCore::GetAllMuons() {
     RVec<Muon> muons;
+    RVec<Gen> truth;
+    if (!IsDATA) truth = GetAllGens();
+
     for (int i = 0; i < nMuon; i++) {
         Muon muon;
         muon.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
         muon.SetCharge(Muon_charge[i]);
+        muon.SetNTrackerLayers(Muon_nTrackerLayers[i]);
+        float roccor = 1.;
+        float roccor_err = 0.;
+        if (IsDATA) {
+            roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom);
+            roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up) - roccor;
+        } else {
+            float matched_pt = -999.;
+            float min_dR = 0.2;
+            for (const auto &gen: truth) {
+                if (fabs(gen.PID()) != 13) continue;
+                if (gen.Status() != 1) continue;
+                float this_dR = muon.DeltaR(gen);
+                if (this_dR < min_dR) {
+                    min_dR = this_dR;
+                    matched_pt = gen.Pt();
+                }
+            }
+            roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom, matched_pt);
+            roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up, matched_pt) - roccor;
+        }
+        muon.SetMiniAODPt(muon.Pt());
+        muon.SetMomentumScaleUpDown(muon.Pt()*(roccor+roccor_err), muon.Pt()*(roccor-roccor_err)); 
+        muon.SetPtEtaPhiM(muon.Pt()*roccor, muon.Eta(), muon.Phi(), muon.M());
         muon.SetTkRelIso(Muon_tkRelIso[i]);
         muon.SetPfRelIso03(Muon_pfRelIso03_all[i]);
         muon.SetPfRelIso04(Muon_pfRelIso04_all[i]);
@@ -381,6 +408,8 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetdXY(Muon_dxy[i], Muon_dxyErr[i]);
         muon.SetdZ(Muon_dz[i], Muon_dzErr[i]);
         muon.SetIP3D(Muon_ip3d[i], Muon_sip3d[i]);
+        muon.SetNTrackerLayers(Muon_nTrackerLayers[i]);
+        muon.SetGenPartFlav(Muon_genPartFlav[i]);
         muon.SetBIDBit(Muon::BooleanID::LOOSE, Muon_looseId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUM, Muon_mediumId[i]);
         muon.SetBIDBit(Muon::BooleanID::MEDIUMPROMPT, Muon_mediumPromptId[i]);
@@ -393,9 +422,13 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetWIDBit(Muon::WorkingPointID::MULTIISO, Muon_multiIsoId[i]);
         if(Run == 3){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaMuID_WP[i]);
+            muon.SetGenPartIdx(Muon_genPartIdx[i]);
+            muon.SetJetIdx(Muon_jetIdx[i]);
         }
         else if(Run == 2){
             muon.SetWIDBit(Muon::WorkingPointID::MVAMU, Muon_mvaId[i]);
+            muon.SetGenPartIdx(static_cast<short>(Muon_genPartIdx_RunII[i]));
+            muon.SetJetIdx(Muon_jetIdx_RunII[i]);
         }
         //muon.SetWIDBit(Muon::WorkingPointID::MVALOWPT, Muon_mvaLowPtId[i]);
         muon.SetWIDBit(Muon::WorkingPointID::PFISO, Muon_pfIsoId[i]);
@@ -409,6 +442,22 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
     }
 
     return muons;
+}
+
+RVec<Muon> AnalyzerCore::ScaleMuons(const RVec<Muon> &muons, const TString &syst) {
+    RVec<Muon> scaled_muons;
+    for (const auto &muon: muons) {
+        Muon scaled_muon = muon;
+        if (syst == "up") {
+            scaled_muon.SetPtEtaPhiM(muon.MomentumScaleUp(), muon.Eta(), muon.Phi(), muon.M());
+        } else if (syst == "down") {
+            scaled_muon.SetPtEtaPhiM(muon.MomentumScaleDown(), muon.Eta(), muon.Phi(), muon.M());
+        } else {
+            throw runtime_error("[AnalyzerCore::ScaleMuons] Invalid variation");
+        }
+        scaled_muons.emplace_back(scaled_muon);
+    }
+    return scaled_muons;
 }
 
 RVec<Muon> AnalyzerCore::GetMuons(const TString ID, const float ptmin, const float fetamax) {
@@ -476,10 +525,19 @@ RVec<Muon> AnalyzerCore::SelectMuons(const RVec<Muon> &muons, const Muon::MuonID
 RVec<Electron> AnalyzerCore::GetAllElectrons(){
     RVec<Electron> electrons;
     for (int i = 0; i < nElectron; i++){
+        // Reject GAP region electrons
+        const float fscEta = fabs(Electron_scEta[i]);
+        if (1.444 < fscEta && fscEta < 1.566) continue;
+
         Electron electron;
         electron.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
         electron.SetCharge(Electron_charge[i]);
-        electron.SetDeltaEtaSC(Electron_deltaEtaSC[i]);
+        electron.SetScEta(Electron_scEta[i]);
+        electron.SetDeltaEtaInSC(Electron_deltaEtaInSC[i]);
+        electron.SetDeltaEtaInSeed(Electron_deltaEtaInSeed[i]);
+        electron.SetDeltaPhiInSC(Electron_deltaPhiInSC[i]);
+        electron.SetDeltaPhiInSeed(Electron_deltaPhiInSeed[i]);
+        electron.SetPFClusterIso(Electron_ecalPFClusterIso[i], Electron_hcalPFClusterIso[i]);
         electron.SetPfRelIso03(Electron_pfRelIso03_all[i]);
         electron.SetMiniPFRelIso(Electron_miniPFRelIso_all[i]);
         electron.SetdXY(Electron_dxy[i], Electron_dxyErr[i]);
@@ -497,21 +555,41 @@ RVec<Electron> AnalyzerCore::GetAllElectrons(){
         electron.SetDr03TkSumPt(Electron_dr03TkSumPt[i]);
         electron.SetDr03TkSumPtHEEP(Electron_dr03TkSumPtHEEP[i]);
         electron.SetR9(Electron_r9[i]);
-        if(Run == 3){
-            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
-
-        }
-        electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
-        electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+        electron.SetRho(fixedGridRhoFastjetAll);
+        electron.SetEnergyErr(Electron_energyErr[i]);
         electron.SetBIDBit(Electron::BooleanID::CUTBASEDHEEP, Electron_cutBased_HEEP[i]);
-        
-        electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
-        electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
         electron.SetMVA(Electron::MVATYPE::MVATTH, Electron_mvaTTH[i]);
         electron.SetGenPartFlav(Electron_genPartFlav[i]);
-        electron.SetGenPartIdx(Electron_genPartIdx[i]);
+
+        if (Run == 2) {
+            electron.SetEnergyResUnc(Electron_dEsigmaUp[i], Electron_dEsigmaDown[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaFall17V2Iso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaFall17V2Iso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWPL, Electron_mvaFall17V2Iso_WPL[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaFall17V2noIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaFall17V2noIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWPL, Electron_mvaFall17V2noIso_WPL[i]);
+            electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaFall17V2Iso[i]);
+            electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaFall17V2noIso[i]);
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased_RunII[i]);
+            electron.SetGenPartIdx(static_cast<short>(Electron_genPartIdx_RunII[i]));
+            electron.SetJetIdx(Electron_jetIdx_RunII[i]);
+        } else if (Run == 3) {
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP80, Electron_mvaIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWP90, Electron_mvaIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVAISOWPL, Electron_mvaIso_WPL[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP80, Electron_mvaNoIso_WP80[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWP90, Electron_mvaNoIso_WP90[i]);
+            electron.SetBIDBit(Electron::BooleanID::MVANOISOWPL, Electron_mvaNoIso_WPL[i]);
+            electron.SetMVA(Electron::MVATYPE::MVAISO, Electron_mvaIso[i]);
+            electron.SetMVA(Electron::MVATYPE::MVANOISO, Electron_mvaNoIso[i]);
+            electron.SetCBIDBit(Electron::CutBasedID::CUTBASED, Electron_cutBased[i]);
+            electron.SetGenPartIdx(Electron_genPartIdx[i]);
+            electron.SetJetIdx(Electron_jetIdx[i]); 
+        } else {
+            throw runtime_error("[AnalyzerCore::GetAllElectrons] Invalid run number");
+        }
+
 
         electrons.push_back(electron);
     }
@@ -554,6 +632,67 @@ RVec<Electron> AnalyzerCore::SelectElectrons(const RVec<Electron> &electrons, co
         selected_electrons.push_back(electron);
     }
     return selected_electrons;
+}
+
+RVec<Electron> AnalyzerCore::ScaleElectrons(const Event &ev, const RVec<Electron> &electrons, const TString &syst) {
+    if (IsDATA || syst == "nom") return electrons;
+    
+    RVec<Electron> scaled_electrons;
+    for (const auto &electron: electrons) {
+        float scale_variation = 1.;
+        if (syst == "up") {
+            scale_variation = myCorr->GetElectronScaleUnc(electron.scEta(), electron.SeedGain(), ev.run(), electron.r9(), electron.Pt(), MyCorrection::variation::up);    
+        } else if (syst == "down") {
+            scale_variation = myCorr->GetElectronScaleUnc(electron.scEta(), electron.SeedGain(), ev.run(), electron.r9(), electron.Pt(), MyCorrection::variation::down);    
+        } else {
+            throw runtime_error("[AnalyzerCore::ScaleElectrons] Invalid variation");
+        }
+        Electron scaled_electron = electron;
+        scaled_electron.SetPtEtaPhiM(electron.Pt()*scale_variation, electron.Eta(), electron.Phi(), electron.M());
+        scaled_electrons.emplace_back(scaled_electron);
+    }
+    return scaled_electrons;
+}
+
+RVec<Electron> AnalyzerCore::SmearElectrons(const RVec<Electron> &electrons, const TString &syst) {
+    RVec<Electron> smeared_electrons;
+    switch(Run) {
+        case 2:
+            for (const auto &electron: electrons) {
+                float smeared_pt = electron.Pt();
+                if (syst == "up") {
+                    smeared_pt *= (electron.E() - electron.dEsigmaUp())/electron.E();
+                } else if (syst == "down") {
+                    smeared_pt *= (electron.E() - electron.dEsigmaDown())/electron.E();
+                } else {
+                    throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
+                }
+                Electron smeared_electron = electron;
+                smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
+                smeared_electrons.emplace_back(smeared_electron);
+            }
+            break;
+        case 3: 
+            for (const auto &electron: electrons) {
+                float smeared_pt = electron.Pt();
+                if (syst == "nom") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::nom, int(electron.Rho()));
+                } else if (syst == "up") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::up, int(electron.Rho()));
+                } else if (syst == "down") {
+                    smeared_pt *= myCorr->GetElectronSmearUnc(electron, MyCorrection::variation::down, int(electron.Rho()));
+                } else {
+                    throw runtime_error("[AnalyzerCore::SmearElectrons] Invalid variation");
+                }
+                Electron smeared_electron = electron;
+                smeared_electron.SetPtEtaPhiM(smeared_pt, electron.Eta(), electron.Phi(), electron.M());
+                smeared_electrons.emplace_back(smeared_electron);
+            }
+            break;
+        default:
+            throw runtime_error("[AnalyzerCore::SmearElectrons] Run " + to_string(Run) + " is not supported");
+    }
+    return smeared_electrons;
 }
 
 RVec<Gen> AnalyzerCore::GetAllGens(){
@@ -656,11 +795,12 @@ RVec<Tau> AnalyzerCore::SelectTaus(const RVec<Tau> &taus, const TString ID, cons
 
 RVec<Jet> AnalyzerCore::GetAllJets() {
     RVec<Jet> Jets;
-    for (int i = 0; i < nJet; i++)
-    {
+    for (int i = 0; i < nJet; i++) {
         Jet jet;
         jet.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         jet.SetArea(Jet_area[i]);
+        jet.SetOriginalIndex(i);
+        jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         if(!IsDATA){
             if(Run == 3)
             jet.SetJetFlavours(Jet_partonFlavour[i] ,Jet_hadronFlavour[i]);
@@ -674,13 +814,14 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
                            Jet_btagPNetB[i], Jet_btagPNetCvB[i], Jet_btagPNetCvL[i], Jet_btagPNetQvG[i],
                            Jet_btagPNetTauVJet[i], Jet_btagRobustParTAK4B[i], Jet_btagRobustParTAK4CvB[i], Jet_btagRobustParTAK4CvL[i], Jet_btagRobustParTAK4QG[i]};
             jet.SetMultiplicities(Jet_nConstituents[i], Jet_nElectrons[i], Jet_nMuons[i], Jet_nSVs[i]);
+            jet.SetHadronMultiplicities(Jet_chMultiplicity[i], Jet_neMultiplicity[i]);
             if(!IsDATA){
                 jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i], Jet_genJetIdx[i]);
             }
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1[i], Jet_electronIdx2[i], Jet_muonIdx1[i], Jet_muonIdx2[i], Jet_svIdx1[i], Jet_svIdx2[i]);
             }
-            jet.SetJetID(Jet_jetId[i], Jet_eta[i], 3, Jet_neHEF[i], Jet_neEmEF[i], Jet_muEF[i], Jet_chEmEF[i]);
+            jet.SetJetID(Jet_jetId[i], 3);
             jet.SetJetPuID(0b111);
             tvs2 = {Jet_PNetRegPtRawCorr[i], Jet_PNetRegPtRawCorrNeutrino[i], Jet_PNetRegPtRawRes[i], Jet_rawFactor[i], -999.0, -999.0, -999.0, -999.0};
         }
@@ -696,29 +837,23 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
             else{
                 jet.SetMatchingIndices(Jet_electronIdx1_RunII[i], Jet_electronIdx2_RunII[i], Jet_muonIdx1_RunII[i], Jet_muonIdx2_RunII[i], -9, -9);
             }
-            jet.SetJetID(Jet_jetId_RunII[i], Jet_eta[i], 2);
-            if (DataYear == 2016)
-            {
+            jet.SetJetID(Jet_jetId_RunII[i], 2);
+            if (DataYear == 2016) {
                 // due to the bug in the NanoAODv9, the puId is stored in a wrong way
                 int InterChanged = 0;
                 InterChanged = Jet_puId[i] >> 2 | ((Jet_puId[i] & 0b001) << 2) | (Jet_puId[i] & 0b010);
                 jet.SetJetPuID(InterChanged);
-            }
-            else
-            {
+            } else {
                 jet.SetJetPuID(Jet_puId[i]);
             }
             tvs2 = {-999.0, -999.0, -999.0, -999.0, Jet_rawFactor[i], Jet_bRegCorr[i], Jet_bRegRes[i], Jet_cRegCorr[i], Jet_cRegRes[i]};
 
         }
         jet.SetTaggerResults(tvs);
-        jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
         jet.SetCorrections(tvs2);
         Jets.push_back(jet);
     }
-    // Set Integer part of first Jet Pt as seed of smearing to ensure reproducibility
-    int seed = static_cast<int>(Jets[0].Pt());
-    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets(), seed);
+    if(!IsDATA) Jets = SmearJets(Jets, GetAllGenJets());
     return Jets;
 }
 
@@ -844,7 +979,7 @@ bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &Al
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
     for(const auto &jet: this_jet){
-        if(jet.EMFraction() < 0.9) selected_jets.push_back(jet);
+        if(jet.chEmEF() + jet.neEmEF() < 0.9) selected_jets.push_back(jet);
     }
     for(const auto &jet: selected_jets){
         if(myCorr->IsJetVetoZone(jet.Eta(), jet.Phi(), mapCategory)) return false;
@@ -928,6 +1063,65 @@ RVec<GenJet> AnalyzerCore::GetAllGenJets() {
     return GenJets;
 }
 
+RVec<GenDressedLepton> AnalyzerCore::GetAllGenDressedLeptons() {
+    RVec<GenDressedLepton> GenDressedLeptons;
+    if(IsDATA) return GenDressedLeptons;
+
+    for(int i = 0; i < nGenDressedLepton; i++) {
+        GenDressedLepton lep;
+        lep.SetPtEtaPhiM(GenDressedLepton_pt[i], GenDressedLepton_eta[i], GenDressedLepton_phi[i], GenDressedLepton_mass[i]);
+        lep.SetPdgId(GenDressedLepton_pdgId[i]);
+        lep.SetHasTauAnc(GenDressedLepton_hasTauAnc[i]);
+        GenDressedLeptons.push_back(lep);
+    }
+    return GenDressedLeptons;
+}
+
+RVec<GenIsolatedPhoton> AnalyzerCore::GetAllGenIsolatedPhotons() {
+    RVec<GenIsolatedPhoton> GenIsolatedPhotons;
+    if(IsDATA) return GenIsolatedPhotons;
+
+    for(int i = 0; i < nGenIsolatedPhoton; i++) {
+        GenIsolatedPhoton photon;
+        photon.SetPtEtaPhiM(GenIsolatedPhoton_pt[i], GenIsolatedPhoton_eta[i], GenIsolatedPhoton_phi[i], GenIsolatedPhoton_mass[i]);
+        GenIsolatedPhotons.push_back(photon);
+    }
+    return GenIsolatedPhotons;
+}
+
+RVec<GenVisTau> AnalyzerCore::GetAllGenVisTaus() {
+    RVec<GenVisTau> GenVisTaus;
+    if(IsDATA) return GenVisTaus;
+
+    for(int i = 0; i < nGenVisTau; i++) {
+        GenVisTau tau;
+        tau.SetPtEtaPhiM(GenVisTau_pt[i], GenVisTau_eta[i], GenVisTau_phi[i], GenVisTau_mass[i]);
+        tau.SetCharge(GenVisTau_charge[i]);
+        tau.SetGenPartIdxMother(GenVisTau_genPartIdxMother[i]);
+        tau.SetStatus(GenVisTau_status[i]);
+        GenVisTaus.push_back(tau);
+    }
+    return GenVisTaus;
+}
+
+RVec<TrigObj> AnalyzerCore::GetAllTrigObjs() {
+    RVec<TrigObj> TrigObjs;
+    
+    for(int i = 0; i < nTrigObj; i++) {
+        TrigObj trigObj;
+        trigObj.SetRun(Run);
+        trigObj.SetPtEtaPhiM(TrigObj_pt[i], TrigObj_eta[i], TrigObj_phi[i], 0.0); // TrigObj mass is typically 0
+        if (Run == 3) {
+            trigObj.SetId(static_cast<Int_t>(TrigObj_id[i]));
+        } else {
+            trigObj.SetId(TrigObj_id_RunII[i]);
+        }
+        trigObj.SetFilterBits(TrigObj_filterBits[i]);
+        TrigObjs.push_back(trigObj);
+    }
+    return TrigObjs;
+}
+
 bool AnalyzerCore::IsHEMElectron(const Electron& electron) const {
     if (DataYear != 2018) return false;
 
@@ -963,14 +1157,13 @@ RVec<int> AnalyzerCore::TrackGenSelfHistory(const Gen &me, const RVec<Gen> &gens
     //returns {index of the first history of the gen, 
     //         index of the last history of the gen's mother}
     int myindex = me.Index();
-    if(myindex<2){ // 0 and 1 are initial partons
-        RVec<int> out = {myindex, -1};
-        return out;
-    }
+    if (myindex < 2) return {myindex, -1};
+
     int mypid = gens.at(myindex).PID();
     int currentidx = myindex;
     int motherindex = me.MotherIndex();
-
+    if (motherindex < 0) return {myindex, -1};
+    
     while(gens.at(motherindex).PID() == mypid){
         // Go one generation up
         currentidx = motherindex;
@@ -1103,6 +1296,7 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
     int myindex = me.Index();
     if(myindex<2) return true;
     RVec<int> my_history = TrackGenSelfHistory(me, gens);
+    if (my_history[1] < 0) return true;
     Gen          Start = gens.at( my_history[0] );
     Gen MotherOf_Start = gens.at( my_history[1] );
 
@@ -1111,11 +1305,14 @@ bool AnalyzerCore::IsFromHadron(const Gen& me, const RVec<Gen>& gens) {
     //==== e.g., leptons from Z start their lives with status 23
     if( 20 < Start.Status() && Start.Status() < 30 ) return false;
 
-     Gen current_me = Start; // me will always be Start
-     Gen current_mother = Start; // initializing
+    Gen current_me = Start; // me will always be Start
+    Gen current_mother = Start; // initializing
     while( current_mother.Index() >= 2 ){
         RVec<int> current_history = TrackGenSelfHistory(current_me, gens);
-
+        if (current_history[1] == -1) { // current_me is the initial partons
+            out = true;
+            break;
+        }
         //==== Go one generation up
         current_me = gens.at(current_history[1]);
 
@@ -1202,9 +1399,9 @@ int AnalyzerCore::GetLeptonType(const Lepton& lep, const RVec<Gen>& gens) {
     if( gen_closest.IsEmpty() ){
         Gen gen_photon_closest = GetGenMatchedPhoton(lep, gens);
         int NearPhotonType = GetGenPhotonType(gen_photon_closest,gens);
-        if     ( NearPhotonType<=0 ) LeptonType=-1;
-        else if( NearPhotonType==1 ) LeptonType=-5;
-        else if( NearPhotonType==2 ) LeptonType=-6;
+        if (NearPhotonType == 1)      LeptonType = -5;
+        else if (NearPhotonType == 2) LeptonType = -6;
+        else                          LeptonType = -1; // NearPhotonType <= 0
     } else { //==== Has macthed gen lepton
         MatchedTruthIdx = gen_closest.Index();
         LeptonType = GetLeptonType_Public(MatchedTruthIdx, gens);
@@ -1239,7 +1436,6 @@ int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens)
     if (genIdx<2) return 0;
     if (gens.at(genIdx).Status()!=1) return 0;
     if( !(fabs(gens.at(genIdx).PID())==11 || fabs(gens.at(genIdx).PID())==13) ) return 0;
-
 
     int LeptonType=0;
     int MPID=0, GrMPID=0;
@@ -1299,14 +1495,6 @@ int AnalyzerCore::GetLeptonType_Public(const int& genIdx, const RVec<Gen>& gens)
     else LeptonType=0;
 
     return LeptonType;
-    //**footnote
-    //1) matched to no gen-lepton nor gen-photon -> mis-reco.
-    //   matched to no gen-lepton, but to photon with hadronic origin -> mis-reco. (e.g. pions->e) or external conversion from photon in jets
-    //2) matched to no gen-lepton, but to photon with non-hadronic origin (hard process) -> external conversion from photon with non-hadronic source (ME-level)
-    //3) matched to no gen-lepton, but to photon with non-hadronic origin (soft QED radiation) -> external conversion from photon with non-hadronic source (PS-level)
-    //4) matched to gen-lepton, categorize based on the truth categorization algo.: AnalyzerCore::GetLeptonType_Public(int TruthIdx, std::vector<Gen>& TruthColl)
-    //5) collimated e/gm objects are merged in SC, hence if there is prompt electron within SC-merging range, reco-electron's properties actually represent pre-QED-FSR prompt-electron, rather than the closest internal conversion electron. Therefore shift the type to the prompt lepton's type.
-    //- Note: distinction between type 4 vs. 5 and type -5 vs. -6 is unphysical. it is only for debugging.
 }
 
 //==== [Type]
@@ -1494,8 +1682,7 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             TTree *newtree = new TTree(treekey.c_str(), "");
             treemap[treekey] = newtree;
             return newtree;
-        }
-        else{
+        } else{
             //check tree is empty. 
             if(fChain->GetEntries() == 0){
                 cout << "[AnalyzerCore::NewTree] fChain is empty." << endl;
@@ -1503,12 +1690,10 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             }
             TTree *newtree = fChain->CloneTree(0);
             newtree->SetName(treekey.c_str());
-            for (const auto &drop : drops)
-            {
+            for (const auto &drop : drops) {
                 newtree->SetBranchStatus(drop, 0);
             }
-            for (const auto &keep : keeps)
-            {
+            for (const auto &keep : keeps) {
                 newtree->SetBranchStatus(keep, 1);
             }
             treemap[treekey] = newtree;
@@ -1516,8 +1701,7 @@ TTree* AnalyzerCore::NewTree(const TString &treename, const RVec<TString> &keeps
             branchmaps[newtree] = this_branchmap;
             return newtree;
         }
-    }
-    else{
+    } else{
         return it->second;
     }
 }
@@ -1540,14 +1724,12 @@ void AnalyzerCore::SetBranch(const TString &treename, const TString &branchname,
         unordered_map<string, TBranch*>* this_branchmap = &branchmaps[tree];
         auto it = this_branchmap->find(string(branchname));
 
-        if (it == this_branchmap->end()){
+        if (it == this_branchmap->end()) {
             auto br = tree->Branch(branchname, this_address, leaflist);
             this_branchmap->insert({string(branchname), br});
-        }
-        else{
+        } else {
             it->second->SetAddress(this_address);
         }
-        
     }
     catch(int e){
         cout << "[AnalyzerCore::SetBranch] Error get tree: " << treename.Data() << endl;
@@ -1561,12 +1743,9 @@ template void AnalyzerCore::SetBranch_Vector<double>(const TString &, const TStr
 template void AnalyzerCore::SetBranch_Vector<bool>(const TString &, const TString &, std::vector<bool> &);
 
 
-void AnalyzerCore::FillTrees(const TString &treename)
-{
-    if (treename == "")
-    {
-        for (const auto &pair : treemap)
-        {
+void AnalyzerCore::FillTrees(const TString &treename) {
+    if (treename == "") {
+        for (const auto &pair : treemap) {
             const string &treename = pair.first;
             TTree *tree = pair.second;
             tree->Fill();
@@ -1577,15 +1756,12 @@ void AnalyzerCore::FillTrees(const TString &treename)
         this_floats.shrink_to_fit();
         this_ints.shrink_to_fit();
         this_bools.shrink_to_fit(); // Mandatory;
-    }
-    else
-    {
+    } else {
         // Convert treeName to std::string for comparison
         std::string treeNameStr(treename.Data());
 
         auto it = treemap.find(treeNameStr);
-        if (it != treemap.end())
-        {
+        if (it != treemap.end()) {
             // Tree with the given name exists, fill it
             TTree *tree = it->second;
             tree->Fill();
@@ -1595,9 +1771,7 @@ void AnalyzerCore::FillTrees(const TString &treename)
             this_floats.shrink_to_fit();
             this_ints.shrink_to_fit();
             this_bools.shrink_to_fit(); // Mandatory;
-        }
-        else
-        {
+        } else {
             // Handle the case where the treeName is not found in the map
             throw std::runtime_error("[AnalyzerCore::FillTrees] Tree with name '" + treeNameStr + "' not found in treemap.");
         }
@@ -1697,4 +1871,3 @@ void AnalyzerCore::WriteHist() {
     cout << "[AnalyzerCore::WriteHist] Writing histograms done" << endl;
     outfile->Close();
 }
-

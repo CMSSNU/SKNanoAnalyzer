@@ -19,7 +19,7 @@
 - [x] Auto-Validation: Check the consistency of the output for a specific NanoAOD file: **Jin**
 - [x] Check for CVMFS environment compatability **deprecated**
 - [x] Update MeasureTaggingEff.cc **Yeonjoon**
-- [x] Rochester Correction Follow-up **Ask Hyonsan or Won(Contact: Chihwan)**
+- [ ] Rochester Correction Follow-up **Ask Hyonsan or Won(Contact: Chihwan)**
 - [x] Update the network to 10G? (later)
 
 For DY, check the before/after of correction

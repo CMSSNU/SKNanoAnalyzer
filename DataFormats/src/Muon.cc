@@ -27,6 +27,9 @@ Muon::Muon() {
     j_softMva = -999.;
     j_mvaLowPt = -999.;
     j_mvaTTH = -999.;
+    
+    // jet matching
+    j_jetIdx = -1;
 }
 
 Muon::~Muon() {}
@@ -68,7 +71,7 @@ void Muon::SetMVAID(MVAID id, float score) {
 }
 
 bool Muon::PassID(const TString ID) const {
-    if (ID == "NOCUT")            return true;
+    if (ID == "")                 return true;
     if (ID == "POGTight")         return isPOGTightId();
     if (ID == "POGMedium")        return isPOGMediumId();
     if (ID == "POGMediumPrompt")  return isPOGMediumPromptId();
@@ -97,14 +100,15 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGPuppiIsoTight") return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
     if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 1;
     if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 2;
+    if (ID == "HcToWATight")      return Pass_HcToWATight();
+    if (ID == "HcToWALoose")      return Pass_HcToWALoose();
     cerr << "[Muon::PassID] " << ID << " is not implemented." << endl;
     exit(ENODATA);
 
     return false;
 }
 
-bool Muon::PassID(const MuonID ID) const
-{
+bool Muon::PassID(const MuonID ID) const {
     switch(ID){
         case MuonID::NOCUT:
             return true;
@@ -168,4 +172,22 @@ bool Muon::PassID(const MuonID ID) const
             break;
     }
     return false;
+}
+
+bool Muon::Pass_HcToWATight() const {
+    if (! isPOGMediumId()) return false;
+    if (! (fabs(dZ()) < 0.1)) return false;
+    if (! (SIP3D() < 3.)) return false;
+    if (! (TkRelIso() < 0.4*Pt())) return false;
+    if (! (MiniPFRelIso() < 0.1)) return false;
+    return true;
+}
+
+bool Muon::Pass_HcToWALoose() const {
+    if (! isPOGMediumId()) return false;
+    if (! (fabs(dZ()) < 0.1)) return false;
+    if (! (SIP3D() < 5.)) return false;
+    if (! (TkRelIso() < 0.4*Pt())) return false;
+    if (! (MiniPFRelIso() < 0.6)) return false;
+    return true;
 }

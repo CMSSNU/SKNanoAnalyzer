@@ -3,17 +3,20 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
+#pragma link C++ class Event+;
 #pragma link C++ class Particle+;
-#pragma link C++ class Gen+;
 #pragma link C++ class LHE+;
+#pragma link C++ class Gen+;
+#pragma link C++ class GenDressedLepton+;
+#pragma link C++ class GenIsolatedPhoton+;
+#pragma link C++ class GenVisTau+;
+#pragma link C++ class GenJet+;
 #pragma link C++ class Lepton+;
 #pragma link C++ class Muon+;
 #pragma link C++ class Electron+;
-#pragma link C++ class Jet+;
-#pragma link C++ class Event+;
 #pragma link C++ class Tau+;
-#pragma link C++ class Jet+;
 #pragma link C++ class Photon+;
-#pragma link C++ class GenJet+;
+#pragma link C++ class Jet+;
 #pragma link C++ class FatJet+;
 #pragma link C++ class JetTaggingParameter+;
+#pragma link C++ class TrigObj+;

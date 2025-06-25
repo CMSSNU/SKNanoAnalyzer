@@ -4,7 +4,7 @@
 void [jobname]() {
     [analyzer] module;
     module.SetTreeName("Events");
-    module.LogEvery = 1000;
+    module.LogEvery = 5000;
     module.IsDATA = false;
     module.MCSample = "[sample]";
     module.xsec = [xsec];

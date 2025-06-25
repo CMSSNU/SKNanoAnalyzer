@@ -166,8 +166,10 @@ def setParser():
     parser.add_argument('-e', dest='Era', default="All",help="2022, 2022EE. can be comma separated")
     parser.add_argument('-r', dest='Run', default="None",help="Run2, Run3. can be comma separated. override era option")
     parser.add_argument('--userflags', dest='Userflags', default="")
-    parser.add_argument('--nmax', dest='NMax', default=300, type=int, help="maximum running jobs")
+    parser.add_argument('--nmax', dest='NMax', default=500, type=int, help="maximum running jobs")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
+    parser.add_argument('--python', action="store_true", default=False,
+    help="Use python analyzer")
     parser.add_argument('--memory', dest='Memory', default=2048, type=float)
     parser.add_argument('--ncpu', dest='ncpu', default=1, type=int) 
     parser.add_argument('--batchname', dest='BatchName', default="")
@@ -191,7 +193,7 @@ def getMasterDirectoryName(timeStamp, Analyzer, Userflags):
     #print("...Done")
     return MasterDirectoryName, abs_MasterDirectoryName
 
-def getInputSampleList(inputArguments, eras):
+def getInputSampleList(inputArguments):
     #if string
     if inputArguments.endswith(".txt"):
         with open(inputArguments, 'r') as f:
@@ -220,75 +222,8 @@ def jobFileDivider(files,ngroup):
     else:
         print('\033[91m'+"ERROR: ngroup should be positive or negative integer"+'\033[0m')
     return filegroups
-
-def create_cpp_job(i, out_base, sample, argparse_module, sampleInfo, isMC, era, userflags, samplePaths, reduction, working_dir):
-    """
-    Worker function to create a single C++ job file.
-    """
-    output = out_base.replace('.root', f'_{i+1}.root')
-    
-    cpp_lines = [
-        "#include <algorithm>",
-        f"void job{i+1}() {{",
-        f"    {argparse_module.Analyzer} module;",
-        '    module.SetTreeName("Events");',
-        '    module.LogEvery = 1000;',
-    ]
-
-    if isMC:
-        cpp_lines += [
-            '    module.IsDATA = false;',
-            f'    module.MCSample = "{sample}";',
-            f'    module.xsec = {sampleInfo["xsec"]};',
-            f'    module.sumW = {sampleInfo["sumW"]};',
-            f'    module.sumSign = {sampleInfo["sumsign"]};',
-        ]
-    else:
-        cpp_lines += [
-            '    module.IsDATA = true;',
-            f'    module.DataStream = "{sample.split("_")[0]}";',
-        ]
-
-    cpp_lines += [
-        f'    module.SetEra("{era}");',
-    ]
-
-    if userflags:
-        cpp_lines.append("    module.Userflags = {")
-        cpp_lines += [f'        "{flag}",' for flag in userflags]
-        cpp_lines.append("    };")
-
-    for path in samplePaths[i]:
-        cpp_lines.append(f'    module.AddFile("{path}");')
-
-    cpp_lines += [
-        f'    module.SetOutfilePath("{output}");',
-    ]
-
-    if reduction > 1:
-        cpp_lines.append(
-            f'    module.MaxEvent = std::max(1, static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));'
-        )
-
-    cpp_lines += [
-        "    module.Init();",
-        "    module.initializeAnalyzer();",
-        "    module.Loop();",
-        "    module.WriteHist();",
-        "}",
-    ]
-
-    cpp_content = "\n".join(cpp_lines)
-    job_filename = os.path.join(working_dir, f"job{i+1}.cpp")
-    
-    try:
-        with open(job_filename, 'w') as f:
-            f.write(cpp_content)
-    except Exception as e:
-        print(f"Error writing {job_filename}: {e}")
-
  
-def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, totsamples):
+def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, totsamples):
     isMC, period = isMCandGetPeriod(sample)
     AnalyzerName = argparse.Analyzer
 
@@ -324,50 +259,95 @@ def pythonJobProducer(era, sample, argparse, masterJobDirectory, userflags, isam
         output = out_base.replace('.root',f'_{i+1}.root')
 
         # Read the template file
-        template_path = os.path.join(SKNANO_HOME, "templates", "job.cc")
-        with open(template_path, 'r') as f:
-            job_content = f.read()
+        if argparse.python:
+            template_path = os.path.join(SKNANO_HOME, "templates", "job.py")
+            with open(template_path, 'r') as f:
+                job_content = f.read()
+
+            # Replace template variations
+            job_content = job_content.replace("[Analyzer]", argparse.Analyzer)
+            job_content = job_content.replace("[era]", era)
+
+            if isMC:
+                job_content = job_content.replace("[sample]", sample)
+                job_content = job_content.replace("[xsec]", str(sampleInfo["xsec"]))
+                job_content = job_content.replace("[sumW]", str(sampleInfo["sumW"]))
+                job_content = job_content.replace("[sumSign]", str(sampleInfo["sumsign"]))
+            else:
+                job_content = job_content.replace("module.IsDATA = False", "module.IsDATA = True")
+                job_content = job_content.replace('module.MCSample = "[sample]"',
+                                                  f'module.DataStream = "{sample.split("_")[0]}"')
+                job_content = job_content.replace("    module.xsec = [xsec]\n", "")
+                job_content = job_content.replace("    module.sumW = [sumW]\n", "")
+                job_content = job_content.replace("    module.sumSign = [sumSign]\n", "")
             
-        # Replace template variables
-        job_content = job_content.replace("[jobname]", f"job_{i+1}")
-        job_content = job_content.replace("[analyzer]", argparse.Analyzer)
-        job_content = job_content.replace("[sample]", sample)
-        job_content = job_content.replace("[era]", era)
-        
-        if isMC:
-            job_content = job_content.replace("[xsec]", str(sampleInfo["xsec"]))
-            job_content = job_content.replace("[sumW]", str(sampleInfo["sumW"]))
-            job_content = job_content.replace("[sumSign]", str(sampleInfo["sumsign"]))
+            # Handle userflags
+            if userflags:
+                userflags_str = "    module.Userflags = RVec(TString)(["
+                userflags_str += ", ".join([f'"{flag}"' for flag in userflags])
+                userflags_str += "])"
+            else:
+                userflags_str = ""
+            job_content = job_content.replace("[USERFLAGS]", userflags_str)
+            
+            # Handle sample paths
+            samplepaths_str = "\n".join([f'    module.AddFile("{path}")' for path in samplePaths[i]])
+            job_content = job_content.replace("[SAMPLEPATHS]", samplepaths_str)
+
+            # Handle reduction/max events
+            maxevent_str = f'    module.MaxEvent = max(1, int(module.fChain.GetEntries()/{int(reduction)}))'
+            job_content = job_content.replace("[MAXEVENT]", maxevent_str)
+
+            # Set output path
+            job_content = job_content.replace("[output]", output)
+            job_filename = os.path.join(working_dir, f"job_{i+1}.py")
+            with open(job_filename, 'w') as f:
+                f.write(job_content)
         else:
-            # For data, remove MC-specific lines
-            job_content = job_content.replace("module.IsDATA = false;", "module.IsDATA = true;")
-            job_content = job_content.replace('module.MCSample = "[sample]";', f'module.DataStream = "{sample.split("_")[0]}";')
-            job_content = job_content.replace("module.xsec = [xsec];", "")
-            job_content = job_content.replace("module.sumW = [sumW];", "") 
-            job_content = job_content.replace("module.sumSign = [sumSign];", "")
+            template_path = os.path.join(SKNANO_HOME, "templates", "job.cc")
+            with open(template_path, 'r') as f:
+                job_content = f.read()
+            
+            # Replace template variables
+            job_content = job_content.replace("[jobname]", f"job_{i+1}")
+            job_content = job_content.replace("[analyzer]", argparse.Analyzer)
+            job_content = job_content.replace("[era]", era)
 
-        # Handle userflags
-        if userflags:
-            userflags_str = "module.Userflags = {\n"
-            userflags_str += "".join([f'\t"{flag}",\n' for flag in userflags])
-            userflags_str += "    };"
-        else:
-            userflags_str = ""
-        job_content = job_content.replace("[USERFLAGS]", userflags_str)
+            if isMC:
+                job_content = job_content.replace("[sample]", sample)
+                job_content = job_content.replace("[xsec]", str(sampleInfo["xsec"]))
+                job_content = job_content.replace("[sumW]", str(sampleInfo["sumW"]))
+                job_content = job_content.replace("[sumSign]", str(sampleInfo["sumsign"]))
+            else:
+                # For data, remove MC-specific lines
+                job_content = job_content.replace("module.IsDATA = false;", "module.IsDATA = true;")
+                job_content = job_content.replace('module.MCSample = "[sample]";', f'module.DataStream = "{sample.split("_")[0]}";')
+                job_content = job_content.replace("module.xsec = [xsec];", "")
+                job_content = job_content.replace("module.sumW = [sumW];", "") 
+                job_content = job_content.replace("module.sumSign = [sumSign];", "")
 
-        # Handle sample paths
-        samplepaths_str = "\n".join([f'\tmodule.AddFile("{path}");' for path in samplePaths[i]])
-        job_content = job_content.replace("[SAMPLEPATHS]", samplepaths_str)
+            # Handle userflags
+            if userflags:
+                userflags_str = "module.Userflags = {\n"
+                userflags_str += "".join([f'\t"{flag}",\n' for flag in userflags])
+                userflags_str += "    };"
+            else:
+                userflags_str = ""
+            job_content = job_content.replace("[USERFLAGS]", userflags_str)
 
-        # Handle reduction/max events
-        maxevent_str = f'\tmodule.MaxEvent = std::max(1, static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));'
-        job_content = job_content.replace("[MAXEVENT]", maxevent_str)
+            # Handle sample paths
+            samplepaths_str = "\n".join([f'\tmodule.AddFile("{path}");' for path in samplePaths[i]])
+            job_content = job_content.replace("[SAMPLEPATHS]", samplepaths_str)
 
-        # Set output path
-        job_content = job_content.replace("[output]", output)
-        job_filename = os.path.join(working_dir, f"job_{i+1}.cc")
-        with open(job_filename, 'w') as f:
-            f.write(job_content)
+            # Handle reduction/max events
+            maxevent_str = f'\tmodule.MaxEvent = std::max(1, static_cast<int>(module.fChain->GetEntries()/{int(reduction)}));'
+            job_content = job_content.replace("[MAXEVENT]", maxevent_str)
+
+            # Set output path
+            job_content = job_content.replace("[output]", output)
+            job_filename = os.path.join(working_dir, f"job_{i+1}.cc")
+            with open(job_filename, 'w') as f:
+                f.write(job_content)
             
     return working_dir, totalNumberOfJobs
             
@@ -396,14 +376,14 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     inclpath = inclpath + [os.path.join(abs_MasterDirectoryName,'include')]
     inclpath = inclpath[-1] if len(inclpath) == 2 else ":".join(inclpath)
     
-    template_path = os.path.join(SKNANO_HOME, "templates", "run.sh")
+    run_template = "run.python.sh" if argparse.python else "run.sh"
+    template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
         run_content = f.read()
     run_content = run_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     run_content = run_content.replace("[SKNANO_DATA]", SKNANO_DATA)
     run_content = run_content.replace("[WORKDIR]", working_dir)
     run_content = run_content.replace("[SKNANO_RUNLOG_LIB]", os.path.join(abs_MasterDirectoryName, 'lib'))
-    #run_content = run_content.replace("[LD_LIBRARY_PATH]", libpath)
     run_content = run_content.replace("[ROOT_INCLUDE_PATH]", inclpath)
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
         f.write(run_content)
@@ -423,8 +403,7 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
 def makeHaddJobs(working_dir,argparser,sample):
     AnalyzerName = argparser.Analyzer
     if len(userflags) > 0:
-        for flag in userflags:
-            AnalyzerName += f"_{flag}"
+        AnalyzerName += f"/{'_'.join(userflags)}"
     era = working_dir.split('/')[-2]
     hadd_target = os.path.join(SKNANO_OUTPUT,AnalyzerName,era,sample+'.root')
     if not os.path.exists(os.path.dirname(hadd_target)):
@@ -443,6 +422,8 @@ def makeHaddJobs(working_dir,argparser,sample):
     job_dict['JobBatchName'] = f"Hadd_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
     job_dict['output'] = os.path.join(working_dir,"hadd.out")
     job_dict['error'] = os.path.join(working_dir,"hadd.err")
+    job_dict['request_cpus'] = 8
+    job_dict['request_memory'] = 8192
 
     return job_dict
 
@@ -482,8 +463,6 @@ def makeSkimPostProcsJobs(working_dir,sample, argparser,era):
     job_dict['when_to_transfer_output'] = "ON_EXIT"
 
     return job_dict
-    
-
 
 def getEachAnalyzerToPostDag(kwarg):
     analyzer_sub_dict = kwarg['analyzer_sub_dict']
@@ -509,10 +488,11 @@ def getEachAnalyzerToPostDag(kwarg):
         
 def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
     batchname = argparser.BatchName
-    userflags = getUserFlagsList(args.Userflags)
+    userflags = getUserFlagsList(argparser.Userflags)
     if batchname == "":
         batchname = argparser.Analyzer
-        batchname += "_".join(userflags) if userflags else ""
+        for flag in userflags:
+            batchname += f"_{flag}"
                 
     dag_dir = os.path.join(master_dir,"dags")
     os.makedirs(dag_dir)
@@ -624,7 +604,7 @@ if __name__ == '__main__':
     userflags = getUserFlagsList(args.Userflags)
     timestamp, string_JobStartTime = getTimeStamp()
     _, abs_MasterDirectoryName= getMasterDirectoryName(timestamp, args.Analyzer, userflags)
-    InputSamplelist = getInputSampleList(args.InputSample, eras)
+    InputSamplelist = getInputSampleList(args.InputSample)
     
     dag_list = []
     hadd_layers = []
@@ -634,7 +614,7 @@ if __name__ == '__main__':
         print(f"Working on {era}")
         InputSamplelist_era = makeSampleList(InputSamplelist, era)
         for isample, sample in enumerate(InputSamplelist_era):
-            working_dir, totalNumberofJobs = pythonJobProducer(era, sample, args, abs_MasterDirectoryName, userflags, isample, len(InputSamplelist_era))
+            working_dir, totalNumberofJobs = jobProducer(era, sample, args, abs_MasterDirectoryName, userflags, isample, len(InputSamplelist_era))
             if totalNumberofJobs == None:
                 continue
             analyzer_sub_dict = makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberofJobs,args)
