@@ -48,22 +48,23 @@ void SKNanoLoader::Loop() {
             cerr << "[SKNanoLoader::Loop] Error reading event " << jentry << endl;
             exit(1);
         }
-        
+
         // make sure Run2 and Run3 variables are in sync
         if (Run == 2) {
-            nLHEPart = static_cast<UInt_t>(nLHEPart_RunII);
-            nGenPart = static_cast<UInt_t>(nGenPart_RunII);
-            nGenJet = static_cast<UInt_t>(nGenJet_RunII);
-            nGenJetAK8 = static_cast<UInt_t>(nGenJetAK8_RunII);
-            nGenIsolatedPhoton = static_cast<UInt_t>(nGenIsolatedPhoton_RunII);
-            nGenDressedLepton = static_cast<UInt_t>(nGenDressedLepton_RunII);
-            nGenVisTau = static_cast<UInt_t>(nGenVisTau_RunII);
-            nMuon = static_cast<UInt_t>(nMuon_RunII);
-            nElectron = static_cast<UInt_t>(nElectron_RunII);
-            nTau = static_cast<UInt_t>(nTau_RunII);
-            nPhoton = static_cast<UInt_t>(nPhoton_RunII);
-            nJet = static_cast<UInt_t>(nJet_RunII);
-            nFatJet = static_cast<UInt_t>(nFatJet_RunII);
+            nLHEPart = static_cast<Int_t>(nLHEPart_RunII);
+            nGenPart = static_cast<Int_t>(nGenPart_RunII);
+            nGenJet = static_cast<Int_t>(nGenJet_RunII);
+            nGenJetAK8 = static_cast<Int_t>(nGenJetAK8_RunII);
+            nGenIsolatedPhoton = static_cast<Int_t>(nGenIsolatedPhoton_RunII);
+            nGenDressedLepton = static_cast<Int_t>(nGenDressedLepton_RunII);
+            nGenVisTau = static_cast<Int_t>(nGenVisTau_RunII);
+            nMuon = static_cast<Int_t>(nMuon_RunII);
+            nElectron = static_cast<Int_t>(nElectron_RunII);
+            nTau = static_cast<Int_t>(nTau_RunII);
+            nPhoton = static_cast<Int_t>(nPhoton_RunII);
+            nJet = static_cast<Int_t>(nJet_RunII);
+            nFatJet = static_cast<Int_t>(nFatJet_RunII);
+            nTrigObj = static_cast<Int_t>(nTrigObj_RunII);
         }
         
         executeEvent();
@@ -104,6 +105,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     const UInt_t kMaxElectron = getMaxBranchValue(df, "nElectron");
     const UInt_t kMaxTau = getMaxBranchValue(df, "nTau");
     const UInt_t kMaxFatJet = getMaxBranchValue(df, "nFatJet");
+    const UInt_t kMaxTrigObj = getMaxBranchValue(df, "nTrigObj");
     cout << "[SKNanoLoader::SetMaxLeafSize] Maximum Leaf Size Set" << endl;
     auto RDataFrameFinishTime = std::chrono::high_resolution_clock::now();
     
@@ -185,6 +187,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     Muon_eta.resize(kMaxMuon);
     Muon_highPtId.resize(kMaxMuon);
     Muon_ip3d.resize(kMaxMuon);
+    Muon_nTrackerLayers.resize(kMaxMuon);
     Muon_isGlobal.resize(kMaxMuon);
     Muon_isStandalone.resize(kMaxMuon);
     Muon_isTracker.resize(kMaxMuon);
@@ -211,19 +214,34 @@ void SKNanoLoader::SetMaxLeafSize(){
     Muon_tkIsoId.resize(kMaxMuon);
     Muon_tkRelIso.resize(kMaxMuon);
     Muon_triggerIdLoose.resize(kMaxMuon);
+    Muon_genPartFlav.resize(kMaxMuon);
     if(Run == 3){ 
         Muon_mvaMuID_WP.resize(kMaxMuon);
+        Muon_genPartIdx.resize(kMaxMuon);
+        Muon_jetIdx.resize(kMaxMuon);
+        Muon_genPartIdx_RunII.resize(0);
+        Muon_jetIdx_RunII.resize(0);
         Muon_mvaId.resize(0);
     }
     else if(Run == 2){
         Muon_mvaMuID_WP.resize(0);
+        Muon_jetIdx.resize(0);
+        Muon_genPartIdx.resize(0);
+        Muon_genPartIdx_RunII.resize(kMaxMuon);
+        Muon_jetIdx_RunII.resize(kMaxMuon);
         Muon_mvaId.resize(kMaxMuon);
     }
     // Electron----------------------------
     Electron_charge.resize(kMaxElectron);
     Electron_convVeto.resize(kMaxElectron);
     Electron_cutBased_HEEP.resize(kMaxElectron);
-    Electron_deltaEtaSC.resize(kMaxElectron);
+    Electron_scEta.resize(kMaxElectron);
+    Electron_deltaEtaInSC.resize(kMaxElectron);
+    Electron_deltaEtaInSeed.resize(kMaxElectron);
+    Electron_deltaPhiInSC.resize(kMaxElectron);
+    Electron_deltaPhiInSeed.resize(kMaxElectron);
+    Electron_ecalPFClusterIso.resize(kMaxElectron);
+    Electron_hcalPFClusterIso.resize(kMaxElectron);
     Electron_dr03EcalRecHitSumEt.resize(kMaxElectron);
     Electron_dr03HcalDepth1TowerSumEt.resize(kMaxElectron);
     Electron_dr03TkSumPt.resize(kMaxElectron);
@@ -235,7 +253,6 @@ void SKNanoLoader::SetMaxLeafSize(){
     Electron_eInvMinusPInv.resize(kMaxElectron);
     Electron_energyErr.resize(kMaxElectron);
     Electron_eta.resize(kMaxElectron);
-    Electron_genPartFlav.resize(kMaxElectron);
     Electron_hoe.resize(kMaxElectron);
     Electron_ip3d.resize(kMaxElectron);
     Electron_isPFcand.resize(kMaxElectron);
@@ -257,6 +274,7 @@ void SKNanoLoader::SetMaxLeafSize(){
     Electron_seedGain.resize(kMaxElectron);
     Electron_sieie.resize(kMaxElectron);
     Electron_sip3d.resize(kMaxElectron);
+    Electron_genPartFlav.resize(kMaxElectron);
     if(Run == 3){
         Electron_cutBased.resize(kMaxElectron);
         Electron_genPartIdx.resize(kMaxElectron);
@@ -264,18 +282,22 @@ void SKNanoLoader::SetMaxLeafSize(){
         Electron_mvaIso.resize(kMaxElectron);
         Electron_mvaIso_WP80.resize(kMaxElectron);
         Electron_mvaIso_WP90.resize(kMaxElectron);
+        Electron_mvaIso_WPL.resize(kMaxElectron);
         Electron_mvaNoIso.resize(kMaxElectron);
         Electron_mvaNoIso_WP80.resize(kMaxElectron);
         Electron_mvaNoIso_WP90.resize(kMaxElectron);
+        Electron_mvaNoIso_WPL.resize(kMaxElectron);
         Electron_cutBased_RunII.resize(0);
         Electron_genPartIdx_RunII.resize(0);
         Electron_jetIdx_RunII.resize(0);
         Electron_mvaFall17V2Iso.resize(0);
         Electron_mvaFall17V2Iso_WP80.resize(0);
         Electron_mvaFall17V2Iso_WP90.resize(0);
+        Electron_mvaFall17V2Iso_WPL.resize(0);
         Electron_mvaFall17V2noIso.resize(0);
         Electron_mvaFall17V2noIso_WP80.resize(0);
         Electron_mvaFall17V2noIso_WP90.resize(0);
+        Electron_mvaFall17V2noIso_WPL.resize(0);
     }
     else if(Run == 2){
         Electron_cutBased.resize(0);
@@ -284,18 +306,24 @@ void SKNanoLoader::SetMaxLeafSize(){
         Electron_mvaIso.resize(0);
         Electron_mvaIso_WP80.resize(0);
         Electron_mvaIso_WP90.resize(0);
+        Electron_mvaIso_WPL.resize(0);
         Electron_mvaNoIso.resize(0);
         Electron_mvaNoIso_WP80.resize(0);
         Electron_mvaNoIso_WP90.resize(0);
+        Electron_mvaNoIso_WPL.resize(0);
         Electron_cutBased_RunII.resize(kMaxElectron);
         Electron_genPartIdx_RunII.resize(kMaxElectron);
         Electron_jetIdx_RunII.resize(kMaxElectron);
         Electron_mvaFall17V2Iso.resize(kMaxElectron);
         Electron_mvaFall17V2Iso_WP80.resize(kMaxElectron);
         Electron_mvaFall17V2Iso_WP90.resize(kMaxElectron);
+        Electron_mvaFall17V2Iso_WPL.resize(kMaxElectron);
         Electron_mvaFall17V2noIso.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP80.resize(kMaxElectron);
         Electron_mvaFall17V2noIso_WP90.resize(kMaxElectron);
+        Electron_mvaFall17V2noIso_WPL.resize(kMaxElectron);
+        Electron_dEsigmaUp.resize(kMaxElectron);
+        Electron_dEsigmaDown.resize(kMaxElectron);
     } 
     
     //Photon----------------------------
@@ -392,6 +420,8 @@ void SKNanoLoader::SetMaxLeafSize(){
         Jet_puId.resize(0);
         Jet_puIdDisc.resize(0);
         Jet_qgl.resize(0);
+        Jet_chMultiplicity.resize(0);
+        Jet_neMultiplicity.resize(0);
     }
     else if(Run == 2){
         Jet_PNetRegPtRawCorr.resize(0);
@@ -445,7 +475,6 @@ void SKNanoLoader::SetMaxLeafSize(){
     }
 
     //Tau----------------------------
-    // Tau----------------------------
     Tau_dxy.resize(kMaxTau);
     Tau_dz.resize(kMaxTau);
     Tau_eta.resize(kMaxTau);
@@ -578,6 +607,14 @@ void SKNanoLoader::SetMaxLeafSize(){
         FatJet_subJetIdx2_RunII.resize(kMaxFatJet);
     }
 
+    // TrigObj----------------------------
+    TrigObj_pt.resize(kMaxTrigObj);
+    TrigObj_eta.resize(kMaxTrigObj);
+    TrigObj_phi.resize(kMaxTrigObj);
+    TrigObj_id.resize(kMaxTrigObj);
+    TrigObj_id_RunII.resize(kMaxTrigObj);
+    TrigObj_filterBits.resize(kMaxTrigObj);
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     auto RDataFrameDuration = std::chrono::duration_cast<std::chrono::milliseconds>(RDataFrameFinishTime - start);
@@ -594,6 +631,24 @@ void SKNanoLoader::Init() {
         if (!branch) {
             cout << "[SKNanoGenLoader::Init] Warning:Branch " << branchName << " not found" << endl;
             return;
+        }
+        fChain->SetBranchStatus(branchName, 1);
+        fChain->SetBranchAddress(branchName, address);
+    };
+    // For some data files, the branch is not in all files, especially for triggers
+    auto SuperSafeSetBranchAddress = [this](const TString &branchName, void* address) {
+        TObjArray* fileElements = fChain->GetListOfFiles();
+        for (int i = 0; i < fileElements->GetEntries(); i++) {
+            TChainElement* element = (TChainElement*)fileElements->At(i);
+            TString fileName = element->GetTitle();
+            TFile* file = TFile::Open(fileName);
+            TTree* tree = (TTree*)file->Get("Events");
+            if (!tree->GetBranch(branchName)) {
+                cout << "[SKNanoGenLoader::Init] Warning: Branch " << branchName << " not found in file " << fileName << endl;
+                file->Close();
+                return;
+            }
+            file->Close();
         }
         fChain->SetBranchStatus(branchName, 1);
         fChain->SetBranchAddress(branchName, address);
@@ -699,8 +754,8 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("GenJetAK8_pt", GenJetAK8_pt.data());
 
     // GenMET
-    SafeSetBranchAddress("GenMet_pt", &GenMet_pt);
-    SafeSetBranchAddress("GenMet_phi", &GenMet_phi);
+    SafeSetBranchAddress("GenMET_pt", &GenMET_pt);
+    SafeSetBranchAddress("GenMET_phi", &GenMET_phi);
 
     // GenDressedLepton
     SetBranchWithRunCheck("nGenDressedLepton", nGenDressedLepton, nGenDressedLepton_RunII);
@@ -733,10 +788,8 @@ void SKNanoLoader::Init() {
     // PileUp & others
     SafeSetBranchAddress("Pileup_nPU", &Pileup_nPU);
     SafeSetBranchAddress("Pileup_nTrueInt", &Pileup_nTrueInt); 
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     SafeSetBranchAddress("FatJet_nBHadrons",FatJet_nBHadrons.data());
     SafeSetBranchAddress("FatJet_nCHadrons",FatJet_nCHadrons.data());
-    SafeSetBranchAddress("Tau_genPartFlav", Tau_genPartFlav.data());
     SafeSetBranchAddress("genTtbarId", &genTtbarId);
 
     // Muon----------------------------
@@ -749,6 +802,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Muon_dzErr", Muon_dzErr.data());
     SafeSetBranchAddress("Muon_eta", Muon_eta.data());
     SafeSetBranchAddress("Muon_ip3d", Muon_ip3d.data());
+    SafeSetBranchAddress("Muon_nTrackerLayers", Muon_nTrackerLayers.data());
     SafeSetBranchAddress("Muon_isGlobal", Muon_isGlobal.data());
     SafeSetBranchAddress("Muon_isStandalone", Muon_isStandalone.data());
     SafeSetBranchAddress("Muon_isTracker", Muon_isTracker.data());
@@ -774,10 +828,15 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Muon_tkIsoId", Muon_tkIsoId.data());
     SafeSetBranchAddress("Muon_tkRelIso", Muon_tkRelIso.data());
     SafeSetBranchAddress("Muon_triggerIdLoose", Muon_triggerIdLoose.data());
+    SafeSetBranchAddress("Muon_genPartFlav", Muon_genPartFlav.data());
     if (Run == 3) {
         SafeSetBranchAddress("Muon_mvaMuID_WP", Muon_mvaMuID_WP.data());
+        SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx.data());
+        SafeSetBranchAddress("Muon_genPartIdx", Muon_genPartIdx.data());
     } else if(Run == 2) {
         SafeSetBranchAddress("Muon_mvaId", Muon_mvaId.data());
+        SafeSetBranchAddress("Muon_jetIdx", Muon_jetIdx_RunII.data());
+        SafeSetBranchAddress("Muon_genPartIdx", Muon_genPartIdx_RunII.data());
     }
 
     //Electron----------------------------
@@ -785,7 +844,13 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_charge", Electron_charge.data());
     SafeSetBranchAddress("Electron_convVeto", Electron_convVeto.data());
     SafeSetBranchAddress("Electron_cutBased_HEEP", Electron_cutBased_HEEP.data());
-    SafeSetBranchAddress("Electron_deltaEtaSC", Electron_deltaEtaSC.data());
+    SafeSetBranchAddress("Electron_scEta", Electron_scEta.data());
+    SafeSetBranchAddress("Electron_deltaEtaInSC", Electron_deltaEtaInSC.data());
+    SafeSetBranchAddress("Electron_deltaEtaInSeed", Electron_deltaEtaInSeed.data());
+    SafeSetBranchAddress("Electron_deltaPhiInSC", Electron_deltaPhiInSC.data());
+    SafeSetBranchAddress("Electron_deltaPhiInSeed", Electron_deltaPhiInSeed.data());
+    SafeSetBranchAddress("Electron_ecalPFClusterIso", Electron_ecalPFClusterIso.data());
+    SafeSetBranchAddress("Electron_hcalPFClusterIso", Electron_hcalPFClusterIso.data());
     SafeSetBranchAddress("Electron_dr03EcalRecHitSumEt", Electron_dr03EcalRecHitSumEt.data());
     SafeSetBranchAddress("Electron_dr03HcalDepth1TowerSumEt", Electron_dr03HcalDepth1TowerSumEt.data());
     SafeSetBranchAddress("Electron_dr03TkSumPt", Electron_dr03TkSumPt.data());
@@ -797,7 +862,6 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_eInvMinusPInv", Electron_eInvMinusPInv.data());
     SafeSetBranchAddress("Electron_energyErr", Electron_energyErr.data());
     SafeSetBranchAddress("Electron_eta", Electron_eta.data());
-    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     SafeSetBranchAddress("Electron_hoe", Electron_hoe.data());
     SafeSetBranchAddress("Electron_ip3d", Electron_ip3d.data());
     SafeSetBranchAddress("Electron_isPFcand", Electron_isPFcand.data());
@@ -819,6 +883,7 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Electron_seedGain", Electron_seedGain.data());
     SafeSetBranchAddress("Electron_sieie", Electron_sieie.data());
     SafeSetBranchAddress("Electron_sip3d", Electron_sip3d.data());
+    SafeSetBranchAddress("Electron_genPartFlav", Electron_genPartFlav.data());
     if (Run == 3) {
         SafeSetBranchAddress("Electron_cutBased", Electron_cutBased.data());
         SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx.data());
@@ -830,14 +895,25 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
     } else if(Run == 2) {
+        SafeSetBranchAddress("Electron_mvaIso_WPL", Electron_mvaIso_WPL.data());
+        SafeSetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso.data());
+        SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
+        SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaNoIso_WPLoose", Electron_mvaNoIso_WPL.data());
+    } else if(Run == 2) {
+        SafeSetBranchAddress("Electron_cutBased", Electron_cutBased_RunII.data());
         SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx_RunII.data());
         SafeSetBranchAddress("Electron_jetIdx", Electron_jetIdx_RunII.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso", Electron_mvaFall17V2Iso.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP80", Electron_mvaFall17V2Iso_WP80.data());
         SafeSetBranchAddress("Electron_mvaFall17V2Iso_WP90", Electron_mvaFall17V2Iso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaFall17V2Iso_WPL", Electron_mvaFall17V2Iso_WPL.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso", Electron_mvaFall17V2noIso.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP80", Electron_mvaFall17V2noIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaFall17V2noIso_WP90", Electron_mvaFall17V2noIso_WP90.data());
+        SafeSetBranchAddress("Electron_mvaFall17V2noIso_WPLoose", Electron_mvaFall17V2noIso_WPL.data());
+        SafeSetBranchAddress("Electron_dEsigmaUp", Electron_dEsigmaUp.data());
+        SafeSetBranchAddress("Electron_dEsigmaDown", Electron_dEsigmaDown.data());
     }
 
     // Photon----------------------------
@@ -908,6 +984,8 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Jet_partonFlavour", Jet_partonFlavour.data());
         SafeSetBranchAddress("Jet_svIdx1", Jet_svIdx1.data());
         SafeSetBranchAddress("Jet_svIdx2", Jet_svIdx2.data());
+        SafeSetBranchAddress("Jet_chMultiplicity", Jet_chMultiplicity.data());
+        SafeSetBranchAddress("Jet_neMultiplicity", Jet_neMultiplicity.data());
     } else if (Run == 2) {
         SafeSetBranchAddress("Jet_bRegCorr", Jet_bRegCorr.data());
         SafeSetBranchAddress("Jet_bRegRes", Jet_bRegRes.data());
@@ -1093,6 +1171,20 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Flag_eeBadScFilter", &Flag_eeBadScFilter);
     //SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
     SafeSetBranchAddress("run", &RunNumber);
+    SafeSetBranchAddress("luminosityBlock", &LumiBlock);
+    SafeSetBranchAddress("event", &EventNumber);
+
+    // TrigObj----------------------------
+    SetBranchWithRunCheck("nTrigObj", nTrigObj, nTrigObj_RunII);
+    SafeSetBranchAddress("TrigObj_pt", TrigObj_pt.data());
+    SafeSetBranchAddress("TrigObj_eta", TrigObj_eta.data());
+    SafeSetBranchAddress("TrigObj_phi", TrigObj_phi.data());
+    if (Run == 3) {
+        SafeSetBranchAddress("TrigObj_id", TrigObj_id.data());
+    } else {
+        SafeSetBranchAddress("TrigObj_id", TrigObj_id_RunII.data());
+    }
+    SafeSetBranchAddress("TrigObj_filterBits", TrigObj_filterBits.data());
 
     string json_path = string(getenv("SKNANO_DATA")) + "/" + DataEra.Data() + "/Trigger/HLT_Path.json";
     ifstream json_file(json_path);
@@ -1102,14 +1194,20 @@ void SKNanoLoader::Init() {
         json_file >> j;
         RVec<TString> not_in_tree;
         for (auto& [key, value] : j.items()) {
-            cout << "[SKNanoLoader::Init] HLT Path: " << key << endl;
+            if (!value.contains("active")) continue;
+            if (!value["active"]) continue;
             Bool_t* passHLT = new Bool_t();
             TString key_str = key;
             TriggerMap[key_str].first = passHLT;
             TriggerMap[key_str].second = value["lumi"];
             //if key_str is in tree, set branch address
             if (fChain->GetBranch(key_str)) {
-                SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                // In some data file, part of the trigger set is missing (changed during the run?)
+                if (IsDATA) {
+                    SuperSafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                } else {
+                    SafeSetBranchAddress(key_str, TriggerMap[key_str].first);
+                }
             } else if(key_str=="Full") {
                 *TriggerMap[key_str].first = true;
             } else{
@@ -1118,7 +1216,6 @@ void SKNanoLoader::Init() {
             }   
         }
         if (not_in_tree.size() > 0) {
-            //print in yellow color
             cout << "\033[1;33m[SKNanoLoader::Init] Following HLT Paths are not in the tree\033[0m" << endl;
             for (auto &path : not_in_tree) {
                 cout << "\033[1;33m" << path << "\033[0m" << endl;

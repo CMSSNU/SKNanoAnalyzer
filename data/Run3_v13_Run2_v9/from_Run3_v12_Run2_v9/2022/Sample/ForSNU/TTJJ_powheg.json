@@ -1,0 +1,10 @@
+{
+    "name": "TTJJ_powheg",
+    "isMC": 1,
+    "PD": "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8",
+    "xsec": 419.6938241160001,
+    "sumsign": -1,
+    "sumW": -1,
+    "nmc": 0,
+    "path": []
+}

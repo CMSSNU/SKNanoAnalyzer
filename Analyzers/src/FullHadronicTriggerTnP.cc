@@ -22,10 +22,7 @@ void FullHadronicTriggerTnP::executeEvent()
     DoubleBTagTrigger = "HLT_PFHT400_SixPFJet32_DoublePFBTagDeepJet_2p94";
     ev = GetEvent();
     // Met Filter
-    if (!PassMetFilter(AllJets, ev))
-    {
-        return;
-    }
+    if (!PassMetFilter(AllJets, ev)) return;
     FillCutFlow(1, 10);
     // jet vetomap
     if (!PassJetVetoMap(AllJets, AllMuons))
@@ -51,7 +48,7 @@ void FullHadronicTriggerTnP::executeEventFromParameter(TString syst)
     RVec<Jet> this_jet = JetsVetoLeptonInside(AllJets, this_electron, this_muon, 0.3);
     if (!IsDATA)
     {
-        this_systjet = SmearJets(this_jet, AllGenJets,0);
+        this_systjet = SmearJets(this_jet, AllGenJets);
     }
     else
         this_systjet = this_jet;

@@ -76,6 +76,13 @@ public:
     inline WorkingPoint PuppiIsoId() const {return (WorkingPoint)j_puppiIsoId;}
     inline WorkingPoint TkIsoId() const {return (WorkingPoint)j_tkIsoId;}
 
+    void SetNTrackerLayers(int n) {j_nTrackerLayers = n;}
+    inline int nTrackerLayers() const {return j_nTrackerLayers;}
+    void SetMiniAODPt(float pt) {j_miniAODPt = pt;}
+    inline float MiniAODPt() const {return j_miniAODPt;}
+    void SetMomentumScaleUpDown(float up, float down) {j_momentumScaleUp = up; j_momentumScaleDown = down;}
+    inline float MomentumScaleUp() const {return j_momentumScaleUp;}
+    inline float MomentumScaleDown() const {return j_momentumScaleDown;}
     // MVA ID scores
     enum class MVAID {NONE, SOFTMVA, MVALOWPT, MVATTH};
 
@@ -84,16 +91,33 @@ public:
     inline float MvaLowPt() const {return j_mvaLowPt;}
     inline float MvaTTH() const {return j_mvaTTH;}
 
+    void SetGenPartIdx(short genPartIdx) { j_genPartIdx = genPartIdx; }
+    inline short GenPartIdx() const { return j_genPartIdx; }
+
+    void SetGenPartFlav(unsigned char genPartFlav) { j_genPartFlav = genPartFlav; }
+    inline unsigned char GenPartFlav() const { return j_genPartFlav; }
+
+    void SetJetIdx(short jetIdx) { j_jetIdx = jetIdx; }
+    inline short JetIdx() const { return j_jetIdx; }
+
     // ID helper functions
     bool PassID(const MuonID ID) const;
     bool PassID(const TString ID) const;
+
+    // Private IDs
+    bool Pass_HcToWATight() const;
+    bool Pass_HcToWALoose() const;
 
 private:
     bool j_isTracker, j_isStandalone, j_isGlobal;
     bool j_looseId, j_mediumId, j_mediumPromptId, j_tightId, j_softId, j_softMvaId, j_triggerIdLoose;
     unsigned char j_highPtId, j_miniIsoId, j_multiIsoId, j_mvaMuId, j_pfIsoId, j_puppiIsoId, j_tkIsoId;
     float j_softMva, j_mvaLowPt, j_mvaTTH;
-
+    int j_nTrackerLayers;
+    float j_miniAODPt, j_momentumScaleUp, j_momentumScaleDown;
+    short j_genPartIdx;
+    unsigned char j_genPartFlav;
+    short j_jetIdx;
     ClassDef(Muon, 1);
 };
 

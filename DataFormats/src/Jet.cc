@@ -60,6 +60,7 @@ Jet::Jet() : Particle() {
 
   // Others
   j_area = -999.0;
+  j_originalIndex = -1;
   // j_hfadjacentEtaStripsSize = -999;
   // j_hfcentralEtaStripSize = -999;
   // j_hfsigmaEtaEta = -999.0;
@@ -93,6 +94,48 @@ bool Jet::PassID(TString ID) const {
   exit(ENODATA);
 
   return false;
+}
+
+void Jet::SetJetID(unsigned char IDBit, int Run) {
+  // bit 0 is loose, bit 1 is tight, bit 2 is tightLepVeto
+  if(Run == 2) {
+    j_looseJetId = (IDBit & 1);
+    j_tightJetID = (IDBit & 2);
+    j_tightLepVetoJetID = (IDBit & 4);
+  }
+  // due to the bug in the NanoAODv12, Below fix is necessary
+  // Please refer https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/117 or https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID13p6TeV#Recommendations_for_the_13_6_AN1
+  // We are moving to NanoAODv13 for Run3, need different implementation
+  else { // Run == 3
+    j_tightJetID = false;
+    if (abs(Eta()) <= 2.6) 
+      j_tightJetID = (neHEF() < 0.99) && (neEmEF() < 0.9) && (chMultiplicity()+neMultiplicity() > 1) && (chHEF() > 0.01) && (chMultiplicity() > 0);
+    else if (abs(Eta()) > 2.6 && abs(Eta()) <= 2.7) 
+      j_tightJetID = (neHEF() < 0.90) && (neEmEF() < 0.99);
+    else if (abs(Eta()) > 2.7 && abs(Eta()) <= 3.0) 
+      j_tightJetID = (neHEF() < 0.99);
+    else // abs(eta) > 3.0
+      j_tightJetID = (neMultiplicity() >= 2) && (neEmEF() < 0.4);
+
+    j_tightLepVetoJetID = false;
+    if (abs(Eta()) <= 2.7) 
+      j_tightLepVetoJetID = j_tightJetID && (muEF() < 0.8) && (chEmEF() < 0.8);
+    else 
+      j_tightLepVetoJetID = j_tightJetID;
+
+    /* This is for NanoAODv12
+    if (abs(eta) <= 2.7) Jet_passJetIdTight = b & (1 << 1);
+    else if (abs(eta) > 2.7 && abs(eta) <= 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neHEF < 0.99);
+    else if (abs(eta) > 3.0) Jet_passJetIdTight = (b & (1 << 1)) && (Jet_neEmEF < 0.4);      
+    
+    bool Jet_passJetIdTightLepVeto = false;      
+    if (abs(eta) <= 2.7) Jet_passJetIdTightLepVeto = Jet_passJetIdTight && (Jet_muEF < 0.8) && (Jet_chEmEF < 0.8);      
+    else Jet_passJetIdTightLepVeto = Jet_passJetIdTight;      
+    j_looseJetId = (b & 1);      
+    j_tightJetID = Jet_passJetIdTight;      
+    j_tightLepVetoJetID = Jet_passJetIdTightLepVeto;      
+    */
+  }
 }
 
 bool Jet::PassID(JetID id) const {

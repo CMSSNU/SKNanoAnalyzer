@@ -133,8 +133,6 @@ void MeasureJetTaggingEff::executeEvent()
                 if (jets.at(ij).GetCTaggerResult(this_tagger).first > this_CvBCut && jets.at(ij).GetCTaggerResult(this_tagger).second > this_CvLCut)
                     FillHist(string("tagging#c") + "##era#" + DataEra.Data() + "##tagger#" + JetTagging::GetTaggerCorrectionLibStr(this_tagger).Data() + "##working_point#" + JetTagging::GetTaggerCorrectionWPStr(this_wp).Data() + "##flavor#" + string(flav) + "##systematic#central##num", this_Eta, this_Pt, weight, NEtaBin, etabins, NPtBin, ptbins);
             }
-
-
         }
     }
 } // void MeasureJetTaggingEff::executeEvent
