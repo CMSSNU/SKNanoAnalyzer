@@ -43,7 +43,6 @@ public:
     MyCorrection();
     MyCorrection(const TString &era, const TString &sample, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
     ~MyCorrection();
-    ~MyCorrection();
 
     // Muon
     float GetMuonScaleSF(const Muon &muon, const variation syst = variation::nom, const float matched_pt=0) const;
