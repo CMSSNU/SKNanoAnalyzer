@@ -41,7 +41,8 @@ public:
         Type1PuppiMET
     };
     MyCorrection();
-    MyCorrection(const TString &era, const TString &sample, const bool IsData);
+    MyCorrection(const TString &era, const TString &sample, const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
+    ~MyCorrection();
     ~MyCorrection();
 
     // Muon
@@ -160,7 +161,7 @@ private:
         string json_electron_custom_emu_leg1_eff;
         string json_electron_custom_emu_leg2_eff;
     };
-    EraConfig GetEraConfig(TString era);
+    EraConfig GetEraConfig(TString era, const string &btagging_eff_file, const string &ctagging_eff_file, const string &btagging_R_file, const string &ctagging_R_file) const;
 
     inline void SetEra(TString era) {
         DataEra = era;
