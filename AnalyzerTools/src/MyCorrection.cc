@@ -8,7 +8,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     SetSample(sample);
     setIsData(IsData);
 
-    EraConfig config = GetEraConfig(era);
+    EraConfig config = GetEraConfig(era, btagging_eff_file, ctagging_eff_file, btagging_R_file, ctagging_R_file);
     struct CorrectionInfo {
         string name;
         string path;  
@@ -88,7 +88,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     JME_vetomap_keys["2023BPix"] = "Summer23BPixPrompt23_RunD_V1";
     JME_vetomap_keys["2023"] = "Summer23Prompt23_RunC_V1";
     JME_vetomap_keys["2022EE"] = "Summer22EE_23Sep2023_RunEFG_V1";
-    JME_vetomap_keys["2022"] = "Summer22_23Sep2023_RunBCD_V1";
+    JME_vetomap_keys["2022"] = "Summer22_23Sep2023_RunCD_V1";
     JME_vetomap_keys["2018"] = "Summer19UL18_V1";
     JME_vetomap_keys["2017"] = "Summer19UL17_V1";
     JME_vetomap_keys["2016postVFP"] = "Summer19UL16_V1";
