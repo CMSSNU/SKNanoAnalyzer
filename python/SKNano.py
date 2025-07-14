@@ -40,7 +40,11 @@ SKIMMING_MODE = False
 #Load commonSampleInfo.json at start
 sampleInfoJsons = {}
 for era in Run.keys():
-    sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
+    try:
+        sampleInfoJsons[era] = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','CommonSampleInfo.json')))
+    except:
+        print(f"\033[93mWarning: {era} CommonSampleInfo.json is not exist\033[0m")
+        sampleInfoJsons[era] = {}
 skimInfoJsons = {}
 
 
@@ -380,6 +384,11 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
         run_content = f.read()
+    mamba_bin_path = os.environ['MAMBA_EXE']
+    mamba_bin_path = os.path.dirname(mamba_bin_path)
+    mamba_root_prefix = os.environ['MAMBA_ROOT_PREFIX']
+    run_content = run_content.replace("[MAMBA_BIN_PATH]", mamba_bin_path)
+    run_content = run_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
     run_content = run_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     run_content = run_content.replace("[SKNANO_DATA]", SKNANO_DATA)
     run_content = run_content.replace("[WORKDIR]", working_dir)

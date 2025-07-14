@@ -1,6 +1,6 @@
 #!/bin/bash
-export PATH="/opt/conda/bin:${PATH}"
-export MAMBA_ROOT_PREFIX="/opt/conda"
+export PATH=[MAMBA_BIN_PATH]
+export MAMBA_ROOT_PREFIX=[MAMBA_ROOT_PREFIX]
 eval "$(micromamba shell hook -s bash)"
 micromamba activate Nano
 
