@@ -61,15 +61,23 @@ if [ $PACKAGE = "conda" ]; then
     fi
 elif [ $PACKAGE = "mamba" ]; then
     echo -e "\033[32m@@@@ Primary environment using mamba\033[0m"
+    # Detect Singularity or GitHub Actions
     IS_SINGULARITY=$(env | grep -i "SINGULARITY_ENVIRONMENT")
-    if [[ -n "$IS_SINGULARITY" ||  -n "$GITHUB_ACTION" ]]; then
-        # Building within Singularity image, will be used for batch jobs
+    if [[ -n "$IS_SINGULARITY" || -n "$GITHUB_ACTION" ]]; then
         echo -e "\033[32m@@@@ Detected Singularity environment\033[0m"
-        eval "$(micromamba shell hook -s zsh)"
     else
-        export PATH="$HOME/micromamba/bin:${PATH}"
-        export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+        # Only add micromamba to PATH if it's not already in PATH
+        if ! command -v micromamba &> /dev/null; then
+            export PATH="$HOME/micromamba/bin:${PATH}"
+            export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+        fi
+    fi
+
+    # micromamba shell hook should only be run once per session
+    if [[ -z "$__MAMBA_SETUP_DONE" ]]; then
+        unalias mamba 2>/dev/null
         eval "$(micromamba shell hook -s zsh)"
+        export __MAMBA_SETUP_DONE=1
     fi
     micromamba activate Nano
     # from this point on, we can follow conda version of setup
@@ -156,14 +164,10 @@ echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 export ROCCOR_PATH=$SKNANO_HOME/external/RoccoR
 
 # JSONPOG integration auto-update
-<<<<<<< HEAD
-export JSONPOG_INTEGRATION_PATH="$SKNANO_HOME/external/jsonpog-integration"
-=======
 check_jsonpog_updates() {
     local auto_update=${1:-false}
     echo -e "\033[32m@@@@ Checking for updates in jsonpog-integration repository...\033[0m"
     export JSONPOG_REPO_PATH="$SKNANO_HOME/external/jsonpog-integration"
->>>>>>> 1631028880053d895708c59dae8cb8447e2d9023
 
     if [ "$auto_update" = false ]; then
         echo -e "\033[32m@@@@ Auto-update is disabled. Skipping update check.\033[0m"
