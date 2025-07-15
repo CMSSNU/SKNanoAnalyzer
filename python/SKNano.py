@@ -53,11 +53,16 @@ for era in Run.keys():
 ##############################
 def isMCandGetPeriod(sample):
     #if sample is ends with _one capital letter, it is data
-    #hope there will be no exception(please)
-    if sample.split("_")[-1].isupper() and len(sample.split("_")[-1]) == 1:
-        return False, sample.split("_")[-1]
-    else:
-        return True, None
+    #also handle 2023 format like C_v1, C_v2, etc.
+    sample_parts = sample.split("_")
+    if len(sample_parts) >= 2:
+        # Check for 2023 format: C_v1, C_v2, etc.
+        if len(sample_parts) >= 2 and sample_parts[-2].isupper() and len(sample_parts[-2]) == 1 and sample_parts[-1].startswith('v'):
+            return False, f"{sample_parts[-2]}_{sample_parts[-1]}"
+        # Check for older format: single capital letter
+        elif sample_parts[-1].isupper() and len(sample_parts[-1]) == 1:
+            return False, sample_parts[-1]
+    return True, None
 
 def getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName):
     isMC, period = isMCandGetPeriod(sample)
@@ -242,12 +247,12 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
     reduction = argparse.Reduction
     
     if sample.startswith("Skim_"):
-        SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
+        SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)]
         sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim',sample+'.json')))['path']
         sample = SkimInfo['PD']
     else:
-        sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
+        sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','ForSNU',sample+'.json')))['path']
         
     samplePaths = jobFileDivider(samplePaths, njobs)
