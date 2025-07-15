@@ -2,7 +2,7 @@ build/*
 install/*
 test/*
 test.root
-CMakeFiles/*
+LocalRuns/**
 external/lhapdf/*
 external/libtorch/*
 config/config.*
@@ -13,8 +13,10 @@ external/**
 !external/KinematicFitter
 !external/jsonpog-integration
 !external/RoccoR
-templates/__pycache__/*
-.DS_Store/*
+**/__pycache__/**
+.DS_Store
+SKFlatAnalyzer
+SKNanoOutput
 
 #Temporary Added to my personal temp files
 DataCOPY/** 
