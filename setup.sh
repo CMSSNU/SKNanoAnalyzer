@@ -25,9 +25,9 @@ fi
 
 # Set up environment
 if [[ $HOSTNAME == *"tamsa"* ]]; then
-    export SKNANO_HOME="/data9/Users/choij/Sync/workspace/SKNanoAnalyzer"
+    export SKNANO_HOME=`pwd`
     export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
-    export SKNANO_OUTPUT="/data9/Users/choij/Sync/workspace/SKNanoOutput"
+    export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 else
     export SKNANO_HOME=`pwd`
     export SKNANO_RUNLOG="$HOME/Sync/workspace/SKNanoRunlog"
@@ -161,7 +161,12 @@ echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 
 # ROCCOR
 export ROCCOR_PATH=$SKNANO_HOME/external/RoccoR
-
+if [ -f "$SKNANO_HOME/templates/CMakeLists.txt" ]; then
+    mv $SKNANO_HOME/templates/CMakeLists.txt $ROCCOR_PATH
+fi
+if [ -f "$SKNANO_HOME/templates/RoccoR_LinkDef.hpp" ]; then
+    mv $SKNANO_HOME/templates/RoccoR_LinkDef.hpp $ROCCOR_PATH
+fi
 # JSONPOG integration auto-update
 check_jsonpog_updates() {
     local auto_update=${1:-false}
