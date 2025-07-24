@@ -367,6 +367,9 @@ float MyCorrection::GetMuonScaleSF(const Muon &muon, const variation syst, const
             roccor = rc.kSpreadMC(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), matched_pt, 0, 0);
             roccor_err = rc.kSpreadMCerror(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), matched_pt);
         } else {
+            //roccor = rc.kScaleMC(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), 0, 0);
+            //roccor_err = 0.;
+            //roccor_err = rc.kScaleMCerror(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi());
             roccor = rc.kSmearMC(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), muon.nTrackerLayers(), u, 0, 0);
             roccor_err = rc.kSmearMCerror(muon.Charge(), muon.Pt(), muon.Eta(), muon.Phi(), muon.nTrackerLayers(), u);
         }

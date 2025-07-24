@@ -2,8 +2,8 @@
 
 ClassImp(LHE)
 
-LHE::LHE() : Particle()
-{
+LHE::LHE() : Particle() {
+    j_IsEmpty = true;
     j_incomingPz = -999.;
     j_spin = -999;
     j_status = -999;

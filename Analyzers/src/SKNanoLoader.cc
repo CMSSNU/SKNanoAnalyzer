@@ -22,6 +22,7 @@ SKNanoLoader::~SKNanoLoader() {
     }
     if (!fChain) return;
     if (fChain->GetCurrentFile()) fChain->GetCurrentFile()->Close();
+    delete fChain;
 }
 
 void SKNanoLoader::Loop() {

@@ -60,6 +60,9 @@ def isMCandGetPeriod(sample):
     #hope there will be no exception(please)
     if sample.split("_")[-1].isupper() and len(sample.split("_")[-1]) == 1:
         return False, sample.split("_")[-1]
+    # Handle new format like MuonEG_C_v1 -> period is "C_v1"
+    elif len(sample.split("_")) >= 3 and sample.split("_")[-2].isupper() and len(sample.split("_")[-2]) == 1:
+        return False, "_".join(sample.split("_")[-2:])
     else:
         return True, None
 

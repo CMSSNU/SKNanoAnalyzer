@@ -162,7 +162,8 @@
         "lumi": 26671.609707229
     },
     "HLT_Ele30_WPTight_Gsf": {
-        "lumi": 26671.609707229
+        "lumi": 26671.609707229,
+        "active": true
     },
     "HLT_Ele32_WPTight_Gsf": {
         "lumi": 26671.609707229
@@ -204,7 +205,8 @@
         "lumi": 26671.609707229
     },
     "HLT_IsoMu24": {
-        "lumi": 26671.609707229
+        "lumi": 26671.609707229,
+        "active": true
     },
     "HLT_IsoMu24_eta2p1": {
         "lumi": 26671.609707229
@@ -279,13 +281,15 @@
         "lumi": 26671.609707229
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL": {
-        "lumi": 26671.609707229
+        "lumi": 26671.609707229,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL": {
         "lumi": 26671.609707229
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ": {
-        "lumi": 26671.609707229
+        "lumi": 26671.609707229,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL_DZ": {
         "lumi": 26671.609707229
@@ -297,7 +301,8 @@
         "lumi": 26671.609707229
     },
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8": {
-        "lumi": 26671.609707229
+        "lumi": 26671.609707229,
+        "active": true
     },
     "HLT_Mu19_TrkIsoVVL_Mu9_TrkIsoVVL_DZ_Mass3p8": {
         "lumi": 26671.609707229

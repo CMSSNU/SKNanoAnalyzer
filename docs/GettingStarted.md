@@ -38,22 +38,28 @@ Your configuration file should be named as `config/config.$USER`. You can copy t
 - [PACKAGE]: Package manager that you are using. `conda / mamba / cvmfs(deprecated)`
 - [TOKEN\_TELEGRAMBOT]: Token for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
 - [USER\_CHATID]: Your Chat ID that should be used for the telegram bot. refer to [Setting the telegram bot](#setting-the-telegram-bot)
-- [SINGULARITY\_IMAGE]: Singularity image that you want to use for the batch job. If you don't want to use singularity, just leave it as empty. refer to [Singularity Support](#singularity-support) for more information.
+- [SINGULARITY\_IMAGE]: Singularity image that you want to use for the batch job. For default setup, you can use the image located at `/data9/Users/choij/Singularity/images/private-el9.sif`. If you don't want to use singularity, just leave it as empty. Refer to [Singularity Support](#singularity-support) for more information.
 
 #### Using conda
 Here is an example to setup the environment using conda.
 ```bash
 # create conda environment
-conda create -n nano python=3.12 root=6.32.02 -c conda-forge
+conda create -n nano python=3.12 root=6.34.04 -c conda-forge
 conda activate nano
 
-# Install onnxruntime-cpp and correctionlib
+# REQUIRED: Install onnxruntime-cpp / correctionlib / boost-cpp
 # NOTE: Using pip to install dependencies is not recommended. Might cause the confusion while compiling the project.
-conda install onnxruntime-cpp correctionlib
+conda install onnxruntime-cpp correctionlib boost-cpp
+
+# Optional packages
+pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121
+pip install torch_geometric
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.4.0+cu121.html
+pip install numpy pandas matplotlib scipy scikit-learn captum networkx seaborn
 ```
 
 #### Using micromamba
-I recommend to use micromamba, which is a faster alternative to anaconda that is infamous for its slow speed to solving the environment.
+Using micromamba is highly recommended, which is a faster alternative to anaconda that is infamous for its slow speed to solving the environment.
 ```bash
 "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
 ```
@@ -70,15 +76,27 @@ micromamba env create -f Nano.yml
 ```
 
 #### Note on using OSX
-If you are testing your jobs on MacOS, you can use both conda and mamba environment. However, you should be cautious about the python version.
-- Latest ROOT from homebrew is 6.32.08. The pre-compiled version run smoothly wiht python 3.12, but correctionlib only supports up to python 3.12.
-- Possible solution is to use the conda / mamba environment with python 3.11 or 3.12 and install root from source. Here are some steps to install ROOT manually and link onnxruntime libraries.
+MacOS have some limitations on the test, especially if you are testing your machine learning workflows with GPUs. Otherwise, compiling the project and running the analyzers should be fine.
 ```bash
 # install mamba
 brew install micromamba # follow the instruction to add the path to your shell
-mamba create -n Nano python=3.12
+mamba create -n Nano python=3.12 root=6.34.04 -c conda-forge
 mamba activate Nano
-mamba install correctionlib onnxruntime-cpp -c conda-forge
+mamba install correctionlib onnxruntime-cpp boost-cpp -c conda-forge
+
+pip install torch==2.4.1 torch_geometric
+pip install --no-build-isolation git+https://github.com/pyg-team/pyg-lib.git
+pip install --no-build-isolation torch_scatter
+pip install --no-build-isolation torch_sparse
+pip install --no-build-isolation torch_cluster
+pip install --no-build-isolation torch_spline_conv
+pip install numpy pandas matplotlib scipy scikit-learn captum networkx cmsstyle
+```
+
+In the case that root is not working with conda installation, try the following steps to install ROOT from source.
+```bash
+# Activate the mamba environment to bind pyROOT
+mamba activate Nano
 
 # install root
 # As Nano environment is activated, pyROOT will be binded to the python in Nano environment.
@@ -101,11 +119,12 @@ echo "source $HOME/mamba/root_install/bin/thisroot.sh" >> ~/.zshrc
 source ~/.zshrc
 root -l # Test the ROOT
 ``` 
+
 Tested on
 - M4 Mac Mini 
-- MacOS Sequoia 15.2
+- MacOS Taeho 26.0
 - python 3.12
-- ROOT 6.32.08
+- ROOT 6.34.04
 - micromamba from homebrew
 
 #### Using cvmfs

@@ -261,7 +261,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
     totalNumberOfJobs = len(samplePaths)
 
     for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}, ({isample}/{totsamples})", smoothing=1.):
-        output = out_base.replace('.root',f'_{i+1}.root')
+        output = out_base.replace('.root',f'_{i}.root')
 
         # Read the template file
         if argparse.python:
