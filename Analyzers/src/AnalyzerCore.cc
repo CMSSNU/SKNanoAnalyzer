@@ -23,15 +23,15 @@ AnalyzerCore::~AnalyzerCore() {
     // if (pdfReweight) delete pdfReweight;
 }
 
-bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
-    bool MetFilter = true;
-    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
+bool AnalyzerCore::PassNoiseFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
+    bool passNoiseFilter = true;
+    passNoiseFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
     //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
-    if(!MetFilter) return false;
-    if(Run == 2) return MetFilter;
+    if(!passNoiseFilter) return false;
+    if(Run == 2) return passNoiseFilter;
     // Temporarily remove the ecalBadCalibFilter, Instead,
-    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
-    if (ev.GetMETVector(met_type).Pt() <= 100.) return MetFilter;
+    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return passNoiseFilter;
+    if (ev.GetMETVector(met_type).Pt() <= 100.) return passNoiseFilter;
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
         bool badEcal = (jet.Pt() > 50.);

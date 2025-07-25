@@ -45,33 +45,33 @@ class DiLepton(DiLeptonBase):
         self.systematics = self.weightVariations + self.scaleVariations
 
     def executeEvent(self):
-        event = self.GetEvent()
-        METv = event.GetMETVector(Event.MET_Type.PUPPI)
+        ev = self.GetEvent()
         rawJets = self.GetAllJets()
-        if not self.PassMETFilter(METv, rawJets): return
+        if not self.PassMetFilter(rawJets, ev): return
         
         rawMuons = self.GetAllMuons()
         rawElectrons = self.GetAllElectrons()
+        METv = ev.GetMETVector(Event.MET_Type.PUPPI)
         genParts = self.GetAllGens() if not self.IsDATA else None
         genJets = self.GetAllGenJets() if not self.IsDATA else None
 
         def processEvent(syst, apply_weight_variation=False):
-            recoObjects = self.defineObjects(event, rawMuons, rawElectrons, rawJets, genJets, METv, syst)
-            channel = self.selectEvent(event, recoObjects)
+            recoObjects = self.defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, syst)
+            channel = self.selectEvent(ev, recoObjects)
             if not channel: return
     
             if apply_weight_variation:
                 assert syst == "Central", "Only Central weight variation is allowed"
-                weights = self.getWeights(channel, event, recoObjects, genParts)
+                weights = self.getWeights(channel, ev, recoObjects, genParts)
                 self.fillObjects(channel, recoObjects, weights)
                 for systSet in self.weightVariations[1:]:
                     syst_up, syst_down = systSet
-                    weights_up = self.getWeights(channel, event, recoObjects, genParts, syst_up)
-                    weights_down = self.getWeights(channel, event, recoObjects, genParts, syst_down)
+                    weights_up = self.getWeights(channel, ev, recoObjects, genParts, syst_up)
+                    weights_down = self.getWeights(channel, ev, recoObjects, genParts, syst_down)
                     self.fillObjects(channel, recoObjects, weights_up, syst_up)
                     self.fillObjects(channel, recoObjects, weights_down, syst_down)
             else:
-                weights = self.getWeights(channel, event, recoObjects, genParts, syst)
+                weights = self.getWeights(channel, ev, recoObjects, genParts, syst)
                 self.fillObjects(channel, recoObjects, weights, syst)
         
         processEvent("Central", apply_weight_variation=True)
@@ -124,10 +124,11 @@ class DiLepton(DiLeptonBase):
         max_jeteta = 2.4 if self.DataEra.Contains("2016") else 2.5
         tightJets = self.SelectJets(allJets, "tight", 20., max_jeteta)
         tightJets_vetoLep = self.JetsVetoLeptonInside(tightJets, looseElectrons, looseMuons, 0.4)
-        tightJets_vetoLep_loosePileupID = self.SelectJets(tightJets_vetoLep, "loosePuId", 20., max_jeteta)
+        if self.Run == 2:
+            tightJets_vetoLep = self.SelectJets(tightJets_vetoLep, "loosePuId", 20., max_jeteta)
         bjets = RVec(Jet)()
         wp = self.myCorr.GetBTaggingWP(JetTagging.JetFlavTagger.DeepJet, JetTagging.JetFlavTaggerWP.Medium)
-        for jet in tightJets_vetoLep_loosePileupID:
+        for jet in tightJets_vetoLep:
             btagScore = jet.GetBTaggerResult(JetTagging.JetFlavTagger.DeepJet)
             if btagScore > wp: bjets.emplace_back(jet)
 
@@ -138,7 +139,6 @@ class DiLepton(DiLeptonBase):
             "tightElectrons": tightElectrons,
             "tightJets": tightJets,
             "tightJets_vetoLep": tightJets_vetoLep,
-            "tightJets_vetoLep_loosePileupID": tightJets_vetoLep_loosePileupID,
             "bjets": bjets,
             "genJets": genJets,
             "METv": METv
@@ -149,7 +149,7 @@ class DiLepton(DiLeptonBase):
         tightMuons = recoObjects["tightMuons"]
         looseElectrons = recoObjects["looseElectrons"]
         tightElectrons = recoObjects["tightElectrons"]
-        jets = recoObjects["tightJets_vetoLep_loosePileupID"]
+        jets = recoObjects["tightJets_vetoLep"]
         bjets = recoObjects["bjets"]
         METv = recoObjects["METv"]
 
@@ -226,26 +226,21 @@ class DiLepton(DiLeptonBase):
         muons = recoObjects["tightMuons"]
         muonRecoSF = self.myCorr.GetMuonRECOSF(muons)
 
-        """
         if syst == "MuonIDSFUp":
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons, myVar.up)
         elif syst == "MuonIDSFDown":
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons, myVar.down)
         else:
             muonIDSF = self.myCorr.GetMuonIDSF("TopHNT", muons)
-        """
 
         eleRecoSF = self.myCorr.GetElectronRECOSF(electrons)
-        """
         if syst == "ElectronIDSFUp":
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons, myVar.up)
         elif syst == "ElectronIDSFDown":
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons, myVar.down)
         else:
             eleIDSF = self.myCorr.GetElectronIDSF("TopHNT", electrons)
-        """
 
-        """
         if "EMu" in channel:
             if syst == "EMuTrigSFUp":
                 trigSF = self.myCorr.GetEMuTriggerSF(electrons, muons, myVar.up)
@@ -262,26 +257,31 @@ class DiLepton(DiLeptonBase):
                 trigSF = self.myCorr.GetDblMuTriggerSF(muons)
         else:
             raise ValueError(f"[DiLepton::getWeights] Invalid channel: {channel}")
-        """
 
         
         pileupIDSF, btagSF = 1., 1.
-        """
-        jets = recoObjects["tightJets_vetoLep_loosePileupID"]
-        genJets = recoObjects["genJets"]
-        matched_idx = self.GenJetMatching(jets, genJets, self.fixedGridRhoFastjetAll, 0.4, 10.)
-        if syst == "PileupJetIDSFUp":
-            pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.up)
-        elif syst == "PileupJetIDSFDown":
-            pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.down)
+        if self.Run == 2:
+            jets = recoObjects["tightJets_vetoLep"]
+            genJets = recoObjects["genJets"]
+            matched_idx = self.GenJetMatching(jets, genJets, self.fixedGridRhoFastjetAll, 0.4, 10.)
+            if syst == "PileupJetIDSFUp":
+                pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.up)
+            elif syst == "PileupJetIDSFDown":
+                pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.down)
+            else:
+                pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.nom)
         else:
-            pileupIDSF = self.myCorr.GetPileupJetIDSF(jets, matched_idx, "loose", myVar.nom)
+            pileupIDSF = 1.
         
+         
         if "EMu" in channel:
-            jets = recoObjects["tightJets_vetoLep_loosePileupID"]
-            tagger, wp, method = JetTagging.JetFlavTagger.DeepJet, JetTagging.JetFlavTaggerWP.Medium, JetTagging.JetTaggingSFMethod.mujets
+            jets = recoObjects["tightJets_vetoLep"]
+            tagger = JetTagging.JetFlavTagger.DeepJet
+            wp = JetTagging.JetFlavTaggerWP.Medium
+            method = JetTagging.JetTaggingSFMethod.mujets
             btagSF = self.myCorr.GetBTaggingSF(jets, tagger, wp, method)
-        """
+        else:
+            btagSF = 1.
 
         return {
             "genWeight": genWeight,
@@ -300,7 +300,7 @@ class DiLepton(DiLeptonBase):
     def fillObjects(self, channel, recoObjects, weights, syst="Central"):
         muons = recoObjects["tightMuons"]
         electrons = recoObjects["tightElectrons"]
-        jets = recoObjects["tightJets_vetoLep_loosePileupID"]
+        jets = recoObjects["tightJets_vetoLep"]
         bjets = recoObjects["bjets"]
         METv = recoObjects["METv"]
         genJets = recoObjects["genJets"]

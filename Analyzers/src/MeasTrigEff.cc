@@ -77,7 +77,7 @@ void MeasTrigEff::initializeAnalyzer() {
 void MeasTrigEff::executeEvent() {
     Event ev = GetEvent();
     RVec<Jet> rawJets = GetAllJets();
-    if (!PassMetFilter(rawJets, ev)) return;
+    if (!PassNoiseFilter(rawJets, ev)) return;
 
     bool PassPreTrigs = false;
     if (MeasElLegs) {

@@ -109,7 +109,7 @@ void MuonTnPProducer::initializeAnalyzer(){
 void MuonTnPProducer::executeEvent(){
     Event ev = GetEvent();
     RVec<Jet> jets = GetAllJets();
-    if (!PassMetFilter(jets, ev)) return;
+    if (!PassNoiseFilter(jets, ev)) return;
 
     RVec<Muon> muons = GetAllMuons(); // Rochester Correction applied
     RVec<TrigObj> trigObjs = GetAllTrigObjs();

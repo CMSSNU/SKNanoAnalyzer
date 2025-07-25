@@ -54,7 +54,7 @@ void ParseMuIDVariables::initializeAnalyzer() {
 void ParseMuIDVariables::executeEvent() {
     Event ev = GetEvent();
     RVec<Jet> jets = GetAllJets();
-    if (!PassMetFilter(jets, ev)) return;
+    if (!PassNoiseFilter(jets, ev)) return;
 
     RVec<Electron> electrons = GetElectrons("POGTight", 25., 2.5);
     RVec<Muon> muons = GetMuons("", 10., 2.4);

@@ -97,18 +97,18 @@ public:
     float GetBTaggingWP() const;
     float GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
     float GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
-    float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total");
+    float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total");
     float GetBTaggingR(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, std::string &processName, const variation syst = variation::nom, const TString &source = "total") const;
-    inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
+    inline float GetBTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetBTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
     inline float GetBTaggingR(const RVec<Jet> &jets, std::string &processName, const variation syst = variation::nom, const TString &source = "total") const { return GetBTaggingR(jets, global_tagger, processName, syst, source); }
 
     // ctagging
     pair<float, float> GetCTaggingWP() const;
     pair<float, float> GetCTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
     float GetCTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
-    float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod &method, const variation syst, const TString &source = "total");
+    float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetFlavTagger tagger, const JetTagging::JetFlavTaggerWP wp, const JetTagging::JetTaggingSFMethod method, const variation syst, const TString &source = "total");
     float GetCTaggingR(const float npvs, const float HT, const JetTagging::JetFlavTagger tagger, const TString &processName = "", const TString &ttBarCategory = "total", const TString &syst_str = "") const;
-    inline float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod &method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetCTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
+    inline float GetCTaggingSF(const RVec<Jet> &jets, const JetTagging::JetTaggingSFMethod method = JetTagging::JetTaggingSFMethod::mujets, const variation syst = variation::nom, const TString &source = "total") { return GetCTaggingSF(jets, global_tagger, global_wp, method, syst, source); }
 
     // PileUp Jet ID
     float GetPileupJetIDSF(const RVec<Jet> &jets, const unordered_map<int, int> &matched_idx, const TString &wp, const variation syst=variation::nom);
@@ -151,14 +151,14 @@ private:
         string txt_roccor;
         
         // Custom
-        string json_muon_custom_TopHNT_idsf;
-        string json_muon_custom_dblmu_leg1_eff;
-        string json_muon_custom_dblmu_leg2_eff;
-        string json_muon_custom_emu_leg1_eff;
-        string json_muon_custom_emu_leg2_eff;
-        string json_electron_custom_TopHNT_idsf;
-        string json_electron_custom_emu_leg1_eff;
-        string json_electron_custom_emu_leg2_eff;
+        string json_muon_TopHNT_idsf;
+        string json_muon_TopHNT_dblmu_leg1_eff;
+        string json_muon_TopHNT_dblmu_leg2_eff;
+        string json_muon_TopHNT_emu_leg1_eff;
+        string json_muon_TopHNT_emu_leg2_eff;
+        string json_electron_TopHNT_idsf;
+        string json_electron_TopHNT_emu_leg1_eff;
+        string json_electron_TopHNT_emu_leg2_eff;
     };
     EraConfig GetEraConfig(TString era);
 
@@ -186,10 +186,10 @@ private:
             return true;
         } catch (const exception &e) {
             if (optional) {
-                cerr << "[MyCorrection::MyCorrection] Warning: Failed to load " << name << " (" << file << "): " << e.what() << endl;
+                cerr << "[MyCorrection::loadCorrectionSet] Warning: Failed to load " << name << " (" << file << "): " << e.what() << endl;
                 return false;
             } else {
-                cerr << "[MyCorrection::MyCorrection] Error: Failed to load " << name << " (" << file << "): " << e.what() << endl;
+                cerr << "[MyCorrection::loadCorrectionSet] Error: Failed to load " << name << " (" << file << "): " << e.what() << endl;
                 throw;
             }
         }
@@ -248,14 +248,14 @@ private:
     unique_ptr<CorrectionSet> cset_met;
 
     // custom
-    unique_ptr<CorrectionSet> cset_muon_custom_TopHNT_idsf;
-    unique_ptr<CorrectionSet> cset_muon_custom_dblmu_leg1_eff;
-    unique_ptr<CorrectionSet> cset_muon_custom_dblmu_leg2_eff;
-    unique_ptr<CorrectionSet> cset_muon_custom_emu_leg1_eff;
-    unique_ptr<CorrectionSet> cset_muon_custom_emu_leg2_eff;
-    unique_ptr<CorrectionSet> cset_electron_custom_TopHNT_idsf;
-    unique_ptr<CorrectionSet> cset_electron_custom_emu_leg1_eff;
-    unique_ptr<CorrectionSet> cset_electron_custom_emu_leg2_eff;
+    unique_ptr<CorrectionSet> cset_muon_TopHNT_idsf;
+    unique_ptr<CorrectionSet> cset_muon_TopHNT_dblmu_leg1_eff;
+    unique_ptr<CorrectionSet> cset_muon_TopHNT_dblmu_leg2_eff;
+    unique_ptr<CorrectionSet> cset_muon_TopHNT_emu_leg1_eff;
+    unique_ptr<CorrectionSet> cset_muon_TopHNT_emu_leg2_eff;
+    unique_ptr<CorrectionSet> cset_electron_TopHNT_idsf;
+    unique_ptr<CorrectionSet> cset_electron_TopHNT_emu_leg1_eff;
+    unique_ptr<CorrectionSet> cset_electron_TopHNT_emu_leg2_eff;
 
     unordered_map<string, string> MUO_keys;
     unordered_map<string, string> LUM_keys;

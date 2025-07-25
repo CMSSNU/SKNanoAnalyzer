@@ -2,6 +2,7 @@
 #define AnalyzerCore_h
 
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <deque>
 
@@ -73,7 +74,7 @@ public:
 
 
     //MetFilter
-    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
+    bool PassNoiseFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
