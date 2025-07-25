@@ -23,15 +23,15 @@ AnalyzerCore::~AnalyzerCore() {
     // if (pdfReweight) delete pdfReweight;
 }
 
-bool AnalyzerCore::PassMetFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
-    bool MetFilter = true;
-    MetFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
+bool AnalyzerCore::PassNoiseFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
+    bool passNoiseFilter = true;
+    passNoiseFilter = Flag_goodVertices && Flag_globalSuperTightHalo2016Filter && Flag_BadPFMuonFilter && Flag_BadPFMuonDzFilter && Flag_hfNoisyHitsFilter && Flag_ecalBadCalibFilter && Flag_eeBadScFilter; // && !Flag_ecalBadCalibFilter;
     //&& Flag_ECalDeadCellTriggerPrimitiveFilter documente as this existed in NanoAOD, but it isn't
-    if(!MetFilter) return false;
-    if(Run == 2) return MetFilter;
+    if(!passNoiseFilter) return false;
+    if(Run == 2) return passNoiseFilter;
     // Temporarily remove the ecalBadCalibFilter, Instead,
-    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return MetFilter;
-    if (ev.GetMETVector(met_type).Pt() <= 100.) return MetFilter;
+    if(!(RunNumber <= 367144 && RunNumber >= 362433)) return passNoiseFilter;
+    if (ev.GetMETVector(met_type).Pt() <= 100.) return passNoiseFilter;
     RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 5.0);
     for(const auto &jet: this_jet){
         bool badEcal = (jet.Pt() > 50.);
@@ -384,17 +384,8 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
             roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom);
             roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up) - roccor;
         } else {
-            float matched_pt = -999.;
-            float min_dR = 0.2;
-            for (const auto &gen: truth) {
-                if (fabs(gen.PID()) != 13) continue;
-                if (gen.Status() != 1) continue;
-                float this_dR = muon.DeltaR(gen);
-                if (this_dR < min_dR) {
-                    min_dR = this_dR;
-                    matched_pt = gen.Pt();
-                }
-            }
+            Gen matched_gen = GetGenMatchedMuon(muon, truth);
+            float matched_pt = matched_gen.Pt();
             roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom, matched_pt);
             roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up, matched_pt) - roccor;
         }
@@ -437,6 +428,9 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
         muon.SetMVAID(Muon::MVAID::SOFTMVA, Muon_softMva[i]);
         muon.SetMVAID(Muon::MVAID::MVALOWPT, Muon_mvaLowPt[i]);
         muon.SetMVAID(Muon::MVAID::MVATTH, Muon_mvaTTH[i]);
+        muon.SetIsTracker(Muon_isTracker[i]);
+        muon.SetIsGlobal(Muon_isGlobal[i]);
+        muon.SetIsStandalone(Muon_isStandalone[i]);
 
         muons.push_back(muon);
     }
@@ -730,6 +724,7 @@ RVec<LHE> AnalyzerCore::GetAllLHEs() {
 
     for (int i = 0; i < nLHEPart; i++) {
         LHE lhe;
+        lhe.SetIsEmpty(false);
         lhe.SetPtEtaPhiM(LHEPart_pt[i], LHEPart_eta[i], LHEPart_phi[i], LHEPart_mass[i]);
         lhe.SetStatus(LHEPart_status[i]);
         lhe.SetSpin(LHEPart_spin[i]);
@@ -1204,6 +1199,34 @@ Gen AnalyzerCore::GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens){
         // Return a Gen with invalid index if no match found
         Gen dummy;
         dummy.SetIndexPIDStatus(-1, 0, -1); 
+        return dummy;
+    }
+    return gen_closest;
+}
+
+Gen AnalyzerCore::GetGenMatchedMuon(const Muon& muon, const RVec<Gen>& gens){
+    // Find status 1 muon
+    int reco_PID = 13;
+
+    float max_dR = 0.2;
+    float min_dR = 0.1;
+    Gen gen_closest;
+    bool found_match = false;
+    float distance = 100000;
+    for (const auto &gen : gens) {
+        if (gen.Status() != 1) continue;
+        if (abs(gen.PID()) != reco_PID) continue;
+        if (gen.MotherIndex() < 0) continue; // reject ISR
+        if (gen.DeltaR(muon) > max_dR) continue;
+        float this_distance = pow(gen.DeltaR(muon)/0.005,2) + pow((muon.Pt()/gen.Pt()-1)/0.02,2);
+        if (this_distance < distance) {
+            distance = this_distance;
+            gen_closest = gen;
+            found_match = true;
+        }
+    }
+    if (!found_match) {
+        Gen dummy;
         return dummy;
     }
     return gen_closest;

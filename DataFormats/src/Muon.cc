@@ -72,6 +72,7 @@ void Muon::SetMVAID(MVAID id, float score) {
 
 bool Muon::PassID(const TString ID) const {
     if (ID == "")                 return true;
+    if (ID == "NOCUT")            return true;
     if (ID == "POGTight")         return isPOGTightId();
     if (ID == "POGMedium")        return isPOGMediumId();
     if (ID == "POGMediumPrompt")  return isPOGMediumPromptId();

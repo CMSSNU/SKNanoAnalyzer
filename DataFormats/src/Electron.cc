@@ -77,6 +77,7 @@ bool Electron::PassID(const TString ID) const {
 
     // POG
     if (ID == "")                 return true;
+    if (ID == "NOCUT")            return true;
     if (ID == "POGVeto")          return (int)(CutBased()) >= (int)(WORKINGPOINT::VETO);
     if (ID == "POGLoose")         return (int)(CutBased()) >= (int)(WORKINGPOINT::LOOSE);
     if (ID == "POGMedium")        return (int)(CutBased()) >= (int)(WORKINGPOINT::MEDIUM);

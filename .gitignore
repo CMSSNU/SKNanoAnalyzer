@@ -16,7 +16,9 @@ external/**
 **/__pycache__/**
 .DS_Store
 SKFlatAnalyzer
+HSNanoAnalyzer
 SKNanoOutput
+Run*NanoAOD*
 
 #Temporary Added to my personal temp files
 DataCOPY/** 

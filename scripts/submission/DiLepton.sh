@@ -8,10 +8,10 @@ for ch in "${CHANNEL[@]}"; do
     if [[ $ch == "EMu" ]]; then
         DATASTREAM="MuonEG"
     else
-        DATASTREAM="DoubleMuon"
+        DATASTREAM="DoubleMuon,Muon,Muon0,Muon1"
     fi
 
-    SKNano.py -a DiLepton -i $DATASTREAM -n 10 -e $ERA --userflags Run${ch},RunSyst --python
-    SKNano.py -a DiLepton -i DYJets,TTLL_powheg,TTLJ_powheg -n 30 -e $ERA --userflags Run${ch},RunSyst --python
-    SKNano.py -a DiLepton -i SampleLists/Run2NanoV9/DiLepton.txt -n 20 -e $ERA --userflags Run${ch},RunSyst --python
+    SKNano.py -a DiLepton -i $DATASTREAM -n 10 -e $ERA --userflags Run${ch},RunSyst --reduction 10
+    SKNano.py -a DiLepton -i DYJets,TTLL_powheg,TTLJ_powheg -n 30 -e $ERA --userflags Run${ch},RunSyst --reduction 10
+    SKNano.py -a DiLepton -i SampleLists/Run3NanoV13/DiLepton.txt -n 10 -e $ERA --userflags Run${ch},RunSyst --reduction 10
 done

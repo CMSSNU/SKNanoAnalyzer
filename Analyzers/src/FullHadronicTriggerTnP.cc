@@ -21,8 +21,8 @@ void FullHadronicTriggerTnP::executeEvent()
     SingleBTagTrigger = "HLT_PFHT450_SixPFJet36_PFBTagDeepJet_1p59";
     DoubleBTagTrigger = "HLT_PFHT400_SixPFJet32_DoublePFBTagDeepJet_2p94";
     ev = GetEvent();
-    // Met Filter
-    if (!PassMetFilter(AllJets, ev)) return;
+    // Noise Filter
+    if (!PassNoiseFilter(AllJets, ev)) return;
     FillCutFlow(1, 10);
     // jet vetomap
     if (!PassJetVetoMap(AllJets, AllMuons))

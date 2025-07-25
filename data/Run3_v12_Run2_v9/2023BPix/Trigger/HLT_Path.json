@@ -177,7 +177,8 @@
         "lumi": 8077.009684657
     },
     "HLT_Ele32_WPTight_Gsf": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_Ele35_WPTight_Gsf": {
         "lumi": 8077.009684657
@@ -228,7 +229,8 @@
         "lumi": 8077.009684657
     },
     "HLT_IsoMu24": {
-        "lumi": 8077.009684657
+        "lumi": 8077.009684657,
+        "active": true
     },
     "HLT_IsoMu24_eta2p1": {
         "lumi": 8077.009684657
