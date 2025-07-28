@@ -61,13 +61,13 @@ void ParseEleIDVariables::initializeAnalyzer() {
         exit(EXIT_FAILURE);
     }
 
-    myCorr = new MyCorrection(DataEra, MCSample, IsDATA);
+    myCorr = new MyCorrection(DataEra, DataPeriod, MCSample, IsDATA);
 }
 
 void ParseEleIDVariables::executeEvent() {
     Event ev = GetEvent();
     RVec<Jet> jets = GetAllJets();
-    if (!PassMetFilter(jets, ev)) return;
+    if (!PassNoiseFilter(jets, ev)) return;
 
     RVec<Electron> electrons = GetElectrons("", 15., 2.5);
     RVec<Muon> muons = GetMuons("POGTight", 25., 2.4);

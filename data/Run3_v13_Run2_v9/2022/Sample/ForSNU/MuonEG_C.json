@@ -3,8 +3,7 @@
     "isMC": 0,
     "NEvents": [
         12097752.0,
-        6700031.0,
-        12172343.0
+        6700031.0
     ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/MuonEG/Run2022C/250617_125532/0000/NANOAOD_1.root",

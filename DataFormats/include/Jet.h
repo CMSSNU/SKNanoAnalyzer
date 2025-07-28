@@ -21,6 +21,13 @@ public:
     PUID_TIGHT,
   };
   // setting functions
+  inline void SetRawPt(float pt) { jet_rawPt = pt; };
+  inline void SetOriginalPt(float pt) { jet_originalPt = pt; };
+  //inline void SetJESUncertainty(float JESUnc) { jet_JESUnc = JESUnc; };
+  float GetRawPt() const { return jet_rawPt; };
+  float GetOriginalPt() const { return jet_originalPt; };
+  //float GetJESUnc() const { return jet_JESunc; };
+
   inline void SetArea(double area) { j_area = area; };
   inline void SetJetFlavours(short pf, unsigned char hf)
   {
@@ -148,6 +155,10 @@ public:
   bool PassID(TString ID) const;
   bool PassID(JetID id) const; 
 private:
+  // For uncorrecting JES
+  float jet_rawPt;
+  float jet_originalPt;
+  //float jet_JESunc;
   // For matching indices in leptons
   int j_originalIndex;  
   // jetID

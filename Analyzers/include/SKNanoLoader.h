@@ -36,6 +36,7 @@ public:
     //bool IsFastSim;
     int DataYear;
     TString DataEra;
+    TString DataPeriod;
     int Run;
     float xsec, sumW, sumSign;
     RVec<TString> Userflags;
@@ -52,6 +53,7 @@ public:
         if(DataYear == 2016 or DataYear == 2017 or DataYear == 2018) Run = 2;
         else if(DataYear == 2022 or DataYear == 2023 or DataYear == 2024 or DataYear == 2025) Run = 3;
     }
+    virtual void SetPeriod(TString period) { DataPeriod=period; }
     virtual void SetCampaign(TString campaign) { Campaign=campaign; }
 
     virtual TString GetEra() const { return DataEra; }
@@ -575,13 +577,14 @@ public:
     Bool_t Flag_METFilters; // What is this?
     Bool_t Flag_goodVertices;
     Bool_t Flag_globalSuperTightHalo2016Filter;
-    Bool_t Flag_ECalDeadCellTriggerPrimitiveFilter;
+    Bool_t Flag_EcalDeadCellTriggerPrimitiveFilter;
+    Bool_t Flag_HBHENoiseFilter;
+    Bool_t Flag_HBHENoiseIsoFilter;
     Bool_t Flag_BadPFMuonFilter;
     Bool_t Flag_BadPFMuonDzFilter;
     Bool_t Flag_hfNoisyHitsFilter;
     Bool_t Flag_ecalBadCalibFilter;
     Bool_t Flag_eeBadScFilter;
-    //Bool_t Flag_ecalBadCalibFilter;
     Int_t RunNumber;
     Int_t LumiBlock;
     Int_t EventNumber;

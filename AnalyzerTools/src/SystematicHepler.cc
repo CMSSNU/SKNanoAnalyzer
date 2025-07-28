@@ -183,6 +183,11 @@ void SystematicHelper::make_Iter_obj_EvtLoopAgain()
             systematics_evtLoopAgain.push_back(obj_up);
             systematics_evtLoopAgain.push_back(obj_down);
         }
+        else if (!syst.hasDedicatedSample)
+        {
+            // Store weight-only systematics (those without evtLoopAgain and without dedicated samples)
+            systematics_weightOnly.push_back(syst.syst);
+        }
     }
 }
 

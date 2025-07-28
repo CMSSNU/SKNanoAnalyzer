@@ -2,9 +2,9 @@
     "name": "MuonEG",
     "isMC": 0,
     "NEvents": [
-        12097752.0,
-        6700031.0,
-        12172343.0
+        12172343.0,
+        36799912.0,
+        6178483.0
     ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/MuonEG/Run2022E/250617_125532/0000/NANOAOD_1.root",
