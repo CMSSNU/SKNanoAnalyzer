@@ -5,7 +5,7 @@ FullHadronicTriggerTnP::~FullHadronicTriggerTnP() {}
 
 void FullHadronicTriggerTnP::initializeAnalyzer()
 {
-    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
 }
 
 

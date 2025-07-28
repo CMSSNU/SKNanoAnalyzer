@@ -103,7 +103,7 @@ void MuonTnPProducer::initializeAnalyzer(){
         newtree->Branch("tag_gen_dR",&tag_gen_dR);
         newtree->Branch("tag_gen_reldpt",&tag_gen_reldpt);
     }
-    myCorr = new MyCorrection(DataEra, MCSample, IsDATA);
+    myCorr = new MyCorrection(DataEra, DataPeriod, MCSample, IsDATA);
 }
 
 void MuonTnPProducer::executeEvent(){

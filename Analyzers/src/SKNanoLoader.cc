@@ -1163,14 +1163,14 @@ void SKNanoLoader::Init() {
     SafeSetBranchAddress("Flag_METFilters", &Flag_METFilters);
     SafeSetBranchAddress("Flag_goodVertices", &Flag_goodVertices);
     SafeSetBranchAddress("Flag_globalSuperTightHalo2016Filter", &Flag_globalSuperTightHalo2016Filter);
-    //SafeSetBranchAddress("Flag_ECalDeadCellTriggerPrimitiveFilter", &Flag_ECalDeadCellTriggerPrimitiveFilter);
-    //documented as this brach exist @ NanoAOD, but not in the file
+    SafeSetBranchAddress("Flag_HBHENoiseFilter", &Flag_HBHENoiseFilter);
+    SafeSetBranchAddress("Flag_HBHENoiseIsoFilter", &Flag_HBHENoiseIsoFilter);
+    SafeSetBranchAddress("Flag_EcalDeadCellTriggerPrimitiveFilter", &Flag_EcalDeadCellTriggerPrimitiveFilter);
     SafeSetBranchAddress("Flag_BadPFMuonFilter", &Flag_BadPFMuonFilter);
     SafeSetBranchAddress("Flag_BadPFMuonDzFilter", &Flag_BadPFMuonDzFilter);
     SafeSetBranchAddress("Flag_hfNoisyHitsFilter", &Flag_hfNoisyHitsFilter);
     SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
     SafeSetBranchAddress("Flag_eeBadScFilter", &Flag_eeBadScFilter);
-    //SafeSetBranchAddress("Flag_ecalBadCalibFilter", &Flag_ecalBadCalibFilter);
     SafeSetBranchAddress("run", &RunNumber);
     SafeSetBranchAddress("luminosityBlock", &LumiBlock);
     SafeSetBranchAddress("event", &EventNumber);

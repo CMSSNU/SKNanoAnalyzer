@@ -32,6 +32,8 @@ void DiLepton::executeEvent() {
     if (!PassNoiseFilter(rawJets, ev)) return;
 
     RVec<Muon> rawMuons = GetAllMuons();
+    if (!RunNoVetoMap && !PassVetoMap(rawJets, rawMuons, "jetvetomap")) return; // For Run3, reject events if any jet is within the veto map
+
     RVec<Electron> rawElectrons = GetAllElectrons();
     Particle METv = ev.GetMETVector(Event::MET_Type::PUPPI);
     RVec<Gen> genParts = !IsDATA ? GetAllGens() : RVec<Gen>();
@@ -127,10 +129,16 @@ DiLepton::RecoObjects DiLepton::defineObjects(Event& ev,
     
     const float max_jeteta = DataEra.Contains("2016") ? 2.4 : 2.5;
     RVec<Jet> tightJets = SelectJets(allJets, "tight", 20., max_jeteta);
+    if (Run == 2) tightJets = SelectJets(tightJets, "loosePuId", 20., max_jeteta);
     RVec<Jet> tightJets_vetoLep = JetsVetoLeptonInside(tightJets, looseElectrons, looseMuons, 0.4);
-    
-    if (Run == 2) {
-        tightJets_vetoLep = SelectJets(tightJets_vetoLep, "loosePuId", 20., max_jeteta);
+
+    // For Run2, apply jet-by-jet veto map
+    if (Run == 2 && !RunNoVetoMap) {
+        RVec<Jet> tightJets_vetoLep_vetoMap;
+        for (const auto &jet : tightJets_vetoLep) {
+            if (PassVetoMap(jet, looseMuons, "jetvetomap")) tightJets_vetoLep_vetoMap.push_back(jet);
+        }
+        tightJets_vetoLep = tightJets_vetoLep_vetoMap;
     }
 
     RVec<Jet> bjets;
@@ -379,8 +387,8 @@ void DiLepton::fillObjects(const DiLepton::Channel& channel, const RecoObjects& 
             if (syst.Contains("PileupReweight")) weight /= weights.pileupWeight;
             if (syst.Contains("TopPtReweight")) weight /= weights.topPtWeight;
             if (syst.Contains("PileupJetIDSF")) weight /= weights.pileupIDSF;
-            if (syst.Contains("MuonIDSF")) weight /= weights.muonIDSF;
-            if (syst.Contains("ElectronIDSF")) weight /= weights.eleIDSF;
+            if (syst.Contains("MuonIDSF")) weight /= (weights.muonIDSF*weights.trigSF);
+            if (syst.Contains("ElectronIDSF")) weight /= (weights.eleIDSF*weights.trigSF);
             if (syst.Contains("DblMuTrigSF")) weight /= weights.trigSF;
             if (syst.Contains("EMuTrigSF")) weight /= weights.trigSF;
         }
@@ -421,6 +429,8 @@ void DiLepton::fillObjects(const DiLepton::Channel& channel, const RecoObjects& 
     for (size_t idx = 0; idx < jets.size(); ++idx) {
         const Jet& jet = jets.at(idx);
         FillHist(Form("%s/%s/jets/%zu/pt", channelStr.Data(), syst.Data(), idx+1), jet.Pt(), weight, 300, 0., 300.);
+        FillHist(Form("%s/%s/jets/%zu/rawPt", channelStr.Data(), syst.Data(), idx+1), jet.GetRawPt(), weight, 300, 0., 300.);
+        FillHist(Form("%s/%s/jets/%zu/originalPt", channelStr.Data(), syst.Data(), idx+1), jet.GetOriginalPt(), weight, 300, 0., 300.);
         FillHist(Form("%s/%s/jets/%zu/eta", channelStr.Data(), syst.Data(), idx+1), jet.Eta(), weight, 48, -2.4, 2.4);
         FillHist(Form("%s/%s/jets/%zu/phi", channelStr.Data(), syst.Data(), idx+1), jet.Phi(), weight, 64, -3.2, 3.2);
         FillHist(Form("%s/%s/jets/%zu/mass", channelStr.Data(), syst.Data(), idx+1), jet.M(), weight, 100, 0., 100.);

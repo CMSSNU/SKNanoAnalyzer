@@ -170,6 +170,7 @@ def setParser():
     #parser.add_argument('-q', dest='Queue', default="fastq")
     parser.add_argument('-e', dest='Era', default="All",help="2022, 2022EE. can be comma separated")
     parser.add_argument('-r', dest='Run', default="None",help="Run2, Run3. can be comma separated. override era option")
+    parser.add_argument('-p', dest='Period', default="All",help="Data period (e.g. A, B, C, etc.) for data samples. Default: All")
     parser.add_argument('--userflags', dest='Userflags', default="")
     parser.add_argument('--nmax', dest='NMax', default=500, type=int, help="maximum running jobs")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
@@ -262,7 +263,6 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
 
     for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}, ({isample}/{totsamples})", smoothing=1.):
         output = out_base.replace('.root',f'_{i}.root')
-
         # Read the template file
         if argparse.python:
             template_path = os.path.join(SKNANO_HOME, "templates", "job.py")
@@ -272,6 +272,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             # Replace template variations
             job_content = job_content.replace("[Analyzer]", argparse.Analyzer)
             job_content = job_content.replace("[era]", era)
+            job_content = job_content.replace("[period]", period if period else "")
 
             if isMC:
                 job_content = job_content.replace("[sample]", sample)
@@ -317,6 +318,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             job_content = job_content.replace("[jobname]", f"job_{i+1}")
             job_content = job_content.replace("[analyzer]", argparse.Analyzer)
             job_content = job_content.replace("[era]", era)
+            job_content = job_content.replace("[period]", period if period else "")
 
             if isMC:
                 job_content = job_content.replace("[sample]", sample)

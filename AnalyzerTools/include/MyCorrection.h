@@ -41,7 +41,7 @@ public:
         Type1PuppiMET
     };
     MyCorrection();
-    MyCorrection(const TString &era, const TString &sample, const bool IsData);
+    MyCorrection(const TString &era, const TString &period, const TString &sample, const bool IsData);
     ~MyCorrection();
 
     // Muon
@@ -116,6 +116,7 @@ public:
     // JERC
     float GetJER(const float eta, const float pt, const float rho) const;
     float GetJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
+    float GetJESSF(const float area, const float eta, const float pt, const float rho, const unsigned int runNumber) const;
     float GetJESUncertainty(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     // jerc_fatjet
     
@@ -172,7 +173,9 @@ private:
             throw runtime_error("Invalid era: " + era);
         }
     }
+    inline void SetPeriod(TString period) { DataPeriod = period; }
     inline TString GetEra() const { return DataEra; }
+    inline TString GetPeriod() const { return DataPeriod; }
     inline void SetSample(TString sample) { Sample = sample; }
     inline void setIsData(bool isData) { IsDATA = isData; }
 
@@ -224,6 +227,7 @@ private:
     string global_wpStr;
     string global_taggerStr;
     TString DataEra;
+    TString DataPeriod;
     int Run;
     TString Sample;
     bool IsDATA;

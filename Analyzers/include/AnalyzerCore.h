@@ -160,7 +160,9 @@ public:
     TFile* GetOutfile() { return outfile; }
     inline void SetOutfilePath(const TString &outpath) { outfile = new TFile(outpath, "RECREATE"); }
     TH1D* GetHist1D(const string &histname);
-    bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
+    bool PassVetoMap(const Jet &jet, const RVec<Muon> &AllMuons, const TString mapCategory="jetvetomap");
+    bool PassVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory="jetvetomap");
+    bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory="jetvetomap");
     inline void FillCutFlow(const int &val,const int &maxCutN=10){
         static int storedMaxCutN = maxCutN;
         FillHist("CutFlow", val, 1., storedMaxCutN, 0, storedMaxCutN);

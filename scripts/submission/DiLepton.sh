@@ -11,7 +11,7 @@ for ch in "${CHANNEL[@]}"; do
         DATASTREAM="DoubleMuon,Muon,Muon0,Muon1"
     fi
 
-    SKNano.py -a DiLepton -i $DATASTREAM -n 10 -e $ERA --userflags Run${ch},RunSyst --reduction 10
-    SKNano.py -a DiLepton -i DYJets,TTLL_powheg,TTLJ_powheg -n 30 -e $ERA --userflags Run${ch},RunSyst --reduction 10
-    SKNano.py -a DiLepton -i SampleLists/Run3NanoV13/DiLepton.txt -n 10 -e $ERA --userflags Run${ch},RunSyst --reduction 10
+    SKNano.py -a DiLepton -i $DATASTREAM -n 10 -e $ERA --userflags Run${ch},RunSyst
+    SKNano.py -a DiLepton -i DYJets,TTLL_powheg,TTLJ_powheg -n 30 -e $ERA --userflags Run${ch},RunSyst
+    SKNano.py -a DiLepton -i SampleLists/Run3NanoV13/DiLepton.txt -n 10 -e $ERA --userflags Run${ch},RunSyst
 done

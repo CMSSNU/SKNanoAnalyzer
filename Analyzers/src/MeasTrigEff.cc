@@ -71,7 +71,7 @@ void MeasTrigEff::initializeAnalyzer() {
         EMuDZTrigs = {"HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
                       "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ"};
     }
-    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
 }
 
 void MeasTrigEff::executeEvent() {

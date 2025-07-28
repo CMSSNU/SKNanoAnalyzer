@@ -48,7 +48,7 @@ void ParseMuIDVariables::initializeAnalyzer() {
         exit(EXIT_FAILURE);
     }
 
-    myCorr = new MyCorrection(DataEra, MCSample, IsDATA);
+    myCorr = new MyCorrection(DataEra, DataPeriod, MCSample, IsDATA);
 }
 
 void ParseMuIDVariables::executeEvent() {

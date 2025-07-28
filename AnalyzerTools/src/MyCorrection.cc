@@ -1,9 +1,10 @@
 #include "MyCorrection.h"
 
 MyCorrection::MyCorrection() {}
-MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool IsData) {
+MyCorrection::MyCorrection(const TString &era, const TString &period, const TString &sample, const bool IsData) {
     cout << "[MyCorrection::MyCorrection] MyCorrection created for " << era << endl;
     SetEra(era);
+    SetPeriod(period);
     SetSample(sample);
     setIsData(IsData);
 
@@ -65,8 +66,15 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     EGM_keys["2018"] = "2018";
 
     //Please use ####### as placeholder
+    if (GetEra() == "2023") {
+        JME_JER_GT["2023"] = "Summer23Prompt23_RunCv1234_JRV1_MC_######_AK4PFPuppi";
+        if (IsDATA) {
+            JME_JES_GT["2023"] = "Summer23Prompt23_V2_DATA_######_AK4PFPuppi";
+        } else { // mc
+            JME_JES_GT["2023"] = "Summer23Prompt23_V2_MC_######_AK4PFPuppi";
+        }
+    }
     JME_JER_GT["2023BPix"] = "Summer23BPixPrompt23_RunD_JRV1_MC_######_AK4PFPuppi";
-    JME_JER_GT["2023"] = "Summer23Prompt23_RunCv1234_JRV1_MC_######_AK4PFPuppi";
     JME_JER_GT["2022"] = "Summer22_22Sep2023_JRV1_MC_######_AK4PFPuppi";
     JME_JER_GT["2022EE"] = "Summer22EE_22Sep2023_JRV1_MC_######_AK4PFPuppi";
     JME_JER_GT["2018"] = "Summer19UL18_JRV2_MC_######_AK4PFchs";
@@ -74,9 +82,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &sample, const bool
     JME_JER_GT["2016postVFP"] = "Summer20UL16_JRV3_MC_######_AK4PFchs";
     JME_JER_GT["2016preVFP"] = "Summer20UL16APV_JRV3_MC_######_AK4PFchs";
 
-
     JME_JES_GT["2023BPix"] = "Summer23BPixPrompt23_V3_MC_######_AK4PFPuppi";
-    JME_JES_GT["2023"] = "Summer23Prompt23_V2_MC_######_AK4PFPuppi";
     JME_JES_GT["2022"] = "Summer22_22Sep2023_V2_MC_######_AK4PFPuppi";
     JME_JES_GT["2022EE"] = "Summer22EE_22Sep2023_V2_MC_######_AK4PFPuppi";
     JME_JES_GT["2018"] = "Summer19UL18_V5_MC_######_AK4PFchs";
@@ -1138,6 +1144,31 @@ float MyCorrection::GetJERSF(const float eta, const float pt, const variation sy
     return 1.;
 }
 
+//JESC
+float MyCorrection::GetJESSF(const float area, const float eta, const float pt, const float rho, const unsigned int runNumber) const {
+    correction::CompoundCorrection::Ref cset = nullptr;
+    string cset_string = JME_JES_GT.at(GetEra().Data());
+    cset_string.replace(cset_string.find("######"), 6, "L1L2L3Res");
+    cset = cset_jerc->compound().at(cset_string);
+    vector<correction::Variable::Type> args;
+    float JESSF = 1.;
+    if (IsDATA) { 
+        args = {area,
+                eta,
+                pt,
+                rho,
+                static_cast<float>(runNumber)
+        };
+    } else {
+        args = {area,
+                eta,
+                pt,
+                rho
+        };
+    }
+    return cset->evaluate(args);
+}
+
 float MyCorrection::GetJESUncertainty(const float eta, const float pt, const variation syst, const TString &source) const {
     int int_syst = 0;
     if (syst == variation::up)
@@ -1161,9 +1192,7 @@ bool MyCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCa
     correction::Correction::Ref cset = nullptr;
     string cset_string = JME_vetomap_keys.at(GetEra().Data());
     cset = cset_jetvetomap->at(cset_string);
-    if (cset->evaluate({mapCategory.Data(), eta, phi}) > 0)
-        return true;
-
+    if (cset->evaluate({mapCategory.Data(), eta, phi}) > 0) return true;
     return false;
 }
 
