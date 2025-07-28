@@ -7,7 +7,6 @@ void DiLeptonBase::initializeAnalyzer() {
     // Flags
     RunDiMu = HasFlag("RunDiMu");
     RunEMu = HasFlag("RunEMu");
-    RunNoVetoMap = HasFlag("RunNoVetoMap");
     MeasFakeMu8 = HasFlag("MeasFakeMu8");
     MeasFakeMu17 = HasFlag("MeasFakeMu17");
     MeasFakeEl8 = HasFlag("MeasFakeEl8");
@@ -76,7 +75,7 @@ void DiLeptonBase::initializeAnalyzer() {
     }
     
     // Correction
-    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
     //const string SKNANO_HOME = getenv("SKNANO_HOME");
     //if (IsDATA) {
     //    systHelper = make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream);

@@ -14,7 +14,6 @@ if __name__ == "__main__":
     module.sumW = [sumW]
     module.sumSign = [sumSign]
     module.SetEra("[era]")
-    module.SetPeriod("[period]")
 [USERFLAGS]
 [SAMPLEPATHS]
 [MAXEVENT]

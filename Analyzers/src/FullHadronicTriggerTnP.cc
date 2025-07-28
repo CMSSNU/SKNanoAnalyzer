@@ -5,7 +5,7 @@ FullHadronicTriggerTnP::~FullHadronicTriggerTnP() {}
 
 void FullHadronicTriggerTnP::initializeAnalyzer()
 {
-    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
 }
 
 
@@ -21,8 +21,8 @@ void FullHadronicTriggerTnP::executeEvent()
     SingleBTagTrigger = "HLT_PFHT450_SixPFJet36_PFBTagDeepJet_1p59";
     DoubleBTagTrigger = "HLT_PFHT400_SixPFJet32_DoublePFBTagDeepJet_2p94";
     ev = GetEvent();
-    // Noise Filter
-    if (!PassNoiseFilter(AllJets, ev)) return;
+    // Met Filter
+    if (!PassMetFilter(AllJets, ev)) return;
     FillCutFlow(1, 10);
     // jet vetomap
     if (!PassJetVetoMap(AllJets, AllMuons))

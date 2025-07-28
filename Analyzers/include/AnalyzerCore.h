@@ -2,7 +2,6 @@
 #define AnalyzerCore_h
 
 #include <map>
-#include <unordered_map>
 #include <string>
 #include <deque>
 
@@ -74,7 +73,7 @@ public:
 
 
     //MetFilter
-    bool PassNoiseFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
+    bool PassMetFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
@@ -131,7 +130,6 @@ public:
     void PrintGen(const RVec<Gen> &gens);
     static RVec<int> TrackGenSelfHistory(const Gen& me, const RVec<Gen>& gens);
     static Gen GetGenMatchedLepton(const Lepton& lep, const RVec<Gen>& gens);
-    static Gen GetGenMatchedMuon(const Muon& muon, const RVec<Gen>& gens);
     static Gen GetGenMatchedPhoton(const Lepton& lep, const RVec<Gen>& gens);
     static bool IsFinalPhotonSt23_Public(const RVec<Gen>& gens);
     bool IsFromHadron(const Gen& me, const RVec<Gen>& gens);
@@ -160,9 +158,7 @@ public:
     TFile* GetOutfile() { return outfile; }
     inline void SetOutfilePath(const TString &outpath) { outfile = new TFile(outpath, "RECREATE"); }
     TH1D* GetHist1D(const string &histname);
-    bool PassVetoMap(const Jet &jet, const RVec<Muon> &AllMuons, const TString mapCategory="jetvetomap");
-    bool PassVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory="jetvetomap");
-    bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory="jetvetomap");
+    bool PassJetVetoMap(const RVec<Jet> &AllJet, const RVec<Muon> &AllMuon, const TString mapCategory = "jetvetomap");
     inline void FillCutFlow(const int &val,const int &maxCutN=10){
         static int storedMaxCutN = maxCutN;
         FillHist("CutFlow", val, 1., storedMaxCutN, 0, storedMaxCutN);
@@ -183,9 +179,9 @@ public:
                                           int n_binx, float *xbins,
                                           int n_biny, float *ybins,
                                           int n_binz, float *zbins);
-    inline void FillHist(const TString &histname, float value, float weight, const RVec<float> &xbins) { FillHist(histname, value, weight, xbins.size()-1, const_cast<float*>(xbins.data())); } 
-    inline void FillHist(const TString &histname, float value_x, float value_y, float weight, const RVec<float> &xbins, const RVec<float> &ybins) {FillHist(histname, value_x, value_y, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data())); }
-    inline void FillHist(const TString &histname, float value_x, float value_y, float value_z, float weight, const RVec<float> &xbins, const RVec<float> &ybins, const RVec<float> &zbins) {FillHist(histname, value_x, value_y, value_z, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data()), zbins.size() - 1, const_cast<float *>(zbins.data())); }
+    inline void FillHist(const TString &histname, float value, float weight, const vector<float> &xbins) { FillHist(histname, value, weight, xbins.size()-1, const_cast<float*>(xbins.data())); } 
+    inline void FillHist(const TString &histname, float value_x, float value_y, float weight, const vector<float> &xbins, const vector<float> &ybins) {FillHist(histname, value_x, value_y, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data())); }
+    inline void FillHist(const TString &histname, float value_x, float value_y, float value_z, float weight, const vector<float> &xbins, const vector<float> &ybins, const vector<float> &zbins) {FillHist(histname, value_x, value_y, value_z, weight, xbins.size() - 1, const_cast<float *>(xbins.data()), ybins.size() - 1, const_cast<float *>(ybins.data()), zbins.size() - 1, const_cast<float *>(zbins.data())); }
 
 
     TTree* NewTree(const TString &treename, const RVec<TString> &keeps = {}, const RVec<TString> &drops = {});

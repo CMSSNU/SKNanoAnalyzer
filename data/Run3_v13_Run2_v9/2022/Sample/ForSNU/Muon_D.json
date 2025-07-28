@@ -3,7 +3,8 @@
     "isMC": 0,
     "NEvents": [
         104137213.0,
-        66249213.0
+        66249213.0,
+        132689601.0
     ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_1.root",
@@ -836,6 +837,7 @@
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_828.root",
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_829.root",
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_830.root",
+        "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_831.root",
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_832.root",
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_833.root",
         "/gv0/DATA/SKNano/Run3NanoAODv13p1/2022/Muon/Run2022D/250617_125533/0000/NANOAOD_834.root",

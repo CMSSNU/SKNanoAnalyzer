@@ -18,10 +18,7 @@ public :
     inline int PdgId() const { return j_pdgId; }
 
     virtual void Print() const;
-    inline void SetIsEmpty(bool b) { j_IsEmpty = b; }
-    inline bool IsEmpty() const { return j_IsEmpty; }
 private :
-    bool j_IsEmpty;
     float j_incomingPz;
     int j_spin;
     int j_status;

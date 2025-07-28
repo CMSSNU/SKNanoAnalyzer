@@ -49,7 +49,7 @@ void ExampleRun::initializeAnalyzer() {
     // Not implemented yet
     
     // Correction
-    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample ,IsDATA);
     // SystematicHelper
     string SKNANO_HOME = getenv("SKNANO_HOME");
     if (IsDATA) {

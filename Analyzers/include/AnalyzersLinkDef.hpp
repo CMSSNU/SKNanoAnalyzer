@@ -15,9 +15,6 @@
 #pragma link C++ class FullHadronicTriggerTnP+;
 #pragma link C++ class GeneratorBase+;
 #pragma link C++ class DiLeptonBase+;
-#pragma link C++ class DiLepton+;
 #pragma link C++ class ParseEleIDVariables+;
 #pragma link C++ class ParseMuIDVariables+;
 #pragma link C++ class TestGetLeptonType+;
-#pragma link C++ class MeasTrigEff+;
-#pragma link C++ class MuonTnPProducer+;

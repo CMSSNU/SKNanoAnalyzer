@@ -11,7 +11,6 @@ public:
 
     // For di-lepton control regions
     bool RunDiMu, RunEMu;
-    bool RunNoVetoMap;
     // For fake measurement
     bool MeasFakeMu8, MeasFakeMu17;
     bool MeasFakeEl8, MeasFakeEl12, MeasFakeEl23;

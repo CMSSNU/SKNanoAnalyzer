@@ -153,8 +153,7 @@
         "lumi": 41477.877400009
     },
     "HLT_Ele32_WPTight_Gsf_L1DoubleEG": {
-        "lumi": 41477.877400009,
-        "active": true
+        "lumi": 41477.877400009
     },
     "HLT_HT450_Beamspot": {
         "lumi": 41477.877400009
@@ -208,8 +207,7 @@
         "lumi": 41477.877400009
     },
     "HLT_IsoMu27": {
-        "lumi": 41477.877400009,
-        "active": true
+        "lumi": 41477.877400009
     },
     "HLT_IsoMu30": {
         "lumi": 41477.877400009

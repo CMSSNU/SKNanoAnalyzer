@@ -29,14 +29,6 @@ public:
     inline bool isPOGSoftMvaId() const {return j_softMvaId;}
     inline bool isPOGTriggerIdLoose() const {return j_triggerIdLoose;}
 
-    // Muon type methods
-    void SetIsTracker(bool isTracker) { j_isTracker = isTracker; }
-    void SetIsStandalone(bool isStandalone) { j_isStandalone = isStandalone; }
-    void SetIsGlobal(bool isGlobal) { j_isGlobal = isGlobal; }
-    inline bool isTracker() const { return j_isTracker; }
-    inline bool isStandalone() const { return j_isStandalone; }
-    inline bool isGlobal() const { return j_isGlobal; }
-
     // Unsigned char IDs
     enum class WorkingPointID {NONE, HIGHPT, MINIISO, MULTIISO, MVAMU, PFISO, PUPPIISO, TKISO};
     enum class WorkingPoint {NONE, VLOOSE, LOOSE, MEDIUM, TIGHT, VTIGHT, VVTIGHT};

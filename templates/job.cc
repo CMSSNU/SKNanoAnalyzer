@@ -11,7 +11,6 @@ void [jobname]() {
     module.sumW = [sumW];
     module.sumSign = [sumSign];
     module.SetEra("[era]");
-    module.SetPeriod("[period]");
 [USERFLAGS]
 [SAMPLEPATHS]
 [MAXEVENT]

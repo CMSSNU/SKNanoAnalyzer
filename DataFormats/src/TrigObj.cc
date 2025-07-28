@@ -101,11 +101,11 @@ bool TrigObj::passMuonFilter(const TString& hltPath) const {
     
     if (j_run == 2) {
         // Run 2 Muon filter bits:
-        // bit 0 = TrkIsoVVL, e.g. Mu17_TrkIsoVVL_Mu8_TrkIsoVVL
+        // bit 0 = TrkIsoVVL
         // bit 1 = Iso
         // bit 2 = OverlapFilter PFTau
-        // bit 3 = 1mu, e.g. IsoMu24
-        // bit 4 = 2mu, e.g. Mu17_TrkIsoVVL_Mu8_TrkIsoVVL
+        // bit 3 = 1mu
+        // bit 4 = 2mu
         // bit 5 = 1mu-1e
         // bit 6 = 1mu-1tau
         // bit 7 = 3mu
@@ -149,6 +149,7 @@ bool TrigObj::passMuonFilter(const TString& hltPath) const {
         // Run 3 Muon filter bits (same as Run 2 plus bit 12):
         // bit 0-11 = same as Run 2
         // bit 12 = 1mu-1photon
+        
         if (hltPath.Contains("Mu") || hltPath.Contains("DoubleMu") || hltPath.Contains("TripleMu")) {
             if (hltPath.Contains("TrkIsoVVL")) {
                 return hasBit(0);

@@ -8,7 +8,7 @@ void TestGetLeptonType::initializeAnalyzer() {
     cout << "[TestGetLeptonType::initializeAnalyzer] DataEra = " << DataEra << endl;
     cout << "[TestGetLeptonType::initializeAnalyzer] IsDATA = " << IsDATA << endl;
     
-    myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample, IsDATA);
+    myCorr = new MyCorrection(DataEra, IsDATA?DataStream:MCSample, IsDATA);
     cout << "[TestGetLeptonType::initializeAnalyzer] MyCorrection initialized" << endl;
 }
 
