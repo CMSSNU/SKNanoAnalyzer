@@ -25,9 +25,9 @@ fi
 
 # Set up environment
 if [[ $HOSTNAME == *"tamsa"* ]]; then
-    export SKNANO_HOME="/data9/Users/choij/Sync/workspace/SKNanoAnalyzer"
+    export SKNANO_HOME="/data9/Users/$USER/Sync/workspace/SKNanoAnalyzer"
     export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
-    export SKNANO_OUTPUT="/data9/Users/choij/Sync/workspace/SKNanoOutput"
+    export SKNANO_OUTPUT="/data9/Users/$USER/Sync/workspace/SKNanoOutput"
 else
     export SKNANO_HOME=`pwd`
     export SKNANO_RUNLOG="$HOME/Sync/workspace/SKNanoRunlog"
