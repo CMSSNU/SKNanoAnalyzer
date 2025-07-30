@@ -117,6 +117,7 @@ public:
     inline std::string getCurrentSysName() const { return current_Iter_obj.iter_name; }
     inline std::string getCurrentIterSysTarget() const { return current_Iter_obj.syst_name; }
     inline std::string getCurrentIterSysSource() const { return current_Iter_obj.syst_source; }
+    inline const std::vector<std::string>& getWeightOnlySystematics() const { return systematics_weightOnly; }
     inline MyCorrection::variation getCurrentIterVariation() const { return current_Iter_obj.variation; }
 
     std::vector<std::string> get_targets_from_name(const std::string &syst_name);
@@ -148,6 +149,7 @@ private:
     std::unordered_map<std::string, std::function<float()>> weight_functions_onesided;
 
     std::vector<Iter_obj> systematics_evtLoopAgain;
+    std::vector<std::string> systematics_weightOnly;
     unordered_map<std::string, std::string> map_dedicatesamplekey_systname;
     
     std::unordered_map<std::string, float> weight_map_nominal;

@@ -57,11 +57,16 @@ for era in Run.keys():
 ##############################
 def isMCandGetPeriod(sample):
     #if sample is ends with _one capital letter, it is data
-    #hope there will be no exception(please)
-    if sample.split("_")[-1].isupper() and len(sample.split("_")[-1]) == 1:
-        return False, sample.split("_")[-1]
-    else:
-        return True, None
+    #also handle 2023 format like C_v1, C_v2, etc.
+    sample_parts = sample.split("_")
+    if len(sample_parts) >= 2:
+        # Check for 2023 format: C_v1, C_v2, etc.
+        if len(sample_parts) >= 2 and sample_parts[-2].isupper() and len(sample_parts[-2]) == 1 and sample_parts[-1].startswith('v'):
+            return False, f"{sample_parts[-2]}_{sample_parts[-1]}"
+        # Check for older format: single capital letter
+        elif sample_parts[-1].isupper() and len(sample_parts[-1]) == 1:
+            return False, sample_parts[-1]
+    return True, None
 
 def getSkimmingOutBaseAndSuffix(era, sample, AnalyzerName):
     isMC, period = isMCandGetPeriod(sample)
@@ -169,6 +174,7 @@ def setParser():
     #parser.add_argument('-q', dest='Queue', default="fastq")
     parser.add_argument('-e', dest='Era', default="All",help="2022, 2022EE. can be comma separated")
     parser.add_argument('-r', dest='Run', default="None",help="Run2, Run3. can be comma separated. override era option")
+    parser.add_argument('-p', dest='Period', default="All",help="Data period (e.g. A, B, C, etc.) for data samples. Default: All")
     parser.add_argument('--userflags', dest='Userflags', default="")
     parser.add_argument('--nmax', dest='NMax', default=500, type=int, help="maximum running jobs")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
@@ -246,12 +252,12 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
     reduction = argparse.Reduction
     
     if sample.startswith("Skim_"):
-        SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
+        SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)]
         sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','Skim',sample+'.json')))['path']
         sample = SkimInfo['PD']
     else:
-        sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{period}$", "", sample)]
+        sampleInfo = sampleInfoJsons[era][sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)]
         samplePaths = json.load(open(os.path.join(SKNANO_DATA,era,'Sample','ForSNU',sample+'.json')))['path']
         
     samplePaths = jobFileDivider(samplePaths, njobs)
@@ -260,8 +266,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
     totalNumberOfJobs = len(samplePaths)
 
     for i in tqdm(range(totalNumberOfJobs), position=1, leave=False, desc=f"Creating Jobs for {sample}, ({isample}/{totsamples})", smoothing=1.):
-        output = out_base.replace('.root',f'_{i+1}.root')
-
+        output = out_base.replace('.root',f'_{i}.root')
         # Read the template file
         if argparse.python:
             template_path = os.path.join(SKNANO_HOME, "templates", "job.py")
@@ -271,6 +276,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             # Replace template variations
             job_content = job_content.replace("[Analyzer]", argparse.Analyzer)
             job_content = job_content.replace("[era]", era)
+            job_content = job_content.replace("[period]", period if period else "")
 
             if isMC:
                 job_content = job_content.replace("[sample]", sample)
@@ -316,6 +322,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             job_content = job_content.replace("[jobname]", f"job_{i+1}")
             job_content = job_content.replace("[analyzer]", argparse.Analyzer)
             job_content = job_content.replace("[era]", era)
+            job_content = job_content.replace("[period]", period if period else "")
 
             if isMC:
                 job_content = job_content.replace("[sample]", sample)

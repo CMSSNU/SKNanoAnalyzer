@@ -237,7 +237,8 @@
         "lumi": 19517.523849863
     },
     "HLT_Ele27_WPTight_Gsf": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_Ele27_WPTight_Gsf_L1JetTauSeeded": {
         "lumi": 19517.523849863
@@ -405,7 +406,8 @@
         "lumi": 19517.523849863
     },
     "HLT_IsoMu24": {
-        "lumi": 19517.523849863
+        "lumi": 19517.523849863,
+        "active": true
     },
     "HLT_IsoMu27": {
         "lumi": 19517.523849863

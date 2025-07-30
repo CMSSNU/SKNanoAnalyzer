@@ -228,7 +228,12 @@
         "lumi": 9451
     },
     "HLT_IsoMu24": {
+<<<<<<< HEAD
         "lumi": 9451
+=======
+        "lumi": 8077.009684657,
+        "active": true
+>>>>>>> aca5e6f3bb0e2279790a5bb7087b9e39620bb3e1
     },
     "HLT_IsoMu24_eta2p1": {
         "lumi": 9451
