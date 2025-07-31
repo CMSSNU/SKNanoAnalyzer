@@ -15,9 +15,9 @@ void DiLepton::initializeAnalyzer() {
     // Initialize SystematicHelper
     string SKNANO_HOME = getenv("SKNANO_HOME");
     if (IsDATA) {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/AnalyzerTools/noSyst.yaml", DataStream);
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/AnalyzerTools/noSyst.yaml", DataStream, DataEra);
     } else {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/AnalyzerTools/DiLeptonSystematic.yaml", MCSample);
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/AnalyzerTools/DiLeptonSystematic.yaml", MCSample, DataEra);
     }
 
     // Setup weight function map for SystematicHelper
