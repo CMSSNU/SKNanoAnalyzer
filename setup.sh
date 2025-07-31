@@ -170,6 +170,27 @@ echo "@@@@ Correction lib: $CORRECTION_LIB_DIR"
 # ROCCOR
 export ROCCOR_PATH=$SKNANO_HOME/external/RoccoR
 
+# Check and copy RoccoR template files if missing
+if [[ ! -f "$ROCCOR_PATH/CMakeLists.txt" ]] || [[ ! -f "$ROCCOR_PATH/RoccoR_LinkDef.hpp" ]]; then
+    echo -e "\033[32m@@@@ Missing RoccoR build files, copying from templates...\033[0m"
+    if [[ ! -f "$ROCCOR_PATH/CMakeLists.txt" ]]; then
+        if [[ -f "$SKNANO_HOME/templates/RoccoR/CMakeLists.txt" ]]; then
+            cp "$SKNANO_HOME/templates/RoccoR/CMakeLists.txt" "$ROCCOR_PATH/"
+            echo "@@@@ Copied CMakeLists.txt to external/RoccoR/"
+        else
+            echo -e "\033[31m@@@@ Template CMakeLists.txt not found in templates/RoccoR/\033[0m"
+        fi
+    fi
+    if [[ ! -f "$ROCCOR_PATH/RoccoR_LinkDef.hpp" ]]; then
+        if [[ -f "$SKNANO_HOME/templates/RoccoR/RoccoR_LinkDef.hpp" ]]; then
+            cp "$SKNANO_HOME/templates/RoccoR/RoccoR_LinkDef.hpp" "$ROCCOR_PATH/RoccoR_LinkDef.hpp"
+            echo "@@@@ Copied RoccoR_LinkDef.hpp to external/RoccoR/RoccoR_LinkDef.hpp"
+        else
+            echo -e "\033[31m@@@@ Template RoccoR_LinkDef.hpp not found in templates/RoccoR/\033[0m"
+        fi
+    fi
+fi
+
 # JSONPOG integration auto-update
 check_jsonpog_updates() {
     local auto_update=${1:-false}
