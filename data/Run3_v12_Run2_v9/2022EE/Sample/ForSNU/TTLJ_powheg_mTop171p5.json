@@ -5,7 +5,7 @@
     "xsec_formula": "923.6*2*3*0.1086*0.6741",
     "nmc": 106574300.0,
     "sumsign": 105708256.0,
-    "sumW": 36804005888.0,
+    "sumW": 36612793855.62305,
     "xsec": 405.685352016,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/TTtoLNu2Q_MT-171p5_TuneCP5_13p6TeV_powheg-pythia8/240808_055932/0000/tree_1.root",

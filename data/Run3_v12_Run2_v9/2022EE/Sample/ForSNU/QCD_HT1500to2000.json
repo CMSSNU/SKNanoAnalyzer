@@ -4,8 +4,8 @@
     "PD": "QCD-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8",
     "xsec": 25.14,
     "nmc": 63307771.0,
-    "sumsign": 63307772.0,
-    "sumW": 106070769664.0,
+    "sumsign": 63307771.0,
+    "sumW": 106344533328.8512,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/240808_055415/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/QCD-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/240808_055415/0000/tree_2.root",

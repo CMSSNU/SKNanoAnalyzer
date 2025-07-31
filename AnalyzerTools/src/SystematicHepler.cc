@@ -1,8 +1,11 @@
 #include "SystematicHelper.h"
 #include <yaml-cpp/yaml.h>
 
-SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
-{
+SystematicHelper::SystematicHelper(std::string yaml_path,
+    TString sample,
+    TString Era)
+: sample(sample.Data()),  
+Era(Era.Data()){
     variation_prefix = {
         {MyCorrection::variation::nom, ""},
         {MyCorrection::variation::up, "_Up"},
@@ -14,6 +17,13 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
         std::string syst_name = node["syst"].as<std::string>();
         SystematicHelper::SYST syst;
         syst.syst = syst_name;
+        if (node["decorrelate_by_era"].IsDefined())
+        {
+            syst.decorrelate_by_era = node["decorrelate_by_era"].as<bool>();
+        }
+        if(syst.decorrelate_by_era){
+            syst.syst = syst.syst + "_" + Era.Data();
+        }
         if (node["source"].IsDefined())
         {
             syst.source = node["source"].as<std::string>();
@@ -46,6 +56,7 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
         {
             syst.target = syst_name;
         }
+
         systematics.push_back(syst);
     }
 
@@ -73,7 +84,6 @@ SystematicHelper::SystematicHelper(std::string yaml_path, TString sample)
     }
 
     make_map_dedicatedSample();
-    this->sample = sample.Data();
     isDedicatedSample = IsDedicatedSample();
     checkBadSystematics();
     make_Iter_obj_EvtLoopAgain();
@@ -104,6 +114,18 @@ SystematicHelper::SYST *SystematicHelper::findSystematic(std::string syst_name)
         if (syst.syst == syst_name)
         {
             return &syst;
+        }
+
+        // Check if syst.syst ends with "_" + Era and the prefix matches
+        std::string suffix = "_" + Era;
+        if (syst.syst.size() > suffix.size() &&
+            syst.syst.compare(syst.syst.size() - suffix.size(), suffix.size(), suffix) == 0)
+        {
+            std::string prefix = syst.syst.substr(0, syst.syst.size() - suffix.size());
+            if (prefix == syst_name)
+            {
+                return &syst;
+            }
         }
     }
     return nullptr;
@@ -261,9 +283,9 @@ void SystematicHelper::assignWeightFunctionMap(const unordered_map<std::string, 
     weight_functions_assigned = true;
 }
 
-std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
+std::unordered_map<std::string, float> SystematicHelper::calculateWeight(bool dry_run)
 {
-    if(!weight_functions_assigned)
+    if(!weight_functions_assigned && !dry_run)
     {
         std::cerr << "Weight functions are not assigned" << std::endl;
         exit(1);
@@ -280,7 +302,7 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
         {
             float weight = 1.;
             auto weight_function = weight_functions_onesided[syst.target];
-            weight = weight_function();
+            if(!dry_run) weight = weight_function();
 
             weight_map_nominal[syst.target] = weight;
             weight_map_up[syst.syst] = 1.;
@@ -293,9 +315,12 @@ std::unordered_map<std::string, float> SystematicHelper::calculateWeight()
             float weight_nominal = 1.;
 
             auto weight_function = weight_functions[syst.target];
-            weight_nominal = weight_function(MyCorrection::variation::nom, "total");
-            weight_up = weight_function(MyCorrection::variation::up, syst.source);
-            weight_down = weight_function(MyCorrection::variation::down, syst.source);
+            if(!dry_run)
+            {
+                weight_nominal = weight_function(MyCorrection::variation::nom, "total");
+                weight_up = weight_function(MyCorrection::variation::up, syst.source);
+                weight_down = weight_function(MyCorrection::variation::down, syst.source);
+            }
 
             weight_map_nominal[syst.target] = weight_nominal;
             weight_map_up[syst.syst] = weight_up;

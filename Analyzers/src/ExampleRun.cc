@@ -52,10 +52,13 @@ void ExampleRun::initializeAnalyzer() {
     myCorr = new MyCorrection(DataEra, DataPeriod, IsDATA?DataStream:MCSample ,IsDATA);
     // SystematicHelper
     string SKNANO_HOME = getenv("SKNANO_HOME");
-    if (IsDATA) {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream);
-    } else {
-        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/ExampleSystematic.yaml", MCSample);
+    if (IsDATA)
+    {
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/noSyst.yaml", DataStream, DataEra);
+    }
+    else
+    {
+        systHelper = std::make_unique<SystematicHelper>(SKNANO_HOME + "/docs/ExampleSystematic.yaml", MCSample, DataEra);
     }
 
     //==== Example 2

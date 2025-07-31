@@ -1,0 +1,35 @@
+--- make_json.py
++++ make_json.py
+@@
+     f2.Close()
+     f.Close()
+     #get absolute path of f2
+     global r_hist
+     r_hist = os.path.abspath("output.root")
++    # 작업 완료 후 원래 작업 디렉터리로 복귀
++    os.chdir(current_dir)
+ 
+@@ def process_correction(tagger, process, key_dicts, r_hist):
+-                        hist_path = f'output.root:{key_dict["hist_key"]}'
++                        # 절대 경로 사용해 모든 worker가 파일을 찾도록 함
++                        hist_path = f'{r_hist}:{key_dict["hist_key"]}'
+ 
+@@ def makingJson(era, taggingmode):
+-    all_processes = sorted(set([key_dict['sample'] for key_dict in key_dicts]))
++    print(f" [INFO] Built {len(key_dicts)} histogram keys for era {era}")
++    all_processes = sorted(set([key_dict['sample'] for key_dict in key_dicts]))
+@@ def makingJson(era, taggingmode):
+-    # Prepare arguments for multiprocessing
+-    tasks = [(tagger, process, key_dicts, r_hist) for tagger in taggers for process in all_processes]
++    # Prepare arguments for multiprocessing
++    tasks = [(tagger, process, key_dicts, r_hist) for tagger in taggers for process in all_processes]
++    # 작업이 없으면 즉시 종료
++    if len(tasks) == 0:
++        print(f"[{era}] No valid histograms – skipping JSON creation.")
++        return main_json
+@@ def makingJson(era, taggingmode):
+-    num_workers = min(multiprocessing.cpu_count(), len(tasks))
+-    print(f"Starting multiprocessing with {num_workers} workers...")
++    num_workers = min(multiprocessing.cpu_count(), len(tasks))
++    print(f"Starting multiprocessing with {num_workers} workers...")
+

@@ -42,7 +42,7 @@ public:
         Type1PuppiMET
     };
     MyCorrection();
-    MyCorrection(const TString &era, const TString &period, const TString &sample, const bool IsData);
+    MyCorrection(const TString &era, const TString &period, const TString &sample, bool IsData,const string &btagging_eff_file = "btaggingEff.json", const string &ctagging_eff_file = "ctaggingEff.json", const string &btagging_R_file = "btaggingR.json", const string &ctagging_R_file = "ctaggingR.json");
     ~MyCorrection();
 
     // Muon
@@ -116,7 +116,7 @@ public:
     // JERC
     float GetJER(const float eta, const float pt, const float rho) const;
     float GetJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
-    float GetJESSF(const float area, const float eta, const float pt, const float rho, const float phi, const unsigned int runNumber) const;
+    float GetJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const;
     float GetJESUncertainty(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     // jerc_fatjet
     
@@ -207,7 +207,7 @@ private:
         string json_electron_TopHNT_emu_leg1_eff;
         string json_electron_TopHNT_emu_leg2_eff;
     };
-    EraConfig GetEraConfig(TString era);
+    EraConfig GetEraConfig(TString era, const string &btagging_eff_file, const string &ctagging_eff_file, const string &btagging_R_file, const string &ctagging_R_file) const;
 
     inline void SetEra(TString era) {
         DataEra = era;
