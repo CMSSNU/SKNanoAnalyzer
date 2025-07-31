@@ -1144,7 +1144,7 @@ float MyCorrection::GetJERSF(const float eta, const float pt, const variation sy
 }
 
 //JESC
-float MyCorrection::GetJESSF(const float area, const float eta, const float pt, const float rho, const unsigned int runNumber) const {
+float MyCorrection::GetJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const {
     correction::CompoundCorrection::Ref cset = nullptr;
     string cset_string = JME_JES_GT.at(GetEra().Data());
     cset_string.replace(cset_string.find("######"), 6, "L1L2L3Res");
@@ -1159,6 +1159,14 @@ float MyCorrection::GetJESSF(const float area, const float eta, const float pt, 
                 static_cast<float>(runNumber)
         };
     } else {
+        if(DataEra == "2024" or DataEra == "2023BPix")
+        args = {area,
+                eta,
+                pt,
+                phi,
+                rho
+        };
+        else
         args = {area,
                 eta,
                 pt,
