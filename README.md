@@ -9,18 +9,9 @@
 
 ## To do
 ### Assigned
-- [x] Add new features to ExampleRun.cc and make them manual: **Yeonjoon**
-- [x] Check the update in jsonpog-correction when sourcing setup.sh: **Chihwan**
-- [x] Clean up gv0: **Jin**
-- [x] Compare the sample list in SKFlat with the necessary samples, and bring them if necessary, check xsec, etc.: **Taehee+Eunsu+Jin**
-- [x] Update the CheckStorages.sh to respect the folder structure under gv0: **Jin**
 - [ ] FatJet and Tau: **Youngwan**
 - [ ] SKNano.py skimming test **Yeonjoon**
-- [x] Auto-Validation: Check the consistency of the output for a specific NanoAOD file: **Jin**
-- [x] Check for CVMFS environment compatability **deprecated**
-- [x] Update MeasureTaggingEff.cc **Yeonjoon**
-- [ ] Rochester Correction Follow-up **Ask Hyonsan or Won(Contact: Chihwan)**
-- [x] Update the network to 10G? (later)
+- [ ] Auto-Validation: Check the consistency of the output for a specific NanoAOD file: **Jin**
 
 For DY, check the before/after of correction
 - [ ] Leptons **Jihoon**
