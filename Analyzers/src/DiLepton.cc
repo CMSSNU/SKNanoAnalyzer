@@ -28,11 +28,18 @@ void DiLepton::initializeAnalyzer() {
 
 void DiLepton::executeEvent() {
     Event ev = GetEvent();
+    
+    // Initial cutflow entry
+    float initialWeight = IsDATA ? 1.0 : MCweight() * ev.GetTriggerLumi("Full");
+    fillCutflow(CutStage::Initial, Channel::NONE, initialWeight, "Central");
+    
     RVec<Jet> rawJets = GetAllJets();
     if (!PassNoiseFilter(rawJets, ev)) return;
+    fillCutflow(CutStage::NoiseFilter, Channel::NONE, initialWeight, "Central");
 
     RVec<Muon> rawMuons = GetAllMuons();
-    if (!RunNoVetoMap && !PassVetoMap(rawJets, rawMuons, "jetvetomap")) return; // For Run3, reject events if any jet is within the veto map
+    if (!(RunNoVetoMap || PassVetoMap(rawJets, rawMuons, "jetvetomap"))) return; // For Run3, reject events if any jet is within the veto map
+    fillCutflow(CutStage::VetoMap, Channel::NONE, initialWeight, "Central");
 
     RVec<Electron> rawElectrons = GetAllElectrons();
     Particle METv = ev.GetMETVector(Event::MET_Type::PUPPI);
@@ -43,9 +50,12 @@ void DiLepton::executeEvent() {
     if (!IsDATA && run_syst && systHelper) {
         // Step 1: Process Central objects and weight-only systematics
         RecoObjects centralObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, "Central");
-        Channel selectedChannel = selectEvent(ev, centralObjects);
+        fillCutflow(CutStage::LeptonSelection, Channel::NONE, initialWeight, "Central");
+        
+        Channel selectedChannel = selectEvent(ev, centralObjects, "Central");
         
         if (selectedChannel != Channel::NONE) {
+            fillCutflow(CutStage::Final, selectedChannel, initialWeight, "Central");
             // Fill Central with nominal weights
             WeightInfo centralWeights = getWeights(selectedChannel, ev, centralObjects, genParts, "Central");
             fillObjects(selectedChannel, centralObjects, centralWeights, "Central");
@@ -62,7 +72,7 @@ void DiLepton::executeEvent() {
                 
                 // Define objects with systematic variation
                 RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, systName);
-                Channel systChannel = selectEvent(ev, recoObjects);
+                Channel systChannel = selectEvent(ev, recoObjects, systName);
                 
                 if (systChannel != Channel::NONE) {
                     WeightInfo weights = getWeights(systChannel, ev, recoObjects, genParts, systName);
@@ -73,9 +83,12 @@ void DiLepton::executeEvent() {
     } else {
         // Process only Central for DATA or when systematics are off
         RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, "Central");
-        Channel selectedChannel = selectEvent(ev, recoObjects);
+        fillCutflow(CutStage::LeptonSelection, Channel::NONE, initialWeight, "Central");
+        
+        Channel selectedChannel = selectEvent(ev, recoObjects, "Central");
         
         if (selectedChannel != Channel::NONE) {
+            fillCutflow(CutStage::Final, selectedChannel, initialWeight, "Central");
             WeightInfo weights = getWeights(selectedChannel, ev, recoObjects, genParts, "Central");
             fillObjects(selectedChannel, recoObjects, weights, "Central");
         }
@@ -162,7 +175,7 @@ DiLepton::RecoObjects DiLepton::defineObjects(Event& ev,
     return objects;
 }
 
-DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObjects) {
+DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObjects, const TString& syst) {
     const RVec<Muon>& looseMuons = recoObjects.looseMuons;
     const RVec<Muon>& tightMuons = recoObjects.tightMuons;
     const RVec<Electron>& looseElectrons = recoObjects.looseElectrons;
@@ -170,6 +183,7 @@ DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObject
     const RVec<Jet>& jets = recoObjects.tightJets_vetoLep;
     const RVec<Jet>& bjets = recoObjects.bjets;
 
+    float weight = IsDATA ? 1.0 : MCweight() * ev.GetTriggerLumi("Full");
     bool isDiMu = (tightMuons.size() == 2 && looseMuons.size() == 2 && 
                    tightElectrons.size() == 0 && looseElectrons.size() == 0);
     bool isEMu = (tightMuons.size() == 1 && looseMuons.size() == 1 && 
@@ -177,14 +191,18 @@ DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObject
 
     if (channel == Channel::DIMU) {
         if (!isDiMu) return Channel::NONE;
+        fillCutflow(CutStage::LeptonSelection, Channel::DIMU, weight, syst);
     }
     if (channel == Channel::EMU) {
         if (!isEMu) return Channel::NONE;
+        fillCutflow(CutStage::LeptonSelection, Channel::EMU, weight, syst);
     }
 
     // DiMu selection
     if (channel == Channel::DIMU) {
         if (!ev.PassTrigger(DblMuTriggers)) return Channel::NONE;
+        fillCutflow(CutStage::Trigger, Channel::DIMU, weight, syst);
+        
         const Muon& mu1 = tightMuons[0];
         const Muon& mu2 = tightMuons[1];
         if (mu1.Pt() <= 20.) return Channel::NONE;
@@ -192,18 +210,27 @@ DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObject
         if (mu1.Charge() + mu2.Charge() != 0) return Channel::NONE;
         Particle pair = mu1 + mu2;
         if (pair.M() <= 50.) return Channel::NONE;
+        fillCutflow(CutStage::KinematicCuts, Channel::DIMU, weight, syst);
         return Channel::DIMU;
     }
     // EMu selection
     else if (channel == Channel::EMU) {
         if (!ev.PassTrigger(EMuTriggers)) return Channel::NONE;
+        fillCutflow(CutStage::Trigger, Channel::EMU, weight, syst);
+        
         const Muon& mu = tightMuons[0];
         const Electron& ele = tightElectrons[0];
         if (!((mu.Pt() > 20. && ele.Pt() > 15.) || (mu.Pt() > 10. && ele.Pt() > 25.))) return Channel::NONE;
         if (mu.Charge() + ele.Charge() != 0) return Channel::NONE;
         if (mu.DeltaR(ele) <= 0.4) return Channel::NONE;
+        fillCutflow(CutStage::KinematicCuts, Channel::EMU, weight, syst);
+        
         if (jets.size() < 2) return Channel::NONE;
+        fillCutflow(CutStage::JetRequirements, Channel::EMU, weight, syst);
+        
         if (bjets.size() < 1) return Channel::NONE;
+        fillCutflow(CutStage::BjetRequirements, Channel::EMU, weight, syst);
+        
         return Channel::EMU;
     }
 
@@ -457,4 +484,13 @@ void DiLepton::fillObjects(const DiLepton::Channel& channel, const RecoObjects& 
         FillHist(Form("%s/%s/pair/phi", channelStr.Data(), syst.Data()), pair.Phi(), weight, 64, -3.2, 3.2);
         FillHist(Form("%s/%s/pair/mass", channelStr.Data(), syst.Data()), pair.M(), weight, 300, 0., 300.);
     }
+}
+
+void DiLepton::fillCutflow(CutStage stage, const Channel& channel, float weight, const TString& syst) {
+    if (syst != "Central") return;
+    TString channelStr = channelToString(channel);
+    if (channelStr == "NONE") channelStr = "ALL";
+    
+    int cutIndex = static_cast<int>(stage);
+    FillHist(Form("%s/%s/cutflow", channelStr.Data(), syst.Data()), cutIndex, weight, 9, 0., 9.);
 }

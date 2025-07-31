@@ -122,7 +122,7 @@
         "isMC": 1,
         "PD": "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
         "xsec_formula": "923.6*2*3*0.1086*0.6741",
-        "xsec": 13.36,
+        "xsec": 405.69,
         "nmc": 63875000.0,
         "sumsign": 63358614.0,
         "sumW": 21354830587.23706,

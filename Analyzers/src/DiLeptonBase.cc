@@ -17,11 +17,11 @@ void DiLeptonBase::initializeAnalyzer() {
 
     // Lepton IDs and triggers
     MuonIDs = new IDContainer("HcToWATight", "HcToWALoose");
-    ElectronIDs = new IDContainer("HcToWATight", "HcToWALoose");
+    ElectronIDs = new IDContainer("HcToWATight", ((Run == 2) ? "HcToWALooseRun2" : "HcToWALooseRun3"));
     if (DataEra == "2016preVFP") {
         DblMuTriggers = {
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
-            "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL "
+            "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL"
         };
         EMuTriggers = {
             "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",

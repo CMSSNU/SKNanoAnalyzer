@@ -139,7 +139,8 @@ public:
     // Private IDs
     bool Pass_CaloIdL_TrackIdL_IsoVL() const;
     bool Pass_HcToWABaseline() const;
-    bool Pass_HcToWALoose() const;
+    bool Pass_HcToWALooseRun2() const;
+    bool Pass_HcToWALooseRun3() const;
     bool Pass_HcToWATight() const;
     // MVA scores
     enum class MVATYPE {NONE, MVAISO, MVANOISO, MVATTH};

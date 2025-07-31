@@ -832,13 +832,12 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         Jet jet;
         const float rawPt = Jet_pt[i] * (1.-Jet_rawFactor[i]);
         const float rawMass = Jet_mass[i] * (1.-Jet_rawFactor[i]);
-        const float JESSF = myCorr->GetJESSF(Jet_area[i], Jet_eta[i], rawPt, fixedGridRhoFastjetAll, RunNumber);
+        const float JESSF = myCorr->GetJESSF(Jet_area[i], Jet_eta[i], rawPt, fixedGridRhoFastjetAll, Jet_phi[i], RunNumber);
         const float correctedPt = rawPt * JESSF;
         const float correctedMass = rawMass * JESSF;
         jet.SetPtEtaPhiM(correctedPt, Jet_eta[i], Jet_phi[i], correctedMass);
         jet.SetRawPt(rawPt);
         jet.SetOriginalPt(Jet_pt[i]);
-        //jet.SetJESUncertainty(scaleUnc);
         jet.SetArea(Jet_area[i]);
         jet.SetOriginalIndex(i);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);
