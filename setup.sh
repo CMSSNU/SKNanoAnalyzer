@@ -24,11 +24,9 @@ else
 fi
 
 # Set up environment
-if [[ $HOSTNAME == *"tamsa"* ]]; then
-    export SKNANO_HOME=`pwd`
-    export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
-    export SKNANO_OUTPUT="/data9/Users/$USER/SKNanoOutput"
-fi
+export SKNANO_HOME=`pwd`
+export SKNANO_RUNLOG="/gv0/Users/$USER/SKNanoRunlog"
+export SKNANO_OUTPUT="/data9/Users/$USER/SKNanoOutput"
 echo "@@@@ Working Directory: $SKNANO_HOME"
 
 CONFIG_FILE="$SKNANO_HOME/config/config.$USER"
