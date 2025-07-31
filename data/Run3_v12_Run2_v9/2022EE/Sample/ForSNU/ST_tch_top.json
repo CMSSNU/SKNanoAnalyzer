@@ -5,7 +5,7 @@
     "xsec": 145,
     "nmc": 10153433.0,
     "sumsign": 9345833.0,
-    "sumW": 1266620032.0,
+    "sumW": 1264425777.2239075,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/240702_143236/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/240702_143236/0000/tree_2.root",

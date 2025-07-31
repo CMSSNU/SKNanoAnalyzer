@@ -5,7 +5,7 @@
     "xsec": 4.741,
     "nmc": 197680.0,
     "sumsign": 197680.0,
-    "sumW": 10055822.0,
+    "sumW": 10055882.387283325,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/QCDB-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/240702_161459/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022/MC/QCDB-4Jets_HT-1500to2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/240702_161459/0000/tree_2.root",

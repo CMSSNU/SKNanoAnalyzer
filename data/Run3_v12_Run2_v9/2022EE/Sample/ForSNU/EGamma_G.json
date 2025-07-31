@@ -2,9 +2,9 @@
     "name": "EGamma",
     "isMC": 0,
     "NEvents": [
-        139033792.0,
-        443177184.0,
-        75325256.0
+        139033757.0,
+        443177147.0,
+        75325249.0
     ],
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/DATA/EGamma/PeriodG/240706_061746/0000/tree_1.root",

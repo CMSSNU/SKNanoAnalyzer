@@ -4,8 +4,8 @@
     "PD": "WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8",
     "xsec": 63396,
     "nmc": 341646395.0,
-    "sumsign": 341646208.0,
-    "sumW": 42924611993600.0,
+    "sumsign": 341646395.0,
+    "sumW": 43097238687592.195,
     "path": [
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8/240702_143047/0000/tree_1.root",
         "/gv0/DATA/SKNano/Run3NanoAODv12/2022EE/MC/WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8/240702_143047/0000/tree_2.root",

@@ -4,8 +4,8 @@
     "PD": "WWtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
     "xsec_formula": "1.673/0.1086*0.6741*6",
     "nmc": 94431936.0,
-    "sumsign": 94413256.0,
-    "sumW": 4597897216.0,
+    "sumsign": 94413272.0,
+    "sumW": 4621463467.350311,
     "note": "need check the xsec",
     "xsec": 62.30769613259669,
     "path": [

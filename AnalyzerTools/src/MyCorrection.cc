@@ -1,14 +1,15 @@
 #include "MyCorrection.h"
 
 MyCorrection::MyCorrection() {}
-MyCorrection::MyCorrection(const TString &era, const TString &period, const TString &sample, const bool IsData) {
+MyCorrection::MyCorrection(const TString &era, const TString &period, const TString &sample, const bool IsData, const string &btagging_eff_file, const string &ctagging_eff_file, const string &btagging_R_file, const string &ctagging_R_file)
+{ 
     cout << "[MyCorrection::MyCorrection] MyCorrection created for " << era << endl;
     SetEra(era);
     SetPeriod(period);
     SetSample(sample);
     setIsData(IsData);
 
-    EraConfig config = GetEraConfig(era);
+    EraConfig config = GetEraConfig(era, btagging_eff_file, ctagging_eff_file, btagging_R_file, ctagging_R_file);
     struct CorrectionInfo {
         string name;
         string path;  
@@ -93,7 +94,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &period, const TStr
     JME_vetomap_keys["2023BPix"] = "Summer23BPixPrompt23_RunD_V1";
     JME_vetomap_keys["2023"] = "Summer23Prompt23_RunC_V1";
     JME_vetomap_keys["2022EE"] = "Summer22EE_23Sep2023_RunEFG_V1";
-    JME_vetomap_keys["2022"] = "Summer22_23Sep2023_RunBCD_V1";
+    JME_vetomap_keys["2022"] = "Summer22_23Sep2023_RunCD_V1";
     JME_vetomap_keys["2018"] = "Summer19UL18_V1";
     JME_vetomap_keys["2017"] = "Summer19UL17_V1";
     JME_vetomap_keys["2016postVFP"] = "Summer19UL16_V1";
@@ -107,7 +108,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &period, const TStr
 
 MyCorrection::~MyCorrection() {}
 
-MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
+MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era, const string &btagging_eff_file, const string &ctagging_eff_file, const string &btagging_R_file, const string &ctagging_R_file) const {
     EraConfig config;
 
     const char *json_pog_path = getenv("JSONPOG_REPO_PATH");
@@ -123,10 +124,6 @@ MyCorrection::EraConfig MyCorrection::GetEraConfig(TString era) {
     const string json_pog_path_str(json_pog_path);
     const string sknano_data_str(sknano_data);
     const string external_roccor_str(external_roccor);
-    const string btagging_eff_file = "btaggingEff.json";
-    const string ctagging_eff_file = "ctaggingEff.json";
-    const string btagging_R_file = "btaggingR.json";
-    const string ctagging_R_file = "ctaggingR.json";
 
 
     config.json_muon = json_pog_path_str + "/POG/MUO";
@@ -928,6 +925,8 @@ float MyCorrection::GetBTaggingR(const RVec<Jet> &jets, const JetTagging::JetFla
 
     this_taggerStr += (string("_") + processName);
 
+    // First, check cset_btagging_R is loaded or nullptr
+    if(!cset_btagging_R) throw std::runtime_error("[MyCorrection::GetBTaggingR] cset_btagging_R is not loaded or nullptr");
     auto cset = cset_btagging_R->at(this_taggerStr);
 
     for (const auto &jet : jets) {
@@ -1145,7 +1144,7 @@ float MyCorrection::GetJERSF(const float eta, const float pt, const variation sy
 }
 
 //JESC
-float MyCorrection::GetJESSF(const float area, const float eta, const float pt, const float rho, const unsigned int runNumber) const {
+float MyCorrection::GetJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const {
     correction::CompoundCorrection::Ref cset = nullptr;
     string cset_string = JME_JES_GT.at(GetEra().Data());
     cset_string.replace(cset_string.find("######"), 6, "L1L2L3Res");
@@ -1160,6 +1159,14 @@ float MyCorrection::GetJESSF(const float area, const float eta, const float pt, 
                 static_cast<float>(runNumber)
         };
     } else {
+        if(DataEra == "2024" or DataEra == "2023BPix")
+        args = {area,
+                eta,
+                pt,
+                phi,
+                rho
+        };
+        else
         args = {area,
                 eta,
                 pt,

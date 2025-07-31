@@ -25,6 +25,7 @@ public:
         bool evtLoopAgain = false;
         bool oneSided = false;
         bool hasDedicatedSample = false;
+        bool decorrelate_by_era = false;
         std::string dedicatedSampleKey_up = "";
         std::string dedicatedSampleKey_down = "";
     };
@@ -61,7 +62,7 @@ public:
         }
     };
 
-    SystematicHelper(std::string yaml_path, TString sample);
+    SystematicHelper(std::string yaml_path, TString sample, TString Era);
     ~SystematicHelper();
     SYST* findSystematic(std::string syst_name);
     void assignWeightFunctionMap(const unordered_map < std::string, std::variant<std::function<float(MyCorrection::variation, TString)>, std::function<float()>>> &weight_functions);
@@ -122,7 +123,7 @@ public:
     std::vector<std::string> get_targets_from_name(const std::string &syst_name);
     std::vector<std::string> get_sources_from_name(const std::string &syst_name);
     MyCorrection::variation get_variation_from_name(const std::string &syst_name);
-    std::unordered_map<std::string, float> calculateWeight();
+    std::unordered_map<std::string, float> calculateWeight(bool dry_run = false);
     inline float safe_divide(float numerator, float denominator)
     {
         if (abs(denominator) < 1e-8)
@@ -159,6 +160,7 @@ private:
     bool isDedicatedSample;
     bool weight_functions_assigned;
     std::string sample;
+    std::string Era;
     Internal_Iter_obj current_Iter_obj;
 };
 

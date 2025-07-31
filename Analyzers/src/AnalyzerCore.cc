@@ -293,7 +293,6 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const MyCorrection::var
                                   //"PileUpPtHF",
                                   //"PileUpPtRef",
                                   "PileUpEnvelope",
-                                  "RelativeFSR",
                                   "RelativeJEREC1",
                                   "RelativeJEREC2",
                                   "RelativeJERHF",
@@ -832,7 +831,7 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         Jet jet;
         const float rawPt = Jet_pt[i] * (1.-Jet_rawFactor[i]);
         const float rawMass = Jet_mass[i] * (1.-Jet_rawFactor[i]);
-        const float JESSF = myCorr->GetJESSF(Jet_area[i], Jet_eta[i], rawPt, fixedGridRhoFastjetAll, RunNumber);
+        const float JESSF = myCorr->GetJESSF(Jet_area[i], Jet_eta[i], rawPt, Jet_phi[i], fixedGridRhoFastjetAll, RunNumber);
         const float correctedPt = rawPt * JESSF;
         const float correctedMass = rawMass * JESSF;
         jet.SetPtEtaPhiM(correctedPt, Jet_eta[i], Jet_phi[i], correctedMass);
@@ -1049,7 +1048,7 @@ bool AnalyzerCore::PassVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMu
 
 bool AnalyzerCore::PassJetVetoMap(const RVec<Jet> &AllJets, const RVec<Muon> &AllMuons, const TString mapCategory){
     RVec<Jet> this_jet = SelectJets(AllJets, Jet::JetID::TIGHT, 15., 5.0);
-    this_jet = SelectJets(AllJets, Jet::JetID::PUID_TIGHT, 15., 5.0);
+    this_jet = SelectJets(this_jet, Jet::JetID::PUID_TIGHT, 15., 5.0);
     RVec<Jet> selected_jets;
     RVec<Electron> empty_electrons;
     this_jet = JetsVetoLeptonInside(this_jet, empty_electrons, AllMuons, 0.2);
