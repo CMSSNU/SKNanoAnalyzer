@@ -837,7 +837,6 @@ RVec<Jet> AnalyzerCore::GetAllJets() {
         jet.SetPtEtaPhiM(correctedPt, Jet_eta[i], Jet_phi[i], correctedMass);
         jet.SetRawPt(rawPt);
         jet.SetOriginalPt(Jet_pt[i]);
-        //jet.SetJESUncertainty(scaleUnc);
         jet.SetArea(Jet_area[i]);
         jet.SetOriginalIndex(i);
         jet.SetEnergyFractions(Jet_chHEF[i], Jet_neHEF[i], Jet_neEmEF[i], Jet_chEmEF[i], Jet_muEF[i]);

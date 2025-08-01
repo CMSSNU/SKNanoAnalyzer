@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <variant>
 using namespace std;
 
 #include "TString.h"
@@ -51,7 +52,6 @@ public:
     inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const Muon &muon, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, muon, syst); }
     inline float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const Muon &muon, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_Trigger_SF_Key, muon, syst); };
     inline float GetMuonISOSF(const TString &Muon_ISO_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "") { return GetMuonIDSF(Muon_ISO_SF_Key, muons, syst); }
-    // float GetMuonTriggerSF(const TString &Muon_Trigger_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom, const TString &source = "");
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const Muon &muon, const variation syst = variation::nom) const;
     float GetMuonIDSF(const TString &Muon_ID_SF_Key, const RVec<Muon> &muons, const variation syst = variation::nom) const;
 
@@ -128,6 +128,52 @@ public:
     
     // reweighting
     float GetTopPtReweight(const RVec<Gen> &gens) const;
+
+    // Safe evaluation function for correction sets with comprehensive error handling
+    template<typename... Args>
+    inline float safeEvaluate(const correction::Correction::Ref &cset, 
+                              const string &function_name,
+                              const vector<correction::Variable::Type> &args) const {
+        if (!cset) {
+            cerr << "[MyCorrection::" << function_name << "] Error: Correction set is null" << endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        try {
+            return cset->evaluate(args);
+        } catch (const std::exception &e) {
+            cerr << "[MyCorrection::" << function_name << "] Error during evaluation: " << e.what() << endl;
+            cerr << "[MyCorrection::" << function_name << "] Arguments (" << args.size() << "): ";
+            for (const auto &arg : args) {
+                std::visit([](const auto &value) { cerr << value << " "; }, arg);
+            }
+            cerr << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Overload for CompoundCorrection
+    template<typename... Args>
+    inline float safeEvaluate(const correction::CompoundCorrection::Ref &cset, 
+                              const string &function_name,
+                              const vector<correction::Variable::Type> &args) const {
+        if (!cset) {
+            cerr << "[MyCorrection::" << function_name << "] Error: CompoundCorrection set is null" << endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        try {
+            return cset->evaluate(args);
+        } catch (const std::exception &e) {
+            cerr << "[MyCorrection::" << function_name << "] Error during evaluation: " << e.what() << endl;
+            cerr << "[MyCorrection::" << function_name << "] Arguments (" << args.size() << "): ";
+            for (const auto &arg : args) {
+                std::visit([](const auto &value) { cerr << value << " "; }, arg);
+            }
+            cerr << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
 
 private:
     struct EraConfig {
@@ -354,7 +400,27 @@ private:
         };
         return sys_string;
     };
-
+    
+    inline string getSystString_EGMScale(const variation syst) const {
+        // Only for Run2
+        if (! (Run == 2)) {
+            throw runtime_error("[MyCorrection::getSystString_EGMScale] Use getSystString_EGM for Run3");
+        }
+        string sys_string = "";
+        switch(syst) {
+        case variation::nom:
+            sys_string = "";
+            break;
+        case variation::up:
+            sys_string = "scaleup";
+            break;
+        case variation::down:
+            sys_string = "scaledown";
+            break;
+        };
+        return sys_string;
+    }
+    
     inline string getSystString_JME(const variation syst) const {
         string sys_string = "nom";
         switch (syst) {

@@ -391,10 +391,13 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
         run_content = f.read()
-    mamba_bin_path = os.environ['MAMBA_EXE']
-    mamba_bin_path = os.path.dirname(mamba_bin_path)
-    mamba_root_prefix = os.environ['MAMBA_ROOT_PREFIX']
-    run_content = run_content.replace("[MAMBA_BIN_PATH]", mamba_bin_path)
+    #mamba_bin_path = os.environ['MAMBA_EXE']
+    #mamba_bin_path = os.path.dirname(mamba_bin_path)
+    # We need to fetch the MAMBA_ROOT_PREFIX from the singularity image if running in a singularity container
+    # Currently, we assume that /opt/conda is the MAMBA_ROOT_PREFIX
+    singularity_image = os.environ["SINGULARITY_IMAGE"]
+    mamba_root_prefix = "/opt/conda" if singularity_image else os.environ['MAMBA_ROOT_PREFIX']
+    run_content = run_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
     run_content = run_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
     run_content = run_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     run_content = run_content.replace("[SKNANO_DATA]", SKNANO_DATA)

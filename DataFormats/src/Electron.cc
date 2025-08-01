@@ -76,20 +76,21 @@ bool Electron::PassID(const TString ID) const {
     if (etaRegion() == ETAREGION::GAP) return false;
 
     // POG
-    if (ID == "")                 return true;
-    if (ID == "NOCUT")            return true;
-    if (ID == "POGVeto")          return (int)(CutBased()) >= (int)(WORKINGPOINT::VETO);
-    if (ID == "POGLoose")         return (int)(CutBased()) >= (int)(WORKINGPOINT::LOOSE);
-    if (ID == "POGMedium")        return (int)(CutBased()) >= (int)(WORKINGPOINT::MEDIUM);
-    if (ID == "POGTight")         return (int)(CutBased()) >= (int)(WORKINGPOINT::TIGHT);
-    if (ID == "POGHEEP")          return isCutBasedHEEP();
-    if (ID == "POGMVAIsoWP80")    return isMVAIsoWP80();
-    if (ID == "POGMVAIsoWP90")    return isMVAIsoWP90();
-    if (ID == "POGMVANoIsoWP80")  return isMVANoIsoWP80();
-    if (ID == "POGMVANoIsoWP90")  return isMVANoIsoWP90();
-    if (ID == "POGMVANoIsoWPLoose") return isMVANoIsoWPLoose();
-    if (ID == "HcToWATight")   return Pass_HcToWATight();
-    if (ID == "HcToWALoose")   return Pass_HcToWALoose();
+    if (ID == "")                   return true;
+    if (ID == "NOCUT")              return true;
+    if (ID == "POGVeto")            return (int)(CutBased()) >= (int)(WORKINGPOINT::VETO);
+    if (ID == "POGLoose")           return (int)(CutBased()) >= (int)(WORKINGPOINT::LOOSE);
+    if (ID == "POGMedium")          return (int)(CutBased()) >= (int)(WORKINGPOINT::MEDIUM);
+    if (ID == "POGTight")           return (int)(CutBased()) >= (int)(WORKINGPOINT::TIGHT);
+    if (ID == "POGHEEP")            return isCutBasedHEEP();
+    if (ID == "POGMVAIsoWP80")      return isMVAIsoWP80();
+    if (ID == "POGMVAIsoWP90")      return isMVAIsoWP90();
+    if (ID == "POGMVANoIsoWP80")    return isMVANoIsoWP80();
+    if (ID == "POGMVANoIsoWP90")    return isMVANoIsoWP90();
+    //if (ID == "POGMVANoIsoWPLoose") return isMVANoIsoWPLoose();
+    if (ID == "HcToWATight")        return Pass_HcToWATight();
+    if (ID == "HcToWALooseRun2")    return Pass_HcToWALooseRun2();
+    if (ID == "HcToWALooseRun3")    return Pass_HcToWALooseRun3();
 
     cerr << "[Electron::PassID] " << ID << " is not implemented" << endl;
     exit(ENODATA);
@@ -158,7 +159,7 @@ bool Electron::Pass_HcToWATight() const {
     return true;
 }
 
-bool Electron::Pass_HcToWALoose() const {
+bool Electron::Pass_HcToWALooseRun2() const {
     if (! Pass_HcToWABaseline()) return false;
     if (! (SIP3D() < 8.)) return false;
     if (! (MiniPFRelIso() < 0.4)) return false;
@@ -179,3 +180,27 @@ bool Electron::Pass_HcToWALoose() const {
     if (! (isMVANoIsoWP90() || passMVAIDNoIsoCut)) return false;
     return true;
 }
+
+bool Electron::Pass_HcToWALooseRun3() const {
+    if (! Pass_HcToWABaseline()) return false;
+    if (! (SIP3D() < 8.)) return false;
+    if (! (MiniPFRelIso() < 0.4)) return false;
+    const float cutIB=0.5, cutOB=-0.8, cutEC=-0.5;
+    bool passMVAIDNoIsoCut = false;
+    switch(etaRegion()) {
+        case ETAREGION::IB:
+            if (! (MvaNoIso() > cutIB)) passMVAIDNoIsoCut = true;
+            break;
+        case ETAREGION::OB:
+            if (! (MvaNoIso() > cutOB)) passMVAIDNoIsoCut = true;
+            break;
+        case ETAREGION::EC:
+            if (! (MvaNoIso() > cutEC)) passMVAIDNoIsoCut = true;
+            break;
+        default: break;
+    }
+    if (! (isMVANoIsoWP90() || passMVAIDNoIsoCut)) return false;
+    return true;
+}
+
+

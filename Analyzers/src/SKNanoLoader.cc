@@ -896,12 +896,6 @@ void SKNanoLoader::Init() {
         SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
         SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
     } else if(Run == 2) {
-        SafeSetBranchAddress("Electron_mvaIso_WPL", Electron_mvaIso_WPL.data());
-        SafeSetBranchAddress("Electron_mvaNoIso", Electron_mvaNoIso.data());
-        SafeSetBranchAddress("Electron_mvaNoIso_WP80", Electron_mvaNoIso_WP80.data());
-        SafeSetBranchAddress("Electron_mvaNoIso_WP90", Electron_mvaNoIso_WP90.data());
-        SafeSetBranchAddress("Electron_mvaNoIso_WPLoose", Electron_mvaNoIso_WPL.data());
-    } else if(Run == 2) {
         SafeSetBranchAddress("Electron_cutBased", Electron_cutBased_RunII.data());
         SafeSetBranchAddress("Electron_genPartIdx", Electron_genPartIdx_RunII.data());
         SafeSetBranchAddress("Electron_jetIdx", Electron_jetIdx_RunII.data());

@@ -63,7 +63,7 @@ private:
     void processWeightOnlySystematics(const Channel& channel, const Event& event, const RecoObjects& recoObjects, const RVec<Gen>& genParts);
 
     // private methods
-    Channel selectEvent(Event& ev, const RecoObjects& recoObjects);
+    Channel selectEvent(Event& ev, const RecoObjects& recoObjects, const TString& syst);
     RecoObjects defineObjects(Event& ev, const RVec<Muon>& rawMuons, 
                              const RVec<Electron>& rawElectrons, 
                              const RVec<Jet>& rawJets,
@@ -80,6 +80,21 @@ private:
                      const RecoObjects& recoObjects, 
                      const WeightInfo& weights, 
                      const TString& syst = "Central");
+
+    // Cutflow functionality
+    enum class CutStage {
+        Initial = 0,
+        NoiseFilter = 1,
+        VetoMap = 2,
+        LeptonSelection = 3,
+        Trigger = 4,
+        KinematicCuts = 5,
+        JetRequirements = 6,
+        BjetRequirements = 7,
+        Final = 8
+    };
+    
+    void fillCutflow(CutStage stage, const Channel& channel, float weight, const TString& syst);
 };
 
 #endif
