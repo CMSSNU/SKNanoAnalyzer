@@ -80,8 +80,8 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGSoft")          return isPOGSoftId();
     if (ID == "POGSoftMVA")       return isPOGSoftMvaId();
     if (ID == "POGTriggerLoose")  return isPOGTriggerIdLoose();
-    if (ID == "POGTrackerHighPt") return (int)HighPtId() == 1;
-    if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 2;
+    if (ID == "POGTrackerHighPt") return (int)HighPtId() == 2;
+    if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 3;
     if (ID == "POGMiniIsoLoose")  return (int)MiniIsoId() >= (int)(WorkingPoint::LOOSE);
     if (ID == "POGMiniIsoMedium") return (int)MiniIsoId() >= (int)(WorkingPoint::MEDIUM);
     if (ID == "POGMiniIsoTight")  return (int)MiniIsoId() >= (int)(WorkingPoint::TIGHT);
@@ -99,8 +99,8 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGPuppiIsoLoose") return (int)PuppiIsoId() >= (int)(WorkingPoint::LOOSE);
     if (ID == "POGPuppiIsoMedium")return (int)PuppiIsoId() >= (int)(WorkingPoint::MEDIUM);
     if (ID == "POGPuppiIsoTight") return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
-    if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 1;
-    if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 2;
+    if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 2;
+    if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 3;
     if (ID == "HcToWATight")      return Pass_HcToWATight();
     if (ID == "HcToWALoose")      return Pass_HcToWALoose();
     cerr << "[Muon::PassID] " << ID << " is not implemented." << endl;
@@ -128,9 +128,9 @@ bool Muon::PassID(const MuonID ID) const {
         case MuonID::POG_TRIGGER_LOOSE:
             return isPOGTriggerIdLoose();
         case MuonID::POG_TRACKER_HIGH_PT:
-            return (int)HighPtId() == 1;
-        case MuonID::POG_GLOBAL_HIGH_PT:
             return (int)HighPtId() == 2;
+        case MuonID::POG_GLOBAL_HIGH_PT:
+            return (int)HighPtId() == 3;
         case MuonID::POG_MINISO_LOOSE:
             return (int)MiniIsoId() >= (int)(WorkingPoint::LOOSE);
         case MuonID::POG_MINISO_MEDIUM:
@@ -166,9 +166,9 @@ bool Muon::PassID(const MuonID ID) const {
         case MuonID::POG_PUPPIISO_TIGHT:
             return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
         case MuonID::POG_TKISO_LOOSE:
-            return (int)TkIsoId() == 1;
-        case MuonID::POG_TKISO_TIGHT:
             return (int)TkIsoId() == 2;
+        case MuonID::POG_TKISO_TIGHT:
+            return (int)TkIsoId() == 3;
         default:
             break;
     }
