@@ -49,14 +49,14 @@ void Muon::SetBIDBit(BooleanID id, bool idbit) {
 
 void Muon::SetWIDBit(WorkingPointID id, unsigned char wp) {
     switch (id) {
-        case WorkingPointID::HIGHPT:    j_highPtId = (unsigned char)(wp+1); break;
+        case WorkingPointID::HIGHPT:    j_highPtId = (unsigned char)(wp); break;
         case WorkingPointID::MINIISO:   j_miniIsoId = (unsigned char)(wp+1); break;
         case WorkingPointID::MULTIISO:  j_multiIsoId = (unsigned char)(wp+1); break;
         case WorkingPointID::MVAMU:     j_mvaMuId = (unsigned char)(wp+2); break;
         //case WorkingPointID::MVALOWPT:  j_mvaLowPtId = (unsigned char)(wp+1); break;
         case WorkingPointID::PFISO:     j_pfIsoId = (unsigned char)wp; break;
         case WorkingPointID::PUPPIISO:  j_puppiIsoId = (unsigned char)(wp+1); break;
-        case WorkingPointID::TKISO:     j_tkIsoId = (unsigned char)(wp+1); break;
+        case WorkingPointID::TKISO:     j_tkIsoId = (unsigned char)(wp); break;
         default: break;
     }
 }
@@ -80,8 +80,8 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGSoft")          return isPOGSoftId();
     if (ID == "POGSoftMVA")       return isPOGSoftMvaId();
     if (ID == "POGTriggerLoose")  return isPOGTriggerIdLoose();
-    if (ID == "POGTrackerHighPt") return (int)HighPtId() == 2;
-    if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 3;
+    if (ID == "POGTrackerHighPt") return (int)HighPtId() == 1;
+    if (ID == "POGGlobalHighPt")  return (int)HighPtId() == 2;
     if (ID == "POGMiniIsoLoose")  return (int)MiniIsoId() >= (int)(WorkingPoint::LOOSE);
     if (ID == "POGMiniIsoMedium") return (int)MiniIsoId() >= (int)(WorkingPoint::MEDIUM);
     if (ID == "POGMiniIsoTight")  return (int)MiniIsoId() >= (int)(WorkingPoint::TIGHT);
@@ -99,8 +99,8 @@ bool Muon::PassID(const TString ID) const {
     if (ID == "POGPuppiIsoLoose") return (int)PuppiIsoId() >= (int)(WorkingPoint::LOOSE);
     if (ID == "POGPuppiIsoMedium")return (int)PuppiIsoId() >= (int)(WorkingPoint::MEDIUM);
     if (ID == "POGPuppiIsoTight") return (int)PuppiIsoId() >= (int)(WorkingPoint::TIGHT);
-    if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 2;
-    if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 3;
+    if (ID == "POGTkIsoLoose")    return (int)TkIsoId() == 1;
+    if (ID == "POGTkIsoTight")    return (int)TkIsoId() == 2;
     if (ID == "HcToWATight")      return Pass_HcToWATight();
     if (ID == "HcToWALoose")      return Pass_HcToWALoose();
     cerr << "[Muon::PassID] " << ID << " is not implemented." << endl;
