@@ -54,9 +54,9 @@ Particle ApplyTypeICorrection(const Particle& MET,
 - Only `UnclusteredEn_Up/Down` is interpreted inside the method and applied as a ±10% variation on the unclustered component.
 
 #### Object Access
-- **Jets**: Uses `GetRawPt()` method for raw momentum
-- **Muons**: Uses `GetRawPt()` method (renamed from `MiniAODPt()`)
-- **Electrons**: Raw = corrected in NanoAOD
+- **Jets**: Uses `OriginalPt()` method for raw momentum
+- **Muons**: Uses `OriginalPt()` method (renamed from `MiniAODPt()`)
+- **Electrons**: `Pt()`: corrected in NanoAOD
 
 ### Usage in Analysis
 

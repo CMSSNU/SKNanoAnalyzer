@@ -370,7 +370,7 @@ float MyCorrection::GetMuonRECOSF(const Muon &muon, const variation syst) const 
     // For RECO efficiency, used 40-60 GeV muons due to the large background in Z-peak.
     // Plaetue already reached in a few GeV, okay to use for [10, 200] GeV muons. 
     auto cset = cset_muon->at("NUM_TrackerMuons_DEN_genTracks");
-    return safeEvaluate(cset, "GetMuonRECOSF", {muon.Eta(), (muon.GetRawPt() < 40. ? 40. : muon.GetRawPt()), getSystString_MUO(syst)});
+    return safeEvaluate(cset, "GetMuonRECOSF", {muon.Eta(), (muon.OriginalPt() < 40. ? 40. : muon.OriginalPt()), getSystString_MUO(syst)});
 }
 
 float MyCorrection::GetMuonRECOSF(const RVec<Muon> &muons, const variation syst) const {
@@ -385,17 +385,17 @@ float MyCorrection::GetMuonIDSF(const TString &Muon_ID_SF_Key, const Muon &muon,
     if (Muon_ID_SF_Key == "TopHNT") {
         auto cset = cset_muon_TopHNT_idsf->at("sf");
         if (syst == variation::nom) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.GetRawPt(), "nom"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "nom"});
         } else if (syst == variation::up) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.GetRawPt(), "up"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "up"});
         } else if (syst == variation::down) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.GetRawPt(), "down"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "down"});
         } else {
             throw runtime_error("[MyCorrection::GetMuonIDSF] Invalid syst value");
         }
     } else {
         auto cset = cset_muon->at(string(Muon_ID_SF_Key));
-        return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.GetRawPt(), getSystString_MUO(syst)});
+        return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_MUO(syst)});
     }
 }
 
@@ -620,22 +620,22 @@ float MyCorrection::GetTriggerEff(const Muon &muon, const TString &trigger_leg_k
     if (trigger_leg_key == "DblMu_Mu17Leg") {
         const string jsonkey = isData ? "data" : "sim";
         auto cset = cset_muon_TopHNT_dblmu_leg1_eff->at(jsonkey);
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.GetRawPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "DblMu_Mu8Leg") {
         const string jsonkey = isData ? "data" : "sim";
         auto cset = cset_muon_TopHNT_dblmu_leg2_eff->at(jsonkey);
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.GetRawPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "EMu_Mu23Leg") {
         const string jsonkey = isData ? "Mu23El12_Data" : "Mu23El12_MC";
         auto cset = cset_muon_TopHNT_emu_leg1_eff->at(jsonkey); 
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.GetRawPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "EMu_Mu8Leg") {
         const string jsonkey = isData ? "Mu8El23_Data" : "Mu8El23_MC";
         auto cset = cset_muon_TopHNT_emu_leg2_eff->at(jsonkey); 
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.GetRawPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else {
         throw runtime_error("[MyCorrection::GetTriggerEff] Invalid trigger leg key");

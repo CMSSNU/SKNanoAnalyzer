@@ -163,7 +163,7 @@ void MuonTnPProducer::executeEvent(){
         tag_isLoose=tag.isPOGLooseId();
         tag_TkIsoLoose=tag.PassID(Muon::MuonID::POG_TKISO_LOOSE);
         tag_PFIsoTight=tag.PassID(Muon::MuonID::POG_PFISO_TIGHT);
-        tag_pt=tag.GetRawPt();
+        tag_pt=tag.OriginalPt();
         tag_pt_cor=tag.Pt();
         tag_eta=tag.Eta();
         tag_phi=tag.Phi();
@@ -208,7 +208,7 @@ void MuonTnPProducer::executeEvent(){
             probe_IsoMu27=PassSLT(probe, trigObjs, 27.);
             probe_Mu17Leg1=PassDLT(probe, trigObjs, 17.);
             probe_Mu8Leg2=PassDLT(probe, trigObjs, 8.);
-            probe_pt=probe.GetRawPt();
+            probe_pt=probe.OriginalPt();
             probe_pt_cor=probe.Pt();
             probe_eta=probe.Eta();
             probe_phi=probe.Phi();

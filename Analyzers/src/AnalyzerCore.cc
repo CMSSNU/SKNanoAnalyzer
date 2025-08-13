@@ -387,9 +387,9 @@ Particle AnalyzerCore::ApplyTypeICorrection(const Particle& MET,
     // Sum of raw muons passing acceptance (pT > 5 GeV, |eta| < 2.4)
     TLorentzVector sumRawMuons;
     for (const auto& muon : muons) {
-        if (muon.GetRawPt() > 5.0 && fabs(muon.Eta()) < 2.4) {
+        if (muon.OriginalPt() > 5.0 && fabs(muon.Eta()) < 2.4) {
             TLorentzVector rawMuon;
-            rawMuon.SetPtEtaPhiM(muon.GetRawPt(), muon.Eta(), muon.Phi(), muon.M());
+            rawMuon.SetPtEtaPhiM(muon.OriginalPt(), muon.Eta(), muon.Phi(), muon.M());
             sumRawMuons += rawMuon;
         }
     }
@@ -512,7 +512,7 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
             roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom, matched_pt);
             roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up, matched_pt) - roccor;
         }
-        muon.SetRawPt(muon.Pt());
+        muon.SetOriginalPt(muon.Pt());
         muon.SetMomentumScaleUpDown(muon.Pt()*(roccor+roccor_err), muon.Pt()*(roccor-roccor_err)); 
         muon.SetPtEtaPhiM(muon.Pt()*roccor, muon.Eta(), muon.Phi(), muon.M());
         muon.SetTkRelIso(Muon_tkRelIso[i]);

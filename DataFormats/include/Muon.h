@@ -86,8 +86,8 @@ public:
 
     void SetNTrackerLayers(int n) {j_nTrackerLayers = n;}
     inline int nTrackerLayers() const {return j_nTrackerLayers;}
-    void SetRawPt(float pt) {j_miniAODPt = pt;}
-    inline float GetRawPt() const {return j_miniAODPt;}
+    void SetOriginalPt(float pt) {j_miniAODPt = pt;}
+    inline float OriginalPt() const {return j_miniAODPt;}
     void SetMomentumScaleUpDown(float up, float down) {j_momentumScaleUp = up; j_momentumScaleDown = down;}
     inline float MomentumScaleUp() const {return j_momentumScaleUp;}
     inline float MomentumScaleDown() const {return j_momentumScaleDown;}
