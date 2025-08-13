@@ -24,7 +24,7 @@ AnalyzerCore::~AnalyzerCore() {
 }
 
 // https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
-bool AnalyzerCore::PassNoiseFilter(const RVec<Jet> &Alljets, const Event &ev, Event::MET_Type met_type) {
+bool AnalyzerCore::PassNoiseFilter(const RVec<Jet> &Alljets, const Event &ev, const Event::MET_Type MET_type){
     bool passNoiseFilter = true;
     if (Run == 2) {
         passNoiseFilter = Flag_goodVertices
@@ -54,8 +54,8 @@ bool AnalyzerCore::PassNoiseFilter(const RVec<Jet> &Alljets, const Event &ev, Ev
         if (! IsDATA) return passNoiseFilter; // Not applying to MC
         if (! (362433 <= RunNumber && RunNumber <= 367144)) return passNoiseFilter;
     
-        const Particle METv = ev.GetMETVector(met_type);
-        if (METv.Pt() <= 100.) return passNoiseFilter;
+        const Particle METv = ev.GetMETVector(MET_type); // Not re-corrected...
+        if (! (METv.Pt() > 100.)) return passNoiseFilter;
         RVec<Jet> this_jet = SelectJets(Alljets, "NOCUT", 50., 0.5);
         for(const auto &jet: this_jet){
             bool badEcal = (jet.Pt() > 50);
@@ -342,6 +342,98 @@ RVec<Jet> AnalyzerCore::ScaleJets(const RVec<Jet> &jets, const TString &syst, co
     else throw runtime_error("[AnalyzerCore::ScaleJets] Invalid syst value");
 }
 
+Particle AnalyzerCore::ApplyTypeICorrection(const Particle& MET,
+                                            const RVec<Jet>& jets,
+                                            const RVec<Electron>& electrons,
+                                            const RVec<Muon>& muons,
+                                            const TString& systName) {
+    // Determine unclustered-only systematic (others are alaeady encoded in input objects)
+    MyCorrection::variation unclustered_syst = MyCorrection::variation::nom;
+    if (systName.Contains("UnclusteredEn")) {
+        if (systName.Contains("Up")) unclustered_syst = MyCorrection::variation::up;
+        else if (systName.Contains("Down")) unclustered_syst = MyCorrection::variation::down;
+    }
+
+    // Apply Type-I correction using TLorentzVector
+    TLorentzVector metVector;
+    metVector.SetPxPyPzE(MET.Px(), MET.Py(), 0.0, MET.Pt());
+
+    // Sum of old corrected jets passing acceptance (pT > 15 GeV) - these were used in NanoAOD Type-I
+    TLorentzVector sumOldCorrJets;
+    for (const auto& jet : jets) {
+        if (jet.GetOriginalPt() > 15.0 && fabs(jet.Eta()) < 5.0) {
+            TLorentzVector oldCorrJet;
+            // Original mass: Jet_mass[i] from NanoAOD (before our re-correction)
+            float originalMass = jet.M();
+            if (jet.Pt() > 0.0f) {
+                // Reconstruct original mass: since both pt and mass scale by JESSF,
+                // originalMass = currentMass * (originalPt / currentPt)
+                originalMass = jet.M() * (jet.GetOriginalPt() / jet.Pt());
+            }
+            oldCorrJet.SetPtEtaPhiM(jet.GetOriginalPt(), jet.Eta(), jet.Phi(), originalMass);
+            sumOldCorrJets += oldCorrJet;
+        }
+    }
+
+    // Sum of corrected jets passing acceptance (pT > 15 GeV, |eta| < 5.0)
+    TLorentzVector sumCorrJets;
+    for (const auto& jet : jets) {
+        if (jet.Pt() > 15.0 && fabs(jet.Eta()) < 5.0) {
+            sumCorrJets += jet;
+        }
+    }
+    metVector -= (sumCorrJets - sumOldCorrJets);
+
+    // Sum of raw muons passing acceptance (pT > 5 GeV, |eta| < 2.4)
+    TLorentzVector sumRawMuons;
+    for (const auto& muon : muons) {
+        if (muon.GetRawPt() > 5.0 && fabs(muon.Eta()) < 2.4) {
+            TLorentzVector rawMuon;
+            rawMuon.SetPtEtaPhiM(muon.GetRawPt(), muon.Eta(), muon.Phi(), muon.M());
+            sumRawMuons += rawMuon;
+        }
+    }
+
+    // Sum of corrected muons passing acceptance (pT > 5 GeV, |eta| < 2.4)
+    TLorentzVector sumCorrMuons;
+    for (const auto& muon : muons) {
+        if (muon.Pt() > 5.0 && fabs(muon.Eta()) < 2.4) {
+            sumCorrMuons += muon;
+        }
+    }
+    metVector -= (sumCorrMuons - sumRawMuons);
+
+    // Electrons: correlate MET with electron scale/resolution variations
+    // Use nominal electrons from the event (NanoAOD nominal == raw reference)
+    RVec<Electron> nominal_electrons = GetAllElectrons();
+    TLorentzVector sumNominalElectrons;
+    for (const auto& ele : nominal_electrons) {
+        if (ele.Pt() > 7.0 && fabs(ele.Eta()) < 2.5) {
+            sumNominalElectrons += ele;
+        }
+    }
+    TLorentzVector sumCorrElectrons;
+    for (const auto& ele : electrons) {
+        if (ele.Pt() > 7.0 && fabs(ele.Eta()) < 2.5) {
+            sumCorrElectrons += ele;
+        }
+    }
+    metVector -= (sumCorrElectrons - sumNominalElectrons);
+
+    // Unclustered energy systematic (±10%) applied on top of correlated object variations
+    if (unclustered_syst != MyCorrection::variation::nom) {
+        TLorentzVector totalObjects = sumCorrJets + sumCorrMuons + sumCorrElectrons;
+        TLorentzVector unclusteredEnergy = metVector + totalObjects;
+        float unc_factor = (unclustered_syst == MyCorrection::variation::up) ? 0.1f : -0.1f;
+        TLorentzVector unclusteredVariation = unclusteredEnergy * unc_factor;
+        metVector -= unclusteredVariation;
+    }
+
+    Particle correctedMET;
+    correctedMET.SetPtEtaPhiM(metVector.Pt(), 0.0, metVector.Phi(), 0.0);
+    return correctedMET;
+}
+
 // pdfs
 float AnalyzerCore::GetPDFWeight(LHAPDF::PDF *pdf) {
     float pdf1 = pdf->xfxQ2(Generator_id1, Generator_x1, Generator_scalePDF);
@@ -383,24 +475,18 @@ float AnalyzerCore::MCweight(bool usesign, bool norm_1invpb) const {
 }
 
 // Objects
-Event AnalyzerCore::GetEvent()
-{
+Event AnalyzerCore::GetEvent() {
     Event ev;
     ev.SetRunLumiEvent(RunNumber, LumiBlock, EventNumber);
     ev.SetnPileUp(Pileup_nPU);
     ev.SetnTrueInt(Pileup_nTrueInt);
-    if(Run == 3){
-        ev.SetnPVsGood(PV_npvsGood);
-    }
-    else if(Run == 2){
-        ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
-    }
+    if (Run == 2) ev.SetnPVsGood(static_cast<int>(PV_npvsGood_RunII));
+    if (Run == 3) ev.SetnPVsGood(PV_npvsGood);
     ev.SetGenMET(GenMET_pt, GenMET_phi);
+    ev.SetMETVector(MET_pt, MET_phi, Event::MET_Type::CHS);
+    ev.SetMETVector(PuppiMET_pt, PuppiMET_phi, Event::MET_Type::PUPPI);
     ev.SetTrigger(TriggerMap);
     ev.SetEra(GetEra());
-    RVec<float> MET_pts = {PuppiMET_pt, PuppiMET_ptUnclusteredUp, PuppiMET_ptUnclusteredDown, PuppiMET_ptJERUp, PuppiMET_ptJERDown, PuppiMET_ptJESUp, PuppiMET_ptJESDown};
-    RVec<float> MET_phis = {PuppiMET_phi, PuppiMET_phiUnclusteredUp, PuppiMET_phiUnclusteredDown, PuppiMET_phiJERUp, PuppiMET_phiJERDown, PuppiMET_phiJESUp, PuppiMET_phiJESDown};
-    ev.SetMET(MET_pts, MET_phis);
     ev.setRho(fixedGridRhoFastjetAll);
     return ev;
 }
@@ -426,7 +512,7 @@ RVec<Muon> AnalyzerCore::GetAllMuons() {
             roccor = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::nom, matched_pt);
             roccor_err = myCorr->GetMuonScaleSF(muon, MyCorrection::variation::up, matched_pt) - roccor;
         }
-        muon.SetMiniAODPt(muon.Pt());
+        muon.SetRawPt(muon.Pt());
         muon.SetMomentumScaleUpDown(muon.Pt()*(roccor+roccor_err), muon.Pt()*(roccor-roccor_err)); 
         muon.SetPtEtaPhiM(muon.Pt()*roccor, muon.Eta(), muon.Phi(), muon.M());
         muon.SetTkRelIso(Muon_tkRelIso[i]);

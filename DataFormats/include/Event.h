@@ -12,17 +12,18 @@ class Event: public TObject {
 public:
     Event();
     ~Event();
-    
+    /*    
     enum class MET_Syst{
         CENTRAL,
         UE,
         JER,
         JES
     };
+    */
 
     enum class MET_Type{
         PUPPI,
-        PF
+        CHS
     };
 
     void SetRunLumiEvent(int run, int lumi, int event) { j_run = run; j_lumi = lumi; j_event = event; }
@@ -48,8 +49,24 @@ public:
     float GetTriggerLumi(TString trig);
     bool IsPDForTrigger(TString trig, TString PD);
 
-    void SetMET(RVec<float> MET_pt, RVec<float> MET_phi);
-    Particle GetMETVector(Event::MET_Type MET_type, MyCorrection::variation syst = MyCorrection::variation::nom, Event::MET_Syst source = MET_Syst::CENTRAL) const;
+    //void SetMET(RVec<float> MET_pt, RVec<float> MET_phi);
+    //Particle GetMETVector(Event::MET_Type MET_type, MyCorrection::variation syst = MyCorrection::variation::nom, Event::MET_Syst source = MET_Syst::CENTRAL) const;
+    void SetMETVector(float MET_pt, float MET_phi, MET_Type MET_type) { 
+        if (MET_type == MET_Type::CHS)
+            j_METVector_CHS.SetPtEtaPhiM(MET_pt, 0, MET_phi, 0); 
+        else if (MET_type == MET_Type::PUPPI)
+            j_METVector_PUPPI.SetPtEtaPhiM(MET_pt, 0, MET_phi, 0);
+        else
+            throw std::runtime_error("Unknown MET_Type in SetMETVector");
+    }
+    inline Particle GetMETVector(MET_Type MET_type) const { 
+        if (MET_type == MET_Type::CHS)
+            return j_METVector_CHS; 
+        else if (MET_type == MET_Type::PUPPI)
+            return j_METVector_PUPPI; 
+        else
+            throw std::runtime_error("Unknown MET_Type in GetMETVector");
+    }
 
     void SetGenMET(float GenMet_pt, float GenMet_phi) { j_GenMETVector.SetPtEtaPhiM(GenMet_pt, 0, GenMet_phi, 0); }
     Particle GetGenMETVector() const { return j_GenMETVector; }
@@ -68,13 +85,15 @@ private:
     int j_nPVsGood;
     float j_nTrueInt;
     RVec<TString> j_HLT_TriggerName;
+    //Particle j_METVector_PUPPI;
+    //Particle j_METVector_PUPPI_UE_UP;
+    //Particle j_METVector_PUPPI_UE_Down;
+    //Particle j_METVector_PUPPI_JER_UP;
+    //Particle j_METVector_PUPPI_JER_Down;
+    //Particle j_METVector_PUPPI_JES_UP;
+    //Particle j_METVector_PUPPI_JES_Down;
+    Particle j_METVector_CHS;
     Particle j_METVector_PUPPI;
-    Particle j_METVector_PUPPI_UE_UP;
-    Particle j_METVector_PUPPI_UE_Down;
-    Particle j_METVector_PUPPI_JER_UP;
-    Particle j_METVector_PUPPI_JER_Down;
-    Particle j_METVector_PUPPI_JES_UP;
-    Particle j_METVector_PUPPI_JES_Down;
     Particle j_GenMETVector;
 
     int j_DataYear;

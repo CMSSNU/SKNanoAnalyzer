@@ -540,7 +540,16 @@ public:
     RVec<Int_t> FatJet_subJetIdx1_RunII;
     RVec<Int_t> FatJet_subJetIdx2_RunII;
 
+    // MET
+    // For Run2 (NanoV9): MET - chs MET with Type-I corrected using chs jets
+    // For Run3 (NanoV13): PuppiMET - Puppi MET with Type-I corrected using Puppi jets
+    Float_t MET_pt;
+    Float_t MET_phi;
+    Float_t PuppiMET_pt;
+    Float_t PuppiMET_phi;
+
     //PuppiMET----------------------------
+    /*
     Float_t PuppiMET_pt;
     Float_t PuppiMET_phi;
     Float_t PuppiMET_sumEt;
@@ -570,6 +579,7 @@ public:
     Float_t MET_significance;
     Float_t MET_sumEt;
     Float_t MET_sumPtUnclustered;
+    */
 
     // rho
     Float_t fixedGridRhoFastjetAll;

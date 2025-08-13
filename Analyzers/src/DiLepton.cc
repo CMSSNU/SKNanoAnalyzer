@@ -37,14 +37,14 @@ void DiLepton::executeEvent() {
     fillCutflow(CutStage::VetoMap, Channel::NONE, initialWeight, "Central");
 
     RVec<Electron> rawElectrons = GetAllElectrons();
-    Particle METv = ev.GetMETVector(Event::MET_Type::PUPPI);
+    
     RVec<Gen> genParts = !IsDATA ? GetAllGens() : RVec<Gen>();
     RVec<GenJet> genJets = !IsDATA ? GetAllGenJets() : RVec<GenJet>();
 
     // Use SystematicHelper for systematic variations
     if (!IsDATA && run_syst && systHelper) {
         // Step 1: Process Central objects and weight-only systematics
-        RecoObjects centralObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, "Central");
+        RecoObjects centralObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, "Central");
         fillCutflow(CutStage::LeptonSelection, Channel::NONE, initialWeight, "Central");
         
         Channel selectedChannel = selectEvent(ev, centralObjects, "Central");
@@ -66,7 +66,7 @@ void DiLepton::executeEvent() {
                 if (systName == "Central" || !systHelper->findSystematic(syst.syst_name)->evtLoopAgain) continue;
                 
                 // Define objects with systematic variation
-                RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, systName);
+                RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, systName);
                 Channel systChannel = selectEvent(ev, recoObjects, systName);
                 
                 if (systChannel != Channel::NONE) {
@@ -77,7 +77,7 @@ void DiLepton::executeEvent() {
         }
     } else {
         // Process only Central for DATA or when systematics are off
-        RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, METv, "Central");
+        RecoObjects recoObjects = defineObjects(ev, rawMuons, rawElectrons, rawJets, genJets, "Central");
         fillCutflow(CutStage::LeptonSelection, Channel::NONE, initialWeight, "Central");
         
         Channel selectedChannel = selectEvent(ev, recoObjects, "Central");
@@ -94,17 +94,18 @@ DiLepton::RecoObjects DiLepton::defineObjects(Event& ev,
                                              const RVec<Muon>& rawMuons, 
                                              const RVec<Electron>& rawElectrons, 
                                              const RVec<Jet>& rawJets,
-                                             const RVec<GenJet>& genJets,
-                                             const Particle& METv, 
+                                             const RVec<GenJet>& genJets, 
                                              const TString& syst) {
+
     // Create copies of the raw objects
     RVec<Muon> allMuons = rawMuons;
     RVec<Electron> allElectrons = rawElectrons;
     RVec<Jet> allJets = rawJets;
-    Particle METv_copy = METv;
-
-    myCorr->METXYCorrection(METv_copy, ev.run(), ev.nPV(), MyCorrection::XYCorrection_MetType::Type1PuppiMET);
-
+    
+    // Determine systematic variation type and direction
+    MyCorrection::variation systVar = MyCorrection::variation::nom;
+    TString systSource = "";
+    
     // Apply scale variations based on systematic name
     if (syst.Contains("ElectronEn")) {
         TString variation = syst.Contains("Up") ? "up" : "down";
@@ -117,13 +118,21 @@ DiLepton::RecoObjects DiLepton::defineObjects(Event& ev,
         allMuons = ScaleMuons(allMuons, variation);
     } else if (syst.Contains("JetEn")) {
         TString variation = syst.Contains("Up") ? "up" : "down";
-        allJets = ScaleJets(allJets, variation);
+        systVar = syst.Contains("Up") ? MyCorrection::variation::up : MyCorrection::variation::down;
+        systSource = "total"; // Use default JES source for simple JetEn systematics
+        allJets = ScaleJets(allJets, variation, systSource);
     } else if (syst.Contains("JetRes")) {
         TString variation = syst.Contains("Up") ? "up" : "down";
         allJets = SmearJets(allJets, genJets, variation);
     } else {
-        // Do nothing
+        // No scale variation
     }
+    
+    // Get MET from event and re-apply Type-I correction and XY correction
+    Particle METv_default = ev.GetMETVector(Event::MET_Type::PUPPI);
+    Particle METv = ApplyTypeICorrection(METv_default, allJets, allElectrons, allMuons, syst);
+    // XY correction is not recommended for PUPPI MET
+    //myCorr->METXYCorrection(METv, ev.run(), ev.nPV(), MyCorrection::XYCorrection_MetType::Type1PFMET);
 
     // Sort objects in pt order
     sort(allMuons.begin(), allMuons.end(), [](const Muon& a, const Muon& b) { return a.Pt() > b.Pt(); });
@@ -165,7 +174,8 @@ DiLepton::RecoObjects DiLepton::defineObjects(Event& ev,
     objects.tightJets_vetoLep = tightJets_vetoLep;
     objects.bjets = bjets;
     objects.genJets = genJets;
-    objects.METv = METv_copy;
+    objects.METv_default = METv_default;
+    objects.METv = METv;
 
     return objects;
 }
@@ -215,7 +225,7 @@ DiLepton::Channel DiLepton::selectEvent(Event& ev, const RecoObjects& recoObject
         
         const Muon& mu = tightMuons[0];
         const Electron& ele = tightElectrons[0];
-        if (!((mu.Pt() > 20. && ele.Pt() > 15.) || (mu.Pt() > 10. && ele.Pt() > 25.))) return Channel::NONE;
+        if (!((mu.Pt() > 25. && ele.Pt() > 15.) || (mu.Pt() > 10. && ele.Pt() > 25.))) return Channel::NONE;
         if (mu.Charge() + ele.Charge() != 0) return Channel::NONE;
         if (mu.DeltaR(ele) <= 0.4) return Channel::NONE;
         fillCutflow(CutStage::KinematicCuts, Channel::EMU, weight, syst);
@@ -393,6 +403,7 @@ void DiLepton::fillObjects(const DiLepton::Channel& channel, const RecoObjects& 
     const RVec<Electron>& electrons = recoObjects.tightElectrons;
     const RVec<Jet>& jets = recoObjects.tightJets_vetoLep;
     const RVec<Jet>& bjets = recoObjects.bjets;
+    const Particle& METv_default = recoObjects.METv_default;
     const Particle& METv = recoObjects.METv;
 
     TString channelStr = channelToString(channel);
@@ -471,6 +482,8 @@ void DiLepton::fillObjects(const DiLepton::Channel& channel, const RecoObjects& 
     FillHist(Form("%s/%s/bjets/size", channelStr.Data(), syst.Data()), bjets.size(), weight, 15, 0., 15.);
     FillHist(Form("%s/%s/METv/pt", channelStr.Data(), syst.Data()), METv.Pt(), weight, 300, 0., 300.);
     FillHist(Form("%s/%s/METv/phi", channelStr.Data(), syst.Data()), METv.Phi(), weight, 64, -3.2, 3.2);
+    FillHist(Form("%s/%s/METv_default/pt", channelStr.Data(), syst.Data()), METv_default.Pt(), weight, 300, 0., 300.);
+    FillHist(Form("%s/%s/METv_default/phi", channelStr.Data(), syst.Data()), METv_default.Phi(), weight, 64, -3.2, 3.2);
 
     if (channel == Channel::DIMU) {
         Particle pair = muons.at(0) + muons.at(1);
