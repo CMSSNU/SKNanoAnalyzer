@@ -370,7 +370,7 @@ float MyCorrection::GetMuonRECOSF(const Muon &muon, const variation syst) const 
     // For RECO efficiency, used 40-60 GeV muons due to the large background in Z-peak.
     // Plaetue already reached in a few GeV, okay to use for [10, 200] GeV muons. 
     auto cset = cset_muon->at("NUM_TrackerMuons_DEN_genTracks");
-    return safeEvaluate(cset, "GetMuonRECOSF", {muon.Eta(), (muon.MiniAODPt() < 40. ? 40. : muon.MiniAODPt()), getSystString_MUO(syst)});
+    return safeEvaluate(cset, "GetMuonRECOSF", {muon.Eta(), (muon.OriginalPt() < 40. ? 40. : muon.OriginalPt()), getSystString_MUO(syst)});
 }
 
 float MyCorrection::GetMuonRECOSF(const RVec<Muon> &muons, const variation syst) const {
@@ -385,17 +385,17 @@ float MyCorrection::GetMuonIDSF(const TString &Muon_ID_SF_Key, const Muon &muon,
     if (Muon_ID_SF_Key == "TopHNT") {
         auto cset = cset_muon_TopHNT_idsf->at("sf");
         if (syst == variation::nom) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.MiniAODPt(), "nom"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "nom"});
         } else if (syst == variation::up) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.MiniAODPt(), "up"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "up"});
         } else if (syst == variation::down) {
-            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.MiniAODPt(), "down"});
+            return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), "down"});
         } else {
-            throw runtime_error("[MyCorrection::GetElectronIDSF] Invalid syst value");
+            throw runtime_error("[MyCorrection::GetMuonIDSF] Invalid syst value");
         }
     } else {
         auto cset = cset_muon->at(string(Muon_ID_SF_Key));
-        return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.MiniAODPt(), getSystString_MUO(syst)});
+        return safeEvaluate(cset, "GetMuonIDSF", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_MUO(syst)});
     }
 }
 
@@ -514,12 +514,14 @@ float MyCorrection::GetElectronRECOSF(const RVec<Electron> &electrons, const var
 float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst) const {
     if (Electron_ID_SF_Key == "TopHNT") {
         auto cset = cset_electron_TopHNT_idsf->at("sf");
+        const bool isLowStat = (GetEra() == "2022" || GetEra() == "2023BPix");
+        const float maxPt = isLowStat ? 99. : 199.;
         if (syst == variation::nom) {
-            return safeEvaluate(cset, "GetElectronRECOSF", {eta, pt, "nom"});
+            return safeEvaluate(cset, "GetElectronIDSF", {eta, min(pt, maxPt), "nom"});
         } else if (syst == variation::up) {
-            return safeEvaluate(cset, "GetElectronRECOSF", {eta, pt, "up"});
+            return safeEvaluate(cset, "GetElectronIDSF", {eta, min(pt, maxPt), "up"});
         } else if (syst == variation::down) {
-            return safeEvaluate(cset, "GetElectronRECOSF", {eta, pt, "down"});
+            return safeEvaluate(cset, "GetElectronIDSF", {eta, min(pt, maxPt), "down"});
         } else {
             throw runtime_error("[MyCorrection::GetElectronIDSF] Invalid syst value");
         }
@@ -618,22 +620,22 @@ float MyCorrection::GetTriggerEff(const Muon &muon, const TString &trigger_leg_k
     if (trigger_leg_key == "DblMu_Mu17Leg") {
         const string jsonkey = isData ? "data" : "sim";
         auto cset = cset_muon_TopHNT_dblmu_leg1_eff->at(jsonkey);
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.MiniAODPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "DblMu_Mu8Leg") {
         const string jsonkey = isData ? "data" : "sim";
         auto cset = cset_muon_TopHNT_dblmu_leg2_eff->at(jsonkey);
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.MiniAODPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "EMu_Mu23Leg") {
         const string jsonkey = isData ? "Mu23El12_Data" : "Mu23El12_MC";
         auto cset = cset_muon_TopHNT_emu_leg1_eff->at(jsonkey); 
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.MiniAODPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else if (trigger_leg_key == "EMu_Mu8Leg") {
         const string jsonkey = isData ? "Mu8El23_Data" : "Mu8El23_MC";
         auto cset = cset_muon_TopHNT_emu_leg2_eff->at(jsonkey); 
-        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.MiniAODPt(), getSystString_CUSTOM(syst)});
+        float eff = safeEvaluate(cset, "GetTriggerEff", {fabs(muon.Eta()), muon.OriginalPt(), getSystString_CUSTOM(syst)});
         return eff < 1. ? eff : 1.;
     } else {
         throw runtime_error("[MyCorrection::GetTriggerEff] Invalid trigger leg key");
@@ -761,8 +763,14 @@ float MyCorrection::GetPairwiseFilterEff(const TString &filter_name, const bool 
             return isData? 0.9961 : 0.9958;
         } else if (GetEra() == "2018") {
             return isData? 0.9988 : 0.9998;
+        } else if (GetEra() == "2022") {
+            return isData? 1. : 0.9998;
+        } else if (GetEra() == "2022EE") {
+            return isData? 0.9994 : 0.9998;
         } else if (GetEra() == "2023") {
             return isData? 0.9993 : 0.9998;
+        } else if (GetEra() == "2023BPix") {
+            return isData? 0.9989 : 0.9997;
         } else {
             cerr << "[MyCorrection::GetPairwiseFilterEff] " << filter_name << " is not implemented for " << GetEra() << endl;
             return 1.;
@@ -776,8 +784,14 @@ float MyCorrection::GetPairwiseFilterEff(const TString &filter_name, const bool 
             return isData? 0.9989 : 0.9955;
         } else if (GetEra() == "2018") {
             return isData? 0.9946 : 0.9981;
+        } else if (GetEra() == "2022") {
+            return isData? 0.9964 : 0.9985;
+        } else if (GetEra() == "2022EE") {
+            return isData? 0.9949 : 0.9976;
         } else if (GetEra() == "2023") {
-            return isData? 0.9944 : 0.9976;
+            return isData? 0.9944 : 0.9977;
+        } else if (GetEra() == "2023BPix") {
+            return isData? 0.9930 : 0.9972;
         } else {
             cerr << "[MyCorrection::GetPairwiseFilterEff] " << filter_name << " is not implemented for " << GetEra() << endl;
             return 1.;
@@ -1190,9 +1204,10 @@ bool MyCorrection::IsJetVetoZone(const float eta, const float phi, TString mapCa
 
 void MyCorrection::METXYCorrection(Particle &Met, const int RunNumber, const int npvs, const XYCorrection_MetType MetType) {
     if (Run == 3) {
-        // No supprot in Run3
+        // Not supported yet
         return;
     }
+
     correction::Correction::Ref cset_pt = nullptr;
     correction::Correction::Ref cset_phi = nullptr;
     switch (MetType) {
@@ -1206,6 +1221,7 @@ void MyCorrection::METXYCorrection(Particle &Met, const int RunNumber, const int
         }
         break;
     case XYCorrection_MetType::Type1PuppiMET:
+        cout << "[MyCorrection::METXYCorrection] Type1PuppiMET is not recommended for PUPPI MET" << endl;
         if (IsDATA) {
             cset_pt = cset_met->at("pt_metphicorr_puppimet_data");
             cset_phi = cset_met->at("phi_metphicorr_puppimet_data");
@@ -1221,6 +1237,7 @@ void MyCorrection::METXYCorrection(Particle &Met, const int RunNumber, const int
     float this_m = Met.M();
     Met.SetPtEtaPhiM(this_pt, this_eta, this_phi, this_m);
 }
+
 
 float MyCorrection::GetTopPtReweight(const RVec<Gen> &gens) const {
     if (!Sample.Contains("TT") || !Sample.Contains("powheg"))
