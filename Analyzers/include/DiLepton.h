@@ -35,6 +35,7 @@ public:
         RVec<Jet> tightJets_vetoLep;
         RVec<Jet> bjets;
         RVec<GenJet> genJets;
+        Particle METv_default;
         Particle METv;
     };
 
@@ -68,7 +69,6 @@ private:
                              const RVec<Electron>& rawElectrons, 
                              const RVec<Jet>& rawJets,
                              const RVec<GenJet>& genJets, 
-                             const Particle &METv, 
                              const TString& syst = "Central");
     WeightInfo getWeights(const Channel& channel,
                           const Event& event,

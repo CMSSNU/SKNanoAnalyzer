@@ -14,3 +14,5 @@ ST_tW_top_Semilep
 ST_tW_antitop_Semilep
 ST_tW_top_Lep
 ST_tW_antitop_Lep
+DYGTo2LG_MLL4to50_PTG10to100
+DYGTo2LG_MLL50_PTG10to100

@@ -52,6 +52,7 @@ bool Event::IsPDForTrigger(TString trig, TString PD) {
     return false;
 }
 
+/*
 void Event::SetMET(RVec<float> MET_pt, RVec<float> MET_phi) {
     j_METVector_PUPPI.SetPtEtaPhiM(MET_pt[0], 0, MET_phi[0], 0);
     j_METVector_PUPPI_UE_UP.SetPtEtaPhiM(MET_pt[1], 0, MET_phi[1], 0);
@@ -61,7 +62,9 @@ void Event::SetMET(RVec<float> MET_pt, RVec<float> MET_phi) {
     j_METVector_PUPPI_JES_UP.SetPtEtaPhiM(MET_pt[5], 0, MET_phi[5], 0);
     j_METVector_PUPPI_JES_Down.SetPtEtaPhiM(MET_pt[6], 0, MET_phi[6], 0);
 }
+*/
 
+/*
 Particle Event::GetMETVector(Event::MET_Type MET_type, MyCorrection::variation syst, Event::MET_Syst source) const
 {
     if(MET_type!=MET_Type::PUPPI) {
@@ -122,3 +125,4 @@ Particle Event::GetMETVector(Event::MET_Type MET_type, MyCorrection::variation s
             exit(EXIT_FAILURE);
     }
 }
+*/

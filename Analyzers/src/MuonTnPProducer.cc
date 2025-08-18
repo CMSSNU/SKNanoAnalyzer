@@ -85,6 +85,7 @@ void MuonTnPProducer::initializeAnalyzer(){
     newtree->Branch("pair_mass_cor",&pair_mass_cor);
     newtree->Branch("pair_pt",&pair_pt);
     newtree->Branch("pair_pt_cor",&pair_pt_cor);
+    newtree->Branch("pair_dr",&pair_dr);
     newtree->Branch("pair_EMTF",&pair_EMTF);
 
     if(!IsDATA){
@@ -162,7 +163,7 @@ void MuonTnPProducer::executeEvent(){
         tag_isLoose=tag.isPOGLooseId();
         tag_TkIsoLoose=tag.PassID(Muon::MuonID::POG_TKISO_LOOSE);
         tag_PFIsoTight=tag.PassID(Muon::MuonID::POG_PFISO_TIGHT);
-        tag_pt=tag.MiniAODPt();
+        tag_pt=tag.OriginalPt();
         tag_pt_cor=tag.Pt();
         tag_eta=tag.Eta();
         tag_phi=tag.Phi();
@@ -207,7 +208,7 @@ void MuonTnPProducer::executeEvent(){
             probe_IsoMu27=PassSLT(probe, trigObjs, 27.);
             probe_Mu17Leg1=PassDLT(probe, trigObjs, 17.);
             probe_Mu8Leg2=PassDLT(probe, trigObjs, 8.);
-            probe_pt=probe.MiniAODPt();
+            probe_pt=probe.OriginalPt();
             probe_pt_cor=probe.Pt();
             probe_eta=probe.Eta();
             probe_phi=probe.Phi();
@@ -226,6 +227,7 @@ void MuonTnPProducer::executeEvent(){
             pair_mass_cor=pair.M();
             pair_pt=pair.Pt();
             pair_pt_cor=pair.Pt();
+            pair_dr=tag.DeltaR(probe);
             pair_EMTF=tag_eta*probe_eta > 0 && fabs(tag_eta) > 0.9 && fabs(probe_eta) > 0.9 && fabs(tag_phi-probe_phi) < 70/180.*3.141592;
 
             if (!IsDATA) {
@@ -415,7 +417,7 @@ bool MuonTnPProducer::PassDLT(const Muon &muon, const RVec<TrigObj> &trigObjs, c
     for(const auto &trigObj : trigObjs){
         if (! trigObj.isMuon()) continue;
         if (! (trigObj.DeltaR(muon) < 0.3)) continue;
-        if (trigObj.hasBit(0) && trigObj.hasBit(4) && trigObj.Pt() > pt_cut) {
+        if (trigObj.hasBit(4) && trigObj.Pt() > pt_cut) {
             return true;
         }
     }

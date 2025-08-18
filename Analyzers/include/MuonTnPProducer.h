@@ -83,6 +83,7 @@ public:
   float pair_mass_cor;
   float pair_pt;
   float pair_pt_cor;
+  float pair_dr;
   bool pair_EMTF;
 
   bool probe_gen_matched;

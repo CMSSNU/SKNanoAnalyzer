@@ -74,7 +74,7 @@ public:
 
 
     //MetFilter
-    bool PassNoiseFilter(const RVec<Jet> &AllJets, const Event &ev, Event::MET_Type met_type = Event::MET_Type::PUPPI);
+    bool PassNoiseFilter(const RVec<Jet> &AllJets, const Event &ev, const Event::MET_Type MET_type=Event::MET_Type::PUPPI);
     // PDF reweight
     PDFReweight *pdfReweight;
     float GetPDFWeight(LHAPDF::PDF *pdf_);
@@ -155,6 +155,13 @@ public:
     RVec<Jet> SmearJets(const RVec<Jet> &jets, const RVec<GenJet> &genjets, const TString &syst, const TString &source="total");
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const MyCorrection::variation &syst=MyCorrection::variation::nom, const TString &source = "total");
     RVec<Jet> ScaleJets(const RVec<Jet> &jets, const TString &syst, const TString &source="total");
+    
+    // Type-I MET correction with correlated object variations
+    Particle ApplyTypeICorrection(const Particle& MET,
+                                  const RVec<Jet>& jets,
+                                  const RVec<Electron>& electrons,
+                                  const RVec<Muon>& muons,
+                                  const MyCorrection::variation& unclustered_syst=MyCorrection::variation::nom);
     
     // Histogram Handlers
     TFile* GetOutfile() { return outfile; }

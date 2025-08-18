@@ -12,7 +12,7 @@ void MeasTrigEff::initializeAnalyzer() {
 
     // ID settings
     MuonIDs = new IDContainer("HcToWATight", "HcToWALoose");
-    ElectronIDs = new IDContainer("HcToWATight", "HcToWALoose");
+    ElectronIDs = new IDContainer("HcToWATight", ((Run==2) ? "HcToWALooseRun2": "HcToWALooseRun3"));
     if (DataEra == "2016preVFP") {
         // No mass filter for DblMuTrigs, No DZ filters for EMu
         SglMuTrigs = {"HLT_IsoMu24", 
