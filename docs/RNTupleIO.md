@@ -56,9 +56,13 @@ switch readers at file boundaries while preserving lazy field state.
   at most 100 inputs, and fully deserializes every intermediate file before it
   can feed the next stage. It then verifies merged dataset entries, histogram
   entries, and compression, atomically publishes the target, and deletes
-  shards only after all checks pass. Staged and parallel partials are placed
-  under the output filesystem (or `--temp-dir`) so a large merge cannot
-  silently exhaust the node-local `/tmp` filesystem.
+  shards only after all checks pass. Staged partials are placed under the
+  output filesystem (or `--temp-dir`) so a large merge cannot silently exhaust
+  the node-local `/tmp` filesystem.
+- Merging is NFS-latency bound rather than CPU bound, so the batches of a stage
+  run as independent `hadd` processes over disjoint inputs. `hadd -n` and
+  `hadd -j` are never used: both corrupt output on ROOT 6.40.02, and every
+  merge output is screened for the resulting repeated key cycles.
 - Skimming records selected global entries during analysis and writes the
   original input schema through the RNTuple Snapshot backend.
 Set `SKNANO_PERFORMANCE_REPORT=/path/report.json` to collect backend-tagged

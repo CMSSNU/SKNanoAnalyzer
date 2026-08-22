@@ -41,8 +41,9 @@ REPO_ROOT = HERE.parents[1]  # .../SKNANOAnalyzer_NanoV15
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from templates.job_dict import main_job, hadd_job, final_job
+from templates.job_dict import main_job, hadd_job, partial_merge_job, final_job
 from python.sample_paths import resolve_sample_paths
+from python.dag_edges import RaggedGrouper, group_sizes
 from python.telegram_reporter import send_telegram_message, submission_message
 
 dag = dags.DAG()
@@ -658,6 +659,16 @@ def setParser():
     help="Maximum event-local errors before failing a job. Use -1 for unlimited. Default: 1")
     parser.add_argument('--no-hadd', dest='no_hadd', action='store_true', default=False,
     help="Skip hadd and move the per-job ROOT outputs to a sample directory under SKNANO_OUTPUT")
+    parser.add_argument('--merge-mode', dest='MergeMode', default='single', choices=['single','index'],
+    help="single: concatenate each sample into one ROOT file. index: merge histograms only and publish <sample>.root.chain.json over the RNTuple shards, which skips the bulk copy entirely")
+    parser.add_argument('--merge-group-size', dest='MergeGroupSize', default=0, type=int,
+    help="Merge analyzer outputs in groups of this many jobs as soon as each group finishes, then merge the group results. 0 keeps the single merge job that waits for the whole sample. 100 is a good starting point")
+    parser.add_argument('--merge-jobs', dest='MergeJobs', default=8, type=int,
+    help="Independent hadd processes the final merge may run over disjoint batches. Never becomes hadd's own -j, which corrupts output")
+    parser.add_argument('--merge-cache-size', dest='MergeCacheSize', default='2g',
+    help="hadd -cachesize for the final merge stage (0 disables). hadd clamps this at 2 GiB")
+    parser.add_argument('--merge-batch-cache-size', dest='MergeBatchCacheSize', default='512m',
+    help="hadd -cachesize for each concurrent merge process, both group merges and batch merges; budget --merge-jobs times this against the merge job's memory request")
     parser.add_argument('--no_exec', action='store_true', default=False, help="only produce working area, not submitting to the condor pool")
     
     #Note: this option will change the behavior of the script. output directory will be changed to Your GV0, hadd will be disabled, and will create the info json of skimmed tree   
@@ -935,8 +946,16 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     
     return job_dict
 
-def makeHaddJobs(working_dir,argparser,sample):
+def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
+    """Build a sample's merge jobs.
+
+    Returns ``(final_job, partial_job, sizes)``.  ``partial_job`` is None unless
+    --merge-group-size asks for group merges; those run as soon as their own
+    analyzer jobs finish instead of waiting for the whole sample, which is what
+    keeps the merge off the critical path.
+    """
     AnalyzerName = argparser.Analyzer
+    userflags = getUserFlagsList(argparser.Userflags)
     if len(userflags) > 0:
         AnalyzerName += f"/{'_'.join(userflags)}"
     era = working_dir.split('/')[-2]
@@ -944,24 +963,65 @@ def makeHaddJobs(working_dir,argparser,sample):
     if not os.path.exists(os.path.dirname(hadd_target)):
         os.makedirs(os.path.dirname(hadd_target))
 
+    sizes = group_sizes(totalNumberofJobs, argparser.MergeGroupSize)
+    grouped = argparser.MergeGroupSize > 0 and len(sizes) > 1
+
+    partial_job = None
+    if grouped:
+        template_path = os.path.join(SKNANO_HOME, "templates", "merge_partial.sh")
+        with open(template_path, 'r') as f:
+            partial_content = f.read()
+        partial_content = partial_content.replace("[WORKDIR]", working_dir)
+        partial_content = partial_content.replace("[SKNANO_HOME]", SKNANO_HOME)
+        partial_content = partial_content.replace("[GROUP_SIZE]", str(argparser.MergeGroupSize))
+        partial_content = partial_content.replace("[NJOBS]", str(totalNumberofJobs))
+        partial_content = partial_content.replace("[CACHE_SIZE]", argparser.MergeBatchCacheSize)
+        partial_script = os.path.join(working_dir, "merge_partial.sh")
+        with open(partial_script, 'w') as f:
+            f.write(partial_content)
+
+        partial_job = partial_merge_job.copy()
+        partial_job['executable'] = partial_script
+        partial_job['JobBatchName'] = f"Merge_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
+        partial_job['output'] = os.path.join(working_dir,"merge_$(Group).out")
+        partial_job['error'] = os.path.join(working_dir,"merge_$(Group).err")
+
+    shard_dir = os.path.join(SKNANO_OUTPUT,AnalyzerName,era,sample)
+    if argparser.MergeMode == 'index':
+        os.makedirs(shard_dir, exist_ok=True)
+        mode_args = f"--shard-dir {shard_dir}"
+        # index mode republishes the shards rather than consuming them.
+        delete_flag = ""
+    else:
+        mode_args = ""
+        delete_flag = "--delete-inputs"
+
     template_path = os.path.join(SKNANO_HOME, "templates", "hadd.sh")
     with open(template_path, 'r') as f:
         hadd_content = f.read()
     hadd_content = hadd_content.replace("[WORKDIR]", working_dir)
     hadd_content = hadd_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     hadd_content = hadd_content.replace("[TARGET]", hadd_target)
+    hadd_content = hadd_content.replace(
+        "[INPUT_GLOB]", "output/partial_*.root" if grouped else "output/hists_*.root")
+    hadd_content = hadd_content.replace("[MERGE_MODE]", argparser.MergeMode)
+    hadd_content = hadd_content.replace("[MODE_ARGS]", mode_args)
+    hadd_content = hadd_content.replace("[MERGE_JOBS]", str(argparser.MergeJobs))
+    hadd_content = hadd_content.replace("[CACHE_SIZE]", argparser.MergeCacheSize)
+    hadd_content = hadd_content.replace("[BATCH_CACHE_SIZE]", argparser.MergeBatchCacheSize)
+    hadd_content = hadd_content.replace("[DELETE_FLAG]", delete_flag)
     hadd_content = hadd_content.replace("[PROVENANCE]", os.path.join(os.path.dirname(os.path.dirname(working_dir)), RUN_MANIFEST_NAME))
     hadd_content = hadd_content.replace("[TARGET_PROVENANCE]", hadd_target + ".provenance.json")
     with open(os.path.join(working_dir,"hadd.sh"),'w') as f:
         f.write(hadd_content)
-        
+
     job_dict = hadd_job.copy()
     job_dict['executable'] = os.path.join(working_dir,"hadd.sh")
     job_dict['JobBatchName'] = f"Hadd_{working_dir.split('/')[-1]}_{working_dir.split('/')[-2]}"
     job_dict['output'] = os.path.join(working_dir,"hadd.out")
     job_dict['error'] = os.path.join(working_dir,"hadd.err")
 
-    return job_dict
+    return job_dict, partial_job, (sizes if grouped else None)
 
 def makeMoveJobs(working_dir,argparser,sample):
     AnalyzerName = argparser.Analyzer
@@ -1042,6 +1102,8 @@ def makeSkimPostProcsJobs(working_dir,sample, argparser,era):
 def getEachAnalyzerToPostDag(kwarg):
     analyzer_sub_dict = kwarg['analyzer_sub_dict']
     hadd_sub_dict = kwarg['hadd_sub_dict']
+    partial_sub_dict = kwarg.get('partial_sub_dict')
+    merge_group_sizes = kwarg.get('merge_group_sizes')
     totalNumberOfJobs = kwarg['totalNumberofJobs']
     batchname = kwarg['batchname']
     postproc_label = kwarg.get('postproc_label', 'Hadd')
@@ -1054,13 +1116,24 @@ def getEachAnalyzerToPostDag(kwarg):
         'submit_description': htcondor.Submit(analyzer_sub_dict),
         'vars' : [{"Process":str(i)} for i in range(1,totalNumberOfJobs+1)]
     }
+
+    # Analyzer node index j wrote output/hists_j.root, so consecutive chunks of
+    # that layer are exactly the shards one group merge owns.
+    partial_layer = None
+    if partial_sub_dict is not None and merge_group_sizes:
+        partial_layer = {
+            'name' : f"Merge_{batchname}",
+            'submit_description' : htcondor.Submit(partial_sub_dict),
+            'vars' : [{"Group":str(group)} for group in range(len(merge_group_sizes))],
+            'group_sizes' : merge_group_sizes,
+        }
     
     hadd_layer = {
         'name' :  f"Postproc_{batchname}" if SKIMMING_MODE else f"{postproc_label}_{batchname}",
         'submit_description' : htcondor.Submit(hadd_sub_dict)
     }
     
-    return (analyzer_layer,hadd_layer)
+    return (analyzer_layer,partial_layer,hadd_layer)
 
 def renderSubmissionSummary(dag_list, master_dir, argparser, userflags, submit_result):
     total_samples = len(dag_list)
@@ -1069,9 +1142,21 @@ def renderSubmissionSummary(dag_list, master_dir, argparser, userflags, submit_r
     cluster_id = submit_result.get('cluster_id') if submit_result else None
     dag_file = submit_result.get('dag_file') if submit_result else None
     status = "Prepared only (--no_exec)" if argparser.no_exec else f"Submitted cluster {cluster_id}"
-    hadd_status = "not applicable (skimming)" if SKIMMING_MODE else (
-        "disabled" if argparser.no_hadd else "enabled"
-    )
+    if SKIMMING_MODE:
+        hadd_status = "not applicable (skimming)"
+    elif argparser.no_hadd:
+        hadd_status = "disabled"
+    else:
+        hadd_status = f"{argparser.MergeMode}, {argparser.MergeJobs} processes"
+        groups = sum(
+            len(group_sizes(item['totalNumberofJobs'], argparser.MergeGroupSize))
+            for item in dag_list
+            if item.get('merge_group_sizes')
+        )
+        hadd_status += (
+            f", pipelined in {groups} groups of {argparser.MergeGroupSize}"
+            if groups else ", single merge after all jobs"
+        )
 
     if not _RICH_AVAILABLE:
         print("\nSKNano submission summary")
@@ -1181,7 +1266,7 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
         for layer_dict in skim_postproc_layers:
             if layer_dict is None:
                 continue
-            analyzer_dict, postproc_dict = layer_dict
+            analyzer_dict, _, postproc_dict = layer_dict
             if analyzer_dict is None or postproc_dict is None:
                 continue
             analyzer_layer = dag.layer(
@@ -1204,7 +1289,7 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
         for layer_dict in hadd_layer_dicts:
             if layer_dict is None:
                 continue
-            analyzer_dict, hadd_dict = layer_dict
+            analyzer_dict, partial_dict, hadd_dict = layer_dict
             if analyzer_dict is None or hadd_dict is None:
                 continue
             analyzer_layer = dag.layer(
@@ -1212,7 +1297,15 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
                 submit_description = analyzer_dict['submit_description'],
                 vars = analyzer_dict['vars']
             )
-            hadd_layer = analyzer_layer.child_layer(
+            merge_parent = analyzer_layer
+            if partial_dict is not None:
+                merge_parent = analyzer_layer.child_layer(
+                    name = partial_dict['name'],
+                    submit_description = partial_dict['submit_description'],
+                    vars = partial_dict['vars'],
+                    edge = RaggedGrouper(partial_dict['group_sizes'])
+                )
+            hadd_layer = merge_parent.child_layer(
                 name = hadd_dict['name'],
                 submit_description = hadd_dict['submit_description']
             )
@@ -1305,15 +1398,19 @@ if __name__ == '__main__':
             if totalNumberofJobs == None:
                 continue
             analyzer_sub_dict = makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberofJobs,args)
+            partial_sub_dict = None
+            merge_group_sizes = None
             if SKIMMING_MODE:
                 postproc_sub_dict = makeSkimPostProcsJobs(working_dir,sample,args,era)
+            elif args.no_hadd:
+                hadd_sub_dict = makeMoveJobs(working_dir,args,sample)
             else:
-                hadd_sub_dict = makeMoveJobs(working_dir,args,sample) if args.no_hadd else makeHaddJobs(working_dir,args,sample)
+                hadd_sub_dict, partial_sub_dict, merge_group_sizes = makeHaddJobs(working_dir,args,sample,totalNumberofJobs)
             
             if SKIMMING_MODE:
                 dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':postproc_sub_dict,'totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}",'metadata_snapshot_files':metadata_snapshot_files})
             else:
-                dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':hadd_sub_dict,'postproc_label':'Move' if args.no_hadd else 'Hadd','totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}",'metadata_snapshot_files':metadata_snapshot_files})
+                dag_list.append({'era':era,'sample':sample,'analyzer_sub_dict':analyzer_sub_dict,'hadd_sub_dict':hadd_sub_dict,'partial_sub_dict':partial_sub_dict,'merge_group_sizes':merge_group_sizes,'postproc_label':'Move' if args.no_hadd else 'Hadd','totalNumberofJobs':totalNumberofJobs,'working_dir':working_dir,'batchname':f"{args.Analyzer}_{era}_{sample}",'metadata_snapshot_files':metadata_snapshot_files})
             if dag_list is not None:
                 if SKIMMING_MODE:
                     postproc_layers.append(getEachAnalyzerToPostDag(dag_list[-1]))

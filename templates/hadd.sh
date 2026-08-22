@@ -12,12 +12,15 @@ set -u
 
 cd [WORKDIR]
 shopt -s nullglob
-inputs=(output/hists_*.root)
+inputs=([INPUT_GLOB])
 if (( ${#inputs[@]} == 0 )); then
-  echo "No analyzer outputs found under [WORKDIR]/output" >&2
+  echo "No merge inputs matching [INPUT_GLOB] under [WORKDIR]" >&2
   exit 1
 fi
 
 python3 "[SKNANO_HOME]/scripts/sknano_merge.py" \
-  --output [TARGET] --jobs 1 --delete-inputs "${inputs[@]}"
+  --output [TARGET] --mode [MERGE_MODE] [MODE_ARGS] \
+  --jobs [MERGE_JOBS] --cache-size [CACHE_SIZE] \
+  --batch-cache-size [BATCH_CACHE_SIZE] [DELETE_FLAG] \
+  "${inputs[@]}"
 cp [PROVENANCE] [TARGET_PROVENANCE]
