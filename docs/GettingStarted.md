@@ -252,6 +252,15 @@ Important submission options are:
 - `--batchname`: custom batch name.
 - `--no-hadd`: skip the per-sample merge step and move the individual shards
   to `SKNANO_OUTPUT/<Analyzer>/<era>/<sample>/hists_*.root`.
+- `--merge-group-size`: merge each group of this many jobs as soon as that
+  group finishes, then merge the group results. This takes the bulk of the
+  merge off the critical path; 100 is a good starting point. The default, 0,
+  keeps one merge job that waits for the whole sample.
+- `--merge-mode`: `single` writes one file per sample; `index` merges only the
+  histograms and publishes `<sample>.root.chain.json` over the RNTuple shards,
+  which skips the bulk copy entirely. Read those with `python/sknano_chain.py`.
+- `--merge-jobs`, `--merge-cache-size`, `--merge-batch-cache-size`: merge
+  throughput tuning. See [MergePerformance](MergePerformance.md).
 - `--skimming_mode`: enable skimming output and post-processing.
 
 ## How to make a sample list

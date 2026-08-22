@@ -22,6 +22,7 @@ the core API documents before changing analyzer or I/O contracts.
 - [Analyzer Task API](AnalyzerTaskAPI.md): shared selections with independently
   selectable analyzer tasks.
 - [Typed Output](OutputHandles.md): RNTuple fields and histogram groups.
+
 - [RNTuple I/O](RNTupleIO.md): input selection, conversion, merging, and
   performance telemetry.
 - [ROOT Schema Compatibility](RootSchemaCompatibility.md): persistent-object

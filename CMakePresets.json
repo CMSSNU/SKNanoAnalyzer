@@ -24,6 +24,13 @@
       "cacheVariables": { "SKNANO_ENABLE_LTO": "ON" }
     },
     {
+      "name": "avx2-lto",
+      "inherits": "portable-lto",
+      "displayName": "AVX2 (x86-64-v3) strict Release with LTO",
+      "binaryDir": "${sourceDir}/build/avx2-lto",
+      "cacheVariables": { "SKNANO_ARCH": "x86-64-v3" }
+    },
+    {
       "name": "fast-validated",
       "inherits": "portable-release",
       "displayName": "Portable FastValidated Release",
@@ -54,6 +61,7 @@
   "buildPresets": [
     { "name": "portable-release", "configurePreset": "portable-release" },
     { "name": "portable-lto", "configurePreset": "portable-lto" },
+    { "name": "avx2-lto", "configurePreset": "avx2-lto" },
     { "name": "fast-validated", "configurePreset": "fast-validated" },
     { "name": "pgo-generate", "configurePreset": "pgo-generate" },
     { "name": "pgo-use", "configurePreset": "pgo-use" }
