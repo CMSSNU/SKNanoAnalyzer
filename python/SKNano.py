@@ -646,6 +646,8 @@ def setParser():
     parser.add_argument('--exclude', dest='ExcludeSample', default="",
     help="Exclude samples by regex (comma-separated, supports * wildcard)")
     parser.add_argument('--nmax', dest='NMax', default=500, type=int, help="maximum running jobs")
+    parser.add_argument('--requirements', dest='Requirements', default="",
+    help="Extra HTCondor Requirements expression for analyzer jobs (merge jobs are not gated, they load no framework library)")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
     parser.add_argument('--python', action="store_true", default=False,
     help="Use python analyzer")
@@ -943,7 +945,11 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     job_dict['output'] = os.path.join(working_dir,"job_$(Process).out")
     job_dict['error'] = os.path.join(working_dir,"job_$(Process).err")
     job_dict['concurrency_limits'] = f"n{nmax}.{username}"
-    
+    # Analyzer jobs only: merge jobs run pure hadd/PyROOT and load no framework
+    # library, so they stay runnable on nodes an arch-gated build cannot use.
+    if argparse.Requirements:
+        job_dict['requirements'] = argparse.Requirements
+
     return job_dict
 
 def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
