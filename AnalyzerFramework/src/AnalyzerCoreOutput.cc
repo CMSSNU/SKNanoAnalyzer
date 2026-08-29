@@ -87,7 +87,9 @@ void ensureRNTupleWriter(RNTupleOutputState &state, const std::string &path,
   }
 
   ROOT::RNTupleWriteOptions options;
-  options.SetCompression(ROOT::RCompressionSetting::EAlgorithm::kLZ4, 4);
+  // Level 1 keeps the fast LZ4 path; levels above 1 switch ROOT to LZ4HC,
+  // which showed up at ~2% of the event loop in perf for little size gain.
+  options.SetCompression(ROOT::RCompressionSetting::EAlgorithm::kLZ4, 1);
   const std::size_t bufferSize =
       state.profile == AnalyzerCore::RNTupleOutputProfile::Fast
           ? 64U * 1024U * 1024U
@@ -546,7 +548,7 @@ void AnalyzerCore::WriteHist() {
   if (!outfile || !outfile->IsOpen())
     throw SKNano::LogicError(
         "[AnalyzerCore::WriteHist] output file is not configured");
-  const int compression_level = 4;
+  const int compression_level = 1;
   const int compression_algorithm = ROOT::RCompressionSetting::EAlgorithm::kLZ4;
   cout << "[AnalyzerCore::WriteHist] Writing histograms to "
        << outfile->GetName() << endl;
@@ -663,7 +665,7 @@ void AnalyzerCore::WriteHist() {
     options.fOutputFormat = ROOT::RDF::ESnapshotOutputFormat::kRNTuple;
     options.fCompressionAlgorithm =
         ROOT::RCompressionSetting::EAlgorithm::kLZ4;
-    options.fCompressionLevel = 4;
+    options.fCompressionLevel = 1;
     options.fApproxZippedClusterSize = 64U * 1024U * 1024U;
     options.fMaxUnzippedClusterSize = 256U * 1024U * 1024U;
     options.fEnablePageChecksums = true;
