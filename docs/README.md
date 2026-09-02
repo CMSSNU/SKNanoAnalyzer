@@ -38,10 +38,3 @@ The YAML files [noSyst.yaml](noSyst.yaml) and
 [ExampleSystematic.yaml](ExampleSystematic.yaml) are small systematic
 configuration examples. [Nano-linux-64.lock](Nano-linux-64.lock) is the pinned
 Linux environment used by the setup guide.
-
-## Documentation maintenance
-
-Keep commands executable from the repository root and link new pages from this
-index. Put stable user and API contracts here; implementation plans, benchmark
-notes, and temporary validation reports belong in issues or development
-artifacts rather than the maintained documentation set.

@@ -260,7 +260,7 @@ Important submission options are:
   histograms and publishes `<sample>.root.chain.json` over the RNTuple shards,
   which skips the bulk copy entirely. Read those with `python/sknano_chain.py`.
 - `--merge-jobs`, `--merge-cache-size`, `--merge-batch-cache-size`: merge
-  throughput tuning. See [MergePerformance](MergePerformance.md).
+  throughput tuning. See [RNTuple I/O](RNTupleIO.md).
 - `--skimming_mode`: enable skimming output and post-processing.
 
 ## How to make a sample list
