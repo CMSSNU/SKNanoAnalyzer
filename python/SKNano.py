@@ -63,6 +63,8 @@ SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
 Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3, '2023':3, '2023BPix':3, '2024':3}
 SKIMMING_MODE = False
+# DAGMan RETRY count for analyzer nodes (see getFinalDag).
+ANALYZER_NODE_RETRIES = 2
 SOURCE_SNAPSHOT_DIRNAME = "source_snapshot"
 SOURCE_ARCHIVE_DIRNAME = "code_archive"
 METADATA_SNAPSHOT_DIRNAME = os.path.join("metadata", "data_snapshot")
@@ -1278,7 +1280,8 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
             analyzer_layer = dag.layer(
                 name = analyzer_dict['name'],
                 submit_description = analyzer_dict['submit_description'],
-                vars = analyzer_dict['vars']
+                vars = analyzer_dict['vars'],
+                retries = ANALYZER_NODE_RETRIES
             )
             postproc_layer = analyzer_layer.child_layer(
                 name = postproc_dict['name'],
@@ -1298,10 +1301,14 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
             analyzer_dict, partial_dict, hadd_dict = layer_dict
             if analyzer_dict is None or hadd_dict is None:
                 continue
+            # A transient failure (a network mount hiccup, an evicted node)
+            # should not take a whole sample's DAG down; retry the analyzer
+            # node a couple of times before declaring the sample failed.
             analyzer_layer = dag.layer(
                 name = analyzer_dict['name'],
                 submit_description = analyzer_dict['submit_description'],
-                vars = analyzer_dict['vars']
+                vars = analyzer_dict['vars'],
+                retries = ANALYZER_NODE_RETRIES
             )
             merge_parent = analyzer_layer
             if partial_dict is not None:
