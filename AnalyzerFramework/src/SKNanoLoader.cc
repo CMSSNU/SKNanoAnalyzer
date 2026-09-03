@@ -1,5 +1,6 @@
 #include <AnalyzerFramework/SKNanoLoader.h>
 #include <algorithm>
+#include <cstdlib>
 #include <exception>
 #include <iomanip>
 using json = nlohmann::json;
@@ -101,11 +102,15 @@ void SKNanoLoader::OpenRNTupleFile(std::size_t index)
     if (index >= rntupleFileRanges.size())
         throw SKNano::LogicError("[SKNanoLoader] invalid RNTuple file index");
     auto next = std::make_unique<SKNano::RNTupleSource>();
+    // The branches activated so far are the columns worth reading ahead; on
+    // the first file nothing is active yet and the whole cluster span is read.
     next->open(inputDatasetName, rntupleFileRanges[index].fileName,
-               rntupleMetrics, rntupleClusterCache);
+               rntupleMetrics, rntupleClusterCache, rntuplePrefetchClusters,
+               &branchManager.getActiveBranches());
     // attachRNTuple clears views into the previous reader before the old
     // RNTupleSource is destroyed by the unique_ptr move below.
     branchManager.attachRNTuple(next.get());
+    AccumulateRNTupleReadStats();
     rntupleSource = std::move(next);
     currentRNTupleFileIndex = index;
     currentFileNumber = static_cast<int>(index);
@@ -137,6 +142,8 @@ bool SKNanoLoader::PrepareEntry(Long64_t globalEntry)
     currentEntry = globalEntry;
     currentLocalEntry = globalEntry - currentFileGlobalBegin;
     ++eventEpoch;
+    rntupleSource->noteEntry(static_cast<std::uint64_t>(currentLocalEntry),
+                             &branchManager.getActiveBranches());
     performanceTelemetry.addCounter("rntuple_local_entry_advances");
     return true;
 }
@@ -187,8 +194,7 @@ void SKNanoLoader::Loop()
 
     auto startTime = std::chrono::steady_clock::now();
     cout << "[SKNanoLoader::Loop] Event Loop Started" << endl;
-    performanceStartBytesRead = TFile::GetFileBytesRead();
-    performanceStartReadCalls = TFile::GetFileReadCalls();
+    rntupleReadStats = SKNano::RNTupleReadStats{};
     performanceEventsProcessed = 0;
     performanceTelemetry.setMetadata("analyzer", analyzerName);
     performanceTelemetry.setMetadata("era", DataEra.Data());
@@ -309,12 +315,41 @@ void SKNanoLoader::WritePerformanceSummary()
     performanceTelemetry.setCounter("event_errors", eventErrorCount);
     performanceTelemetry.setCounter("active_branches", branchManager.getActiveBranches().size());
     performanceTelemetry.setMetadata("input_format", "rntuple");
-    performanceTelemetry.setCounter("file_bytes_read",
-        TFile::GetFileBytesRead() - performanceStartBytesRead);
-    performanceTelemetry.setCounter("file_read_calls",
-        TFile::GetFileReadCalls() - performanceStartReadCalls);
+    // RNTuple reads bypass TFile, so the byte accounting comes from the
+    // page source (ROOT metrics, when enabled) and the read-ahead thread.
+    SKNano::RNTupleReadStats total = rntupleReadStats;
+    if (rntupleSource)
+        total += rntupleSource->readStats();
+    performanceTelemetry.setCounter("rntuple_read_payload_bytes",
+                                    static_cast<double>(total.readPayloadBytes));
+    performanceTelemetry.setCounter("rntuple_read_overhead_bytes",
+                                    static_cast<double>(total.readOverheadBytes));
+    performanceTelemetry.setCounter("rntuple_read_calls",
+                                    static_cast<double>(total.readCalls));
+    performanceTelemetry.setCounter("rntuple_readv_calls",
+                                    static_cast<double>(total.readVCalls));
+    performanceTelemetry.setCounter("rntuple_unzip_bytes",
+                                    static_cast<double>(total.unzipBytes));
+    performanceTelemetry.setCounter("rntuple_read_wall_seconds",
+                                    total.readWallSeconds);
+    performanceTelemetry.setCounter("rntuple_unzip_wall_seconds",
+                                    total.unzipWallSeconds);
+    performanceTelemetry.setCounter("prefetch_bytes",
+                                    static_cast<double>(total.prefetchBytes));
+    performanceTelemetry.setCounter("prefetch_ranges",
+                                    static_cast<double>(total.prefetchRanges));
+    performanceTelemetry.setCounter("prefetch_clusters",
+                                    static_cast<double>(total.prefetchClusters));
+    performanceTelemetry.setCounter("prefetch_window_clusters",
+                                    rntuplePrefetchClusters);
     performanceTelemetry.setCounter("input_files", inputFiles.size());
     performanceTelemetry.writeJson();
+}
+
+void SKNanoLoader::AccumulateRNTupleReadStats()
+{
+    if (rntupleSource)
+        rntupleReadStats += rntupleSource->readStats();
 }
 
 void SKNanoLoader::Init()
@@ -323,6 +358,17 @@ void SKNanoLoader::Init()
     if (const char *report = std::getenv("SKNANO_PERFORMANCE_REPORT")) {
         SetPerformanceReportPath(report);
         rntupleMetrics = true;
+    }
+    // SKNANO_INPUT_PREFETCH=0 turns the input read-ahead off, 1 keeps the
+    // default window, N>1 sets the window in clusters.
+    if (const char *prefetch = std::getenv("SKNANO_INPUT_PREFETCH")) {
+        const long value = std::strtol(prefetch, nullptr, 10);
+        if (value <= 0)
+            rntuplePrefetchClusters = 0;
+        else if (value > 1)
+            rntuplePrefetchClusters = static_cast<unsigned>(value);
+        cout << "[SKNanoLoader::Init] input prefetch window = "
+             << rntuplePrefetchClusters << " cluster(s)" << endl;
     }
     if (GetInputEntries() == 0)
     {

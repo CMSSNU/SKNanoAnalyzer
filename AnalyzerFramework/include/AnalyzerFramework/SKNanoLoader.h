@@ -9,6 +9,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 using namespace std;
@@ -107,10 +108,10 @@ public:
         performanceTelemetry.setEnabled(true);
     }
     SKNano::PerformanceTelemetry::ScopedPhase
-    MeasurePerformancePhase(const std::string &name) {
+    MeasurePerformancePhase(std::string_view name) {
         return performanceTelemetry.measure(name);
     }
-    void AddPerformanceCounter(const std::string &name, double value = 1.) {
+    void AddPerformanceCounter(std::string_view name, double value = 1.) {
         performanceTelemetry.addCounter(name, value);
     }
     void SetExecutionPlan(SKNano::ExecutionPlan plan) {
@@ -179,9 +180,11 @@ public:
     // independent of it, so this only turns on for an explicit
     // SKNANO_PERFORMANCE_REPORT request.
     bool rntupleMetrics = false;
+    // Page-cache read-ahead window in clusters for the input files (see
+    // RNTupleSource::open). 0 disables it. Overridden by SKNANO_INPUT_PREFETCH.
+    unsigned rntuplePrefetchClusters = 2;
+    SKNano::RNTupleReadStats rntupleReadStats; //!
 
-    Long64_t performanceStartBytesRead = 0;
-    int performanceStartReadCalls = 0;
     Long64_t performanceEventsProcessed = 0;
 
 protected:
@@ -196,6 +199,7 @@ protected:
                        const std::string &exceptionType);
     void WriteFailureSummary() const;
     void WritePerformanceSummary();
+    void AccumulateRNTupleReadStats();
 
 #include <generated_loader_api.inc>
 };
