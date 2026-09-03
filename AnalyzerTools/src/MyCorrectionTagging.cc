@@ -60,6 +60,34 @@ float MyCorrection::GetBTaggingEff(const float eta, const float pt,
                        pt});
 }
 
+float MyCorrection::GetBTaggingSF(const float eta, const float pt,
+                                  const int flav,
+                                  JetTagging::JetFlavTagger tagger,
+                                  JetTagging::JetFlavTaggerWP wp,
+                                  const variation syst,
+                                  const TString &method) const {
+  const string this_taggerStr =
+      JetTagging::GetTaggerCorrectionLibStr(tagger).Data();
+  const string this_wpStr = JetTagging::GetTaggerCorrectionWPStr(wp).Data();
+  // BTV splits the fixed-WP measurement by flavour: heavy flavour is measured
+  // in ttbar+mujets ("comb"), light in a negative-tag sample ("light"), and
+  // the two live in separate corrections with the same signature.
+  const string suffix =
+      method.Length() > 0 ? string(method.Data()) : (flav == 0 ? "light" : "comb");
+  try {
+    correction::Correction::Ref cset =
+        cset_btagging->at(this_taggerStr + "_" + suffix);
+    return safeEvaluate(cset, "GetBTaggingSF",
+                        {getSystString_BTV(syst), this_wpStr, flav, fabs(eta),
+                         pt});
+  } catch (const exception &e) {
+    cerr << "[MyCorrection::GetBTaggingSF] Failed to evaluate '"
+         << this_taggerStr << "_" << suffix << "' wp '" << this_wpStr
+         << "' flav " << flav << endl;
+    throw;
+  }
+}
+
 pair<float, float> MyCorrection::GetCTaggingWP() const {
   try {
     const auto &cset =

@@ -178,6 +178,13 @@ public:
     float GetBTaggingWP() const;
     float GetBTaggingWP(JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp) const;
     float GetBTaggingEff(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom);
+    // Fixed-working-point BTV scale factor. `cset_btagging` was already loaded
+    // for its _wp_values thresholds but the SF corrections in the same file had
+    // no accessor, so no analysis could apply a b-tagging weight at all.
+    // Method selects the correction suffix: "comb"/"mujets" are measured for
+    // heavy flavour (flav 5/4), "light" for flav 0 -- pass the one that matches
+    // the jet, which GetBTaggingSF does by default when method is empty.
+    float GetBTaggingSF(const float eta, const float pt, const int flav, JetTagging::JetFlavTagger tagger, JetTagging::JetFlavTaggerWP wp, const variation syst = variation::nom, const TString &method = "") const;
 
     // ctagging
     pair<float, float> GetCTaggingWP() const;
