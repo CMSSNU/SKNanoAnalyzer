@@ -1,5 +1,6 @@
 #include <AnalyzerFramework/AnalyzerCore.h>
 #include <Compression.h>
+#include <ROOT/RField.hxx>
 #include <ROOT/RNTupleWriteOptions.hxx>
 #include <ROOT/RNTupleWriter.hxx>
 #include <ROOT/RNTupleReader.hxx>
@@ -37,6 +38,7 @@ public:
   std::unique_ptr<ROOT::Detail::RRawPtrWriteEntry> entry;
   std::unique_ptr<ROOT::RNTupleWriter> writer;
   std::unordered_map<std::string, FieldBinding> fields;
+  std::vector<std::string> halfPrecisionFields;
   AnalyzerCore::RNTupleOutputProfile profile;
   unsigned int compressionThreads;
   std::uint64_t entries = 0;
@@ -72,6 +74,17 @@ resolveRNTupleDirectory(TFile &file, const std::string &path) {
   return {directory, objectName};
 }
 
+// Column representation must be chosen before the model is frozen, so the
+// half-precision requests are applied here, on the way to the first writer.
+void applyHalfPrecision(ROOT::RFieldBase &field) {
+  if (auto *real = dynamic_cast<ROOT::RField<float> *>(&field))
+    real->SetHalfPrecision();
+  else if (auto *real = dynamic_cast<ROOT::RField<double> *>(&field))
+    real->SetHalfPrecision();
+  for (auto *child : field.GetMutableSubfields())
+    applyHalfPrecision(*child);
+}
+
 void ensureRNTupleWriter(RNTupleOutputState &state, const std::string &path,
                          TFile *outfile) {
   if (state.writer)
@@ -79,6 +92,8 @@ void ensureRNTupleWriter(RNTupleOutputState &state, const std::string &path,
   if (!outfile || !outfile->IsOpen())
     throw SKNano::LogicError(
         "[AnalyzerCore::BookRNTuple] output file is not open");
+  for (const auto &fieldName : state.halfPrecisionFields)
+    applyHalfPrecision(state.model->GetMutableField(fieldName));
   state.model->Freeze();
   state.entry = state.model->CreateRawPtrWriteEntry();
   for (const auto &[unused, field] : state.fields) {
@@ -87,7 +102,9 @@ void ensureRNTupleWriter(RNTupleOutputState &state, const std::string &path,
   }
 
   ROOT::RNTupleWriteOptions options;
-  options.SetCompression(ROOT::RCompressionSetting::EAlgorithm::kLZ4, 4);
+  // Level 1 keeps the fast LZ4 path; levels above 1 switch ROOT to LZ4HC,
+  // which showed up at ~2% of the event loop in perf for little size gain.
+  options.SetCompression(ROOT::RCompressionSetting::EAlgorithm::kLZ4, 1);
   const std::size_t bufferSize =
       state.profile == AnalyzerCore::RNTupleOutputProfile::Fast
           ? 64U * 1024U * 1024U
@@ -236,6 +253,13 @@ std::uint64_t AnalyzerCore::RNTupleHandle::GetEntries() const {
 }
 
 AnalyzerCore::RNTupleHandle &
+AnalyzerCore::RNTupleHandle::SetHalfPrecision(std::string_view name) {
+  RequireValid();
+  owner_->MarkRNTupleFieldHalfPrecision(ntupleName_, std::string(name));
+  return *this;
+}
+
+AnalyzerCore::RNTupleHandle &
 AnalyzerCore::RNTupleHandle::Set(const TString &name, float value) {
   RequireValid();
   owner_->SetRNTupleValue(ntupleName_, name, value);
@@ -343,8 +367,34 @@ void AnalyzerCore::FillRNTuple(const std::string &ntupleName) {
                              ntupleName + " not found");
   auto &state = *output->second;
   ensureRNTupleWriter(state, ntupleName, outfile);
-  state.writer->Fill(*state.entry);
+  {
+    // Includes the cluster flush, i.e. compression and the write to the
+    // output file system, whenever this Fill completes a cluster.
+    auto phase = performanceTelemetry.measure("rntuple_fill");
+    state.writer->Fill(*state.entry);
+  }
   ++state.entries;
+}
+
+void AnalyzerCore::MarkRNTupleFieldHalfPrecision(const std::string &ntupleName,
+                                                 const std::string &fieldName) {
+  auto output = rntupleOutputs_.find(ntupleName);
+  if (output == rntupleOutputs_.end())
+    throw SKNano::LogicError("[AnalyzerCore::RNTupleHandle] RNTuple " +
+                             ntupleName + " not found");
+  auto &state = *output->second;
+  if (state.fields.find(fieldName) == state.fields.end())
+    throw SKNano::ConfigError(
+        "[RNTupleHandle::SetHalfPrecision] unknown field '" + ntupleName +
+        "/" + fieldName + "'");
+  if (state.writer)
+    throw SKNano::LogicError(
+        "[RNTupleHandle::SetHalfPrecision] cannot change the representation "
+        "after the first Fill for '" + ntupleName + "'");
+  if (std::find(state.halfPrecisionFields.begin(),
+                state.halfPrecisionFields.end(),
+                fieldName) == state.halfPrecisionFields.end())
+    state.halfPrecisionFields.push_back(fieldName);
 }
 
 std::uint64_t
@@ -546,7 +596,7 @@ void AnalyzerCore::WriteHist() {
   if (!outfile || !outfile->IsOpen())
     throw SKNano::LogicError(
         "[AnalyzerCore::WriteHist] output file is not configured");
-  const int compression_level = 4;
+  const int compression_level = 1;
   const int compression_algorithm = ROOT::RCompressionSetting::EAlgorithm::kLZ4;
   cout << "[AnalyzerCore::WriteHist] Writing histograms to "
        << outfile->GetName() << endl;
@@ -663,7 +713,7 @@ void AnalyzerCore::WriteHist() {
     options.fOutputFormat = ROOT::RDF::ESnapshotOutputFormat::kRNTuple;
     options.fCompressionAlgorithm =
         ROOT::RCompressionSetting::EAlgorithm::kLZ4;
-    options.fCompressionLevel = 4;
+    options.fCompressionLevel = 1;
     options.fApproxZippedClusterSize = 64U * 1024U * 1024U;
     options.fMaxUnzippedClusterSize = 256U * 1024U * 1024U;
     options.fEnablePageChecksums = true;

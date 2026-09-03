@@ -245,9 +245,22 @@ Important submission options are:
 - `-e`: comma-separated eras, for example `-e 2022EE,2023`.
 - `-r`: `Run2`, `Run3`, or a comma-separated combination; this overrides
   `-e`.
+- `-p`: comma-separated data periods; `--exclude`: samples to drop from a
+  broad `-i` pattern.
 - `--reduction`: process a reduced fraction of the input.
-- `--memory`: requested memory in MiB; the default is 2048.
+- `--memory`: requested memory in MiB; the default is 2048. Jobs whose
+  `MemoryUsage` exceeds the request are preempted by the pool, so request
+  the measured peak RSS (`peak_rss_kib` in `*.performance.json`) plus margin.
 - `--ncpu`: requested CPU count; the default is 1.
+- `--nmax`: HTCondor concurrency limit (`n<nmax>.<user>`); the default is
+  500. One limit name is shared by every submission of the same user with the
+  same value, and the pool preempts a user holding more than 800 slots, so
+  keep the sum of concurrently running submissions at or below 800.
+- `--requirements`: an HTCondor `requirements` expression for the analyzer
+  jobs only (merge jobs load no framework library), e.g. to pin an
+  arch-gated build to `(Microarch >= "x86_64-v3")` nodes.
+- `--failure-policy` (`fail-fast`, `skip-event`) and `--max-event-errors`:
+  what a job does on an event-level analysis exception.
 - `--userflags`: comma-separated analyzer flags.
 - `--batchname`: custom batch name.
 - `--no-hadd`: skip the per-sample merge step and move the individual shards
@@ -260,8 +273,16 @@ Important submission options are:
   histograms and publishes `<sample>.root.chain.json` over the RNTuple shards,
   which skips the bulk copy entirely. Read those with `python/sknano_chain.py`.
 - `--merge-jobs`, `--merge-cache-size`, `--merge-batch-cache-size`: merge
-  throughput tuning. See [MergePerformance](MergePerformance.md).
+  throughput tuning. See [RNTuple I/O](RNTupleIO.md).
 - `--skimming_mode`: enable skimming output and post-processing.
+
+Analyzer nodes carry a DAGMan `RETRY 2`, so a transient failure (a network
+mount hiccup, a node that dies) re-runs the node before the sample is marked
+failed; `condor_submit_dag -force <run>/dags/finaldag.dag` resumes from the
+rescue file after that. Each job also reads its input through the framework's
+page-cache read-ahead (see [RNTuple I/O](RNTupleIO.md)), so a 1-CPU job runs
+two threads: the analysis and one I/O thread that is mostly blocked in
+`pread()`.
 
 ## How to make a sample list
 

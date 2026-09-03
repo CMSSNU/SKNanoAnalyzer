@@ -147,6 +147,10 @@ if(SKNANO_ENABLE_LTO)
     endif()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # GCC LTO misdiagnoses ROOT dictionary's signed nElements sentinel.
+        add_link_options(-Wno-alloc-size-larger-than)
+    endif()
 endif()
 
 if(VecCore_FOUND)

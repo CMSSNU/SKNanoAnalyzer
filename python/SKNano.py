@@ -63,6 +63,8 @@ SKNANO_RUN2_NANOAODPATH = os.environ['SKNANO_RUN2_NANOAODPATH']
 username = os.environ['USER']
 Run = {'2016preVFP':2,'2016postVFP':2,'2017':2,'2018':2,'2022':3,'2022EE':3, '2023':3, '2023BPix':3, '2024':3}
 SKIMMING_MODE = False
+# DAGMan RETRY count for analyzer nodes (see getFinalDag).
+ANALYZER_NODE_RETRIES = 2
 SOURCE_SNAPSHOT_DIRNAME = "source_snapshot"
 SOURCE_ARCHIVE_DIRNAME = "code_archive"
 METADATA_SNAPSHOT_DIRNAME = os.path.join("metadata", "data_snapshot")
@@ -646,6 +648,8 @@ def setParser():
     parser.add_argument('--exclude', dest='ExcludeSample', default="",
     help="Exclude samples by regex (comma-separated, supports * wildcard)")
     parser.add_argument('--nmax', dest='NMax', default=500, type=int, help="maximum running jobs")
+    parser.add_argument('--requirements', dest='Requirements', default="",
+    help="Extra HTCondor Requirements expression for analyzer jobs (merge jobs are not gated, they load no framework library)")
     parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
     parser.add_argument('--python', action="store_true", default=False,
     help="Use python analyzer")
@@ -943,7 +947,11 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     job_dict['output'] = os.path.join(working_dir,"job_$(Process).out")
     job_dict['error'] = os.path.join(working_dir,"job_$(Process).err")
     job_dict['concurrency_limits'] = f"n{nmax}.{username}"
-    
+    # Analyzer jobs only: merge jobs run pure hadd/PyROOT and load no framework
+    # library, so they stay runnable on nodes an arch-gated build cannot use.
+    if argparse.Requirements:
+        job_dict['requirements'] = argparse.Requirements
+
     return job_dict
 
 def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
@@ -1272,7 +1280,8 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
             analyzer_layer = dag.layer(
                 name = analyzer_dict['name'],
                 submit_description = analyzer_dict['submit_description'],
-                vars = analyzer_dict['vars']
+                vars = analyzer_dict['vars'],
+                retries = ANALYZER_NODE_RETRIES
             )
             postproc_layer = analyzer_layer.child_layer(
                 name = postproc_dict['name'],
@@ -1292,10 +1301,14 @@ def getFinalDag(hadd_layer_dicts,skim_postproc_layers,master_dir,argparser):
             analyzer_dict, partial_dict, hadd_dict = layer_dict
             if analyzer_dict is None or hadd_dict is None:
                 continue
+            # A transient failure (a network mount hiccup, an evicted node)
+            # should not take a whole sample's DAG down; retry the analyzer
+            # node a couple of times before declaring the sample failed.
             analyzer_layer = dag.layer(
                 name = analyzer_dict['name'],
                 submit_description = analyzer_dict['submit_description'],
-                vars = analyzer_dict['vars']
+                vars = analyzer_dict['vars'],
+                retries = ANALYZER_NODE_RETRIES
             )
             merge_parent = analyzer_layer
             if partial_dict is not None:
