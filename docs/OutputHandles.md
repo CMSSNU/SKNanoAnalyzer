@@ -37,7 +37,7 @@ helpers remain useful for dynamic legacy analysis code; they register storage
 once and only update the stable slot on later events. Cached `OutputField<T>`
 handles are preferred for new hot loops.
 
-The default `Fast` profile uses LZ4 level 4, 64 MiB target clusters, buffered
+The default `Fast` profile uses LZ4 level 1, 64 MiB target clusters, buffered
 writes, page checksums, and compression workers configured from the job's
 `--ncpu`. Analyses that book many mostly sparse datasets can use:
 
@@ -46,6 +46,17 @@ Output().Book(name, AnalyzerCore::RNTupleOutputProfile::Sparse);
 ```
 
 The sparse profile reduces each dataset's page/cluster buffer budget to 4 MiB.
+
+A bulk field whose consumers tolerate half precision can be stored as RNTuple
+`kReal16` without changing the analyzer's buffers:
+
+```cpp
+tree.Field("BPH_lambdacRawTrack", buffers.rawTrack);   // vector<array<float,48>>
+tree.SetHalfPrecision("BPH_lambdacRawTrack");          // before the first Fill()
+```
+
+Every float/double leaf below the named field is converted on write; ROOT and
+uproot (>= 5.6) read it back as float.
 Datasets whose dynamic schema is never used are omitted from that shard; the
 validated merger permits missing datasets while requiring identical schemas
 where a dataset is present. This keeps empty categories mergeable without
