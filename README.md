@@ -5,6 +5,8 @@
 
 ## Introduction
 
+- Setting up for the first time: run `./bootstrap.sh` and follow the
+  [Setup Guide](docs/SetupGuide.md).
 - Start with the [documentation index](docs/README.md).
 - For installation and analysis submission, see [Getting Started](docs/GettingStarted.md).
 - Before contributing code, read the [Development Guide](docs/DevelopmentGuide.md).
@@ -39,6 +41,25 @@ The old flat `Analyzers/` layout and flat includes such as
 `#include <AnalyzerFramework/AnalyzerCore.h>`.
 
 ## Changelog
+
+### Unreleased
+
+- `./bootstrap.sh` is a one-shot interactive setup wizard. It installs
+  micromamba if needed, creates the `Nano` environment, writes
+  `config/config.$USER`, creates the output and log directories, builds the
+  batch image from the new `templates/Nano.def`, initialises the submodules,
+  and builds. Finished steps are detected and skipped, so it is safe to
+  re-run; `--yes` takes every default. Every question is explained in
+  [docs/SetupGuide.md](docs/SetupGuide.md).
+- `config/config.$USER` gained `[MAMBA_EXE]` and `[MAMBA_ROOT_PREFIX]`;
+  `setup.sh` reads them instead of assuming `$HOME/micromamba`. A key that is
+  present but empty now keeps the built-in default rather than exporting the
+  literal `[KEY]` string, and `[PACKAGE]` defaults to `mamba`.
+- `source setup.sh` works under bash as well as zsh: the micromamba shell hook
+  follows the sourcing shell, and the `conda` compatibility shim is a function
+  rather than an alias.
+- `scripts/install_libtorch.sh` pins the LibTorch build instead of following
+  the nightly `latest` archive; override with `LIBTORCH_VERSION`.
 
 ### [2.0.0] - 2026-07-22
 
@@ -107,6 +128,7 @@ internal commit.
 #### Migration quick start
 
 ```bash
+./bootstrap.sh          # first time only
 source setup.sh
 ./scripts/build.sh --clean
 
