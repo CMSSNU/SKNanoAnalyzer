@@ -2,6 +2,18 @@
 
 [Documentation index](README.md)
 
+> **First time here?** Run the setup wizard and follow the beginner guide:
+>
+> ```bash
+> git clone --recurse-submodules git@github.com:CMSSNU/SKNanoAnalyzer.git
+> cd SKNanoAnalyzer && ./bootstrap.sh
+> ```
+>
+> [Setup Guide](SetupGuide.md) explains every question the wizard asks, which
+> value to give on the SNU cluster and elsewhere, and how to change it later.
+> The [manual setup](#manual-setup) below is what the wizard automates; read it
+> when something goes wrong or when you are setting up an unusual environment.
+
 ## Important Notes
 Skim large samples before the main analysis when the baseline keeps only a
 small fraction of events. On the SNU cluster, avoidable input I/O is often the
@@ -19,6 +31,7 @@ SKNano.py -a ExampleRun -i '[YOUR_PREFIX]*' -e 2022 -n 10 --reduction 10
 
 - [Important Notes](#important-notes)
 - [Setting up the environment](#setting-up-the-environment)
+- [Manual setup](#manual-setup)
   - [Preliminary Setup](#preliminary-setup)
   - [Installation](#installation)
 - [How to Submit the job](#how-to-submit-the-job)
@@ -28,30 +41,55 @@ SKNano.py -a ExampleRun -i '[YOUR_PREFIX]*' -e 2022 -n 10 --reduction 10
 
 ## Setting up the environment
 
-`NanoAODv15` builds the framework and common analyzers. A branch that pins an
-external analyzer module should be cloned with submodules:
+`./bootstrap.sh` does the whole setup: it installs micromamba if needed, creates
+the `Nano` environment, writes `config/config.$USER`, creates the output and log
+directories, builds the batch image, initialises the submodules, and builds the
+project. It is interactive, every question has a default, and it is safe to
+re-run — finished steps are detected and skipped.
 
 ```bash
-git submodule update --init --recursive
-source setup.sh
-./scripts/build.sh --clean
+./bootstrap.sh          # interactive
+./bootstrap.sh --yes    # take every default, ask nothing
 ```
 
-Job submission remains unchanged because ROOT discovers installed analyzer
-dictionaries automatically.
+Then, in every new shell:
+
+```bash
+source setup.sh
+```
+
+A branch that pins an external analyzer module needs its submodules; the wizard
+initialises them, or do it by hand with
+`git submodule update --init --recursive`. Job submission is unaffected by which
+modules are present, because ROOT discovers installed analyzer dictionaries
+automatically.
+
+## Manual setup
+
+What follows is the same setup done by hand. `./bootstrap.sh` automates all of
+it; read on when a step fails, or when your environment is unusual enough that
+the wizard's assumptions do not hold.
 
 ### Preliminary Setup
 For Linux, the recommended environment is micromamba plus Singularity. See
 [Environment Setup](SettingEnv.md) for the cluster-specific instructions.
 #### Making config file
 Copy `config/config.default` to `config/config.$USER`, then set the entries
-needed by your environment:
+needed by your environment. A key with no value keeps the built-in default, and
+values may not contain spaces.
 
-- [PACKAGE]: package manager, either `conda` or `mamba`
+- [PACKAGE]: package manager. Use `mamba`; `conda` is still accepted. The
+  template value is `mamba`.
+- [MAMBA\_EXE]: absolute path to the `micromamba` executable
+- [MAMBA\_ROOT\_PREFIX]: environment root, the directory holding `envs/Nano`
+- [SKNANO\_OUTPUT]: where analysis output is written
+- [SKNANO\_RUNLOG]: where submission directories and job logs are written
+- [SKNANO\_INPUT\_ROOT]: top of the NanoAOD production to analyse
 - [TOKEN\_TELEGRAMBOT]: optional Telegram bot token
 - [USER\_CHATID]: optional Telegram chat ID
 - [SINGULARITY\_IMAGE]: absolute path to the Singularity image used by batch
-  jobs; see [Environment Setup](SettingEnv.md#setting-up-singularity)
+  jobs; see [Environment Setup](SettingEnv.md#setting-up-singularity). Leaving
+  it empty selects container-less execution.
 
 #### Using conda
 Here is an example to setup the environment using conda.
@@ -167,6 +205,7 @@ git remote add upstream git@github.com:CMSSNU/SKNanoAnalyzer.git
 git checkout $DEVBRANCH
 
 # create config file and edit the configuration
+# (./bootstrap.sh writes this file for you)
 cp config/config.default config/config.$USER
 
 # first time setup
@@ -245,14 +284,44 @@ Important submission options are:
 - `-e`: comma-separated eras, for example `-e 2022EE,2023`.
 - `-r`: `Run2`, `Run3`, or a comma-separated combination; this overrides
   `-e`.
+- `-p`: comma-separated data periods; `--exclude`: samples to drop from a
+  broad `-i` pattern.
 - `--reduction`: process a reduced fraction of the input.
-- `--memory`: requested memory in MiB; the default is 2048.
+- `--memory`: requested memory in MiB; the default is 2048. Jobs whose
+  `MemoryUsage` exceeds the request are preempted by the pool, so request
+  the measured peak RSS (`peak_rss_kib` in `*.performance.json`) plus margin.
 - `--ncpu`: requested CPU count; the default is 1.
+- `--nmax`: HTCondor concurrency limit (`n<nmax>.<user>`); the default is
+  500. One limit name is shared by every submission of the same user with the
+  same value, and the pool preempts a user holding more than 800 slots, so
+  keep the sum of concurrently running submissions at or below 800.
+- `--requirements`: an HTCondor `requirements` expression for the analyzer
+  jobs only (merge jobs load no framework library), e.g. to pin an
+  arch-gated build to `(Microarch >= "x86_64-v3")` nodes.
+- `--failure-policy` (`fail-fast`, `skip-event`) and `--max-event-errors`:
+  what a job does on an event-level analysis exception.
 - `--userflags`: comma-separated analyzer flags.
 - `--batchname`: custom batch name.
 - `--no-hadd`: skip the per-sample merge step and move the individual shards
   to `SKNANO_OUTPUT/<Analyzer>/<era>/<sample>/hists_*.root`.
+- `--merge-group-size`: merge each group of this many jobs as soon as that
+  group finishes, then merge the group results. This takes the bulk of the
+  merge off the critical path; 100 is a good starting point. The default, 0,
+  keeps one merge job that waits for the whole sample.
+- `--merge-mode`: `single` writes one file per sample; `index` merges only the
+  histograms and publishes `<sample>.root.chain.json` over the RNTuple shards,
+  which skips the bulk copy entirely. Read those with `python/sknano_chain.py`.
+- `--merge-jobs`, `--merge-cache-size`, `--merge-batch-cache-size`: merge
+  throughput tuning. See [RNTuple I/O](RNTupleIO.md).
 - `--skimming_mode`: enable skimming output and post-processing.
+
+Analyzer nodes carry a DAGMan `RETRY 2`, so a transient failure (a network
+mount hiccup, a node that dies) re-runs the node before the sample is marked
+failed; `condor_submit_dag -force <run>/dags/finaldag.dag` resumes from the
+rescue file after that. Each job also reads its input through the framework's
+page-cache read-ahead (see [RNTuple I/O](RNTupleIO.md)), so a 1-CPU job runs
+two threads: the analysis and one I/O thread that is mostly blocked in
+`pread()`.
 
 ## How to make a sample list
 

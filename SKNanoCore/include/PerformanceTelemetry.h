@@ -9,6 +9,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #if defined(__unix__) || defined(__APPLE__)
@@ -27,22 +28,20 @@ public:
     class ScopedPhase {
     public:
         ScopedPhase() = default;
-        ScopedPhase(PerformanceTelemetry *owner_, std::string name_)
-            : owner(owner_), name(std::move(name_)),
-              start(std::chrono::steady_clock::now()) {}
+        explicit ScopedPhase(PhaseStats *stats_)
+            : stats(stats_), start(std::chrono::steady_clock::now()) {}
         ScopedPhase(const ScopedPhase &) = delete;
         ScopedPhase &operator=(const ScopedPhase &) = delete;
         ScopedPhase(ScopedPhase &&other) noexcept
-            : owner(other.owner), name(std::move(other.name)), start(other.start) {
-            other.owner = nullptr;
+            : stats(other.stats), start(other.start) {
+            other.stats = nullptr;
         }
         ScopedPhase &operator=(ScopedPhase &&other) noexcept {
             if (this != &other) {
                 finish();
-                owner = other.owner;
-                name = std::move(other.name);
+                stats = other.stats;
                 start = other.start;
-                other.owner = nullptr;
+                other.stats = nullptr;
             }
             return *this;
         }
@@ -50,15 +49,17 @@ public:
 
     private:
         void finish() {
-            if (!owner)
+            if (!stats)
                 return;
-            const auto elapsed = std::chrono::duration<double>(
+            stats->seconds += std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - start).count();
-            owner->recordPhase(name, elapsed);
-            owner = nullptr;
+            ++stats->calls;
+            stats = nullptr;
         }
-        PerformanceTelemetry *owner = nullptr;
-        std::string name;
+        // Points into phases_; std::map nodes never move, and startRun()
+        // resets the values in place rather than clearing the map, so a slot
+        // stays valid for the lifetime of the telemetry object.
+        PhaseStats *stats = nullptr;
         std::chrono::steady_clock::time_point start{};
     };
 
@@ -70,8 +71,10 @@ public:
     void startRun() {
         if (!enabled_)
             return;
-        phases_.clear();
-        counters_.clear();
+        for (auto &phase : phases_)
+            phase.second = PhaseStats{};
+        for (auto &counter : counters_)
+            counter.second = 0.;
         wallStart_ = std::chrono::steady_clock::now();
         cpuStart_ = std::clock();
         running_ = true;
@@ -89,27 +92,40 @@ public:
         running_ = false;
     }
 
-    ScopedPhase measure(std::string name) {
-        return enabled_ ? ScopedPhase(this, std::move(name)) : ScopedPhase();
+    // Heterogeneous lookups: a string literal at the call site never
+    // materializes a std::string, which matters at the per-candidate sites
+    // that fire tens of millions of times per job.
+    ScopedPhase measure(std::string_view name) {
+        return enabled_ ? ScopedPhase(phaseSlot(name)) : ScopedPhase();
+    }
+    PhaseStats *phaseSlot(std::string_view name) {
+        auto found = phases_.find(name);
+        if (found == phases_.end())
+            found = phases_.emplace(std::string(name), PhaseStats{}).first;
+        return &found->second;
     }
 
     void setCounter(std::string name, double value) {
         if (enabled_)
             counters_[std::move(name)] = value;
     }
-    void addCounter(const std::string &name, double value = 1.) {
-        if (enabled_)
-            counters_[name] += value;
+    void addCounter(std::string_view name, double value = 1.) {
+        if (!enabled_)
+            return;
+        auto found = counters_.find(name);
+        if (found == counters_.end())
+            found = counters_.emplace(std::string(name), 0.).first;
+        found->second += value;
     }
     void setMetadata(std::string name, std::string value) {
         if (enabled_)
             metadata_[std::move(name)] = std::move(value);
     }
 
-    const std::map<std::string, PhaseStats> &phases() const noexcept {
+    const std::map<std::string, PhaseStats, std::less<>> &phases() const noexcept {
         return phases_;
     }
-    const std::map<std::string, double> &counters() const noexcept {
+    const std::map<std::string, double, std::less<>> &counters() const noexcept {
         return counters_;
     }
 
@@ -153,12 +169,6 @@ public:
     }
 
 private:
-    void recordPhase(const std::string &name, double seconds) {
-        auto &stats = phases_[name];
-        stats.seconds += seconds;
-        ++stats.calls;
-    }
-
     static long peakRssKiB() noexcept {
 #if defined(__unix__) || defined(__APPLE__)
         struct rusage usage {};
@@ -205,7 +215,7 @@ private:
 
     static void writeNumberMap(
         std::ostream &output,
-        const std::map<std::string, double> &values) {
+        const std::map<std::string, double, std::less<>> &values) {
         bool first = true;
         for (const auto &item : values) {
             output << (first ? "\n" : ",\n") << "    \""
@@ -223,8 +233,8 @@ private:
     std::clock_t cpuStart_ = 0;
     double wallSeconds_ = 0.;
     double cpuSeconds_ = 0.;
-    std::map<std::string, PhaseStats> phases_;
-    std::map<std::string, double> counters_;
+    std::map<std::string, PhaseStats, std::less<>> phases_;
+    std::map<std::string, double, std::less<>> counters_;
     std::map<std::string, std::string> metadata_;
 };
 

@@ -147,6 +147,10 @@ if(SKNANO_ENABLE_LTO)
     endif()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # GCC LTO misdiagnoses ROOT dictionary's signed nElements sentinel.
+        add_link_options(-Wno-alloc-size-larger-than)
+    endif()
 endif()
 
 if(VecCore_FOUND)
@@ -209,6 +213,10 @@ install(FILES ${CMAKE_BINARY_DIR}/analyzers.manifest DESTINATION share/sknano)
 if(BUILD_TESTING)
     add_test(NAME analyzer_layer_boundaries
              COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/check_layers.sh)
+    add_test(NAME merge_engine
+             COMMAND ${Python3_EXECUTABLE}
+                     ${CMAKE_SOURCE_DIR}/scripts/tests/test_sknano_merge.py)
+    set_tests_properties(merge_engine PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 # Fetch external dependencies

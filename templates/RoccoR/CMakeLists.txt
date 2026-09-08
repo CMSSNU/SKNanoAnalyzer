@@ -10,7 +10,7 @@ target_include_directories(RoccoR PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(RoccoR ${ROOT_LIBRARIES})
+target_link_libraries(RoccoR PUBLIC ${ROOT_LIBRARIES})
 
 ROOT_GENERATE_DICTIONARY(G__RoccoR
     ${HEADERS}

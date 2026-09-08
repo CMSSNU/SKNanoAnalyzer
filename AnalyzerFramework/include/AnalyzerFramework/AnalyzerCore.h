@@ -181,6 +181,12 @@ public:
         template <typename T>
         OutputField<T> MakeField(std::string_view name);
 
+        // Store every float/double leaf under `name` (scalars, vectors,
+        // arrays, nested) as IEEE half precision on disk (RNTuple kReal16).
+        // The in-memory type is unchanged; readers get floats back.  Call it
+        // after Field()/MakeField() and before the first Fill().
+        RNTupleHandle &SetHalfPrecision(std::string_view name);
+
         RNTupleHandle &Set(const TString &name, float value);
         RNTupleHandle &Set(const TString &name, double value);
         RNTupleHandle &Set(const TString &name, int value);
@@ -698,6 +704,8 @@ protected:
         std::function<void(ROOT::RNTupleModel &)> addField,
         std::function<void(ROOT::Detail::RRawPtrWriteEntry &)> bindField);
     void FillRNTuple(const std::string &ntupleName);
+    void MarkRNTupleFieldHalfPrecision(const std::string &ntupleName,
+                                       const std::string &fieldName);
     std::uint64_t GetRNTupleEntries(const std::string &ntupleName) const;
     bool HasRNTupleOutput(std::string_view name) const noexcept;
     void FinalizeRNTuples();

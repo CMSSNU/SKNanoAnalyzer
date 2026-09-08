@@ -1,5 +1,7 @@
 # Exact Linux x86_64 lock for the validated ROOT 6.40.02 / C++20 environment.
 # Install with: micromamba create -n Nano -f docs/Nano-linux-64.lock
+# uproot >= 5.6 is required: ROOT 6.40 writes RNTuple v1.0, which uproot 5.5.x
+# rejects with a footer-checksum AssertionError. Pinned at 5.7.6 here.
 @EXPLICIT
 https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2#fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
 https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-7_kmp_llvm.conda#c0cddb66070dd6355311f7667ce2acccf70d1013edaa6e97f22859502fefdb22
@@ -383,7 +385,7 @@ https://conda.anaconda.org/conda-forge/noarch/typing_utils-0.1.0-pyhd8ed1ab_1.co
 https://conda.anaconda.org/conda-forge/noarch/tzdata-2024b-hc8b5060_0.conda#4fde5c3008bf5d2db82f2b50204464314cc3c91c1d953652f7bd01d9e52aefdf
 https://conda.anaconda.org/conda-forge/noarch/uhi-0.5.0-pyhd8ed1ab_0.conda#79bc0daf06019b0424b57ffaa3ff2ba11b77169b5d2add160b307d40fe6b0b12
 https://conda.anaconda.org/conda-forge/linux-64/unicodedata2-15.1.0-py312h66e93f0_1.conda#1fcba6d363d901d9a06381e1aee2d5634f82389965dd7a339f19b3ae81ce6da0
-https://conda.anaconda.org/conda-forge/noarch/uproot-5.5.1-pyhd8ed1ab_1.conda#b93fabe7f6669efcc0c20904a989c0e292b7794f856ec64c9caafb85f728299b
+https://conda.anaconda.org/conda-forge/noarch/uproot-5.7.6-pyhc364b38_0.conda#239b74292344e2c5f60cfb0da136ad89627bc0b8faf523ac66ec6a7ed6e65500
 https://conda.anaconda.org/conda-forge/noarch/uri-template-1.3.0-pyhd8ed1ab_1.conda#e0eb6c8daf892b3056f08416a96d68b0a358b7c46b99c8a50481b22631a4dfc0
 https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.19-pyhd8ed1ab_0.conda#543ebab5241418a4e0d4d9e356ef13e4361504810a067a01481660bb35eb5643
 https://conda.anaconda.org/conda-forge/linux-64/vdt-0.4.4-h59595ed_0.conda#528cb33b3303abf1a0d74d9ecc94b74a268b9d7d548b7df8a86d9d390d8893c5

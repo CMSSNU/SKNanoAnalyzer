@@ -33,6 +33,11 @@ ERROR_PATTERNS = {
         r"traceback|terminate called|uncaught exception|fatal error|segmentation|segfault|abort(?:ed)?",
         re.IGNORECASE,
     ),
+    "Merge validation failure": re.compile(
+        r"sknano-merge:|repeated object keys|failed to unzip|r__unzip_header|"
+        r"merged .*(?:entry counts|schema) differ|staged partials lost entries",
+        re.IGNORECASE,
+    ),
 }
 
 
@@ -145,6 +150,7 @@ def classify_errors(manifest: dict, max_files: int = 2000) -> tuple[Counter, lis
         if not workdir.is_dir():
             continue
         error_files = list(workdir.glob("job_*.err"))
+        error_files.extend(workdir.glob("merge_*.err"))
         error_files.extend([
             workdir / "hadd.err",
             workdir / "move.err",
