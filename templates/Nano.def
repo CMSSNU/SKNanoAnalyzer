@@ -1,0 +1,38 @@
+# Apptainer/Singularity definition for SKNanoAnalyzer batch jobs.
+#
+# The image carries only a base OS and micromamba. The Nano environment itself
+# stays outside the image and is reached through a symlink, so installing or
+# updating a package does not mean rebuilding the image.
+#
+# The placeholder on the ln line below stands for the environment root
+# (MAMBA_ROOT_PREFIX), i.e. the directory that contains envs/Nano.
+# bootstrap.sh substitutes it. To build by hand, substitute it yourself:
+#
+#     sed "s|.NANO_ENV_PATH.|$MAMBA_ROOT_PREFIX|g" templates/Nano.def > Nano.def
+#     apptainer build --fakeroot Nano.sif Nano.def
+
+Bootstrap: docker
+From: almalinux:9
+
+%labels
+    DESCRIPTION "SKNanoAnalyzer batch base (EL9) with the Nano micromamba env symlinked in."
+
+%post
+    set -eux
+    dnf -y install zsh bzip2
+    mkdir -p /opt/conda && cd /opt/conda
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+    echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
+    echo 'export MAMBA_ROOT_PREFIX=/opt/conda' >> /etc/profile.d/conda.sh
+    mkdir -p /opt/conda/envs
+    ln -sfn [NANO_ENV_PATH]/envs/Nano /opt/conda/envs/Nano || true
+    chown -R root:users /opt/conda && chmod -R 775 /opt/conda
+
+%environment
+    export CONDA_PREFIX=/opt/conda/envs/Nano
+    export PATH=$CONDA_PREFIX/bin:/opt/conda/bin:$PATH
+    export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$CONDA_PREFIX/lib64:${LD_LIBRARY_PATH}
+    export PYTHONNOUSERSITE=1
+
+%runscript
+    exec /bin/zsh
