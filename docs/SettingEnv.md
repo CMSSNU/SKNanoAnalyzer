@@ -5,7 +5,9 @@
 ## Overview
 
 This guide sets up the shared micromamba environment and Singularity image used
-to run SKNanoAnalyzer on the SNU cluster.
+to run SKNanoAnalyzer on the SNU cluster, by hand. `./bootstrap.sh` automates
+all of it — see the [Setup Guide](SetupGuide.md) — so read this page when you
+want to know what the wizard is doing, or when a step needs fixing.
 
 ### What is micromamba?
 
@@ -21,35 +23,34 @@ large package environment outside the image and available to every worker.
 
 ## Setting up micromamba
 ### Install micromamba
-micromamba can be installed easily by following the instructions on the [official micromamba documentation](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html). Simply follow the instructions exactly as provided, and no particular problems should arise.
+
+`./bootstrap.sh` installs micromamba for you (see [Setup Guide](SetupGuide.md));
+this section is the manual equivalent.
+
+The upstream installer is interactive and edits your shell profile:
 
 ```bash
 "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
 ```
-This command executes install.sh in the current shell environment. When you execute this command, you will be prompted with the following questions.
+
+Two of its defaults are wrong on a cluster and must be changed.
 
 ```
 Micromamba binary folder? [~/.local/bin]
 ```
-This is a question about where to place the micromamba package manager. ***Do not use the default path.*** Instead, I recommend using `/data6/Users/your_id/micromamba_bin` as the installation path. This is because the default path is under home directory, which cluster nodes do not have access to. 
-
-```
-Init shell (zsh)? [Y/n]
-```
-Choose `Y` to initialize micromamba for your shell (zsh in this case). This will add necessary configurations to your shell profile file (e.g., `.zshrc`).
-
-```
-Configure conda-forge? [Y/n] 
-```
-Choose `Y` to add the conda-forge channel to your micromamba configuration. This channel contains a wide variety of packages that you may need.
-
+***Do not use the default path.*** Use `/data6/Users/$USER/micromamba_bin`
+instead. The default is under the home directory, which the worker nodes do not
+mount.
 
 ```
 Prefix location? [~/micromamba]
 ```
-***Do not use the default path.*** as same reason mentioned above. Instead, I recommend using `/data6/Users/your_id/micromamba_envs` as the installation path for micromamba environments.
+***Do not use the default path,*** for the same reason. Use
+`/data6/Users/$USER/micromamba_envs`.
 
-After completing the installation, this script automatically adds the micromamba initialization command to your shell profile file (e.g., `.zshrc`, `.bashrc`). like below:
+Answer `Y` to `Init shell` and to `Configure conda-forge`.
+
+The installer appends an initialisation block to your shell profile:
 
 ```bash
 # >>> mamba initialize >>>
@@ -65,11 +66,16 @@ fi
 unset __mamba_setup
 # <<< mamba initialize <<<
 ```
-After restarting your terminal, you can verify the installation by running:
+
+That block is optional for SKNanoAnalyzer: `setup.sh` reads the same two paths
+from `[MAMBA_EXE]` and `[MAMBA_ROOT_PREFIX]` in `config/config.$USER`, so a
+checkout works even in a shell that never initialised micromamba. Record them
+there whichever way you installed it.
+
+After restarting your terminal, verify:
 ```bash
 micromamba --version
 ```
-This should display the installed version of micromamba.
 
 ### Install required packages
 
@@ -92,53 +98,40 @@ toolchain.
 Now we need to create the Singularity image.
 Fundamentally, this is conceptually almost identical to building a new computer and installing the OS fresh. Therefore, you must configure the necessary environment settings when creating the image. Then, each time you run the image, it's like booting up a new computer with exactly this configuration already complete.
 
-This is done through the `.def` file. Save the following content as `SKNANOAnalyzer.def`.
+This is done through a `.def` file. The repository ships one at
+[`templates/Nano.def`](../templates/Nano.def), so there is nothing to paste: it
+carries a single placeholder for the environment root you chose above.
 
-```def
-Bootstrap: docker
-From: almalinux:9
-
-%labels
-    MAINTAINER "Yeonjoon Kim <yeonjoon.kim@cern.ch>"
-    DESCRIPTION "Snapshot of local micromamba env via conda-pack (EL9 base)."
-
-%post
-    set -eux
-    dnf -y install zsh bzip2
-    mkdir -p /opt/conda && cd /opt/conda
-    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-    echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
-    echo 'export MAMBA_ROOT_PREFIX=/opt/conda' >> /etc/profile.d/conda.sh
-    mkdir -p /opt/conda/envs
-    ln -sfn [your_path_to_envs]/envs/Nano /opt/conda/envs/Nano || true
-    chown -R root:users /opt/conda && chmod -R 775 /opt/conda
-
-%environment
-    export CONDA_PREFIX=/opt/conda/envs/Nano
-    export PATH=$CONDA_PREFIX/bin:/opt/conda/bin:$PATH
-    export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$CONDA_PREFIX/lib64:${LD_LIBRARY_PATH}
-    export PYTHONNOUSERSITE=1
-
-%runscript
-    exec /bin/zsh
+```bash
+sed "s|.NANO_ENV_PATH.|$MAMBA_ROOT_PREFIX|g" templates/Nano.def > Nano.def
+apptainer build --fakeroot Nano.sif Nano.def
 ```
 
-This file downloads the image corresponding to Almalinux 9, then executes the script in the `%post` section to build the image.
+`./bootstrap.sh` does exactly this when you answer **(b)** to the batch
+execution question.
+
+The definition downloads an AlmaLinux 9 base image and installs micromamba into
+it:
+
 ```bash
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 ```
-Above command installs micromamba inside the Singularity image. However, in this micromamba environment, the libraries we installed earlier—such as `root` and `correctionlib`—are not present.
-We don't want to rebuild the image every time we install or update a new package, so let's ensure the micromamba installed inside the image can access the `Nano` environment we created earlier.
+
+That micromamba does not contain `root`, `correctionlib`, or anything else we
+installed earlier. Rather than rebuilding the image every time a package
+changes, the `Nano` environment stays outside the image and is symlinked in:
+
 ```bash
-ln -sfn [your_path_to_envs]/envs/Nano /opt/conda/envs/Nano || true
+ln -sfn [NANO_ENV_PATH]/envs/Nano /opt/conda/envs/Nano || true
 echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
 echo 'export MAMBA_ROOT_PREFIX=/opt/conda' >> /etc/profile.d/conda.sh
 ```
-The above commands create a symbolic link to the `Nano` environment we created earlier, allowing us to use all the packages installed in that environment within the Singularity image.
 
-After saving the above content as `SKNANOAnalyzer.def`, you can build the Singularity image by running the following command in the terminal:
-```bash
-apptainer build SKNANOAnalyzer.sif SKNANOAnalyzer.def
-```
+The consequence is that the environment root must be on storage the worker nodes
+can read, and that moving it means rebuilding the image.
+
+Put the resulting path in `[SINGULARITY_IMAGE]` in `config/config.$USER`. An
+empty value is valid and means "run without a container".
+
 After building the image, return to [Getting Started](GettingStarted.md) to
 configure, build, and run SKNanoAnalyzer.
