@@ -117,7 +117,7 @@ elif [ "$PACKAGE" = "mamba" ]; then
         unset _sknano_shell
         export __MAMBA_SETUP_DONE=1
     fi
-    micromamba activate Nano
+    micromamba activate Nano15
     # from this point on, we can follow conda version of setup
     PACKAGE="conda"
     # A function rather than an alias: bash does not expand aliases in
@@ -151,8 +151,8 @@ if [[ -z "$SKNANO_ANALYSIS_MODULE_DIRS" ]]; then
     [[ -n "$_sknano_module_dirs" ]] && export SKNANO_ANALYSIS_MODULE_DIRS="$_sknano_module_dirs"
     unset _sknano_module_dirs
 fi
-export SKNANO_RUN3_NANOAODPATH="/gv0/DATA/SKNano/NanoAODv15/"
-export SKNANO_RUN2_NANOAODPATH="/gv0/DATA/SKNano/NanoAODv15/"
+export SKNANO_RUN3_NANOAODPATH="/gv0/DATA/SKNano/NanoAODv15_RNTuple/"
+export SKNANO_RUN2_NANOAODPATH="/gv0/DATA/SKNano/NanoAODv15_RNTuple/"
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKNANO_LIB
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$SKNANO_LIB

@@ -159,6 +159,118 @@
         "sumsign": 998508.0,
         "sumW": 0.03513889267375703
     },
+    "DYto2L_MLL50to120_HT40to70": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-40to70-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 480.2220383,
+        "nmc": 410493396.0,
+        "sumsign": 410493396.0,
+        "sumW": 623666969726.099
+    },
+    "DYto2L_MLL50to120_HT70to100": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-70to100-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 212.4379778,
+        "nmc": 268137316.0,
+        "sumsign": 268137316.0,
+        "sumW": 236863780167.32947
+    },
+    "DYto2L_MLL50to120_HT100to400": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-100to400-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 234.878937,
+        "nmc": 396793361.0,
+        "sumsign": 396793361.0,
+        "sumW": 596099804311.3335
+    },
+    "DYto2L_MLL50to120_HT400to800": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-400to800-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 8.7202477896,
+        "nmc": 16223572.0,
+        "sumsign": 16223572.0,
+        "sumW": 1160819435.5668411
+    },
+    "DYto2L_MLL50to120_HT800to1500": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-800to1500-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.898325608,
+        "nmc": 2659044.0,
+        "sumsign": 2659044.0,
+        "sumW": 20932646.321234226
+    },
+    "DYto2L_MLL50to120_HT1500to2500": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-1500to2500-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.065423511,
+        "nmc": 1889567.0,
+        "sumsign": 1889567.0,
+        "sumW": 1084303.5956919193
+    },
+    "DYto2L_MLL50to120_HT2500toInf": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-2500-MLL-50to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.004370223,
+        "nmc": 984539.0,
+        "sumsign": 984539.0,
+        "sumW": 37273.56312663108
+    },
+    "DYto2L_MLL120toInf_HT40to70": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-40to70-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 7.558098461,
+        "nmc": 30009269.0,
+        "sumsign": 30009269.0,
+        "sumW": 695194592.0467796
+    },
+    "DYto2L_MLL120toInf_HT70to100": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-70to100-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 3.343509929,
+        "nmc": 18785855.0,
+        "sumsign": 18785855.0,
+        "sumW": 273843518.52011967
+    },
+    "DYto2L_MLL120toInf_HT100to400": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-100to400-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 4.383709336,
+        "nmc": 18974607.0,
+        "sumsign": 18974607.0,
+        "sumW": 586525118.1059303
+    },
+    "DYto2L_MLL120toInf_HT400to800": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-400to800-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.227254158,
+        "nmc": 1775774.0,
+        "sumsign": 1775774.0,
+        "sumW": 3739594.3267149925
+    },
+    "DYto2L_MLL120toInf_HT800to1500": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-800to1500-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.027079397,
+        "nmc": 949421.0,
+        "sumsign": 949421.0,
+        "sumW": 241668.0318439901
+    },
+    "DYto2L_MLL120toInf_HT1500to2500": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-1500to2500-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.002199796,
+        "nmc": 999402.0,
+        "sumsign": 999402.0,
+        "sumW": 19915.698334643617
+    },
+    "DYto2L_MLL120toInf_HT2500toInf": {
+        "isMC": 1,
+        "PD": "DYto2L-4Jets_Bin-HT-2500-MLL-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.000157505,
+        "nmc": 1026591.0,
+        "sumsign": 1026591.0,
+        "sumW": 1435.0619800965069
+    },
     "WtoLNu_1J": {
         "isMC": 1,
         "PD": "WtoLNu-4Jets_Bin-1J_TuneCP5_13p6TeV_madgraphMLM-pythia8",
@@ -374,6 +486,102 @@
         "nmc": 9659513.0,
         "sumsign": 9659513.0,
         "sumW": 44.95887022568013
+    },
+    "WtoLNu_MLNu0to120_HT40to100": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-40to100-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 5533.390059,
+        "nmc": 361395701.0,
+        "sumsign": 361395701.0,
+        "sumW": 7982193041334.104
+    },
+    "WtoLNu_MLNu0to120_HT100to400": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-100to400-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 2112.005673,
+        "nmc": 375281609.0,
+        "sumsign": 375281609.0,
+        "sumW": 4998198517232.842
+    },
+    "WtoLNu_MLNu0to120_HT400to800": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-400to800-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 75.34058516,
+        "nmc": 124386168.0,
+        "sumsign": 124386168.0,
+        "sumW": 78074196953.66876
+    },
+    "WtoLNu_MLNu0to120_HT800to1500": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-800to1500-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 7.864421146,
+        "nmc": 15283623.0,
+        "sumsign": 15283623.0,
+        "sumW": 1057966211.0422058
+    },
+    "WtoLNu_MLNu0to120_HT1500to2500": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-1500to2500-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.565152704,
+        "nmc": 15480230.0,
+        "sumsign": 15480230.0,
+        "sumW": 78109566.04624939
+    },
+    "WtoLNu_MLNu0to120_HT2500toInf": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-2500-MLNu-0to120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.003960583,
+        "nmc": 13634921.0,
+        "sumsign": 13634921.0,
+        "sumW": 4544026.161401957
+    },
+    "WtoLNu_MLNu120toInf_HT40to100": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-40to100-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 26.74341787,
+        "nmc": 43791645.0,
+        "sumsign": 43791645.0,
+        "sumW": 4976994210.071297
+    },
+    "WtoLNu_MLNu120toInf_HT100to400": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-100to400-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 13.23575511,
+        "nmc": 22905968.0,
+        "sumsign": 22905968.0,
+        "sumW": 2113632319.7571487
+    },
+    "WtoLNu_MLNu120toInf_HT400to800": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-400to800-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.657958536,
+        "nmc": 14880703.0,
+        "sumsign": 14880703.0,
+        "sumW": 92307006.55374527
+    },
+    "WtoLNu_MLNu120toInf_HT800to1500": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-800to1500-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.078959798,
+        "nmc": 12681807.0,
+        "sumsign": 12681807.0,
+        "sumW": 9525906.797299325
+    },
+    "WtoLNu_MLNu120toInf_HT1500to2500": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-1500to2500-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 0.006395049,
+        "nmc": 15097108.0,
+        "sumsign": 15097108.0,
+        "sumW": 892268.0384725779
+    },
+    "WtoLNu_MLNu120toInf_HT2500toInf": {
+        "isMC": 1,
+        "PD": "WtoLNu-4Jets_Bin-HT-2500-MLNu-120_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "xsec": 4.878923e-05,
+        "nmc": 14086002.0,
+        "sumsign": 14086002.0,
+        "sumW": 59132.02971884888
     },
     "TTLJ_powheg": {
         "isMC": 1,
@@ -844,6 +1052,306 @@
         "nmc": 91953615.0,
         "sumsign": 91953615.0,
         "sumW": 32116997677.263794
+    },
+    "QCD_Pt15to20_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-15to20_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 1444000,
+        "nmc": 31078562.0,
+        "sumsign": 31078562.0,
+        "sumW": 31082831.358353972
+    },
+    "QCD_Pt20to30_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-20to30_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 5309000,
+        "nmc": 27305022.0,
+        "sumsign": 27305022.0,
+        "sumW": 27305033.09826994
+    },
+    "QCD_Pt30to50_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-30to50_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 6849000,
+        "nmc": 29008060.0,
+        "sumsign": 29008060.0,
+        "sumW": 29008060.0
+    },
+    "QCD_Pt50to80_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-50to80_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 2130000,
+        "nmc": 29059468.0,
+        "sumsign": 29059468.0,
+        "sumW": 29059468.0
+    },
+    "QCD_Pt80to120_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-80to120_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 391400,
+        "nmc": 29437751.0,
+        "sumsign": 29437751.0,
+        "sumW": 29442056.059343934
+    },
+    "QCD_Pt120to170_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-120to170_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 71630,
+        "nmc": 27584498.0,
+        "sumsign": 27584498.0,
+        "sumW": 27584823.32546282
+    },
+    "QCD_Pt170to300_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-170to300_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 18010,
+        "nmc": 29515968.0,
+        "sumsign": 29515968.0,
+        "sumW": 29515968.0
+    },
+    "QCD_Pt300to470_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-300to470_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 1116,
+        "nmc": 30174212.0,
+        "sumsign": 30174212.0,
+        "sumW": 30174213.50137329
+    },
+    "QCD_Pt470to600_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-470to600_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 82.76,
+        "nmc": 34732273.0,
+        "sumsign": 34732273.0,
+        "sumW": 34732273.876120806
+    },
+    "QCD_Pt600to800_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-600to800_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 21.62,
+        "nmc": 32404726.0,
+        "sumsign": 32404726.0,
+        "sumW": 32404726.0
+    },
+    "QCD_Pt800to1000_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-800to1000_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 3.361,
+        "nmc": 32040195.0,
+        "sumsign": 32040195.0,
+        "sumW": 32040195.0
+    },
+    "QCD_Pt1000toInf_EMEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-1000_Fil-EMEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 1.02,
+        "nmc": 22920551.0,
+        "sumsign": 22920551.0,
+        "sumW": 22920551.0
+    },
+    "QCD_Pt15to20_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-15to20_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 3018000.0,
+        "nmc": 124873343.0,
+        "sumsign": 124873343.0,
+        "sumW": 124897491.39201915
+    },
+    "QCD_Pt20to30_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-20to30_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 2701000.0,
+        "nmc": 93246015.0,
+        "sumsign": 93246015.0,
+        "sumW": 93247345.93744016
+    },
+    "QCD_Pt30to50_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-30to50_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 1461000.0,
+        "nmc": 95229839.0,
+        "sumsign": 95229839.0,
+        "sumW": 95229839.0
+    },
+    "QCD_Pt50to80_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-50to80_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 407600.0,
+        "nmc": 107361868.0,
+        "sumsign": 107361868.0,
+        "sumW": 107361868.0
+    },
+    "QCD_Pt80to120_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-80to120_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 96070.0,
+        "nmc": 94158748.0,
+        "sumsign": 94158748.0,
+        "sumW": 94168237.57770228
+    },
+    "QCD_Pt120to170_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-120to170_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 23140.0,
+        "nmc": 99977764.0,
+        "sumsign": 99977764.0,
+        "sumW": 99980371.21541381
+    },
+    "QCD_Pt170to300_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-170to300_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 7754.0,
+        "nmc": 94354003.0,
+        "sumsign": 94354003.0,
+        "sumW": 94354003.0
+    },
+    "QCD_Pt300to470_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-300to470_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 699.6,
+        "nmc": 79686379.0,
+        "sumsign": 79686379.0,
+        "sumW": 79686387.0202837
+    },
+    "QCD_Pt470to600_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-470to600_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 67.67,
+        "nmc": 71842009.0,
+        "sumsign": 71842009.0,
+        "sumW": 71842010.44133115
+    },
+    "QCD_Pt600to800_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-600to800_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 21.27,
+        "nmc": 85759452.0,
+        "sumsign": 85759452.0,
+        "sumW": 85759452.0
+    },
+    "QCD_Pt800to1000_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-800to1000_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 3.89,
+        "nmc": 81633640.0,
+        "sumsign": 81633640.0,
+        "sumW": 81633640.0
+    },
+    "QCD_Pt1000toInf_MuEnriched": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-1000_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8",
+        "xsec": 1.323,
+        "nmc": 87267908.0,
+        "sumsign": 87267908.0,
+        "sumW": 87267908.0
+    },
+    "QCD_Pt15to20_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-15to20_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-15to20_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 2348000.0,
+        "nmc": 28091910.0,
+        "sumsign": 28091910.0,
+        "sumW": 28096840.273877144
+    },
+    "QCD_Pt20to30_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-20to30_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-20to30_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 2037000.0,
+        "nmc": 28130575.0,
+        "sumsign": 28130575.0,
+        "sumW": 28131184.98289478
+    },
+    "QCD_Pt30to50_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-30to50_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-30to50_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 1042000.0,
+        "nmc": 28952958.0,
+        "sumsign": 28952958.0,
+        "sumW": 28952958.0
+    },
+    "QCD_Pt50to80_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-50to80_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-50to80_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 270800.0,
+        "nmc": 30131770.0,
+        "sumsign": 30131770.0,
+        "sumW": 30131770.0
+    },
+    "QCD_Pt80to120_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-80to120_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-80to120_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 60250.0,
+        "nmc": 27867233.0,
+        "sumsign": 27867233.0,
+        "sumW": 27870250.963623643
+    },
+    "QCD_Pt120to170_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-120to170_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-120to170_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 13830.0,
+        "nmc": 33949580.0,
+        "sumsign": 33949580.0,
+        "sumW": 33950789.27009559
+    },
+    "QCD_Pt170to300_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-170to300_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-170to300_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 4416.0,
+        "nmc": 31691496.0,
+        "sumsign": 31691496.0,
+        "sumW": 31691496.0
+    },
+    "QCD_Pt300to470_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-300to470_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-300to470_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 377.1,
+        "nmc": 28833430.0,
+        "sumsign": 28833430.0,
+        "sumW": 28833432.863370657
+    },
+    "QCD_Pt470to600_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-470to600_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-470to600_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 35.35,
+        "nmc": 29400547.0,
+        "sumsign": 29400547.0,
+        "sumW": 29400547.788558125
+    },
+    "QCD_Pt600to800_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-600to800_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-600to800_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 10.85,
+        "nmc": 32966804.0,
+        "sumsign": 32966804.0,
+        "sumW": 32966804.0
+    },
+    "QCD_Pt800to1000_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-800to1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-800to1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 1.96,
+        "nmc": 31590443.0,
+        "sumsign": 31590443.0,
+        "sumW": 31590443.0
+    },
+    "QCD_Pt1000toInf_bcToE": {
+        "isMC": 1,
+        "PD": "QCD_Bin-PT-1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
+        "xsec": 0.6528,
+        "nmc": 19760876.0,
+        "sumsign": 19760876.0,
+        "sumW": 19760876.0
     },
     "Muon0": {
         "isMC": 0,
