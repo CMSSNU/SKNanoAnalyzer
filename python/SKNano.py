@@ -18,6 +18,7 @@ import socket
 import subprocess
 import tarfile
 import hashlib
+import time
 import glob
 from pathlib import Path
 
@@ -128,6 +129,8 @@ SOURCE_SNAPSHOT_IGNORE_SUFFIXES = (
     ".o",
     ".pyc",
     ".pkl",
+    ".tsv",
+    ".csv",
     ".npz",
     ".npy",
     ".h5",
@@ -318,6 +321,61 @@ def makeSourceArchive(master_dir, snapshot_dir, git_info):
         "size_bytes": os.path.getsize(archive_path),
     }
 
+def gitSnapshotFiles(repository):
+    """Files git considers source, relative to *repository*.
+
+    An analysis module is a working directory, not a source tree: it holds the
+    BDT trainings, the plot outputs and the validation dumps the analysis has
+    produced so far.  .gitignore already says which of those are not source,
+    and the ignore list here cannot -- it filters by name and suffix, and the
+    outputs are .tsv and .json like the sample metadata is.
+
+    Untracked-but-not-ignored files are included: an analyzer added since the
+    last commit is source and has to reach the job.
+
+    Returns None when *repository* is not a git working tree, so the caller can
+    fall back to copying it whole.
+    """
+    try:
+        listing = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=repository, check=True, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+    except Exception:
+        return None
+    return [name for name in listing.split("\0") if name]
+
+def copySnapshotFileList(source_dir, target_dir, relpaths):
+    """Copy *relpaths* from *source_dir* into *target_dir*.
+
+    Applies the same per-file rules as sourceSnapshotIgnore: a submodule
+    gitlink is a directory rather than a file, a tracked file may have been
+    deleted in the working tree, and a file over the size cap does not belong
+    in a snapshot that gets archived on every submission.
+    """
+    copied = 0
+    skipped = []
+    for relpath in relpaths:
+        source = os.path.join(source_dir, relpath)
+        if not os.path.isfile(source):
+            continue
+        name = os.path.basename(relpath)
+        if name.endswith(SOURCE_SNAPSHOT_IGNORE_SUFFIXES):
+            skipped.append(relpath)
+            continue
+        try:
+            if os.path.getsize(source) > MAX_SOURCE_SNAPSHOT_FILE_BYTES:
+                skipped.append(relpath)
+                continue
+        except OSError:
+            skipped.append(relpath)
+            continue
+        target = os.path.join(target_dir, relpath)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copy2(source, target)
+        copied += 1
+    return copied, skipped
+
 def makeSourceSnapshot(master_dir):
     snapshot_dir = os.path.join(master_dir, SOURCE_SNAPSHOT_DIRNAME)
     os.makedirs(snapshot_dir, exist_ok=True)
@@ -339,13 +397,29 @@ def makeSourceSnapshot(master_dir):
     for module_dir in getAnalysisModuleDirs():
         module_name = os.path.basename(module_dir.rstrip(os.sep))
         target = os.path.join(snapshot_dir, "analysis_modules", module_name)
-        shutil.copytree(module_dir, target, ignore=sourceSnapshotIgnore,
-                        dirs_exist_ok=True)
+        # Copying the module whole means copying whatever the analysis has
+        # produced in it -- hundreds of MB of trainings and plots on a working
+        # module -- to network storage and then through tar and sha256, on
+        # every submission.  Ask git what is source instead.
+        tracked = gitSnapshotFiles(module_dir)
+        if tracked is None:
+            shutil.copytree(module_dir, target, ignore=sourceSnapshotIgnore,
+                            dirs_exist_ok=True)
+            module_source_selection = "whole directory"
+            module_nfiles, module_skipped = None, []
+        else:
+            os.makedirs(target, exist_ok=True)
+            module_nfiles, module_skipped = copySnapshotFileList(
+                module_dir, target, tracked)
+            module_source_selection = "git"
         module_git = getGitInfo(module_dir)
         modules.append({
             "name": module_name,
             "source": module_dir,
             "snapshot": target,
+            "selection": module_source_selection,
+            "nfiles": module_nfiles,
+            "skipped": module_skipped,
             "git": module_git,
             "schema_versions": getModuleSchemaVersions(module_dir),
         })
@@ -692,6 +766,47 @@ def getMasterDirectoryName(timeStamp, Analyzer, Userflags):
     #print("...Done")
     return MasterDirectoryName, abs_MasterDirectoryName
 
+def getMambaEnvSettings():
+    # The batch scripts have to activate the very environment the submission ran
+    # in: a job that picks up a different ROOT than the one the libraries were
+    # built against segfaults inside dlopen.
+    # Inside a singularity image the root prefix is /opt/conda, but the image
+    # only carries the environments that were linked when it was built, so the
+    # generated script falls back to the absolute prefix when the name is not
+    # found there.
+    # The script also has to run by hand on a login node, where /opt/conda does
+    # not exist, so it carries the submitting shell's own micromamba as a
+    # fallback. That fallback is not $MAMBA_ROOT_PREFIX/bin: micromamba is
+    # commonly installed outside its root prefix, so prefer $MAMBA_EXE.
+    singularity_image = os.environ["SINGULARITY_IMAGE"]
+    env_prefix = os.environ.get('CONDA_PREFIX', '')
+    if not env_prefix:
+        print('\033[91m'+"Error: no conda/mamba environment is active, source setup.sh before submitting"+'\033[0m')
+        exit()
+    host_root_prefix = os.environ.get('MAMBA_ROOT_PREFIX') or os.path.dirname(os.path.dirname(env_prefix))
+    mamba_exe = os.environ.get('MAMBA_EXE', '')
+    host_bin_path = os.path.dirname(mamba_exe) if mamba_exe else os.path.join(host_root_prefix, 'bin')
+    root_prefix = "/opt/conda" if singularity_image else host_root_prefix
+    checkRootMatchesEnv(env_prefix)
+    return root_prefix, os.path.basename(env_prefix), env_prefix, host_root_prefix, host_bin_path
+
+def checkRootMatchesEnv(env_prefix):
+    # The analyzer libraries are linked against one specific ROOT soname. An
+    # environment carrying a different one loads them anyway and then segfaults
+    # inside dlopen, so refuse to submit instead of letting every job die.
+    probe = os.path.join(SKNANO_LIB, "libAnalyzerFramework.so")
+    if not os.path.exists(probe):
+        return
+    with open(probe, 'rb') as f:
+        soname = re.search(rb'libCore\.so\.6\.\d+', f.read())
+    if soname is None:
+        return
+    soname = soname.group().decode()
+    if not os.path.exists(os.path.join(env_prefix, "lib", soname)):
+        print('\033[91m'+f"Error: {probe} needs {soname}, which {env_prefix} does not provide"+'\033[0m')
+        print('\033[91m'+"The jobs would segfault on library load. Activate the environment the libraries were built in, or rebuild."+'\033[0m')
+        exit()
+
 def getInputSampleList(inputArguments):
     #if string
     if inputArguments.endswith(".txt"):
@@ -913,14 +1028,13 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
         run_content = f.read()
-    #mamba_bin_path = os.environ['MAMBA_EXE']
-    #mamba_bin_path = os.path.dirname(mamba_bin_path)
-    # We need to fetch the MAMBA_ROOT_PREFIX from the singularity image if running in a singularity container
-    # Currently, we assume that /opt/conda is the MAMBA_ROOT_PREFIX
-    singularity_image = os.environ["SINGULARITY_IMAGE"]
-    mamba_root_prefix = "/opt/conda" if singularity_image else os.environ['MAMBA_ROOT_PREFIX']
+    mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
     run_content = run_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
     run_content = run_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
+    run_content = run_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
+    run_content = run_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
+    run_content = run_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
+    run_content = run_content.replace("[MAMBA_ENV]", mamba_env)
     snapshot_home = os.path.join(abs_MasterDirectoryName, SOURCE_SNAPSHOT_DIRNAME)
     lhapdf_include_dir = os.environ.get('LHAPDF_INCLUDE_DIR', os.path.join(SKNANO_HOME, 'external', 'lhapdf', 'redhat', 'include'))
     lhapdf_lib_dir = os.environ.get('LHAPDF_LIB_DIR', os.path.join(SKNANO_HOME, 'external', 'lhapdf', 'redhat', 'lib'))
@@ -979,6 +1093,13 @@ def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
         template_path = os.path.join(SKNANO_HOME, "templates", "merge_partial.sh")
         with open(template_path, 'r') as f:
             partial_content = f.read()
+        mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
+        partial_content = partial_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
+        partial_content = partial_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
+        partial_content = partial_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
+        partial_content = partial_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
+        partial_content = partial_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
+        partial_content = partial_content.replace("[MAMBA_ENV]", mamba_env)
         partial_content = partial_content.replace("[WORKDIR]", working_dir)
         partial_content = partial_content.replace("[SKNANO_HOME]", SKNANO_HOME)
         partial_content = partial_content.replace("[GROUP_SIZE]", str(argparser.MergeGroupSize))
@@ -1007,6 +1128,13 @@ def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
     template_path = os.path.join(SKNANO_HOME, "templates", "hadd.sh")
     with open(template_path, 'r') as f:
         hadd_content = f.read()
+    mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
+    hadd_content = hadd_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
+    hadd_content = hadd_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
+    hadd_content = hadd_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
+    hadd_content = hadd_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
+    hadd_content = hadd_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
+    hadd_content = hadd_content.replace("[MAMBA_ENV]", mamba_env)
     hadd_content = hadd_content.replace("[WORKDIR]", working_dir)
     hadd_content = hadd_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     hadd_content = hadd_content.replace("[TARGET]", hadd_target)
@@ -1389,7 +1517,14 @@ if __name__ == '__main__':
     userflags = getUserFlagsList(args.Userflags)
     timestamp, string_JobStartTime = getTimeStamp()
     _, abs_MasterDirectoryName= getMasterDirectoryName(timestamp, args.Analyzer, userflags)
+    # This is the one step between the master directory and the first progress
+    # bar, and it writes and then archives the whole source tree, so say so
+    # rather than looking hung.
+    print("Snapshotting source...", end="", flush=True)
+    snapshot_start = time.time()
     source_snapshot = makeSourceSnapshot(abs_MasterDirectoryName)
+    archive_mb = source_snapshot['archive']['size_bytes'] / (1024 * 1024)
+    print(f" {time.time() - snapshot_start:.1f}s ({archive_mb:.1f} MB archive)")
     InputSamplelist = getInputSampleList(args.InputSample)
     period_filter = parsePeriodFilter(args.Period)
     exclude_regexes = getExcludeRegexList(args.ExcludeSample)

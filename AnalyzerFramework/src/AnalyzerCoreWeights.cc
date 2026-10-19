@@ -102,37 +102,35 @@ float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst,
                                       const MyCorrection::variation &muR_syst) {
   if (nLHEScaleWeight == 0)
     return 1.;
-  if (muF_syst == MyCorrection::variation::down &&
-      muR_syst == MyCorrection::variation::down)
-    return LHEScaleWeight[0];
-  else if (muF_syst == MyCorrection::variation::nom &&
-           muR_syst == MyCorrection::variation::down)
-    return LHEScaleWeight[1];
-  else if (muF_syst == MyCorrection::variation::up &&
-           muR_syst == MyCorrection::variation::down)
-    return LHEScaleWeight[2];
-  else if (muF_syst == MyCorrection::variation::down &&
-           muR_syst == MyCorrection::variation::nom)
-    return LHEScaleWeight[3];
-  else if (muF_syst == MyCorrection::variation::up &&
-           muR_syst == MyCorrection::variation::nom)
-    return LHEScaleWeight[4];
-  else if (muF_syst == MyCorrection::variation::down &&
-           muR_syst == MyCorrection::variation::up)
-    return LHEScaleWeight[5];
-  else if (muF_syst == MyCorrection::variation::nom &&
-           muR_syst == MyCorrection::variation::up)
-    return LHEScaleWeight[6];
-  else if (muF_syst == MyCorrection::variation::up &&
-           muR_syst == MyCorrection::variation::up)
-    return LHEScaleWeight[7];
-  else if (muF_syst == MyCorrection::variation::nom &&
-           muR_syst == MyCorrection::variation::nom)
+  // (nom, nom) is the central value by definition; it needs no slot, and the
+  // 8-entry layout does not have one.
+  if (muF_syst == MyCorrection::variation::nom &&
+      muR_syst == MyCorrection::variation::nom)
     return 1.f;
-  else {
+
+  // LHEScaleWeight is a 3x3 grid over (muR, muF) in {0.5, 1, 2} with muR as the
+  // outer index: slot = 3 * iR + iF. Producers ship it either complete (9
+  // entries) or with the (1, 1) nominal at slot 4 dropped (8 entries), and
+  // which one you get is a per-sample property -- every 2024 NanoAODv15 sample
+  // checked carries 9. Assuming 8 unconditionally silently returns the nominal
+  // for (muF up, muR nom) and reads a neighbouring scale pair for the three
+  // combinations above it, so the muF-up nuisance collapses to zero while
+  // muR-up quietly mixes in a muF shift.
+  const auto axisIndex = [](const MyCorrection::variation &v) -> int {
+    return v == MyCorrection::variation::down
+               ? 0
+               : (v == MyCorrection::variation::nom ? 1 : 2);
+  };
+  int slot = 3 * axisIndex(muR_syst) + axisIndex(muF_syst);
+  if (nLHEScaleWeight == 8 && slot > 4)
+    slot -= 1; // nominal slot absent, everything above it shifts down
+
+  if (slot < 0 || slot >= static_cast<int>(nLHEScaleWeight))
     throw SKNano::LogicError(
-        "[AnalyzerCore::GetScaleVariation] requested variation is not implemented");
-  }
+        "[AnalyzerCore::GetScaleVariation] slot " + std::to_string(slot) +
+        " is out of range for nLHEScaleWeight = " +
+        std::to_string(nLHEScaleWeight));
+  return LHEScaleWeight[slot];
 }
 
 float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst,

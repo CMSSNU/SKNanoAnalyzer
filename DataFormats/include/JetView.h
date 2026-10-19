@@ -16,10 +16,13 @@
 struct JetSoA {
     std::function<void()> populateNominal;
     std::function<void()> populateJerVariations;
+    std::function<void()> populateJesVariations;
     mutable bool nominalReady = false;
     mutable bool nominalComputing = false;
     mutable bool jerVariationsReady = false;
     mutable bool jerVariationsComputing = false;
+    mutable bool jesVariationsReady = false;
+    mutable bool jesVariationsComputing = false;
 
     ColumnView<float> pt;
     ColumnView<float> eta;
@@ -124,6 +127,29 @@ struct JetSoA {
             nominalComputing = false;
         } catch (...) {
             nominalComputing = false;
+            throw;
+        }
+    }
+
+    // The JES lanes used to be filled only by an explicit
+    // AnalyzerCore::ApplyJetScaleVariation call, which nothing in the repository
+    // made, so JesPt*/JesMass* returned the zero-initialised lane. Populate them
+    // on first access, exactly as the JER lanes are.
+    void ensureJesVariations() const {
+        ensureNominal();
+        if (jesVariationsReady)
+            return;
+        if (jesVariationsComputing)
+            throw std::logic_error("recursive Jet JES variation materialization");
+        if (!populateJesVariations)
+            return;
+        jesVariationsComputing = true;
+        try {
+            populateJesVariations();
+            jesVariationsReady = true;
+            jesVariationsComputing = false;
+        } catch (...) {
+            jesVariationsComputing = false;
             throw;
         }
     }
@@ -266,10 +292,10 @@ public:
     float SmearedMassNominal() const { ensureNominal(); return idx < store->smearedMassNominal.size() ? store->smearedMassNominal[idx] : Mass(); }
     float SmearedMassUp() const { ensureJerVariations(); return idx < store->smearedMassUp.size() ? store->smearedMassUp[idx] : Mass(); }
     float SmearedMassDown() const { ensureJerVariations(); return idx < store->smearedMassDown.size() ? store->smearedMassDown[idx] : Mass(); }
-    float JesPtUp() const { ensureNominal(); return idx < store->jesPtUp.size() ? store->jesPtUp[idx] : SmearedPtNominal(); }
-    float JesPtDown() const { ensureNominal(); return idx < store->jesPtDown.size() ? store->jesPtDown[idx] : SmearedPtNominal(); }
-    float JesMassUp() const { ensureNominal(); return idx < store->jesMassUp.size() ? store->jesMassUp[idx] : SmearedMassNominal(); }
-    float JesMassDown() const { ensureNominal(); return idx < store->jesMassDown.size() ? store->jesMassDown[idx] : SmearedMassNominal(); }
+    float JesPtUp() const { ensureJesVariations(); return idx < store->jesPtUp.size() ? store->jesPtUp[idx] : SmearedPtNominal(); }
+    float JesPtDown() const { ensureJesVariations(); return idx < store->jesPtDown.size() ? store->jesPtDown[idx] : SmearedPtNominal(); }
+    float JesMassUp() const { ensureJesVariations(); return idx < store->jesMassUp.size() ? store->jesMassUp[idx] : SmearedMassNominal(); }
+    float JesMassDown() const { ensureJesVariations(); return idx < store->jesMassDown.size() ? store->jesMassDown[idx] : SmearedMassNominal(); }
 
     TLorentzVector P4() const {
         TLorentzVector v;
@@ -294,6 +320,10 @@ private:
     void ensureJerVariations() const {
         assertCurrentEvent();
         store->ensureJerVariations();
+    }
+    void ensureJesVariations() const {
+        assertCurrentEvent();
+        store->ensureJesVariations();
     }
     const JetSoA *store = nullptr;
     std::size_t idx = 0;
