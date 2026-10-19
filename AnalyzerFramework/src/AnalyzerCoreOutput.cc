@@ -442,11 +442,12 @@ void AnalyzerCore::FinalizeRNTuples() {
     // unmergeable.
     if (output->fields.empty())
       continue;
-    // An RNTuple that was never filled has no writer yet. Do not create one just
-    // to persist an empty (zero-cluster) RNTuple: hadd (ROOT 6.40.02,
+    // An RNTuple that was never filled has no writer yet. Do not create one
+    // just to persist an empty (zero-cluster) RNTuple: a writer-written empty
+    // RNTuple merges fine in a single-stage hadd, but hadd (ROOT 6.40.02,
     // RNTupleMerger::MergeSourceClusters) aborts with "!clusterIds.empty()
-    // violated" as soon as such an input is merged, so a job in which one
-    // booked RNTuple stayed empty would break the merge of the whole sample.
+    // violated" when an *hadd output* that itself holds an empty RNTuple is
+    // merged again in a later stage -- the case a staged/partial merge hits.
     // A missing key therefore means "no entries in this RNTuple".
     if (!output->writer) {
       std::cout << "[AnalyzerCore::WriteHist] Skipping empty RNTuple: " << name
