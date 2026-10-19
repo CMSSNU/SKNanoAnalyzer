@@ -565,7 +565,8 @@ void AnalyzerCore::PopulateElectronMomentum(ElectronSoA &storage,
 // Stage 2: the scale and smearing nuisances. Smear variations rescale the
 // raw momentum with the stage-1 draw; scale variations multiply the already
 // smeared momentum. Data carries no variation.
-void AnalyzerCore::PopulateElectronMomentumVariations(ElectronSoA &storage) {
+void AnalyzerCore::PopulateElectronMomentumVariations(
+    ElectronSoA &storage, const std::uint64_t runNumber) {
   const std::size_t count = storage.size();
   storage.scaleUpPt.assign(count, 0.f);
   storage.scaleDownPt.assign(count, 0.f);
@@ -593,13 +594,13 @@ void AnalyzerCore::PopulateElectronMomentumVariations(ElectronSoA &storage) {
         rawPt * (1.f + draw * myCorr->GetElectronSmearWidth(
                                   rawPt, r9, scEta, MyCorrection::variation::down));
     storage.scaleUpPt[index] =
-        corrected * myCorr->GetElectronScaleUnc(scEta, seedGain, RunNumber, r9,
-                                                rawPt,
-                                                MyCorrection::variation::up);
+        corrected * myCorr->GetElectronScaleUnc(
+                        scEta, seedGain, static_cast<unsigned int>(runNumber),
+                        r9, rawPt, MyCorrection::variation::up);
     storage.scaleDownPt[index] =
-        corrected * myCorr->GetElectronScaleUnc(scEta, seedGain, RunNumber, r9,
-                                                rawPt,
-                                                MyCorrection::variation::down);
+        corrected * myCorr->GetElectronScaleUnc(
+                        scEta, seedGain, static_cast<unsigned int>(runNumber),
+                        r9, rawPt, MyCorrection::variation::down);
   }
 }
 
@@ -659,7 +660,8 @@ ElectronViewCollection AnalyzerCore::GetAllElectronViews() {
                              static_cast<std::uint64_t>(event.get()));
   };
   storage->populateMomentumVariations = [this, storagePtr = storage.get()] {
-    PopulateElectronMomentumVariations(*storagePtr);
+    PopulateElectronMomentumVariations(
+        *storagePtr, static_cast<std::uint64_t>(RunNumber.get()));
   };
 
   ElectronViewCollection result(std::move(storage));

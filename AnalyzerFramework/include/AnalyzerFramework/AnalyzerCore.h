@@ -359,7 +359,8 @@ public:
     void PopulateElectronMomentum(ElectronSoA &storage, std::uint64_t runNumber,
                                   std::uint64_t lumiBlock,
                                   std::uint64_t eventNumber);
-    void PopulateElectronMomentumVariations(ElectronSoA &storage);
+    void PopulateElectronMomentumVariations(ElectronSoA &storage,
+                                            std::uint64_t runNumber);
     void PopulateFatJetNominal(FatJetSoA &storage);
     void PopulateFatJetJerVariations(FatJetSoA &storage);
     void PopulateFatJetJesVariations(FatJetSoA &storage);

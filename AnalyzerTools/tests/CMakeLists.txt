@@ -1,6 +1,10 @@
 find_package(GTest CONFIG REQUIRED)
 
-add_executable(sknano_tools_tests TauCorrectionTest.cc)
+add_executable(sknano_tools_tests TauCorrectionTest.cc LeptonCorrectionTest.cc)
+
+# MuonScaRe.h is header-only and private to the library (src/).
+target_include_directories(sknano_tools_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
 target_link_libraries(sknano_tools_tests PRIVATE
     AnalyzerTools
