@@ -330,11 +330,12 @@ void AnalyzerCore::ApplyJetSmearingAndUncertainties(
       for (size_t i = 0; i < storage->size(); ++i) {
         storage->smearedPtNominal[i] = storage->correctedPt[i];
         storage->smearedMassNominal[i] = storage->correctedMass[i];
-        // Data has nothing to vary, but ResetJetLanes sizes the variation
-        // vectors, so the view accessors read them rather than falling back to
-        // the nominal. Mirror the nominal into them: an analyzer that loops
-        // over systematics on data then sees the nominal jet instead of a
-        // momentum of zero. AK8 gets this for free by leaving its lanes empty.
+        // Data has nothing to vary, but InitialiseJetSystematics sizes the
+        // variation vectors, so the view accessors read them rather than
+        // falling back to the nominal. Mirror the nominal into them: an
+        // analyzer that loops over systematics on data then sees the nominal
+        // jet instead of a momentum of zero. AK8 does the same in its
+        // population stages.
         storage->smearedPtUp[i] = storage->correctedPt[i];
         storage->smearedPtDown[i] = storage->correctedPt[i];
         storage->smearedMassUp[i] = storage->correctedMass[i];
@@ -598,19 +599,6 @@ bool AnalyzerCore::PropagateJetSystToMET(
   return true;
 }
 
-const std::vector<TString> &AnalyzerCore::JetEnergyScaleSources() const {
-  static const std::vector<TString> sources = {
-      "AbsoluteMPFBias", "AbsoluteScale",   "AbsoluteStat",   "FlavorQCD",
-      "Fragmentation",   "PileUpDataMC",    "PileUpPtBB",     "PileUpPtEC1",
-      "PileUpPtEC2",     "PileUpPtHF",      "PileUpPtRef",    "RelativeJEREC1",
-      "RelativeJEREC2",  "RelativeJERHF",   "RelativePtBB",   "RelativePtEC1",
-      "RelativePtEC2",   "RelativePtHF",    "RelativeBal",    "RelativeSample",
-      "RelativeFSR",     "RelativeStatFSR", "RelativeStatEC", "RelativeStatHF",
-      "SinglePionECAL",  "SinglePionHCAL",  "TimePtEta"};
-  ;
-  return sources;
-}
-
 JetViewCollection AnalyzerCore::GetAllJetViews() {
   const Long64_t entry = CurrentEntry();
   if (cachedJetViewsEntry == entry)
@@ -639,7 +627,11 @@ JetViewCollection AnalyzerCore::GetAllJetViews() {
       throw SKNano::EventDataError(
           "[GetAllJetViews] expired Jet storage during JES variation "
           "materialization");
-    PopulateJetJESVariations(locked);
+    // A source prepared explicitly (PrepareJetJESVariations with a breakdown
+    // source) already owns the lanes; recomputing "total" here would replace
+    // it on the first JesPt*/JesMass* read.
+    if (!locked->jesVariationValid)
+      PopulateJetJESVariations(locked);
   };
 
   cachedJetViews = JetViewCollection(std::move(storage));

@@ -685,7 +685,6 @@ protected:
     const GenJetViewCollection& genjets,
     bool isMC,
     float rho);
-    const std::vector<TString> &JetEnergyScaleSources() const;
     bool useTH1F = false;
     // Reused by the per-event jet/genjet matcher. Keeping the capacity on the
     // analyzer removes allocator traffic without changing matching order.
