@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <exception>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,6 +42,23 @@ protected:
             mc_.reset();
             data_.reset();
         }
+        muoReference_ = MuoLatestIsReferenceSnapshot();
+    }
+    // The MuonScaRe reference numbers belong to MUO snapshot 2026-06-18 while
+    // the era yml reads `latest`; once POG moves `latest`, skip rather than fail
+    // until the numbers are regenerated.
+    static bool MuoLatestIsReferenceSnapshot() {
+        const std::string dir =
+            std::string(std::getenv("JSONPOG_REPO_PATH")) +
+            "/MUO/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/";
+        auto slurp = [](const std::string &path) {
+            std::ifstream in(path, std::ios::binary);
+            return std::string(std::istreambuf_iterator<char>(in), {});
+        };
+        const std::string latest =
+            slurp(dir + "latest/muon_scalesmearing.json.gz");
+        return !latest.empty() &&
+               latest == slurp(dir + "2026-06-18/muon_scalesmearing.json.gz");
     }
     static void TearDownTestSuite() {
         mc_.reset();
@@ -53,11 +72,15 @@ protected:
     static std::unique_ptr<MyCorrection> mc_;
     static std::unique_ptr<MyCorrection> data_;
     static std::string skip_;
+    static bool muoReference_;
 };
 
 std::unique_ptr<MyCorrection> LeptonCorrection::mc_;
 std::unique_ptr<MyCorrection> LeptonCorrection::data_;
 std::string LeptonCorrection::skip_;
+bool LeptonCorrection::muoReference_ = false;
+constexpr const char *kMuoSkip =
+    "MUO latest is no longer snapshot 2026-06-18; regenerate the reference";
 
 // ---- MuonScaRe validity window ---------------------------------------------
 // Expected values come from the POG C++ reference (jsonpog-integration
@@ -81,6 +104,8 @@ Lanes Correct(const MyCorrection &corr, int q, float pt, float eta,
 }
 
 TEST_F(LeptonCorrection, MuonDataScaleStartsAt26AndHasNoUpperBound) {
+    if (!muoReference_)
+        GTEST_SKIP() << kMuoSkip;
     const auto below = Correct(*data_, 1, 25.5f, 0.5f, 1.f).lanes;
     EXPECT_EQ(below.nominal, 25.5f);
     EXPECT_PT(Correct(*data_, 1, 26.f, 0.5f, 1.f).lanes.nominal,
@@ -95,6 +120,8 @@ TEST_F(LeptonCorrection, MuonDataScaleStartsAt26AndHasNoUpperBound) {
 }
 
 TEST_F(LeptonCorrection, MuonMCOutsideSmearWindowKeepsScaleUncertainty) {
+    if (!muoReference_)
+        GTEST_SKIP() << kMuoSkip;
     // Below 26 GeV: no scale, no smearing, but the stat scale uncertainty.
     const auto low = Correct(*mc_, -1, 20.f, -1.25f, -2.5f).lanes;
     EXPECT_EQ(low.nominal, 20.f);
@@ -114,6 +141,8 @@ TEST_F(LeptonCorrection, MuonMCOutsideSmearWindowKeepsScaleUncertainty) {
 }
 
 TEST_F(LeptonCorrection, MuonMCInsideSmearWindowMatchesReference) {
+    if (!muoReference_)
+        GTEST_SKIP() << kMuoSkip;
     // The draw comes from the file's RandomSmearing node rather than the
     // reference's TRandom3, so the reference variations are evaluated on this
     // code's scaled and smeared pt: (26.020255338753788, 26.051951680637128)
