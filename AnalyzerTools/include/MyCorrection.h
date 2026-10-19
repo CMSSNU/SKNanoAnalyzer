@@ -322,13 +322,13 @@ public:
     // jerc_fatjet
     // Mirrors the AK4 functions above, reading fatJet_jerc.json.gz. Kept
     // separate rather than parameterised because the global tags, the
-    // correction set and the caching all differ. The JES uncertainty source
-    // names are capitalised ("Total"), matching the AK8 key naming.
+    // correction set and the caching all differ. "total" (any case, or empty)
+    // resolves to the JSON's "Total" source, as on the AK4 side.
     float GetFJER(const float eta, const float pt, const float rho) const;
-    float GetFJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+    float GetFJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     float GetFJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const;
-    float GetFJESUncertainty(const float eta, const float pt, const TString &source = "Total") const;
-    float GetFJESUncertaintySF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+    float GetFJESUncertainty(const float eta, const float pt, const TString &source = "total") const;
+    float GetFJESUncertaintySF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
 
     // jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, const TString &mapCategory) const;
