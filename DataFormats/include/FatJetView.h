@@ -275,8 +275,9 @@ public:
     float SDMass() const { return store_->softDropMass[index_]; }
 
     // ---- JEC/JER lanes ------------------------------------------------------
-    // Pt()/M() above stay raw, matching JetView. Pick a lane explicitly, or let
-    // SelectFatJets hand back the projection you asked for.
+    // Pt()/M()/SDMass() above stay raw, matching JetView, and so do the views
+    // SelectFatJets returns. Pick a lane explicitly, or use SelectFatJetViews
+    // for views whose Pt()/M()/SDMass() follow the projection you asked for.
     float CorrectedPt() const { return nominalLane(store_->correctedPt, Pt()); }
     float CorrectedMass() const { return nominalLane(store_->correctedMass, M()); }
     float SmearedPtNominal() const { return nominalLane(store_->smearedPtNominal, Pt()); }

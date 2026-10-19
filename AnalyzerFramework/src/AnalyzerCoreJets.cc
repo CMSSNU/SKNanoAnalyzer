@@ -639,28 +639,37 @@ JetViewCollection AnalyzerCore::GetAllJetViews() {
   return cachedJetViews;
 }
 
+namespace {
+// The lane SelectJetViews and SelectFatJetViews project onto. Data has no
+// smearing or variation, so it always reads the corrected momentum.
+JetKinematicProjection
+SelectedProjection(bool isData, const MyCorrection::variation &jesVariation,
+                   const MyCorrection::variation &jerVariation,
+                   const char *context) {
+  if (jesVariation != MyCorrection::variation::nom &&
+      jerVariation != MyCorrection::variation::nom)
+    throw SKNano::LogicError(std::string("[AnalyzerCore::") + context +
+                             "] simultaneous JES and JER variation");
+  if (isData)
+    return JetKinematicProjection::Corrected;
+  if (jesVariation == MyCorrection::variation::up)
+    return JetKinematicProjection::JesUp;
+  if (jesVariation == MyCorrection::variation::down)
+    return JetKinematicProjection::JesDown;
+  if (jerVariation == MyCorrection::variation::up)
+    return JetKinematicProjection::JerUp;
+  if (jerVariation == MyCorrection::variation::down)
+    return JetKinematicProjection::JerDown;
+  return JetKinematicProjection::Nominal;
+}
+} // namespace
+
 SelectedJetViewCollection AnalyzerCore::SelectJetViews(
     const JetViewCollection &jets, std::vector<std::size_t> indices,
     const MyCorrection::variation &jesVariation,
     const MyCorrection::variation &jerVariation, bool sortByPt) const {
-  if (jesVariation != MyCorrection::variation::nom &&
-      jerVariation != MyCorrection::variation::nom)
-    throw SKNano::LogicError(
-        "[AnalyzerCore::SelectJetViews] simultaneous JES and JER variation");
-
-  JetKinematicProjection projection = IsDATA
-      ? JetKinematicProjection::Corrected
-      : JetKinematicProjection::Nominal;
-  if (!IsDATA) {
-    if (jesVariation == MyCorrection::variation::up)
-      projection = JetKinematicProjection::JesUp;
-    else if (jesVariation == MyCorrection::variation::down)
-      projection = JetKinematicProjection::JesDown;
-    else if (jerVariation == MyCorrection::variation::up)
-      projection = JetKinematicProjection::JerUp;
-    else if (jerVariation == MyCorrection::variation::down)
-      projection = JetKinematicProjection::JerDown;
-  }
+  const JetKinematicProjection projection = SelectedProjection(
+      IsDATA, jesVariation, jerVariation, "SelectJetViews");
 
   SelectedJetViewCollection selected(jets.storage(), std::move(indices),
                                      projection);
@@ -835,6 +844,26 @@ AnalyzerCore::SelectFatJets(const FatJetViewCollection &fatjets,
     selected.push_back(fatjets.rawIndex(index));
   }
   return FatJetViewCollection(fatjets.storage(), std::move(selected));
+}
+
+SelectedFatJetViewCollection AnalyzerCore::SelectFatJetViews(
+    const FatJetViewCollection &fatjets, std::vector<std::size_t> indices,
+    const MyCorrection::variation &jesVariation,
+    const MyCorrection::variation &jerVariation, bool sortByPt) const {
+  const JetKinematicProjection projection = SelectedProjection(
+      IsDATA, jesVariation, jerVariation, "SelectFatJetViews");
+
+  for (auto &index : indices)
+    index = fatjets[index].OriginalIndex();
+  const FatJetSoA *storage = fatjets.storage().get();
+  if (sortByPt)
+    std::sort(indices.begin(), indices.end(),
+              [&](std::size_t lhs, std::size_t rhs) {
+                return SelectedFatJetView(storage, lhs, projection).Pt() >
+                       SelectedFatJetView(storage, rhs, projection).Pt();
+              });
+  return SelectedFatJetViewCollection(fatjets.storage(), std::move(indices),
+                                      projection);
 }
 
 std::vector<std::size_t> AnalyzerCore::JetsVetoLeptonInside(

@@ -21,6 +21,7 @@
 #pragma link C++ class TauView-;
 #pragma link C++ class PhotonView-;
 #pragma link C++ class FatJetView-;
+#pragma link C++ class SelectedFatJetView-;
 #pragma link C++ class SVView-;
 #pragma link C++ class TrigObjView-;
 #pragma link C++ class GenDressedLeptonView-;
@@ -37,6 +38,7 @@
 #pragma link C++ class EventRange<TauSoA,TauView>-;
 #pragma link C++ class EventRange<PhotonSoA,PhotonView>-;
 #pragma link C++ class EventRange<FatJetSoA,FatJetView>-;
+#pragma link C++ class SelectedFatJetViewCollection-;
 #pragma link C++ class EventRange<SVSoA,SVView>-;
 #pragma link C++ class EventRange<TrigObjSoA,TrigObjView>-;
 #pragma link C++ class EventRange<GenDressedLeptonSoA,GenDressedLeptonView>-;

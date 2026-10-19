@@ -45,6 +45,7 @@
 #include "JetView.h"
 #include "SelectedJetView.h"
 #include "FatJetView.h"
+#include "SelectedFatJetView.h"
 #include "TauView.h"
 #include "PhotonView.h"
 #include "SVView.h"
@@ -359,14 +360,6 @@ public:
                                     GenViewCollection &truth, bool &truthLoaded);
     void PopulateElectronMomentum(ElectronSoA &storage);
     void PopulateElectronMomentumVariations(ElectronSoA &storage);
-    void PopulateFatJetNominal(FatJetSoA &storage);
-    void PopulateFatJetJerVariations(FatJetSoA &storage);
-    void PopulateFatJetJesVariations(FatJetSoA &storage);
-    float FatJetSmearFactor(const FatJetSoA &storage, std::size_t index,
-                            MyCorrection::variation syst) const;
-    float FatJetSoftDropRatio(const FatJetSoA &storage, std::size_t index,
-                              MyCorrection::variation jesVar,
-                              MyCorrection::variation jerVar) const;
     GenViewCollection GetAllGenViews();
     JetViewCollection GetAllJetViews();
     SelectedJetViewCollection SelectJetViews(
@@ -431,6 +424,16 @@ public:
                                        float fetamax,
                                        const MyCorrection::variation &JESVariation = MyCorrection::variation::nom,
                                        const MyCorrection::variation &JERVariation = MyCorrection::variation::nom) const;
+    // AK8 counterpart of SelectJetViews: the views' Pt()/M()/SDMass() follow
+    // the requested lane (data: the corrected momentum). indices are positions
+    // in fatjets, so both GetAllFatJets() with its raw indices and a
+    // SelectFatJets result with AllIndices() work.
+    SelectedFatJetViewCollection SelectFatJetViews(
+        const FatJetViewCollection &fatjets,
+        std::vector<std::size_t> indices,
+        const MyCorrection::variation &jesVariation = MyCorrection::variation::nom,
+        const MyCorrection::variation &jerVariation = MyCorrection::variation::nom,
+        bool sortByPt = true) const;
     std::vector<std::size_t> JetsVetoLeptonInside(const JetViewCollection& jets,
                                    const std::vector<std::size_t>& jet_indices,
                                    const ElectronViewCollection& electrons,
@@ -698,6 +701,15 @@ protected:
     const GenJetViewCollection& genjets,
     bool isMC,
     float rho);
+    // AK8 lazy correction stages, bound to FatJetSoA by GetAllFatJets.
+    void PopulateFatJetNominal(FatJetSoA &storage);
+    void PopulateFatJetJerVariations(FatJetSoA &storage);
+    void PopulateFatJetJesVariations(FatJetSoA &storage);
+    float FatJetSmearFactor(const FatJetSoA &storage, std::size_t index,
+                            MyCorrection::variation syst) const;
+    float FatJetSoftDropRatio(const FatJetSoA &storage, std::size_t index,
+                              MyCorrection::variation jesVar,
+                              MyCorrection::variation jerVar) const;
     bool useTH1F = false;
     // Reused by the per-event jet/genjet matcher. Keeping the capacity on the
     // analyzer removes allocator traffic without changing matching order.

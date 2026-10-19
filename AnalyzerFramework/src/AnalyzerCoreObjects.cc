@@ -939,6 +939,55 @@ FatJetViewCollection AnalyzerCore::GetAllFatJets() {
 
 }
 
+namespace {
+// CounterRNG streams for the AK8 draws, ASCII tags distinct from AK4's
+// "JER_SMEA". Subjet draws are keyed on 2 * fatJetIndex + slot.
+constexpr std::uint64_t kFatJetJerStream = 0x464a45525f534d45ULL; // "FJER_SME"
+constexpr std::uint64_t kSubJetJerStream = 0x534a45525f534d45ULL; // "SJER_SME"
+
+// The floor AK4 puts on a smear factor (ApplyJetSmearingAndUncertainties):
+// 0.01 GeV of energy survives, so no fluctuation zeroes or flips the jet.
+float MinSmearFactor(const float pt, const float eta, const float mass) {
+  constexpr float MIN_JET_ENERGY = 1e-2f;
+  const float energy =
+      std::sqrt(pt * pt * std::cosh(eta) * std::cosh(eta) + mass * mass);
+  return MIN_JET_ENERGY / std::max(energy, MIN_JET_ENERGY);
+}
+
+// 1:1 reco-gen matching, as MatchJetsToGenJets does for AK4: every pair inside
+// the cone and within 3 sigma in pT is a candidate, the closest (then the
+// smaller pT difference) is taken first, and each reco and gen jet is used at
+// most once. reco(i) gives {pt, eta, phi, sigma}, gen(g) gives {pt, eta, phi};
+// sigma <= 0 leaves a reco jet unmatched.
+template <typename Reco, typename Gen, typename Assign>
+void MatchOneToOne(const std::size_t nReco, const std::size_t nGen,
+                   const float maxDR, Reco reco, Gen gen, Assign assign) {
+  std::vector<std::tuple<float, float, std::size_t, std::size_t>> candidates;
+  for (std::size_t i = 0; i < nReco; ++i) {
+    const auto [pt, eta, phi, sigma] = reco(i);
+    if (pt <= 0.f || sigma <= 0.f)
+      continue;
+    for (std::size_t g = 0; g < nGen; ++g) {
+      const auto [genPt, genEta, genPhi] = gen(g);
+      const float dr2 = SKNano::Geometry::DeltaR2(eta, phi, genEta, genPhi);
+      if (dr2 >= maxDR * maxDR)
+        continue;
+      const float ptDiff = std::fabs(pt - genPt);
+      if (ptDiff < 3.f * sigma)
+        candidates.emplace_back(dr2, ptDiff, i, g);
+    }
+  }
+  std::sort(candidates.begin(), candidates.end());
+  std::vector<unsigned char> usedReco(nReco, 0), usedGen(nGen, 0);
+  for (const auto &[dr2, ptDiff, i, g] : candidates) {
+    if (usedReco[i] || usedGen[g])
+      continue;
+    usedReco[i] = usedGen[g] = 1;
+    assign(i, g);
+  }
+}
+} // namespace
+
 // Hybrid JER smearing factor for one AK8 jet from the stage-1 intermediates:
 // scale toward the matched gen jet when there is one, otherwise the stochastic
 // term with the jet's own unit draw.
@@ -947,16 +996,19 @@ float AnalyzerCore::FatJetSmearFactor(const FatJetSoA &storage,
                                       const MyCorrection::variation syst) const {
   const float correctedPt = storage.correctedPt[index];
   const float sf = myCorr->GetFJERSF(storage.eta[index], correctedPt, syst);
+  const float minCorr = MinSmearFactor(correctedPt, storage.eta[index],
+                                       storage.correctedMass[index]);
   const float matchedGenPt = storage.jerMatchedGenPt[index];
   if (matchedGenPt > 0.f) {
-    const float ratio = (correctedPt - matchedGenPt) / correctedPt;
-    return std::max(0.f, 1.f + (sf - 1.f) * ratio);
+    const float ratio =
+        (correctedPt - matchedGenPt) / std::max(correctedPt, 1e-6f);
+    return std::max(minCorr, 1.f + (sf - 1.f) * ratio);
   }
   if (sf <= 1.f)
     return 1.f;
   const float width =
       storage.jerResolution[index] * std::sqrt(sf * sf - 1.f);
-  return std::max(0.f, 1.f + width * storage.jerUnitDraw[index]);
+  return std::max(minCorr, 1.f + width * storage.jerUnitDraw[index]);
 }
 
 // m_SD scaled by how the corrected subjet pair mass moves. Subjets are
@@ -977,13 +1029,15 @@ float AnalyzerCore::FatJetSoftDropRatio(
     const float subPt = SubJet_pt[j];
     const float sf = myCorr->GetJERSF(SubJet_eta[j], subPt, jerVar);
     const float subGenPt = storage.sdSubGenPt[index][s];
+    const float minCorr = MinSmearFactor(subPt, SubJet_eta[j], SubJet_mass[j]);
     float factor = 1.f;
     if (subGenPt > 0.f) {
-      factor = std::max(0.f, 1.f + (sf - 1.f) * (subPt - subGenPt) / subPt);
+      factor = std::max(minCorr, 1.f + (sf - 1.f) * (subPt - subGenPt) /
+                                           std::max(subPt, 1e-6f));
     } else if (sf > 1.f) {
-      factor = std::max(0.f, 1.f + storage.sdSubResolution[index][s] *
-                                       std::sqrt(sf * sf - 1.f) *
-                                       storage.sdSubDraw[index][s]);
+      factor = std::max(minCorr, 1.f + storage.sdSubResolution[index][s] *
+                                           std::sqrt(sf * sf - 1.f) *
+                                           storage.sdSubDraw[index][s]);
     }
     if (jesVar != MyCorrection::variation::nom)
       factor *= myCorr->GetJESUncertaintySF(SubJet_eta[j], subPt, jesVar,
@@ -998,8 +1052,8 @@ float AnalyzerCore::FatJetSoftDropRatio(
 
 // Stage 1: JEC re-derived from the raw momentum, the nominal JER smearing and
 // the nominal SoftDrop mass. Every random draw and gen match the variation
-// stages need is taken here, in the same order as before the split, and
-// stored on the SoA.
+// stages need is taken here and stored on the SoA. The legacy-mode draws keep
+// their order (fat jet, then its two subjets, jet by jet).
 void AnalyzerCore::PopulateFatJetNominal(FatJetSoA &storage) {
   const std::size_t count = storage.size();
   auto reset = [count](std::vector<float> &lane) { lane.assign(count, 0.f); };
@@ -1018,15 +1072,22 @@ void AnalyzerCore::PopulateFatJetNominal(FatJetSoA &storage) {
 
   const float rho = static_cast<float>(Rho_fixedGridRhoFastjetAll.get());
 
-  // Seed per event, as the AK4 path does, so the smearing reproduces across
-  // runs. The offset keeps AK8 off the same draws as AK4.
-  if (!IsDATA)
+  // Legacy mode seeds per event, as the AK4 path does, so the smearing
+  // reproduces across runs; the offset keeps AK8 off the same draws as AK4.
+  // Counter-based mode leaves gRandom alone and keys every draw on the event
+  // and the object, like AK4.
+  const bool counterRng = GetRngMode() == SKNano::RngMode::CounterBased;
+  if (!IsDATA && !counterRng)
     gRandom->SetSeed(static_cast<int>(PuppiMET_pt * 1e6) + 1);
-
-  // Gen-level AK8 jets, for the scaling half of the hybrid smearing. There is
-  // no GenJetAK8 view, so the raw branches are read directly.
-  const std::size_t genCount =
-      IsDATA ? 0u : static_cast<std::size_t>(nGenJetAK8.get());
+  const auto unitDraw = [&](const std::size_t object,
+                            const std::uint64_t stream) -> float {
+    if (!counterRng)
+      return gRandom->Gaus(0.f, 1.f);
+    return static_cast<float>(SKNano::CounterRNG::normal(
+        static_cast<std::uint64_t>(RunNumber.get()),
+        static_cast<std::uint64_t>(luminosityBlock.get()),
+        static_cast<std::uint64_t>(event.get()), object, stream));
+  };
 
   for (std::size_t index = 0; index < count; ++index) {
     const float rawPt = storage.pt[index] * (1.f - storage.rawFactor[index]);
@@ -1063,86 +1124,104 @@ void AnalyzerCore::PopulateFatJetNominal(FatJetSoA &storage) {
       continue;
     }
 
-    const float resolution = myCorr->GetFJER(eta, correctedPt, rho);
-    storage.jerResolution[index] = resolution;
-    float matchedGenPt = -1.f;
-    float bestDR = 0.4f; // AK8 matching cone is R/2 = 0.4
-    for (std::size_t g = 0; g < genCount; ++g) {
-      const float dEta = eta - GenJetAK8_eta[g];
-      float dPhi = phi - GenJetAK8_phi[g];
-      while (dPhi > static_cast<float>(M_PI))
-        dPhi -= 2.f * static_cast<float>(M_PI);
-      while (dPhi < -static_cast<float>(M_PI))
-        dPhi += 2.f * static_cast<float>(M_PI);
-      const float dR = std::sqrt(dEta * dEta + dPhi * dPhi);
-      if (dR >= bestDR)
-        continue;
-      // The gen jet also has to be compatible in momentum, else this is a
-      // coincidental overlap rather than the same jet.
-      if (std::fabs(correctedPt - GenJetAK8_pt[g]) >=
-          3.f * resolution * correctedPt)
-        continue;
-      bestDR = dR;
-      matchedGenPt = GenJetAK8_pt[g];
+    storage.jerResolution[index] = myCorr->GetFJER(eta, correctedPt, rho);
+  }
+  if (count == 0 || !myCorr || IsDATA)
+    return;
+
+  // The matching is 1:1 across jets, so every resolution has to be known
+  // before any jet is smeared. There is no GenJetAK8 view, so the raw
+  // branches are read directly.
+  const std::size_t genCount = static_cast<std::size_t>(nGenJetAK8.get());
+  MatchOneToOne(
+      count, genCount, 0.4f, // AK8 matching cone is R/2 = 0.4
+      [&](const std::size_t i) {
+        const float pt = storage.correctedPt[i];
+        return std::array<float, 4>{pt, storage.eta[i], storage.phi[i],
+                                    storage.jerResolution[i] * pt};
+      },
+      [&](const std::size_t g) {
+        return std::array<float, 3>{GenJetAK8_pt[g], GenJetAK8_eta[g],
+                                    GenJetAK8_phi[g]};
+      },
+      [&](const std::size_t i, const std::size_t g) {
+        storage.jerMatchedGenPt[i] = GenJetAK8_pt[g];
+      });
+
+  // Subjet pairs and their resolutions, then the same 1:1 matching over every
+  // (fat jet, slot) against the gen subjets.
+  const std::size_t nSub = static_cast<std::size_t>(nSubJet.get());
+  const auto subjetIndex = [&](const std::size_t index, const int s) {
+    return static_cast<std::size_t>(s == 0 ? storage.subJetIdx1[index]
+                                           : storage.subJetIdx2[index]);
+  };
+  std::vector<unsigned char> hasSubjets(count, 0);
+  for (std::size_t index = 0; index < count; ++index) {
+    const short sub1 = storage.subJetIdx1[index];
+    const short sub2 = storage.subJetIdx2[index];
+    if (sub1 < 0 || sub2 < 0 || static_cast<std::size_t>(sub1) >= nSub ||
+        static_cast<std::size_t>(sub2) >= nSub)
+      continue;
+    hasSubjets[index] = 1;
+    // Subjets are AK4-scale objects, so the AK4 resolution applies.
+    for (int s = 0; s < 2; ++s) {
+      const std::size_t j = subjetIndex(index, s);
+      storage.sdSubResolution[index][s] =
+          myCorr->GetJER(SubJet_eta[j], SubJet_pt[j], rho);
     }
-    storage.jerMatchedGenPt[index] = matchedGenPt;
+  }
+  const std::size_t nSubGen = static_cast<std::size_t>(nSubGenJetAK8.get());
+  MatchOneToOne(
+      2 * count, nSubGen, 0.2f, // AK4 matching cone, R/2
+      [&](const std::size_t k) {
+        const std::size_t index = k / 2;
+        if (!hasSubjets[index])
+          return std::array<float, 4>{0.f, 0.f, 0.f, 0.f};
+        const std::size_t j = subjetIndex(index, static_cast<int>(k % 2));
+        return std::array<float, 4>{
+            SubJet_pt[j], SubJet_eta[j], SubJet_phi[j],
+            storage.sdSubResolution[index][k % 2] * SubJet_pt[j]};
+      },
+      [&](const std::size_t g) {
+        return std::array<float, 3>{SubGenJetAK8_pt[g], SubGenJetAK8_eta[g],
+                                    SubGenJetAK8_phi[g]};
+      },
+      [&](const std::size_t k, const std::size_t g) {
+        storage.sdSubGenPt[k / 2][k % 2] = SubGenJetAK8_pt[g];
+      });
+
+  for (std::size_t index = 0; index < count; ++index) {
+    const float sdMass = storage.softDropMass[index];
     // One unit draw per jet, reused by the nominal and both variations.
-    storage.jerUnitDraw[index] = gRandom->Gaus(0.f, 1.f);
+    storage.jerUnitDraw[index] = unitDraw(index, kFatJetJerStream);
 
     const float nomFactor =
         FatJetSmearFactor(storage, index, MyCorrection::variation::nom);
-    storage.smearedPtNominal[index] = correctedPt * nomFactor;
-    storage.smearedMassNominal[index] = correctedMass * nomFactor;
+    storage.smearedPtNominal[index] = storage.correctedPt[index] * nomFactor;
+    storage.smearedMassNominal[index] =
+        storage.correctedMass[index] * nomFactor;
 
     // ---- SoftDrop mass --------------------------------------------------
     // m_SD is the invariant mass of the two soft-drop subjets, so its JERC
     // response is the subjets' (AK4), not the fat jet's. Everything is taken
     // as a ratio to the uncorrected subjet pair mass, which NanoAOD already
     // agrees with to well under a percent.
-    const short sub1 = storage.subJetIdx1[index];
-    const short sub2 = storage.subJetIdx2[index];
-    const std::size_t nSub = static_cast<std::size_t>(nSubJet.get());
-    if (sub1 < 0 || sub2 < 0 || static_cast<std::size_t>(sub1) >= nSub ||
-        static_cast<std::size_t>(sub2) >= nSub) {
+    if (!hasSubjets[index]) {
       // No subjet pair recorded: leave m_SD alone rather than guess.
       storage.sdMassNominal[index] = sdMass;
       continue;
     }
 
-    const std::size_t subIdx[2] = {static_cast<std::size_t>(sub1),
-                                   static_cast<std::size_t>(sub2)};
     TLorentzVector reference;
-    const std::size_t nSubGen =
-        static_cast<std::size_t>(nSubGenJetAK8.get());
     for (int s = 0; s < 2; ++s) {
-      const std::size_t j = subIdx[s];
+      const std::size_t j = subjetIndex(index, s);
       TLorentzVector v;
       v.SetPtEtaPhiM(SubJet_pt[j], SubJet_eta[j], SubJet_phi[j],
                      SubJet_mass[j]);
       reference += v;
       // One draw per subjet, reused by every pass so the variations stay a
       // coherent shift of the same pull.
-      storage.sdSubDraw[index][s] = gRandom->Gaus(0.f, 1.f);
-      // Subjets are AK4-scale objects, so the AK4 resolution applies.
-      const float subRes = myCorr->GetJER(SubJet_eta[j], SubJet_pt[j], rho);
-      storage.sdSubResolution[index][s] = subRes;
-      float best = 0.2f; // AK4 matching cone, R/2
-      for (std::size_t g = 0; g < nSubGen; ++g) {
-        const float dEta = SubJet_eta[j] - SubGenJetAK8_eta[g];
-        float dPhi = SubJet_phi[j] - SubGenJetAK8_phi[g];
-        while (dPhi > static_cast<float>(M_PI))
-          dPhi -= 2.f * static_cast<float>(M_PI);
-        while (dPhi < -static_cast<float>(M_PI))
-          dPhi += 2.f * static_cast<float>(M_PI);
-        const float dR = std::sqrt(dEta * dEta + dPhi * dPhi);
-        if (dR >= best)
-          continue;
-        if (std::fabs(SubJet_pt[j] - SubGenJetAK8_pt[g]) >=
-            3.f * subRes * SubJet_pt[j])
-          continue;
-        best = dR;
-        storage.sdSubGenPt[index][s] = SubGenJetAK8_pt[g];
-      }
+      storage.sdSubDraw[index][s] = unitDraw(2 * index + s, kSubJetJerStream);
     }
 
     const float referenceMass = reference.M();

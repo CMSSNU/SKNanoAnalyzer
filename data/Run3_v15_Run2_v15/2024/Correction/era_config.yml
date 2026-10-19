@@ -94,7 +94,7 @@ pog_files:
   #   ctagging:   {pog: BTV, name: ctagging.json.gz}
   #   met:        {pog: JME, name: met.json.gz}
   # AK8 JERC, read through the FJER/FJES global_tags above.
-  jerc_fatjet:        {pog: JME, name: fatJet_jerc.json.gz}
+  jerc_fatjet:        {pog: JME, name: fatJet_jerc.json.gz, required: true}
 
 # Home-made inputs under $SKNANO_DATA/2024/.
 data_files:
