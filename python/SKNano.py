@@ -129,8 +129,6 @@ SOURCE_SNAPSHOT_IGNORE_SUFFIXES = (
     ".o",
     ".pyc",
     ".pkl",
-    ".tsv",
-    ".csv",
     ".npz",
     ".npy",
     ".h5",
