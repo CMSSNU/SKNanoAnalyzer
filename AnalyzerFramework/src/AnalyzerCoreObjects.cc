@@ -2,11 +2,27 @@
 #include "JetView.h"
 #include "TObjArray.h"
 #include "TObjString.h"
+#include "TRandom3.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <vector>
+
+namespace {
+// Same seed for the nominal smearing and its variations, so they share the
+// Gaussian pull and the variation stays a coherent shift. Depends only on the
+// event and the muon direction, so it reproduces across passes.
+inline unsigned int MuonSmearSeed(const unsigned long long eventNumber,
+                                  const float eta, const float phi) {
+  const unsigned int etaBits =
+      static_cast<unsigned int>(std::fabs(eta) * 1000.f);
+  const unsigned int phiBits =
+      static_cast<unsigned int>(std::fabs(phi) * 1000.f);
+  return static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull) ^
+         (etaBits << 8) ^ phiBits;
+}
+} // namespace
 
 // Objects
 Event AnalyzerCore::GetEvent() {
@@ -261,6 +277,7 @@ MuonViewCollection AnalyzerCore::GetAllMuonViews() {
   storage->puppiIsoId.bind(&Muon_puppiIsoId);
   storage->tkIsoId.bind(&Muon_tkIsoId);
   storage->nTrackerLayers.bind(&Muon_nTrackerLayers);
+  storage->tunepRelPt.bind(&Muon_tunepRelPt);
   storage->softMva.bind(&Muon_softMva);
   storage->softMvaRun3.bind(&Muon_softMvaRun3);
   storage->mvaLowPt.bind(&Muon_mvaLowPt);
@@ -271,6 +288,14 @@ MuonViewCollection AnalyzerCore::GetAllMuonViews() {
 
   storage->populateMomentum =
       [this, target = storage.get()] { PopulateMuonMomentum(*target); };
+  storage->populateMomentumVariations = [this, target = storage.get()] {
+    PopulateMuonMomentumVariations(*target);
+  };
+  storage->populateHighPt =
+      [this, target = storage.get()] { PopulateMuonHighPt(*target); };
+  storage->populateHighPtVariations = [this, target = storage.get()] {
+    PopulateMuonHighPtVariations(*target);
+  };
 
   MuonViewCollection result(std::move(storage));
   cachedMuonViews = result;
@@ -278,66 +303,240 @@ MuonViewCollection AnalyzerCore::GetAllMuonViews() {
   return cachedMuonViews;
 }
 
+// Rochester corrects toward the matched generator muon; the POG recipe does
+// not need the match, so only that path pays for it.
+float AnalyzerCore::MuonRochesterMatchedGenPt(const MuonSoA &storage,
+                                              const std::size_t index,
+                                              GenViewCollection &truth,
+                                              bool &truthLoaded) {
+  const short genIndex = storage.genPartIdx[index];
+  if (genIndex >= 0 && static_cast<std::size_t>(genIndex) < GenPart_pt.size() &&
+      std::abs(GenPart_pdgId[genIndex]) == 13 &&
+      GenPart_status[genIndex] == 1 &&
+      GenPart_genPartIdxMother[genIndex] >= 0) {
+    return GenPart_pt[genIndex];
+  }
+  if (!truthLoaded) {
+    truth = GetAllGenViews();
+    truthLoaded = true;
+  }
+  TLorentzVector reco;
+  reco.SetPtEtaPhiM(storage.pt[index], storage.eta[index], storage.phi[index],
+                    storage.mass[index]);
+  float matchedPt = 0.f;
+  float bestDistance = std::numeric_limits<float>::max();
+  for (const auto gen : truth) {
+    if (gen.Status() != 1 || std::abs(gen.PdgId()) != 13 ||
+        gen.MotherIndex() < 0 || gen.P4().DeltaR(reco) > 0.2)
+      continue;
+    const float distance =
+        std::pow(gen.P4().DeltaR(reco) / 0.005f, 2) +
+        std::pow((storage.pt[index] / gen.Pt() - 1.f) / 0.02f, 2);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      matchedPt = gen.Pt();
+    }
+  }
+  return matchedPt;
+}
+
+// Stage 1: the nominal medium-pT momentum. This is what Pt() reads, so it is
+// the only stage the default path materialises.
 void AnalyzerCore::PopulateMuonMomentum(MuonSoA &storage) {
   const std::size_t count = storage.rawSize();
   storage.correctedPt.assign(count, 0.f);
   storage.miniAODPt.assign(count, 0.f);
-  storage.momentumScaleUp.assign(count, 0.f);
-  storage.momentumScaleDown.assign(count, 0.f);
+
+  const bool usePOGScaleSmearing = myCorr && myCorr->HasMuonScaleSmearing();
+  const unsigned long long eventNumber =
+      static_cast<unsigned long long>(event.get());
+  const unsigned int lumiBlock =
+      static_cast<unsigned int>(luminosityBlock.get());
 
   GenViewCollection truth;
   bool truthLoaded = false;
   for (std::size_t index = 0; index < count; ++index) {
     const float pt = storage.pt[index];
+    storage.miniAODPt[index] = pt;
+    if (usePOGScaleSmearing) {
+      const int trackerLayers =
+          IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
+      storage.correctedPt[index] =
+          myCorr->GetMuonScaleSmearing(storage.charge[index], pt,
+                                       storage.eta[index], storage.phi[index],
+                                       trackerLayers, eventNumber, lumiBlock,
+                                       /*withVariations=*/false)
+              .nominal;
+      continue;
+    }
+    if (!myCorr) {
+      storage.correctedPt[index] = pt;
+      continue;
+    }
+    const float matchedPt =
+        IsDATA ? 0.f
+               : MuonRochesterMatchedGenPt(storage, index, truth, truthLoaded);
+    const int trackerLayers =
+        IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
+    storage.correctedPt[index] =
+        pt * myCorr->GetMuonScaleAndError(storage.charge[index], pt,
+                                          storage.eta[index],
+                                          storage.phi[index], trackerLayers,
+                                          matchedPt)
+                 .scale;
+  }
+}
+
+// Stage 2: scale and resolution nuisances of the medium-pT correction. The
+// POG nominal is deterministic (the draw comes from the file's hash
+// generator), so recomputing it here reproduces stage 1 exactly.
+void AnalyzerCore::PopulateMuonMomentumVariations(MuonSoA &storage) {
+  const std::size_t count = storage.rawSize();
+  storage.momentumScaleUp.assign(count, 0.f);
+  storage.momentumScaleDown.assign(count, 0.f);
+  storage.momentumResUp.assign(count, 0.f);
+  storage.momentumResDown.assign(count, 0.f);
+
+  const bool usePOGScaleSmearing = myCorr && myCorr->HasMuonScaleSmearing();
+  const unsigned long long eventNumber =
+      static_cast<unsigned long long>(event.get());
+  const unsigned int lumiBlock =
+      static_cast<unsigned int>(luminosityBlock.get());
+
+  GenViewCollection truth;
+  bool truthLoaded = false;
+  for (std::size_t index = 0; index < count; ++index) {
+    const float pt = storage.pt[index];
+    const int trackerLayers =
+        IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
+    if (usePOGScaleSmearing) {
+      const MyCorrection::MuonMomentumLanes lanes = myCorr->GetMuonScaleSmearing(
+          storage.charge[index], pt, storage.eta[index], storage.phi[index],
+          trackerLayers, eventNumber, lumiBlock);
+      storage.momentumScaleUp[index] = lanes.scaleUp;
+      storage.momentumScaleDown[index] = lanes.scaleDown;
+      storage.momentumResUp[index] = lanes.resUp;
+      storage.momentumResDown[index] = lanes.resDown;
+      continue;
+    }
+    MyCorrection::MuonScaleAndError scale{1.f, 0.f};
+    if (myCorr) {
+      const float matchedPt =
+          IsDATA ? 0.f
+                 : MuonRochesterMatchedGenPt(storage, index, truth, truthLoaded);
+      scale = myCorr->GetMuonScaleAndError(storage.charge[index], pt,
+                                           storage.eta[index],
+                                           storage.phi[index], trackerLayers,
+                                           matchedPt);
+    }
+    storage.momentumScaleUp[index] = pt * (scale.scale + scale.error);
+    storage.momentumScaleDown[index] = pt * (scale.scale - scale.error);
+    // Rochester carries no resolution nuisance of its own.
+    storage.momentumResUp[index] = storage.correctedPt[index];
+    storage.momentumResDown[index] = storage.correctedPt[index];
+  }
+}
+
+// Stage 3: the high-pT momentum. The regime is decided on the pre-correction
+// TuneP pt and latched here, so later passes cannot reclassify a muon that a
+// correction moved across the boundary.
+void AnalyzerCore::PopulateMuonHighPt(MuonSoA &storage) {
+  const std::size_t count = storage.rawSize();
+  storage.tunePPt.assign(count, 0.f);
+  storage.highPtRegime.assign(count, 0);
+  storage.highPtPt.assign(count, 0.f);
+
+  for (std::size_t index = 0; index < count; ++index) {
     const float eta = storage.eta[index];
     const float phi = storage.phi[index];
     const int charge = storage.charge[index];
-    float matchedPt = 0.f;
+    const float tunePPt = storage.pt[index] * storage.tunepRelPt[index];
+    const bool highPt = tunePPt >= MyCorrection::HIGHPT_MUON_MIN_PT;
+    storage.tunePPt[index] = tunePPt;
+    storage.highPtRegime[index] = highPt ? 1 : 0;
 
-    if (!IsDATA) {
-      const short genIndex = storage.genPartIdx[index];
-      if (genIndex >= 0 &&
-          static_cast<std::size_t>(genIndex) < GenPart_pt.size() &&
-          std::abs(GenPart_pdgId[genIndex]) == 13 &&
-          GenPart_status[genIndex] == 1 &&
-          GenPart_genPartIdxMother[genIndex] >= 0) {
-        matchedPt = GenPart_pt[genIndex];
-      } else {
-        if (!truthLoaded) {
-          truth = GetAllGenViews();
-          truthLoaded = true;
-        }
-        TLorentzVector reco;
-        reco.SetPtEtaPhiM(pt, eta, phi, storage.mass[index]);
-        float bestDistance = std::numeric_limits<float>::max();
-        for (const auto gen : truth) {
-          if (gen.Status() != 1 || std::abs(gen.PdgId()) != 13 ||
-              gen.MotherIndex() < 0 || gen.P4().DeltaR(reco) > 0.2)
-            continue;
-          const float distance =
-              std::pow(gen.P4().DeltaR(reco) / 0.005f, 2) +
-              std::pow((pt / gen.Pt() - 1.f) / 0.02f, 2);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            matchedPt = gen.Pt();
-          }
-        }
-      }
+    if (!highPt) {
+      // Below the boundary the medium-pT correction already covers scale and
+      // resolution, so the high-pT lane mirrors it. Smearing here again
+      // would double count against the medium-pT correction.
+      storage.highPtPt[index] = storage.correctedPt[index];
+      continue;
     }
-
-    MyCorrection::MuonScaleAndError scale{1.f, 0.f};
-    if (myCorr) {
-      const int trackerLayers =
-          IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
-      scale = myCorr->GetMuonScaleAndError(charge, pt, eta, phi,
-                                            trackerLayers, matchedPt);
+    if (!myCorr) {
+      storage.highPtPt[index] = tunePPt;
+      continue;
     }
-    storage.miniAODPt[index] = pt;
-    storage.momentumScaleUp[index] = pt * (scale.scale + scale.error);
-    storage.momentumScaleDown[index] = pt * (scale.scale - scale.error);
-    storage.correctedPt[index] = pt * scale.scale;
+    // The Generalized Endpoint bias belongs to data, so it is removed there
+    // and simulation is left alone.
+    if (IsDATA) {
+      storage.highPtPt[index] = myCorr->GetMuonGEScaledPt(
+          tunePPt, eta, phi, charge, MyCorrection::variation::nom);
+      continue;
+    }
+    // Extra resolution smearing, simulation and high-pT regime only.
+    const float momentum = tunePPt * std::cosh(eta);
+    const unsigned int seed = MuonSmearSeed(event, eta, phi);
+    storage.highPtPt[index] =
+        tunePPt * myCorr->GetMuonHighPtSmearFactor(
+                      momentum, eta, seed, MyCorrection::variation::nom);
   }
-  storage.momentumReady = true;
+}
+
+// Stage 4: the high-pT nuisances. Below the boundary they mirror the
+// medium-pT ones; above it the seeded smear factor reproduces stage 3.
+void AnalyzerCore::PopulateMuonHighPtVariations(MuonSoA &storage) {
+  const std::size_t count = storage.rawSize();
+  storage.highPtScaleUp.assign(count, 0.f);
+  storage.highPtScaleDown.assign(count, 0.f);
+  storage.highPtResUp.assign(count, 0.f);
+  storage.highPtResDown.assign(count, 0.f);
+
+  for (std::size_t index = 0; index < count; ++index) {
+    if (storage.highPtRegime[index] == 0) {
+      storage.highPtScaleUp[index] = storage.momentumScaleUp[index];
+      storage.highPtScaleDown[index] = storage.momentumScaleDown[index];
+      storage.highPtResUp[index] = storage.momentumResUp[index];
+      storage.highPtResDown[index] = storage.momentumResDown[index];
+      continue;
+    }
+    const float highPtPt = storage.highPtPt[index];
+    if (!myCorr || IsDATA) {
+      // Data is never varied: the nuisance rides on the simulation templates.
+      storage.highPtScaleUp[index] = highPtPt;
+      storage.highPtScaleDown[index] = highPtPt;
+      storage.highPtResUp[index] = highPtPt;
+      storage.highPtResDown[index] = highPtPt;
+      continue;
+    }
+    const float eta = storage.eta[index];
+    const float phi = storage.phi[index];
+    const int charge = storage.charge[index];
+    const float tunePPt = storage.tunePPt[index];
+    const float momentum = tunePPt * std::cosh(eta);
+    const unsigned int seed = MuonSmearSeed(event, eta, phi);
+    const float nomFactor = myCorr->GetMuonHighPtSmearFactor(
+        momentum, eta, seed, MyCorrection::variation::nom);
+    const float upFactor = myCorr->GetMuonHighPtSmearFactor(
+        momentum, eta, seed, MyCorrection::variation::up);
+    const float downFactor = myCorr->GetMuonHighPtSmearFactor(
+        momentum, eta, seed, MyCorrection::variation::down);
+    // Shift by the kappa uncertainty alone. Moving simulation by the full
+    // kappa would make the nuisance the size of the correction rather than of
+    // its error, which at TeV momenta is a large difference.
+    storage.highPtScaleUp[index] =
+        myCorr->GetMuonGESigmaShiftedPt(tunePPt, eta, phi, charge,
+                                        MyCorrection::variation::up) *
+        nomFactor;
+    storage.highPtScaleDown[index] =
+        myCorr->GetMuonGESigmaShiftedPt(tunePPt, eta, phi, charge,
+                                        MyCorrection::variation::down) *
+        nomFactor;
+    // Variations ride on the nominal as a ratio so the shared pull cancels.
+    const float ratioUp = (nomFactor > 0.f) ? upFactor / nomFactor : 1.f;
+    const float ratioDown = (nomFactor > 0.f) ? downFactor / nomFactor : 1.f;
+    storage.highPtResUp[index] = highPtPt * ratioUp;
+    storage.highPtResDown[index] = highPtPt * ratioDown;
+  }
 }
 
 MuonViewCollection AnalyzerCore::SelectMuonViews(
@@ -380,9 +579,115 @@ AnalyzerCore::SelectMuonIndices(const MuonViewCollection &muons,
   return SelectMuonIndices(muons, seed_indices, ID, ptmin, fetamax);
 }
 
-ElectronViewCollection AnalyzerCore::GetAllElectronViews() {
+std::vector<std::size_t> AnalyzerCore::SelectHighPtMuonIndices(
+    const MuonViewCollection &muons,
+    const std::vector<std::size_t> &seed_indices, const MuonView::MuonID ID,
+    const float ptmin, const float fetamax) const {
+  std::vector<std::size_t> selected;
+  selected.reserve(muons.size());
+  for (auto i : seed_indices) {
+    const auto &mu = muons[i];
+    // Cut on the high-pT momentum rather than Pt(): above the boundary that is
+    // TuneP with the Generalized Endpoint scale, which is what the analysis
+    // actually uses for these muons.
+    if (!(mu.HighPtPt() > ptmin))
+      continue;
+    if (!(std::abs(mu.Eta()) < fetamax))
+      continue;
+    if (!mu.PassID(ID))
+      continue;
+    selected.push_back(i);
+  }
+  return selected;
+}
+
+std::vector<std::size_t> AnalyzerCore::SelectHighPtMuonIndices(
+    const MuonViewCollection &muons, const MuonView::MuonID ID,
+    const float ptmin, const float fetamax) const {
+  auto seed_indices = AllIndices(muons);
+  return SelectHighPtMuonIndices(muons, seed_indices, ID, ptmin, fetamax);
+}
+
+// Stage 1: the nominal EGM correction, a scale on data and a smearing in
+// simulation. One Gaussian draw per electron is kept for the variation
+// stage, which is what makes the variations coherent shifts rather than
+// independent re-smearings.
+void AnalyzerCore::PopulateElectronMomentum(ElectronSoA &storage) {
+  const std::size_t count = storage.size();
+  storage.correctedPt.assign(count, 0.f);
+  storage.smearDraw.assign(count, 0.f);
+
+  for (std::size_t index = 0; index < count; ++index) {
+    const float rawPt = storage.pt[index];
+    if (!myCorr) {
+      storage.correctedPt[index] = rawPt;
+      continue;
+    }
+    const float scEta = storage.scEta[index];
+    const float r9 = storage.r9[index];
+    if (IsDATA) {
+      // Data takes the scale only; there is nothing to smear.
+      storage.correctedPt[index] =
+          rawPt * myCorr->GetElectronScaleCorr(scEta, storage.seedGain[index],
+                                               RunNumber, r9, rawPt);
+      continue;
+    }
+    const unsigned int seed = MuonSmearSeed(event, scEta, storage.phi[index]);
+    TRandom3 rng(seed);
+    const float draw = rng.Gaus(0.f, 1.f);
+    storage.smearDraw[index] = draw;
+    const float widthNom = myCorr->GetElectronSmearWidth(
+        rawPt, r9, scEta, MyCorrection::variation::nom);
+    storage.correctedPt[index] = rawPt * (1.f + widthNom * draw);
+  }
+}
+
+// Stage 2: the scale and smearing nuisances. Smear variations rescale the
+// raw momentum with the stage-1 draw; scale variations multiply the already
+// smeared momentum. Data carries no variation.
+void AnalyzerCore::PopulateElectronMomentumVariations(ElectronSoA &storage) {
+  const std::size_t count = storage.size();
+  storage.scaleUpPt.assign(count, 0.f);
+  storage.scaleDownPt.assign(count, 0.f);
+  storage.smearUpPt.assign(count, 0.f);
+  storage.smearDownPt.assign(count, 0.f);
+
+  for (std::size_t index = 0; index < count; ++index) {
+    const float corrected = storage.correctedPt[index];
+    if (!myCorr || IsDATA) {
+      storage.scaleUpPt[index] = corrected;
+      storage.scaleDownPt[index] = corrected;
+      storage.smearUpPt[index] = corrected;
+      storage.smearDownPt[index] = corrected;
+      continue;
+    }
+    const float rawPt = storage.pt[index];
+    const float scEta = storage.scEta[index];
+    const float r9 = storage.r9[index];
+    const unsigned char seedGain = storage.seedGain[index];
+    const float draw = storage.smearDraw[index];
+    storage.smearUpPt[index] =
+        rawPt * (1.f + draw * myCorr->GetElectronSmearWidth(
+                                  rawPt, r9, scEta, MyCorrection::variation::up));
+    storage.smearDownPt[index] =
+        rawPt * (1.f + draw * myCorr->GetElectronSmearWidth(
+                                  rawPt, r9, scEta, MyCorrection::variation::down));
+    storage.scaleUpPt[index] =
+        corrected * myCorr->GetElectronScaleUnc(scEta, seedGain, RunNumber, r9,
+                                                rawPt,
+                                                MyCorrection::variation::up);
+    storage.scaleDownPt[index] =
+        corrected * myCorr->GetElectronScaleUnc(scEta, seedGain, RunNumber, r9,
+                                                rawPt,
+                                                MyCorrection::variation::down);
+  }
+}
+
+ElectronViewCollection AnalyzerCore::GetAllElectronViews(bool skipCrack) {
   const Long64_t entry = CurrentEntry();
-  if (cachedElectronViewsEntry == entry)
+  // Only the default collection is cached; a crack-skipping request is a
+  // different set of electrons and would otherwise poison the cache.
+  if (!skipCrack && cachedElectronViewsEntry == entry)
     return cachedElectronViews;
 
   auto storage = std::make_shared<ElectronSoA>();
@@ -429,6 +734,15 @@ ElectronViewCollection AnalyzerCore::GetAllElectronViews() {
   storage->readRho = [this] {
     return static_cast<float>(Rho_fixedGridRhoFastjetAll.get());
   };
+  storage->populateMomentum = [this, storagePtr = storage.get()] {
+    PopulateElectronMomentum(*storagePtr);
+  };
+  storage->populateMomentumVariations = [this, storagePtr = storage.get()] {
+    PopulateElectronMomentumVariations(*storagePtr);
+  };
+
+  if (skipCrack)
+    return ElectronViewCollection(std::move(storage), true);
 
   ElectronViewCollection result(std::move(storage));
   cachedElectronViews = result;

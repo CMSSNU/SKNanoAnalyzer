@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "EventRange.h"
@@ -66,7 +67,41 @@ struct ElectronSoA {
     mutable bool rhoReady = false;
     mutable bool rhoComputing = false;
 
+    // Energy scale and smearing lanes. Run 3 NanoAOD ships uncalibrated, so
+    // the nominal correction lives here: a scale on data, a smearing in
+    // simulation. Populated lazily on first access, like the muon momentum.
+    std::vector<float> correctedPt;
+    std::vector<float> scaleUpPt;
+    std::vector<float> scaleDownPt;
+    std::vector<float> smearUpPt;
+    std::vector<float> smearDownPt;
+    // The unit Gaussian draw behind the nominal smearing, kept so the smear
+    // variations shift the same pull rather than re-drawing.
+    std::vector<float> smearDraw;
+    // Providers, bound by AnalyzerCore. The nominal stage is what Pt() reads;
+    // the variation stage is materialised only when a variation lane is.
+    std::function<void()> populateMomentum;
+    std::function<void()> populateMomentumVariations;
+    mutable bool momentumReady = false;
+    mutable bool momentumComputing = false;
+    mutable bool momentumVariationsReady = false;
+    mutable bool momentumVariationsComputing = false;
+
     std::size_t size() const { return pt.size(); }
+
+    // No provider bound (e.g. a standalone unit test) leaves the lanes empty
+    // and the accessors fall back to the uncorrected pt.
+    void ensureMomentum() const {
+        // Validate the event epoch before a provider reads several branches.
+        static_cast<void>(pt.size());
+        materialise(populateMomentum, momentumReady, momentumComputing,
+                    "momentum");
+    }
+    void ensureMomentumVariations() const {
+        ensureMomentum();
+        materialise(populateMomentumVariations, momentumVariationsReady,
+                    momentumVariationsComputing, "momentum variation");
+    }
 
     float getRho() const {
         static_cast<void>(pt.size());
@@ -87,6 +122,25 @@ struct ElectronSoA {
             throw;
         }
     }
+
+private:
+    static void materialise(const std::function<void()> &provider, bool &ready,
+                            bool &computing, const char *what) {
+        if (ready || !provider)
+            return;
+        if (computing)
+            throw SKNano::LogicError(std::string("[ElectronSoA] recursive ") +
+                                     what + " computation");
+        computing = true;
+        try {
+            provider();
+            ready = true;
+            computing = false;
+        } catch (...) {
+            computing = false;
+            throw;
+        }
+    }
 };
 
 class ElectronView {
@@ -101,7 +155,37 @@ public:
 
     bool valid() const { return static_cast<bool>(store) && idx < store->size(); }
 
-    float Pt() const { return store->pt[idx]; }
+    // Carries the EGM energy correction: the scale on data, the smearing in
+    // simulation. Mirrors MuonView::Pt(), which is likewise corrected. Use
+    // MiniAODPt() for the uncorrected NanoAOD value.
+    float Pt() const {
+        assertCurrentEvent();
+        return idx < store->correctedPt.size() ? store->correctedPt[idx]
+                                               : store->pt[idx];
+    }
+    float MiniAODPt() const { return store->pt[idx]; }
+    // Scale variations ride on the smeared momentum; smear variations ride on
+    // the raw one with the nominal random draw. Both follow the EGM recipe.
+    float ScaleUpPt() const {
+        static_cast<void>(store->size());
+        store->ensureMomentumVariations();
+        return idx < store->scaleUpPt.size() ? store->scaleUpPt[idx] : Pt();
+    }
+    float ScaleDownPt() const {
+        static_cast<void>(store->size());
+        store->ensureMomentumVariations();
+        return idx < store->scaleDownPt.size() ? store->scaleDownPt[idx] : Pt();
+    }
+    float SmearUpPt() const {
+        static_cast<void>(store->size());
+        store->ensureMomentumVariations();
+        return idx < store->smearUpPt.size() ? store->smearUpPt[idx] : Pt();
+    }
+    float SmearDownPt() const {
+        static_cast<void>(store->size());
+        store->ensureMomentumVariations();
+        return idx < store->smearDownPt.size() ? store->smearDownPt[idx] : Pt();
+    }
     float Eta() const { return store->eta[idx]; }
     float Phi() const { return store->phi[idx]; }
     float M() const { return store->mass[idx]; }
@@ -173,7 +257,10 @@ private:
     bool Pass_HcToWALooseRun2() const;
     bool Pass_HcToWALooseRun3() const;
 
-    void assertCurrentEvent() const { static_cast<void>(store->size()); }
+    void assertCurrentEvent() const {
+        static_cast<void>(store->size());
+        store->ensureMomentum();
+    }
     const ElectronSoA *store = nullptr;
     std::size_t idx = 0;
 };
