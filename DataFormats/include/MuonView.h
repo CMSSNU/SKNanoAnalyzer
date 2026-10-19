@@ -92,8 +92,6 @@ struct MuonSoA {
     void ensureMomentum() const {
         // Validate the event epoch before a provider reads several branches.
         static_cast<void>(pt.size());
-        if (!populateMomentum)
-            throw SKNano::LogicError("[MuonSoA] momentum provider is not bound");
         materialise(populateMomentum, momentumReady, momentumComputing,
                     "momentum");
     }
@@ -108,12 +106,15 @@ struct MuonSoA {
     }
 
 private:
-    // An unbound optional provider leaves its lanes empty, and the accessors
-    // fall back to the stage below.
+    // Every stage is bound by AnalyzerCore; a missing provider would leave
+    // its lanes empty, so it is an error rather than a fallback.
     static void materialise(const std::function<void()> &provider, bool &ready,
                             bool &computing, const char *what) {
-        if (ready || !provider)
+        if (ready)
             return;
+        if (!provider)
+            throw SKNano::LogicError(std::string("[MuonSoA] ") + what +
+                                     " provider is not bound");
         if (computing)
             throw SKNano::LogicError(std::string("[MuonSoA] recursive ") + what +
                                      " computation");
@@ -149,21 +150,21 @@ public:
     float MiniAODPt() const { assertCurrentEvent(); return store->miniAODPt[idx]; }
     float MomentumScaleUp() const {
         store->ensureMomentumVariations();
-        return idx < store->momentumScaleUp.size() ? store->momentumScaleUp[idx] : Pt();
+        return lane(store->momentumScaleUp);
     }
     float MomentumScaleDown() const {
         store->ensureMomentumVariations();
-        return idx < store->momentumScaleDown.size() ? store->momentumScaleDown[idx] : Pt();
+        return lane(store->momentumScaleDown);
     }
     // Resolution nuisance of the medium-pT correction (simulation only; equals
     // Pt() on data and for eras corrected with Rochester).
     float MomentumResUp() const {
         store->ensureMomentumVariations();
-        return idx < store->momentumResUp.size() ? store->momentumResUp[idx] : Pt();
+        return lane(store->momentumResUp);
     }
     float MomentumResDown() const {
         store->ensureMomentumVariations();
-        return idx < store->momentumResDown.size() ? store->momentumResDown[idx] : Pt();
+        return lane(store->momentumResDown);
     }
 
     // ---- High-pT treatment (MUO POG "High pT" prescription) -----------------
@@ -173,20 +174,20 @@ public:
     // TuneP momentum before any correction. This is what decides the regime.
     float TunePPt() const {
         store->ensureHighPt();
-        return idx < store->tunePPt.size() ? store->tunePPt[idx] : Pt();
+        return lane(store->tunePPt);
     }
     // Latched at populate time from the pre-correction TuneP pt. Deciding this
     // later, from corrected values, would misclassify any muon that the scale
     // correction or the smearing pushed across the boundary.
     bool IsHighPtRegime() const {
         store->ensureHighPt();
-        return idx < store->highPtRegime.size() && store->highPtRegime[idx] != 0;
+        return lane(store->highPtRegime) != 0;
     }
     // Below the boundary this is the medium-pT momentum, Pt(); above it, the
     // uncorrected TuneP momentum.
     float HighPtPt() const {
         store->ensureHighPt();
-        return idx < store->highPtPt.size() ? store->highPtPt[idx] : Pt();
+        return lane(store->highPtPt);
     }
     // Full momentum from the high-pT lane. The reco scale factor is binned in
     // p rather than pt, so callers need this rather than HighPtPt().
@@ -250,6 +251,14 @@ private:
     void assertCurrentEvent() const {
         static_cast<void>(store->rawSize());
         store->ensureMomentum();
+    }
+    // A stage that ran fills every lane it owns, data included; an empty lane
+    // is a provider bug, not a cue to fall back to the nominal.
+    template <typename T>
+    T lane(const std::vector<T> &values) const {
+        if (idx >= values.size())
+            throw SKNano::LogicError("[MuonView] correction lane is not populated");
+        return values[idx];
     }
     const MuonSoA *store = nullptr;
     std::size_t idx = 0;

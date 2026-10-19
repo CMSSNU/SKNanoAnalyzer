@@ -78,7 +78,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &period,
   // era that configures neither would run with uncorrected muons, and nothing
   // downstream could tell, so refuse to construct rather than warn.
   if (!config.path("roccor").empty()) {
-    loadRoccoR(config.path("roccor"), true);
+    loadRoccoR(config.path("roccor"));
   } else if (!muSS_loaded) {
     throw SKNano::ConfigError(
         "[MyCorrection::MyCorrection] neither muon_scalesmearing nor roccor "

@@ -456,6 +456,7 @@ private:
         cout << "[MyCorrection::loadRoccoR] " << file << endl;
         try {
             rc.init(file);
+            roccorLoaded = true;
             return true;
         } catch (const exception &e) {
             if (optional) {
@@ -658,6 +659,7 @@ private:
     mutable correction::Correction::Ref preparedJESResidual;
 
     RoccoR rc;
+    bool roccorLoaded = false;
     unique_ptr<GoldenJsonParser> golden_json_parser;
     // Every POG spells the systematics differently, so the enum has to be
     // mapped per POG.  These return a string literal rather than a

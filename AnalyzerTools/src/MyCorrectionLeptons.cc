@@ -11,6 +11,9 @@
 MyCorrection::MuonScaleAndError MyCorrection::GetMuonScaleAndError(
     int charge, float pt, float eta, float phi, int trackerLayers,
     const float matched_pt) const {
+  if (!roccorLoaded)
+    throw SKNano::ConfigError("[MyCorrection::GetMuonScaleAndError] RoccoR is "
+                              "not loaded for this era");
   float roccor = 1.;
   float roccor_err = 0.;
 
@@ -180,7 +183,7 @@ float MyCorrection::GetMuonHighPtSF(const TString &key, const float eta,
                                     const float pt,
                                     const variation syst) const {
   if (!cset_muon_highpt)
-    return 1.f;
+    throwNullCorrection("GetMuonHighPtSF");
   // The maps stop at |eta| = 2.4 and start at 50 GeV; correctionlib throws
   // outside them. The JSON applies abs() to eta itself.
   const float clampedEta =
@@ -194,7 +197,7 @@ float MyCorrection::GetMuonHighPtSF(const TString &key, const float eta,
 float MyCorrection::GetMuonHighPtRECOSF(const float eta, const float p,
                                         const variation syst) const {
   if (!cset_muon_highpt)
-    return 1.f;
+    throwNullCorrection("GetMuonHighPtRECOSF");
   // Binned in the full momentum p, not pt -- see the POG high-pT twiki.
   const float clampedEta =
       std::min(std::fabs(eta), HIGHPT_SF_MAX_ABSETA - 1e-3f);
@@ -254,10 +257,8 @@ float MyCorrection::GetElectronScaleUnc(const float scEta,
                                         const variation syst) const {
   if (IsDATA)
     return 1.0;
-  // Eras whose EGM scale-and-smearing file is absent get no variation rather
-  // than a null dereference.
   if (!cset_electron_variation)
-    return 1.0;
+    throwNullCorrection("GetElectronScaleUnc");
 
   switch (Run) {
   case 2: {
@@ -307,7 +308,7 @@ float MyCorrection::GetElectronScaleCorr(const float scEta,
   if (Run != 3)
     return 1.f;
   if (!cset_electron_variation)
-    return 1.f;
+    throwNullCorrection("GetElectronScaleCorr");
 
   // seedGain is a binned axis (edges 0/5/10/15) with clamp flow, not a
   // category, so gains 1, 6 and 12 land in their own bins and anything else
@@ -331,7 +332,7 @@ float MyCorrection::GetElectronSmearWidth(const float pt, const float r9,
   if (Run != 3)
     return 0.f;
   if (!cset_electron_variation)
-    return 0.f;
+    throwNullCorrection("GetElectronSmearWidth");
 
   const string systKey = (syst == variation::up)     ? "smear_up"
                          : (syst == variation::down) ? "smear_down"
