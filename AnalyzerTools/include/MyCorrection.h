@@ -392,7 +392,7 @@ private:
         // absent from the yml is absent here too, and gets skipped at load.
         unordered_map<string, string> paths;
         unordered_set<string> required;
-        unordered_map<string, string> keys;        // LUM, EGM, JME_vetomap
+        unordered_map<string, string> keys;        // LUM, EGM, EGM_scale, EGM_smear, JME_vetomap
         unordered_map<string, string> global_tags; // JER, JES_MC, JES_DATA
 
         string path(const string &name) const {
@@ -584,9 +584,9 @@ private:
     // event only cost a hash and a string construction.
     string LUM_era_key;      // pileup profile, e.g. "Collisions24_..._goldenJSON"
     string EGM_era_key;      // EGM campaign tag, e.g. "2024Prompt"
-    string EGM_era_scale_key;
-    // electronSS_EtDependent.json.gz keys. Every correction in that file
-    // carries the era tag, e.g. EGMScale_Compound_Ele_2023postBPIX.
+    // electronSS_EtDependent.json.gz keys, from the era yml: the 2024 file
+    // names them without an era tag ("Scale", "SmearAndSyst"), the 2022-2023
+    // files with one (EGMScale_Compound_Ele_2023postBPIX, ...).
     string EGM_scale_compound_key; // data: the full scale chain
     string EGM_smear_syst_key;     // simulation: smearing and its systematics
     string EGM_era_prompt;   // era + "Prompt", the Run3 electron SF campaign key

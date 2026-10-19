@@ -47,6 +47,10 @@ warnings:
 keys:
   LUM: Collisions24_BCDEFGHI_goldenJSON
   EGM: "2024Prompt"
+  # electronSS_EtDependent.json.gz: compound scale (data) and smearing with
+  # its systematics (simulation).
+  EGM_scale: Scale
+  EGM_smear: SmearAndSyst
   JME_vetomap: Summer24Prompt24_RunBCDEFGHI_V1
 
 # JERC global tags. "######" is substituted with the correction level

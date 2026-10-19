@@ -103,13 +103,14 @@ MyCorrection::MyCorrection(const TString &era, const TString &period,
   // per event, per lepton or per jet.
   LUM_era_key = config.key("LUM");
   EGM_era_key = config.key("EGM");
-  EGM_era_scale_key = EGM_era_key + "_ScaleJSON";
-  // The 2024 electronSS_EtDependent file names these two without an era tag,
-  // unlike the 2022-2023 campaigns (EGMScale_Compound_Ele_2023postBPIX, ...).
-  // Only 2024 has an era yml today; when an older campaign gets one, resolve
-  // the tagged spelling here instead of hard-coding it.
-  EGM_scale_compound_key = "Scale";
-  EGM_smear_syst_key = "SmearAndSyst";
+  EGM_scale_compound_key = config.key("EGM_scale");
+  EGM_smear_syst_key = config.key("EGM_smear");
+  if (cset_electron_variation &&
+      (EGM_scale_compound_key.empty() || EGM_smear_syst_key.empty()))
+    throw SKNano::ConfigError(
+        "[MyCorrection::MyCorrection] electron_variation is configured but "
+        "keys.EGM_scale or keys.EGM_smear is missing for era " +
+        string(GetEra().Data()));
   EGM_era_prompt = string(GetEra().Data()) + "Prompt";
   JME_vetomap_key = config.key("JME_vetomap");
 
