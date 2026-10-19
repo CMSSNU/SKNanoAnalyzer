@@ -10,18 +10,8 @@
 #include <vector>
 
 namespace {
-// Same seed for the nominal smearing and its variations, so they share the
-// Gaussian pull and the variation stays a coherent shift. Depends only on the
-// event and the muon direction, so it reproduces across passes.
-inline unsigned int MuonSmearSeed(const unsigned long long eventNumber,
-                                  const float eta, const float phi) {
-  const unsigned int etaBits =
-      static_cast<unsigned int>(std::fabs(eta) * 1000.f);
-  const unsigned int phiBits =
-      static_cast<unsigned int>(std::fabs(phi) * 1000.f);
-  return static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull) ^
-         (etaBits << 8) ^ phiBits;
-}
+// Counter-RNG stream of the EGM smearing draw, ASCII "EGM_SMEA".
+constexpr std::uint64_t kElectronSmearStream = 0x45474d5f534d4541ULL;
 } // namespace
 
 // Objects
@@ -525,8 +515,13 @@ std::vector<std::size_t> AnalyzerCore::SelectHighPtMuonIndices(
 // Stage 1: the nominal EGM correction, a scale on data and a smearing in
 // simulation. One Gaussian draw per electron is kept for the variation
 // stage, which is what makes the variations coherent shifts rather than
-// independent re-smearings.
-void AnalyzerCore::PopulateElectronMomentum(ElectronSoA &storage) {
+// independent re-smearings. The draw is counter-based on (run, lumi, event,
+// electron index), so it reproduces in any pass and does not depend on the
+// RNG mode.
+void AnalyzerCore::PopulateElectronMomentum(ElectronSoA &storage,
+                                            const std::uint64_t runNumber,
+                                            const std::uint64_t lumiBlock,
+                                            const std::uint64_t eventNumber) {
   const std::size_t count = storage.size();
   storage.correctedPt.assign(count, 0.f);
   storage.smearDraw.assign(count, 0.f);
@@ -542,13 +537,13 @@ void AnalyzerCore::PopulateElectronMomentum(ElectronSoA &storage) {
     if (IsDATA) {
       // Data takes the scale only; there is nothing to smear.
       storage.correctedPt[index] =
-          rawPt * myCorr->GetElectronScaleCorr(scEta, storage.seedGain[index],
-                                               RunNumber, r9, rawPt);
+          rawPt * myCorr->GetElectronScaleCorr(
+                      scEta, storage.seedGain[index],
+                      static_cast<unsigned int>(runNumber), r9, rawPt);
       continue;
     }
-    const unsigned int seed = MuonSmearSeed(event, scEta, storage.phi[index]);
-    TRandom3 rng(seed);
-    const float draw = rng.Gaus(0.f, 1.f);
+    const float draw = static_cast<float>(SKNano::CounterRNG::normal(
+        runNumber, lumiBlock, eventNumber, index, kElectronSmearStream));
     storage.smearDraw[index] = draw;
     const float widthNom = myCorr->GetElectronSmearWidth(
         rawPt, r9, scEta, MyCorrection::variation::nom);
@@ -649,7 +644,10 @@ ElectronViewCollection AnalyzerCore::GetAllElectronViews(bool skipCrack) {
     return static_cast<float>(Rho_fixedGridRhoFastjetAll.get());
   };
   storage->populateMomentum = [this, storagePtr = storage.get()] {
-    PopulateElectronMomentum(*storagePtr);
+    PopulateElectronMomentum(*storagePtr,
+                             static_cast<std::uint64_t>(RunNumber.get()),
+                             static_cast<std::uint64_t>(luminosityBlock.get()),
+                             static_cast<std::uint64_t>(event.get()));
   };
   storage->populateMomentumVariations = [this, storagePtr = storage.get()] {
     PopulateElectronMomentumVariations(*storagePtr);

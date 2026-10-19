@@ -356,7 +356,9 @@ public:
     void PopulateMuonHighPt(MuonSoA &storage);
     float MuonRochesterMatchedGenPt(const MuonSoA &storage, std::size_t index,
                                     GenViewCollection &truth, bool &truthLoaded);
-    void PopulateElectronMomentum(ElectronSoA &storage);
+    void PopulateElectronMomentum(ElectronSoA &storage, std::uint64_t runNumber,
+                                  std::uint64_t lumiBlock,
+                                  std::uint64_t eventNumber);
     void PopulateElectronMomentumVariations(ElectronSoA &storage);
     void PopulateFatJetNominal(FatJetSoA &storage);
     void PopulateFatJetJerVariations(FatJetSoA &storage);
