@@ -100,6 +100,8 @@ bool ElectronView::PassID(const TString &id) const {
     return false;
 }
 
+// HLT emulation: the online relative isolation is taken against the
+// uncorrected energy, so the cuts scale with MiniAODPt(), not Pt().
 bool ElectronView::Pass_CaloIdL_TrackIdL_IsoVL() const {
     const bool ApplyEA = true;
 
@@ -114,11 +116,11 @@ bool ElectronView::Pass_CaloIdL_TrackIdL_IsoVL() const {
             return false;
         if (!(hoe() < 0.13f))
             return false;
-        if (!(std::max(0.f, ecalPFClusterIso() - Rho() * (ApplyEA ? 0.16544f : 0.f)) < 0.5f * Pt()))
+        if (!(std::max(0.f, ecalPFClusterIso() - Rho() * (ApplyEA ? 0.16544f : 0.f)) < 0.5f * MiniAODPt()))
             return false;
-        if (!(std::max(0.f, hcalPFClusterIso() - Rho() * (ApplyEA ? 0.05956f : 0.f)) < 0.3f * Pt()))
+        if (!(std::max(0.f, hcalPFClusterIso() - Rho() * (ApplyEA ? 0.05956f : 0.f)) < 0.3f * MiniAODPt()))
             return false;
-        if (!(dr03TkSumPt() < 0.2f * Pt()))
+        if (!(dr03TkSumPt() < 0.2f * MiniAODPt()))
             return false;
         return true;
     } else {
@@ -130,11 +132,11 @@ bool ElectronView::Pass_CaloIdL_TrackIdL_IsoVL() const {
             return false;
         if (!(hoe() < 0.13f))
             return false;
-        if (!(std::max(0.f, ecalPFClusterIso() - Rho() * (ApplyEA ? 0.13212f : 0.f)) < 0.5f * Pt()))
+        if (!(std::max(0.f, ecalPFClusterIso() - Rho() * (ApplyEA ? 0.13212f : 0.f)) < 0.5f * MiniAODPt()))
             return false;
-        if (!(std::max(0.f, hcalPFClusterIso() - Rho() * (ApplyEA ? 0.13052f : 0.f)) < 0.3f * Pt()))
+        if (!(std::max(0.f, hcalPFClusterIso() - Rho() * (ApplyEA ? 0.13052f : 0.f)) < 0.3f * MiniAODPt()))
             return false;
-        if (!(dr03TkSumPt() < 0.2f * Pt()))
+        if (!(dr03TkSumPt() < 0.2f * MiniAODPt()))
             return false;
         return true;
     }
