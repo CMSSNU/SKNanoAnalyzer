@@ -571,12 +571,21 @@ void AnalyzerCore::HistogramGroup::Fill(
 void AnalyzerCore::ValidateTreePath(std::string_view treeName) const {
   if (treeName.empty())
     throw SKNano::ConfigError("[AnalyzerCore::BookRNTuple] name is empty");
+  // RNTuples are always written at the top level under their flattened name
+  // (see flattenRNTuplePath), so two Book()ed paths that look unrelated
+  // before flattening -- e.g. "A/B_C" and "A_B/C" -- can still collide on
+  // the same output key.
+  const std::string flatTreeName = flattenRNTuplePath(std::string(treeName));
   for (const auto &[otherNtuple, unused] : rntupleOutputs_) {
     static_cast<void>(unused);
     if (outputPathsConflict(treeName, otherNtuple))
       throw SKNano::ConfigError(
           "[AnalyzerCore::BookRNTuple] output path conflicts with RNTuple '" +
           otherNtuple + "'");
+    if (flatTreeName == flattenRNTuplePath(otherNtuple))
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::BookRNTuple] output path '" + flatTreeName +
+          "' collides after flattening with RNTuple '" + otherNtuple + "'");
   }
   const auto checkHistograms = [&](const auto &histograms) {
     for (const auto &[histogram, unused] : histograms) {
@@ -585,6 +594,13 @@ void AnalyzerCore::ValidateTreePath(std::string_view treeName) const {
         throw SKNano::ConfigError(
             "[AnalyzerCore::BookRNTuple] output path conflicts with histogram '" +
             histogram + "'");
+      // A histogram with no subdirectory is also written under its own name
+      // at the top level, the same place the flattened RNTuple key lands.
+      if (histogram.find('/') == std::string::npos &&
+          flatTreeName == histogram)
+        throw SKNano::ConfigError(
+            "[AnalyzerCore::BookRNTuple] output path '" + flatTreeName +
+            "' collides after flattening with histogram '" + histogram + "'");
     }
   };
   checkHistograms(histmap1d);
@@ -597,12 +613,18 @@ void AnalyzerCore::ValidateHistogramPath(
   if (histogramName.empty())
     throw SKNano::ConfigError(
         "[AnalyzerCore::BookHist] histogram name is empty");
+  const bool topLevel = histogramName.find('/') == std::string_view::npos;
   for (const auto &[ntupleName, unused] : rntupleOutputs_) {
     static_cast<void>(unused);
     if (outputPathsConflict(histogramName, ntupleName))
       throw SKNano::ConfigError(
           "[AnalyzerCore::BookHist] output path conflicts with RNTuple '" +
           ntupleName + "'");
+    if (topLevel && histogramName == flattenRNTuplePath(ntupleName))
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::BookHist] output path '" +
+          std::string(histogramName) +
+          "' collides after flattening with RNTuple '" + ntupleName + "'");
   }
 }
 
