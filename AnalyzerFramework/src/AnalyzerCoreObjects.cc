@@ -12,6 +12,20 @@
 namespace {
 // Counter-RNG stream of the EGM smearing draw, ASCII "EGM_SMEA".
 constexpr std::uint64_t kElectronSmearStream = 0x45474d5f534d4541ULL;
+
+// Subtracts sum(lanePt - MiniAODPt) of the leptons from MET in x and y.
+template <typename Collection, typename LanePt>
+void SubtractLeptonCorrFromMET(const Collection &leptons, Particle &met,
+                               const LanePt &lanePt) {
+  float shiftPx = 0.f;
+  float shiftPy = 0.f;
+  for (const auto lepton : leptons) {
+    const float delta = lanePt(lepton) - lepton.MiniAODPt();
+    shiftPx += delta * std::cos(lepton.Phi());
+    shiftPy += delta * std::sin(lepton.Phi());
+  }
+  met.SetXYZM(met.Px() - shiftPx, met.Py() - shiftPy, 0., 0.);
+}
 } // namespace
 
 // Objects
@@ -703,6 +717,45 @@ bool AnalyzerCore::IsHEMElectron(const ElectronView &electron) const {
 
   return electron.Eta() < -1.25 && electron.Phi() > -1.62 &&
          electron.Phi() < -0.82;
+}
+
+bool AnalyzerCore::PropagateMuonCorrToMET(
+    const MuonViewCollection &muons, Particle &met,
+    const MyCorrection::variation scaleVar,
+    const MyCorrection::variation resVar) const {
+  using V = MyCorrection::variation;
+  if (scaleVar != V::nom && resVar != V::nom)
+    throw std::runtime_error(
+        "[AnalyzerCore::PropagateMuonCorrToMET] Both scale and resolution "
+        "are non-nominal, not supported");
+  SubtractLeptonCorrFromMET(muons, met, [&](const MuonView &muon) {
+    if (scaleVar != V::nom)
+      return scaleVar == V::up ? muon.MomentumScaleUp()
+                               : muon.MomentumScaleDown();
+    if (resVar != V::nom)
+      return resVar == V::up ? muon.MomentumResUp() : muon.MomentumResDown();
+    return muon.Pt();
+  });
+  return true;
+}
+
+bool AnalyzerCore::PropagateElectronCorrToMET(
+    const ElectronViewCollection &electrons, Particle &met,
+    const MyCorrection::variation scaleVar,
+    const MyCorrection::variation smearVar) const {
+  using V = MyCorrection::variation;
+  if (scaleVar != V::nom && smearVar != V::nom)
+    throw std::runtime_error(
+        "[AnalyzerCore::PropagateElectronCorrToMET] Both scale and smearing "
+        "are non-nominal, not supported");
+  SubtractLeptonCorrFromMET(electrons, met, [&](const ElectronView &electron) {
+    if (scaleVar != V::nom)
+      return scaleVar == V::up ? electron.ScaleUpPt() : electron.ScaleDownPt();
+    if (smearVar != V::nom)
+      return smearVar == V::up ? electron.SmearUpPt() : electron.SmearDownPt();
+    return electron.Pt();
+  });
+  return true;
 }
 
 PhotonViewCollection AnalyzerCore::GetAllPhotons() {

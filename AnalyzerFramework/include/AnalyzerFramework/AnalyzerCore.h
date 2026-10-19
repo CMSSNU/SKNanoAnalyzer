@@ -410,6 +410,16 @@ public:
     ElectronViewCollection SelectElectronViews(
         const ElectronViewCollection &electrons,
         std::vector<std::size_t> indices, bool sortByPt = true) const;
+    // NanoAOD MET is built from uncorrected leptons. These subtract, for the
+    // leptons passed, sum(lane pt - MiniAODPt()) along each lepton's phi; the
+    // lane is Pt() or the requested variation. At most one variation may be
+    // non-nominal.
+    bool PropagateMuonCorrToMET(const MuonViewCollection &muons, Particle &met,
+                                MyCorrection::variation scaleVar = MyCorrection::variation::nom,
+                                MyCorrection::variation resVar = MyCorrection::variation::nom) const;
+    bool PropagateElectronCorrToMET(const ElectronViewCollection &electrons, Particle &met,
+                                    MyCorrection::variation scaleVar = MyCorrection::variation::nom,
+                                    MyCorrection::variation smearVar = MyCorrection::variation::nom) const;
     FatJetViewCollection GetAllFatJets();
     SVViewCollection GetAllSVViews();
 
