@@ -57,8 +57,32 @@ bool outputPathsConflict(std::string_view first, std::string_view second) {
   return isParent(first, second) || isParent(second, first);
 }
 
+// RNTuples are written at the top level of the file, with a "dir/sub/name"
+// path flattened to "dir_sub_name" (e.g. "Central/SR_Tree" -> "Central_SR_Tree").
+//
+// hadd in ROOT 6.40.02 (TFileMerger -> RNTuple::Merge) cannot merge an RNTuple
+// that lives inside a TDirectory: the merge "succeeds" but every RNTuple of the
+// output is unreadable ("invalid envelope buffer, too short"), even for a
+// single input file. Written at the top level the same RNTuples merge fine.
+// The directory-placing version is kept below for when ROOT fixes the merger.
+std::string flattenRNTuplePath(const std::string &path) {
+  std::string flat = path;
+  while (!flat.empty() && flat.front() == '/')
+    flat.erase(flat.begin());
+  for (auto &c : flat)
+    if (c == '/')
+      c = '_';
+  return flat;
+}
+
 std::pair<TDirectory *, std::string>
 resolveRNTupleDirectory(TFile &file, const std::string &path) {
+  return {&file, flattenRNTuplePath(path)};
+}
+
+#if 0 // RNTuple inside a TDirectory: breaks hadd (ROOT 6.40.02), see above
+std::pair<TDirectory *, std::string>
+resolveRNTupleDirectory_inDirectory(TFile &file, const std::string &path) {
   const auto slash = path.find_last_of('/');
   if (slash == std::string::npos)
     return {&file, path};
@@ -73,6 +97,7 @@ resolveRNTupleDirectory(TFile &file, const std::string &path) {
                              directoryName + "'");
   return {directory, objectName};
 }
+#endif
 
 // Column representation must be chosen before the model is frozen, so the
 // half-precision requests are applied here, on the way to the first writer.
@@ -436,7 +461,17 @@ void AnalyzerCore::FinalizeRNTuples() {
     // unmergeable.
     if (output->fields.empty())
       continue;
-    ensureRNTupleWriter(*output, name, outfile);
+    // An RNTuple that was never filled has no writer yet. Do not create one just
+    // to persist an empty (zero-cluster) RNTuple: hadd (ROOT 6.40.02,
+    // RNTupleMerger::MergeSourceClusters) aborts with "!clusterIds.empty()
+    // violated" as soon as such an input is merged, so a job in which one
+    // booked RNTuple stayed empty would break the merge of the whole sample.
+    // A missing key therefore means "no entries in this RNTuple".
+    if (!output->writer) {
+      std::cout << "[AnalyzerCore::WriteHist] Skipping empty RNTuple: " << name
+                << " (0 entries, not written)" << std::endl;
+      continue;
+    }
     std::cout << "[AnalyzerCore::WriteHist] Writing RNTuple: " << name
               << " (" << output->entries << " entries)" << std::endl;
     output->writer.reset();
@@ -731,7 +766,12 @@ void AnalyzerCore::WriteHist() {
     for (const auto &[name, output] : rntupleOutputs_) {
       if (output->fields.empty())
         continue;
-      auto reader = ROOT::RNTupleReader::Open(name, outputPartialPath_);
+      if (output->entries == 0)
+        continue;   // never filled -> not written (FinalizeRNTuples)
+      // RNTuples are stored under the flattened top-level name (see
+      // resolveRNTupleDirectory).
+      auto reader = ROOT::RNTupleReader::Open(flattenRNTuplePath(name),
+                                              outputPartialPath_);
       if (reader->GetNEntries() != output->entries)
         throw SKNano::LogicError(
             "[AnalyzerCore::WriteHist] RNTuple entry validation failed for '" +

@@ -61,6 +61,12 @@ def _root_module():
     except ImportError as error:
         raise RuntimeError("PyROOT is required to validate merge inputs") from error
     ROOT.gROOT.SetBatch(True)
+    # A shard holds ~120k histograms.  Left registered in the TFile's in-memory
+    # directory, TFile::Close() then destroys them all at once and that teardown
+    # is quadratic: measured 4.8 s to read a shard and >15 min to close it.
+    # Unregistering makes the same close take 0.1 s.  Nothing here writes
+    # histograms, so owning them in a directory buys us nothing.
+    ROOT.TH1.AddDirectory(False)
     return ROOT
 
 
@@ -145,6 +151,11 @@ def inspect(root, file_path: Path) -> FileSummary:
             histogram = directory.Get(name)
             if not histogram:
                 raise RuntimeError(f"cannot read histogram {path} from {file_path}")
+            # AddDirectory(False) means no TDirectory owns this, so without
+            # handing ownership to Python nothing ever frees it and the ~120k
+            # histograms of every shard pile up (measured: 12.5 GB and climbing
+            # part-way through one sample).  With it, peak stays at 0.68 GB.
+            root.SetOwnership(histogram, True)
             histograms[path] = Histogram(
                 class_name,
                 int(histogram.GetDimension()),
@@ -428,6 +439,8 @@ def merge_histograms(
                     continue
                 if klass and klass.InheritsFrom(root.TH1.Class()):
                     histogram = key.ReadObj()
+                    # Not owned by root_file under AddDirectory(False); see inspect.
+                    root.SetOwnership(histogram, True)
                     if full in totals:
                         if not totals[full].Add(histogram):
                             raise RuntimeError(f"cannot add histogram {full} from {path}")
