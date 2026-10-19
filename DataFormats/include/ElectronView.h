@@ -279,8 +279,6 @@ public:
     using Base = EventRange<ElectronSoA, ElectronView>;
     using Base::Base;
     ElectronViewCollection() = default;
-    explicit ElectronViewCollection(std::shared_ptr<ElectronSoA> storage,
-                                    bool skipCrack);
 };
 
 #endif // ELECTRONVIEW_H

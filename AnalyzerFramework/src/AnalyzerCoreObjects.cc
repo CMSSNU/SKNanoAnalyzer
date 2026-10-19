@@ -589,11 +589,9 @@ void AnalyzerCore::PopulateElectronMomentumVariations(ElectronSoA &storage) {
   }
 }
 
-ElectronViewCollection AnalyzerCore::GetAllElectronViews(bool skipCrack) {
+ElectronViewCollection AnalyzerCore::GetAllElectronViews() {
   const Long64_t entry = CurrentEntry();
-  // Only the default collection is cached; a crack-skipping request is a
-  // different set of electrons and would otherwise poison the cache.
-  if (!skipCrack && cachedElectronViewsEntry == entry)
+  if (cachedElectronViewsEntry == entry)
     return cachedElectronViews;
 
   auto storage = std::make_shared<ElectronSoA>();
@@ -649,9 +647,6 @@ ElectronViewCollection AnalyzerCore::GetAllElectronViews(bool skipCrack) {
   storage->populateMomentumVariations = [this, storagePtr = storage.get()] {
     PopulateElectronMomentumVariations(*storagePtr);
   };
-
-  if (skipCrack)
-    return ElectronViewCollection(std::move(storage), true);
 
   ElectronViewCollection result(std::move(storage));
   cachedElectronViews = result;

@@ -2,22 +2,6 @@
 
 #include <algorithm>
 
-ElectronViewCollection::ElectronViewCollection(std::shared_ptr<ElectronSoA> storage, bool skipCrack)
-    : Base([&storage, skipCrack]() -> Base {
-        if (!storage || !skipCrack)
-            return Base(std::move(storage));
-        std::vector<std::size_t> indices;
-        const std::size_t n = storage->size();
-        indices.reserve(n);
-    for (std::size_t i = 0; i < n; ++i) {
-            const float absScEta = std::fabs(storage->scEta[i]);
-            if (absScEta > 1.444f && absScEta < 1.566f)
-                continue;
-            indices.push_back(i);
-    }
-        return Base(std::move(storage), std::move(indices));
-      }()) {}
-
 ElectronView::EtaRegion ElectronView::etaRegion() const {
     const float absScEta = std::fabs(ScEta());
     if (absScEta < 0.8f)
