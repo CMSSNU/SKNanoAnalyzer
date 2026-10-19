@@ -80,25 +80,6 @@ resolveRNTupleDirectory(TFile &file, const std::string &path) {
   return {&file, flattenRNTuplePath(path)};
 }
 
-#if 0 // RNTuple inside a TDirectory: breaks hadd (ROOT 6.40.02), see above
-std::pair<TDirectory *, std::string>
-resolveRNTupleDirectory_inDirectory(TFile &file, const std::string &path) {
-  const auto slash = path.find_last_of('/');
-  if (slash == std::string::npos)
-    return {&file, path};
-  const std::string directoryName = path.substr(0, slash);
-  const std::string objectName = path.substr(slash + 1);
-  TDirectory *directory = file.GetDirectory(directoryName.c_str());
-  if (!directory)
-    directory = file.mkdir(directoryName.c_str());
-  if (!directory)
-    throw SKNano::LogicError("[AnalyzerCore::BookRNTuple] cannot create "
-                             "output directory '" +
-                             directoryName + "'");
-  return {directory, objectName};
-}
-#endif
-
 // Column representation must be chosen before the model is frozen, so the
 // half-precision requests are applied here, on the way to the first writer.
 void applyHalfPrecision(ROOT::RFieldBase &field) {
