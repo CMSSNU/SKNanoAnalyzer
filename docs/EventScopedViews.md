@@ -11,11 +11,19 @@ been removed from `DataFormats`, `AnalyzerCore`, and `MyCorrection`.
 - `GetAll*Views()` binds a small SoA descriptor and does not read every object
   field.
 - A field activates its NanoAOD column on first access. Derived correction
-  lanes (muon momentum and jet JEC/JER) are populated once per event on first
-  corrected-field access.
+  lanes (muon momentum, AK4 jet and AK8 fat-jet JEC/JER/JES) are populated
+  once per event on first corrected-field access. For both jet collections the
+  nominal lanes never compute a variation: the JER and JES lanes each run their
+  own stage on first access.
 - Selection is represented by raw input indices. `SelectMuonViews()`,
   `SelectElectronViews()`, and `SelectJetViews()` return ranges over those
   indices without copying physics objects.
+- `SelectJetViews()` and its AK8 analogue `SelectFatJetViews()` project:
+  `Pt()`, `M()`, `P4()` (and `SDMass()` for fat jets) read the nominal, JES or
+  JER lane the call asked for, the corrected momentum on data.
+  `SelectFatJetViews()` takes positions in the collection it is given, so a
+  `SelectFatJets()` result works with `AllIndices()`. `SelectFatJets()` cuts on
+  the same lanes but returns raw `FatJetView`s.
 - A view or selected range is valid only for the event in which it was
   created. Access after the loader advances to another event throws.
 - `Lepton` and `Particle` remain explicit value types for output and tool

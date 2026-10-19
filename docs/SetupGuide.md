@@ -299,7 +299,9 @@ carries are also reachable through `CMS_corrections`, a symlink into
 `/cvmfs/cms-griddata.cern.ch`, and that is what `setup.sh` points
 `JSONPOG_REPO_PATH` at. If you have no cvmfs *and* no jsonpog-integration,
 correction lookups fail at runtime; see
-[section 5](#5-common-errors) for the override.
+[section 5](#5-common-errors) for the override. A clone made before the
+submodule URL moved to `cms-nanoAOD/jsonpog-integration` needs
+`git submodule sync external/jsonpog-integration` once.
 
 The analysis-group submodules (`Vcb_Analyzers`, `Hadron_Analyzers`, …) are
 private repositories. Failing to clone them is expected and harmless unless you
