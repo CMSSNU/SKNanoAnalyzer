@@ -42,12 +42,15 @@ snapshots:
 # Printed in red at startup. Use for known-wrong inputs we are living with.
 warnings:
   - "ONNX models for TopPt reweight are 13TeV, not 13.6TeV. Update when available."
-  - "No 2024 entry in any of the three hard-coded high-pT muon maps (Generalized Endpoint kappa, smearing strength, resolution polynomial). Every high-pT momentum lane (HighPtPt, HighPtScaleUp/Down, HighPtResUp/Down) equals TuneP, so the GE and resolution nuisances are identically zero, and GetMuonHighPtResolution returns 0 for every muon. The high-pT ID/RECO/HLT scale factors from muon_HighPt.json.gz are unaffected."
 
 # Era-dependent keys inside the correctionlib files.
 keys:
   LUM: Collisions24_BCDEFGHI_goldenJSON
   EGM: "2024Prompt"
+  # electronSS_EtDependent.json.gz: compound scale (data) and smearing with
+  # its systematics (simulation).
+  EGM_scale: Scale
+  EGM_smear: SmearAndSyst
   JME_vetomap: Summer24Prompt24_RunBCDEFGHI_V1
 
 # JERC global tags. "######" is substituted with the correction level
@@ -94,7 +97,7 @@ pog_files:
   #   ctagging:   {pog: BTV, name: ctagging.json.gz}
   #   met:        {pog: JME, name: met.json.gz}
   # AK8 JERC, read through the FJER/FJES global_tags above.
-  jerc_fatjet:        {pog: JME, name: fatJet_jerc.json.gz}
+  jerc_fatjet:        {pog: JME, name: fatJet_jerc.json.gz, required: true}
 
 # Home-made inputs under $SKNANO_DATA/2024/.
 data_files:

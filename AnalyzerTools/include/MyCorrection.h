@@ -114,20 +114,22 @@ public:
     //
     // HasMuonScaleSmearing() tells the caller which one is configured.
     bool HasMuonScaleSmearing() const { return muSS_loaded; }
-    // POG recipe, valid for 26 < pt < 200 GeV; outside that window every lane
-    // equals pt.  trackerLayers is ignored for data.  The resolution smearing
+    // POG recipe: the scale applies from 26 GeV up, the smearing only while
+    // the scaled pt is inside [26, 200] GeV, the scale uncertainty at any pt.
+    // trackerLayers is ignored for data.  The resolution smearing
     // draws its random number from the file's own deterministic generator
     // (event number, lumi section, phi), so it reproduces across passes and
     // does not depend on the framework RNG mode.
-    // withVariations=false stops after the nominal: the scale and resolution
-    // uncertainties cost four more correctionlib evaluations per muon, and the
-    // nominal path has no use for them. The nominal is deterministic, so a
-    // later full call reproduces it exactly.
-    MuonMomentumLanes GetMuonScaleSmearing(int charge, float pt, float eta,
-                                           float phi, int trackerLayers,
-                                           unsigned long long eventNumber,
-                                           unsigned int lumiBlock,
-                                           bool withVariations = true) const;
+    // Split in two stages: the nominal returns the intermediates the
+    // variations need, so the nominal path pays for the nominal only and the
+    // variation stage does not redo it. Data variations equal the nominal.
+    MuonScaReState GetMuonScaleSmearing(int charge, float pt, float eta,
+                                        float phi, int trackerLayers,
+                                        unsigned long long eventNumber,
+                                        unsigned int lumiBlock) const;
+    MuonMomentumLanes GetMuonScaleSmearingVariations(const MuonScaReState &state,
+                                                     int charge, float eta,
+                                                     float phi) const;
     MuonScaleAndError GetMuonScaleAndError(int charge, float pt, float eta,
                                            float phi, int trackerLayers,
                                            float matchedPt = 0.f) const;
@@ -154,27 +156,6 @@ public:
     float GetMuonHighPtRECOSF(const float eta, const float p,
                               const variation syst = variation::nom) const;
 
-    // Generalized Endpoint momentum scale, for pt above HIGHPT_MUON_MIN_PT and
-    // data only: the bias belongs to data, so it is removed there rather than
-    // injected into simulation. Eras without a kappa map return pt unchanged.
-    float GetMuonGEScaledPt(const float pt, const float eta, const float phi,
-                            const int charge,
-                            const variation syst = variation::nom) const;
-    // The same shift driven by the kappa uncertainty alone, with no central
-    // bias. This is the simulation nuisance: data already carries the nominal
-    // correction, so the template only has to move by the measurement error.
-    // Returns pt unchanged for the nominal variation.
-    float GetMuonGESigmaShiftedPt(const float pt, const float eta,
-                                  const float phi, const int charge,
-                                  const variation syst) const;
-
-    // High-pT resolution width, a cubic in the full momentum p (not pt).
-    float GetMuonHighPtResolution(const float p, const float eta) const;
-    // Extra smearing applied to simulation in the high-pT regime. Returns 1 for
-    // data and for eras with no resolution map.
-    float GetMuonHighPtSmearFactor(const float p, const float eta,
-                                   const unsigned int seed,
-                                   const variation syst = variation::nom) const;
     float GetMuonIDSF(const TString &key, const MuonView &muon,
                       variation syst = variation::nom) const;
     float GetMuonIDSF(const TString &key, const MuonViewCollection &muons,
@@ -208,10 +189,14 @@ public:
     float GetElectronSmearWidth(const float pt, const float r9,
                                 const float scEta,
                                 const variation syst = variation::nom) const;
-    float GetElectronRECOSF(const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    // ID and RECO SFs are binned in signed supercluster eta and pt from 10 GeV
+    // with error flow; pt is clamped to that edge. The view forms read
+    // ScEta() and MiniAODPt().
+    static constexpr float ELECTRON_SF_MIN_PT = 10.f; // ID/RECO map lower edge
+    float GetElectronRECOSF(const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
     float GetElectronRECOSF(const ElectronView &electron, const variation syst = variation::nom) const;
     float GetElectronRECOSF(const ElectronViewCollection &electrons, const variation syst = variation::nom) const;
-    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
     float GetElectronIDSF(const TString &key, const ElectronView &electron, const variation syst = variation::nom) const;
     float GetElectronIDSF(const TString &key, const ElectronViewCollection &electrons, const variation syst = variation::nom) const;
     // ---- HEEP (high-pT) electron ID scale factor ----------------------------
@@ -223,6 +208,8 @@ public:
     // do not configure the file; calling the getter then throws.
     bool HasElectronHEEPIDSF() const { return static_cast<bool>(cset_electron_heep); }
     float GetElectronHEEPIDSF(const float scEta, const float pt,
+                              const variation syst = variation::nom) const;
+    float GetElectronHEEPIDSF(const ElectronView &electron,
                               const variation syst = variation::nom) const;
     static constexpr float HEEP_SF_MIN_PT = 35.f; // map lower edge
     // photon
@@ -262,18 +249,31 @@ public:
                           const variation syst = variation::nom) const;
 
     // Trigger
-    // Single lepton trigger from POG
-    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool isData, const variation syst = variation::nom) const;
+    // Single lepton trigger from POG. The electron HLT maps start at 25 GeV
+    // with error flow; pt is clamped to that edge.
+    static constexpr float ELECTRON_HLT_SF_MIN_PT = 25.f; // HLT map lower edge
+    // The view forms pick the inputs: MiniAODPt() for both flavours, signed
+    // Eta() for muons and signed ScEta() for electrons.
+    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float eta, const float pt, const bool isData, const variation syst = variation::nom) const;
+    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const MuonView &muon, const bool isData, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonView &muon, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonViewCollection &muons, const variation syst = variation::nom) const;
     float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const bool isDATA, const variation syst = variation::nom) const;
+    float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const bool isDATA, const variation syst = variation::nom) const;
     inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, phi, true, syst);
     };
     inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, phi, false, syst);
     };
+    inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const {
+        return GetElectronTriggerEff(Electron_ID_SF_Key, electron, true, syst);
+    };
+    inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const {
+        return GetElectronTriggerEff(Electron_ID_SF_Key, electron, false, syst);
+    };
     float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const;
 
     // PUWeights
     float GetPUWeight(const float nTrueInt, const variation syst = variation::nom, const TString &source = "") const;
@@ -322,13 +322,13 @@ public:
     // jerc_fatjet
     // Mirrors the AK4 functions above, reading fatJet_jerc.json.gz. Kept
     // separate rather than parameterised because the global tags, the
-    // correction set and the caching all differ. The JES uncertainty source
-    // names are capitalised ("Total"), matching the AK8 key naming.
+    // correction set and the caching all differ. "total" (any case, or empty)
+    // resolves to the JSON's "Total" source, as on the AK4 side.
     float GetFJER(const float eta, const float pt, const float rho) const;
-    float GetFJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+    float GetFJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
     float GetFJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const;
-    float GetFJESUncertainty(const float eta, const float pt, const TString &source = "Total") const;
-    float GetFJESUncertaintySF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+    float GetFJESUncertainty(const float eta, const float pt, const TString &source = "total") const;
+    float GetFJESUncertaintySF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "total") const;
 
     // jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, const TString &mapCategory) const;
@@ -392,7 +392,7 @@ private:
         // absent from the yml is absent here too, and gets skipped at load.
         unordered_map<string, string> paths;
         unordered_set<string> required;
-        unordered_map<string, string> keys;        // LUM, EGM, JME_vetomap
+        unordered_map<string, string> keys;        // LUM, EGM, EGM_scale, EGM_smear, JME_vetomap
         unordered_map<string, string> global_tags; // JER, JES_MC, JES_DATA
 
         string path(const string &name) const {
@@ -458,6 +458,7 @@ private:
         cout << "[MyCorrection::loadRoccoR] " << file << endl;
         try {
             rc.init(file);
+            roccorLoaded = true;
             return true;
         } catch (const exception &e) {
             if (optional) {
@@ -583,9 +584,9 @@ private:
     // event only cost a hash and a string construction.
     string LUM_era_key;      // pileup profile, e.g. "Collisions24_..._goldenJSON"
     string EGM_era_key;      // EGM campaign tag, e.g. "2024Prompt"
-    string EGM_era_scale_key;
-    // electronSS_EtDependent.json.gz keys. Every correction in that file
-    // carries the era tag, e.g. EGMScale_Compound_Ele_2023postBPIX.
+    // electronSS_EtDependent.json.gz keys, from the era yml: the 2024 file
+    // names them without an era tag ("Scale", "SmearAndSyst"), the 2022-2023
+    // files with one (EGMScale_Compound_Ele_2023postBPIX, ...).
     string EGM_scale_compound_key; // data: the full scale chain
     string EGM_smear_syst_key;     // simulation: smearing and its systematics
     string EGM_era_prompt;   // era + "Prompt", the Run3 electron SF campaign key
@@ -660,6 +661,7 @@ private:
     mutable correction::Correction::Ref preparedJESResidual;
 
     RoccoR rc;
+    bool roccorLoaded = false;
     unique_ptr<GoldenJsonParser> golden_json_parser;
     // Every POG spells the systematics differently, so the enum has to be
     // mapped per POG.  These return a string literal rather than a

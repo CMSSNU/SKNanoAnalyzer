@@ -188,6 +188,15 @@ The wizard creates the directory and verifies it can write a file there.
 condor and DAG files, per-job logs, a source snapshot, and
 `run_manifest.json`. This is where you look when a job fails.
 
+The source snapshot is `git ls-files` (cached plus untracked-but-not-ignored)
+from the main repository and from every analysis module, skipping any path
+component named in `SOURCE_SNAPSHOT_IGNORE_NAMES` (`output`, `tmp`, `logs`,
+`build`, ...) and any single file over 20 MB; an analysis module that is not
+a git working tree is copied whole instead. Jobs run against this snapshot,
+not your working tree at submission time (`SKNANO_HOME` inside the job
+points at it), so an uncommitted-and-untracked-but-gitignored file (a model
+weights file matched by `.gitignore`, say) will not reach the job.
+
 **What to enter.** The same rule as Q4 — `/gv0/Users/$USER/SKNanoRunlog` on the
 cluster. It is much smaller than the output directory but has many small files.
 
@@ -299,7 +308,9 @@ carries are also reachable through `CMS_corrections`, a symlink into
 `/cvmfs/cms-griddata.cern.ch`, and that is what `setup.sh` points
 `JSONPOG_REPO_PATH` at. If you have no cvmfs *and* no jsonpog-integration,
 correction lookups fail at runtime; see
-[section 5](#5-common-errors) for the override.
+[section 5](#5-common-errors) for the override. A clone made before the
+submodule URL moved to `cms-nanoAOD/jsonpog-integration` needs
+`git submodule sync external/jsonpog-integration` once.
 
 The analysis-group submodules (`Vcb_Analyzers`, `Hadron_Analyzers`, …) are
 private repositories. Failing to clone them is expected and harmless unless you
@@ -375,12 +386,20 @@ SKNano.py -a ExampleRun -i DYto2E_MLL50to120 -e 2024 -n 1 --no_exec
 Then, in the working directory the submission printed:
 
 ```bash
-# with [SINGULARITY_IMAGE] set, run.sh expects the container's own /opt/conda
+# with [SINGULARITY_IMAGE] set, run.sh activates the submitter's own
+# environment by its absolute prefix (bind-mounted in from the host), falling
+# back to activating it by name only if that prefix isn't visible in the image
 apptainer exec -B /gv0 -B /data6 "$SINGULARITY_IMAGE" bash run.sh 1
 
-# with [SINGULARITY_IMAGE] empty, run.sh points at your MAMBA_ROOT_PREFIX
+# with [SINGULARITY_IMAGE] empty, run.sh falls back the same way, starting
+# from your MAMBA_ROOT_PREFIX instead of the image's /opt/conda
 bash run.sh 1
 ```
+
+A run submitted from inside the image cannot be re-run by hand on a login
+node the same way: `setup.sh` recorded `MAMBA_EXE=/opt/conda/bin/micromamba`
+at submission time, so the generated script's login-node fallback also
+points at `/opt/conda/bin`, which does not exist outside the image.
 
 `run.sh` is not marked executable — HTCondor sets that itself — so invoke it
 through `bash`.

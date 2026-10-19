@@ -2,7 +2,10 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(sknano_framework_tests
     SelectTauIndicesTest.cc
-    OverlapRemovalTest.cc)
+    OverlapRemovalTest.cc
+    WeightIndexTest.cc
+    LeptonCorrectionFlowTest.cc
+    OutputPathCollisionTest.cc)
 
 target_link_libraries(sknano_framework_tests PRIVATE
     AnalyzerFramework

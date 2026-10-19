@@ -45,6 +45,7 @@
 #include "JetView.h"
 #include "SelectedJetView.h"
 #include "FatJetView.h"
+#include "SelectedFatJetView.h"
 #include "TauView.h"
 #include "PhotonView.h"
 #include "SVView.h"
@@ -354,19 +355,13 @@ public:
     void PopulateMuonMomentum(MuonSoA &storage);
     void PopulateMuonMomentumVariations(MuonSoA &storage);
     void PopulateMuonHighPt(MuonSoA &storage);
-    void PopulateMuonHighPtVariations(MuonSoA &storage);
     float MuonRochesterMatchedGenPt(const MuonSoA &storage, std::size_t index,
                                     GenViewCollection &truth, bool &truthLoaded);
-    void PopulateElectronMomentum(ElectronSoA &storage);
-    void PopulateElectronMomentumVariations(ElectronSoA &storage);
-    void PopulateFatJetNominal(FatJetSoA &storage);
-    void PopulateFatJetJerVariations(FatJetSoA &storage);
-    void PopulateFatJetJesVariations(FatJetSoA &storage);
-    float FatJetSmearFactor(const FatJetSoA &storage, std::size_t index,
-                            MyCorrection::variation syst) const;
-    float FatJetSoftDropRatio(const FatJetSoA &storage, std::size_t index,
-                              MyCorrection::variation jesVar,
-                              MyCorrection::variation jerVar) const;
+    void PopulateElectronMomentum(ElectronSoA &storage, std::uint64_t runNumber,
+                                  std::uint64_t lumiBlock,
+                                  std::uint64_t eventNumber);
+    void PopulateElectronMomentumVariations(ElectronSoA &storage,
+                                            std::uint64_t runNumber);
     GenViewCollection GetAllGenViews();
     JetViewCollection GetAllJetViews();
     SelectedJetViewCollection SelectJetViews(
@@ -397,21 +392,28 @@ public:
     std::vector<std::size_t> SelectMuonIndices(const MuonViewCollection &muons, const MuonView::MuonID ID, const float ptmin, const float fetamax) const;
     // High-pT muon selection (MUO POG "High pT" prescription). Cuts on
     // MuonView::HighPtPt() instead of Pt(), so muons past ~200 GeV are judged
-    // on TuneP with the Generalized Endpoint scale. Opt-in: SelectMuonIndices
+    // on TuneP. Opt-in: SelectMuonIndices
     // above is unchanged.
     std::vector<std::size_t> SelectHighPtMuonIndices(const MuonViewCollection &muons, const std::vector<std::size_t> &seed_indices, const MuonView::MuonID ID, const float ptmin, const float fetamax) const;
     std::vector<std::size_t> SelectHighPtMuonIndices(const MuonViewCollection &muons, const MuonView::MuonID ID, const float ptmin, const float fetamax) const;
     MuonViewCollection SelectMuonViews(const MuonViewCollection &muons,
         std::vector<std::size_t> indices, bool sortByPt = true) const;
-    // skipCrack drops electrons in the ECAL gap up front. Off by default, which
-    // keeps the collection as NanoAOD delivers it; PassID rejects gap
-    // electrons anyway, so this only matters when counting with NOCUT.
-    ElectronViewCollection GetAllElectronViews(bool skipCrack = false);
+    ElectronViewCollection GetAllElectronViews();
     std::vector<std::size_t> SelectElectronIndices(const ElectronViewCollection &electrons, const std::vector<size_t> &seed_indices, const ElectronView::ElectronID ID, const float ptmin, const float fetamax, bool vetoHEM = false) const;
     std::vector<std::size_t> SelectElectronIndices(const ElectronViewCollection &electrons, const ElectronView::ElectronID ID, const float ptmin, const float fetamax, bool vetoHEM = false) const;
     ElectronViewCollection SelectElectronViews(
         const ElectronViewCollection &electrons,
         std::vector<std::size_t> indices, bool sortByPt = true) const;
+    // NanoAOD MET is built from uncorrected leptons. These subtract, for the
+    // leptons passed, sum(lane pt - MiniAODPt()) along each lepton's phi; the
+    // lane is Pt() or the requested variation. At most one variation may be
+    // non-nominal.
+    bool PropagateMuonCorrToMET(const MuonViewCollection &muons, Particle &met,
+                                MyCorrection::variation scaleVar = MyCorrection::variation::nom,
+                                MyCorrection::variation resVar = MyCorrection::variation::nom) const;
+    bool PropagateElectronCorrToMET(const ElectronViewCollection &electrons, Particle &met,
+                                    MyCorrection::variation scaleVar = MyCorrection::variation::nom,
+                                    MyCorrection::variation smearVar = MyCorrection::variation::nom) const;
     FatJetViewCollection GetAllFatJets();
     SVViewCollection GetAllSVViews();
 
@@ -431,6 +433,16 @@ public:
                                        float fetamax,
                                        const MyCorrection::variation &JESVariation = MyCorrection::variation::nom,
                                        const MyCorrection::variation &JERVariation = MyCorrection::variation::nom) const;
+    // AK8 counterpart of SelectJetViews: the views' Pt()/M()/SDMass() follow
+    // the requested lane (data: the corrected momentum). indices are positions
+    // in fatjets, so both GetAllFatJets() with its raw indices and a
+    // SelectFatJets result with AllIndices() work.
+    SelectedFatJetViewCollection SelectFatJetViews(
+        const FatJetViewCollection &fatjets,
+        std::vector<std::size_t> indices,
+        const MyCorrection::variation &jesVariation = MyCorrection::variation::nom,
+        const MyCorrection::variation &jerVariation = MyCorrection::variation::nom,
+        bool sortByPt = true) const;
     std::vector<std::size_t> JetsVetoLeptonInside(const JetViewCollection& jets,
                                    const std::vector<std::size_t>& jet_indices,
                                    const ElectronViewCollection& electrons,
@@ -486,7 +498,20 @@ public:
     }
     // Functions
     float GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst);
+    //! Slot of one (muF, muR) pair in an LHEScaleWeight-ordered array (muR
+    //! outer, muF inner), also used for the parallel patch_ScaleVariation and
+    //! sumScaleVariation arrays. n_entries is the array's own size: 9 with the
+    //! (1,1) nominal kept, 8 with it dropped. Throws for any other size and for
+    //! (nom, nom) on an 8-entry array, which has no such slot.
+    static std::size_t ScaleVariationIndex(const MyCorrection::variation &muF_syst,
+                                           const MyCorrection::variation &muR_syst,
+                                           std::size_t n_entries);
     float GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst);
+    //! Slot of one (ISR, FSR) pair in PSWeight: [ISR up, FSR up, ISR down, FSR
+    //! down]. Requires n_entries == 4 and exactly one of the two varied.
+    static std::size_t PSWeightIndex(const MyCorrection::variation &ISR_syst,
+                                     const MyCorrection::variation &FSR_syst,
+                                     std::size_t n_entries);
     inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetBTaggingWP(tagger, wp); }
     inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetCTaggingWP(tagger, wp); }
     inline float GetBTaggingWP(){ return myCorr->GetBTaggingWP(); }
@@ -685,7 +710,15 @@ protected:
     const GenJetViewCollection& genjets,
     bool isMC,
     float rho);
-    const std::vector<TString> &JetEnergyScaleSources() const;
+    // AK8 lazy correction stages, bound to FatJetSoA by GetAllFatJets.
+    void PopulateFatJetNominal(FatJetSoA &storage);
+    void PopulateFatJetJerVariations(FatJetSoA &storage);
+    void PopulateFatJetJesVariations(FatJetSoA &storage);
+    float FatJetSmearFactor(const FatJetSoA &storage, std::size_t index,
+                            MyCorrection::variation syst) const;
+    float FatJetSoftDropRatio(const FatJetSoA &storage, std::size_t index,
+                              MyCorrection::variation jesVar,
+                              MyCorrection::variation jerVar) const;
     bool useTH1F = false;
     // Reused by the per-event jet/genjet matcher. Keeping the capacity on the
     // analyzer removes allocator traffic without changing matching order.

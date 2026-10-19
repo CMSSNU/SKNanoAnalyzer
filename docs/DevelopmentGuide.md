@@ -44,7 +44,9 @@ enum class variation { nom, up, down };
 ```
 
 Use `"total"` for the combined uncertainty and as the default source. Refer to
-`Correction::GetBTaggingSF` for an existing implementation.
+`Correction::GetBTaggingSF` for an existing implementation. The AK4 and AK8
+JES lookups accept `"total"` in any case, or an empty source, and normalise it
+to the JME `"Total"` key; other sources must match the JSON key exactly.
 
 ## Typed constants and identifiers
 
