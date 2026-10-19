@@ -1,6 +1,6 @@
 find_package(GTest CONFIG REQUIRED)
 
-add_executable(sknano_tools_tests TauCorrectionTest.cc)
+add_executable(sknano_tools_tests TauCorrectionTest.cc JetCorrectionTest.cc)
 
 target_link_libraries(sknano_tools_tests PRIVATE
     AnalyzerTools
