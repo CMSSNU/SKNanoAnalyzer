@@ -208,10 +208,14 @@ public:
     float GetElectronSmearWidth(const float pt, const float r9,
                                 const float scEta,
                                 const variation syst = variation::nom) const;
-    float GetElectronRECOSF(const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    // ID and RECO SFs are binned in signed supercluster eta and pt from 10 GeV
+    // with error flow; pt is clamped to that edge. The view forms read
+    // ScEta() and MiniAODPt().
+    static constexpr float ELECTRON_SF_MIN_PT = 10.f; // ID/RECO map lower edge
+    float GetElectronRECOSF(const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
     float GetElectronRECOSF(const ElectronView &electron, const variation syst = variation::nom) const;
     float GetElectronRECOSF(const ElectronViewCollection &electrons, const variation syst = variation::nom) const;
-    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float abseta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronIDSF(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
     float GetElectronIDSF(const TString &key, const ElectronView &electron, const variation syst = variation::nom) const;
     float GetElectronIDSF(const TString &key, const ElectronViewCollection &electrons, const variation syst = variation::nom) const;
     // ---- HEEP (high-pT) electron ID scale factor ----------------------------
@@ -262,7 +266,9 @@ public:
                           const variation syst = variation::nom) const;
 
     // Trigger
-    // Single lepton trigger from POG
+    // Single lepton trigger from POG. The electron HLT maps start at 25 GeV
+    // with error flow; pt is clamped to that edge.
+    static constexpr float ELECTRON_HLT_SF_MIN_PT = 25.f; // HLT map lower edge
     float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool isData, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonView &muon, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonViewCollection &muons, const variation syst = variation::nom) const;

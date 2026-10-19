@@ -596,11 +596,13 @@ float MyCorrection::GetElectronRECOSF(const float eta, const float pt,
     // EGM_era_prompt is precomputed; concatenating it here allocated a string
     // for every electron.
     const auto &cset = cachedElectronIDSF.get(cset_electron, "Electron-ID-SF");
-    const char *ptRange =
-        pt < 20.f ? "RecoBelow20" : (pt < 75.f ? "Reco20to75" : "RecoAbove75");
+    const float clampedPt = std::max(pt, ELECTRON_SF_MIN_PT);
+    const char *ptRange = clampedPt < 20.f
+                              ? "RecoBelow20"
+                              : (clampedPt < 75.f ? "Reco20to75" : "RecoAbove75");
     return safeEvaluate(cset, "GetElectronRECOSF",
                         {EGM_era_prompt, getSystString_EGM(syst), ptRange, eta,
-                         pt});
+                         clampedPt});
   }
   default:
     throw runtime_error("[MyCorrection::GetElectronRECOSF] Invalid run number");
@@ -611,7 +613,7 @@ float MyCorrection::GetElectronRECOSF(const ElectronView &electron,
                                       const variation syst) const {
   // Uncalibrated pt, as the muon SFs read MiniAODPt(): Pt() now carries the
   // EGM scale and smearing, which would move electrons across SF pt bins.
-  return GetElectronRECOSF(std::fabs(electron.Eta()), electron.MiniAODPt(),
+  return GetElectronRECOSF(electron.ScEta(), electron.MiniAODPt(),
                            electron.Phi(), syst);
 }
 
@@ -639,7 +641,7 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key,
   return safeEvaluate(cset, "GetElectronIDSF",
                       {EGM_era_prompt, getSystString_EGM(syst),
                        Electron_ID_SF_Key.Data(),
-                       eta, pt < 999.9f ? pt : 999.9f});
+                       eta, std::clamp(pt, ELECTRON_SF_MIN_PT, 999.9f)});
 }
 
 float MyCorrection::GetElectronHEEPIDSF(const float scEta, const float pt,
@@ -662,7 +664,7 @@ float MyCorrection::GetElectronIDSF(const TString &key,
                                     const variation syst) const {
   // Uncalibrated pt, as the muon SFs read MiniAODPt(): Pt() now carries the
   // EGM scale and smearing, which would move electrons across SF pt bins.
-  return GetElectronIDSF(key, std::fabs(electron.Eta()), electron.MiniAODPt(),
+  return GetElectronIDSF(key, electron.ScEta(), electron.MiniAODPt(),
                          electron.Phi(), syst);
 }
 
@@ -778,14 +780,15 @@ float MyCorrection::GetElectronTriggerEff(
   if (hasPhi < 0)
     hasPhi = isInputInCorrection("phi", cset) ? 1 : 0;
 
+  const float clampedPt = std::max(pt, ELECTRON_HLT_SF_MIN_PT);
   try {
     if (hasPhi == 0)
       return safeEvaluate(cset, "GetTriggerEff",
                           {EGM_era_key, ValType,
-                           Electron_Trigger_SF_Key.Data(), eta, pt});
+                           Electron_Trigger_SF_Key.Data(), eta, clampedPt});
     return safeEvaluate(cset, "GetTriggerEff",
                         {EGM_era_key, ValType, Electron_Trigger_SF_Key.Data(),
-                         eta, pt, phi});
+                         eta, clampedPt, phi});
   } catch (const exception &e) {
     cerr << "[MyCorrection::GetElectronTriggerEff] " << e.what() << endl;
     throw;
@@ -801,14 +804,15 @@ float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
   if (electronHltSFHasPhi < 0)
     electronHltSFHasPhi = isInputInCorrection("phi", cset) ? 1 : 0;
 
+  const float clampedPt = std::max(pt, ELECTRON_HLT_SF_MIN_PT);
   try {
     if (electronHltSFHasPhi == 0)
       return safeEvaluate(cset, "GetTriggerEff",
                           {EGM_era_key, getSystString_EGM(syst),
-                           Electron_Trigger_SF_Key.Data(), eta, pt});
+                           Electron_Trigger_SF_Key.Data(), eta, clampedPt});
     return safeEvaluate(cset, "GetTriggerEff",
                         {EGM_era_key, getSystString_EGM(syst),
-                         Electron_Trigger_SF_Key.Data(), eta, pt, phi});
+                         Electron_Trigger_SF_Key.Data(), eta, clampedPt, phi});
   } catch (const exception &e) {
     cerr << "[MyCorrection::GetElectronTriggerSF] " << e.what() << endl;
     throw;
