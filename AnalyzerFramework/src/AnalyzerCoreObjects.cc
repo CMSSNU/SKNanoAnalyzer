@@ -333,6 +333,7 @@ void AnalyzerCore::PopulateMuonMomentum(MuonSoA &storage) {
   const std::size_t count = storage.rawSize();
   storage.correctedPt.assign(count, 0.f);
   storage.miniAODPt.assign(count, 0.f);
+  storage.scaRe.assign(count, MuonScaReState{});
 
   const bool usePOGScaleSmearing = myCorr && myCorr->HasMuonScaleSmearing();
   const unsigned long long eventNumber =
@@ -348,12 +349,11 @@ void AnalyzerCore::PopulateMuonMomentum(MuonSoA &storage) {
     if (usePOGScaleSmearing) {
       const int trackerLayers =
           IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
+      storage.scaRe[index] = myCorr->GetMuonScaleSmearing(
+          storage.charge[index], pt, storage.eta[index], storage.phi[index],
+          trackerLayers, eventNumber, lumiBlock);
       storage.correctedPt[index] =
-          myCorr->GetMuonScaleSmearing(storage.charge[index], pt,
-                                       storage.eta[index], storage.phi[index],
-                                       trackerLayers, eventNumber, lumiBlock,
-                                       /*withVariations=*/false)
-              .nominal;
+          static_cast<float>(storage.scaRe[index].correctedPt);
       continue;
     }
     if (!myCorr) {
@@ -375,8 +375,8 @@ void AnalyzerCore::PopulateMuonMomentum(MuonSoA &storage) {
 }
 
 // Stage 2: scale and resolution nuisances of the medium-pT correction. The
-// POG nominal is deterministic (the draw comes from the file's hash
-// generator), so recomputing it here reproduces stage 1 exactly.
+// POG recipe builds them on the stage-1 intermediates rather than re-running
+// the nominal chain.
 void AnalyzerCore::PopulateMuonMomentumVariations(MuonSoA &storage) {
   const std::size_t count = storage.rawSize();
   storage.momentumScaleUp.assign(count, 0.f);
@@ -385,10 +385,6 @@ void AnalyzerCore::PopulateMuonMomentumVariations(MuonSoA &storage) {
   storage.momentumResDown.assign(count, 0.f);
 
   const bool usePOGScaleSmearing = myCorr && myCorr->HasMuonScaleSmearing();
-  const unsigned long long eventNumber =
-      static_cast<unsigned long long>(event.get());
-  const unsigned int lumiBlock =
-      static_cast<unsigned int>(luminosityBlock.get());
 
   GenViewCollection truth;
   bool truthLoaded = false;
@@ -397,9 +393,10 @@ void AnalyzerCore::PopulateMuonMomentumVariations(MuonSoA &storage) {
     const int trackerLayers =
         IsDATA ? 0 : static_cast<int>(storage.nTrackerLayers[index]);
     if (usePOGScaleSmearing) {
-      const MyCorrection::MuonMomentumLanes lanes = myCorr->GetMuonScaleSmearing(
-          storage.charge[index], pt, storage.eta[index], storage.phi[index],
-          trackerLayers, eventNumber, lumiBlock);
+      const MyCorrection::MuonMomentumLanes lanes =
+          myCorr->GetMuonScaleSmearingVariations(
+              storage.scaRe[index], storage.charge[index], storage.eta[index],
+              storage.phi[index]);
       storage.momentumScaleUp[index] = lanes.scaleUp;
       storage.momentumScaleDown[index] = lanes.scaleDown;
       storage.momentumResUp[index] = lanes.resUp;

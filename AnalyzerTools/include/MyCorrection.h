@@ -120,15 +120,16 @@ public:
     // draws its random number from the file's own deterministic generator
     // (event number, lumi section, phi), so it reproduces across passes and
     // does not depend on the framework RNG mode.
-    // withVariations=false stops after the nominal: the scale and resolution
-    // uncertainties cost four more correctionlib evaluations per muon, and the
-    // nominal path has no use for them. The nominal is deterministic, so a
-    // later full call reproduces it exactly.
-    MuonMomentumLanes GetMuonScaleSmearing(int charge, float pt, float eta,
-                                           float phi, int trackerLayers,
-                                           unsigned long long eventNumber,
-                                           unsigned int lumiBlock,
-                                           bool withVariations = true) const;
+    // Split in two stages: the nominal returns the intermediates the
+    // variations need, so the nominal path pays for the nominal only and the
+    // variation stage does not redo it. Data variations equal the nominal.
+    MuonScaReState GetMuonScaleSmearing(int charge, float pt, float eta,
+                                        float phi, int trackerLayers,
+                                        unsigned long long eventNumber,
+                                        unsigned int lumiBlock) const;
+    MuonMomentumLanes GetMuonScaleSmearingVariations(const MuonScaReState &state,
+                                                     int charge, float eta,
+                                                     float phi) const;
     MuonScaleAndError GetMuonScaleAndError(int charge, float pt, float eta,
                                            float phi, int trackerLayers,
                                            float matchedPt = 0.f) const;

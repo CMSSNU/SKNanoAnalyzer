@@ -19,6 +19,14 @@
  * without materialising per-object payloads.
  */
 
+// Intermediates of the MUO POG nominal correction, kept on the SoA so the
+// variation stage reuses them instead of re-running the nominal chain.
+struct MuonScaReState {
+    double scaledPt = 0.;    // after the scale step (POG pt_woresol)
+    double correctedPt = 0.; // after the smearing step (POG pt_wresol)
+    double k = 0.;           // residual smearing factor; 0 when not smeared
+};
+
 struct MuonSoA {
     ColumnView<float> pt;
     ColumnView<float> eta;
@@ -61,6 +69,7 @@ struct MuonSoA {
 
     std::vector<float> correctedPt;
     std::vector<float> miniAODPt;
+    std::vector<MuonScaReState> scaRe; // POG recipe only
     std::vector<float> momentumScaleUp;
     std::vector<float> momentumScaleDown;
     // Resolution variation of the medium-pT correction. Only the MUO POG
@@ -76,7 +85,7 @@ struct MuonSoA {
     // Providers, bound by AnalyzerCore. Each stage is materialised on first
     // access to one of its lanes and never before: the nominal path pays for
     // the nominal only.
-    std::function<void()> populateMomentum;            // correctedPt, miniAODPt
+    std::function<void()> populateMomentum;            // correctedPt, miniAODPt, scaRe
     std::function<void()> populateMomentumVariations;  // momentumScale*/Res*
     std::function<void()> populateHighPt;              // tunePPt, highPtRegime, highPtPt
     mutable bool momentumReady = false;

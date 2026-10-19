@@ -74,10 +74,10 @@ MyCorrection::MuonScaleAndError MyCorrection::GetMuonScaleAndError(
 // The file also carries "syst" variations (mass-binning changes); the POG
 // example does not use them and neither does this.
 // ---------------------------------------------------------------------------
-MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
+MuonScaReState MyCorrection::GetMuonScaleSmearing(
     const int charge, const float pt, const float eta, const float phi,
     const int trackerLayers, const unsigned long long eventNumber,
-    const unsigned int lumiBlock, const bool withVariations) const {
+    const unsigned int lumiBlock) const {
   if (!muSS_loaded)
     throwNullCorrection("GetMuonScaleSmearing");
 
@@ -98,15 +98,13 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
       ptScaled = ptD;
   }
 
-  if (IsDATA) {
-    const float nominal = static_cast<float>(ptScaled);
-    return {nominal, nominal, nominal, nominal, nominal};
-  }
+  MuonScaReState state{ptScaled, ptScaled, 0.};
+  if (IsDATA)
+    return state;
 
   // ---- Resolution, simulation only, inside the window (pt_resol) -----------
+  // k stays 0 outside the window: there is nothing to vary there.
   const double absEta = std::fabs(etaD);
-  double ptCorr = ptScaled;
-  double k = 0.; // stays 0 outside the window: nothing to vary there
   if (ptScaled >= SKNano::MUON_SCARE_MIN_PT &&
       ptScaled <= SKNano::MUON_SCARE_MAX_PT) {
     // sigma(pt) from the quadratic, evaluated on the scaled pt.
@@ -120,7 +118,8 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
 
     const double kData = safeEvaluate(muSS_k_data, "GetMuonScaleSmearing/k_data", {absEta, "nom"});
     const double kMC = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_mc", {absEta, "nom"});
-    k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
+    const double k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
+    state.k = k;
 
     // Flat random number from the file's hash generator, then shaped by the
     // Crystal Ball fitted for this |eta| and tracker-layer multiplicity.  The
@@ -136,16 +135,30 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
         safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 2}));
     const double candidate = ptScaled * (1. + k * sigma * cb.invcdf(u));
     if (SKNano::MuonScaReResultIsSane(candidate, ptScaled))
-      ptCorr = candidate;
+      state.correctedPt = candidate;
   }
+  return state;
+}
 
+MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearingVariations(
+    const MuonScaReState &state, const int charge, const float eta,
+    const float phi) const {
+  if (!muSS_loaded)
+    throwNullCorrection("GetMuonScaleSmearingVariations");
   MuonMomentumLanes lanes;
-  lanes.nominal = static_cast<float>(ptCorr);
-  if (!withVariations) {
+  lanes.nominal = static_cast<float>(state.correctedPt);
+  // The POG publishes no data-side uncertainty; the nuisance rides on the
+  // simulation templates.
+  if (IsDATA) {
     lanes.scaleUp = lanes.scaleDown = lanes.resUp = lanes.resDown =
         lanes.nominal;
     return lanes;
   }
+  const double etaD = eta, phiD = phi;
+  const double q = charge;
+  const double ptScaled = state.scaledPt;
+  const double ptCorr = state.correctedPt;
+  const double k = state.k;
 
   // ---- Scale uncertainty, on the corrected pt (pt_scale_var) ---------------
   const double statA = safeEvaluate(muSS_a_mc, "GetMuonScaleSmearing/a_stat", {etaD, phiD, "stat"});
@@ -160,7 +173,7 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
   // ---- Resolution uncertainty: shift k, keep the draw (pt_resol_var) -------
   lanes.resUp = lanes.resDown = lanes.nominal;
   if (k != 0.) {
-    const double kUnc = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_unc", {absEta, "stat"});
+    const double kUnc = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_unc", {std::fabs(etaD), "stat"});
     const double stdTimesDraw = (ptCorr / ptScaled - 1.) / k;
     const auto shifted = [&](const double kShifted) {
       const double value = ptScaled * (1. + kShifted * stdTimesDraw);
