@@ -154,27 +154,6 @@ public:
     float GetMuonHighPtRECOSF(const float eta, const float p,
                               const variation syst = variation::nom) const;
 
-    // Generalized Endpoint momentum scale, for pt above HIGHPT_MUON_MIN_PT and
-    // data only: the bias belongs to data, so it is removed there rather than
-    // injected into simulation. Eras without a kappa map return pt unchanged.
-    float GetMuonGEScaledPt(const float pt, const float eta, const float phi,
-                            const int charge,
-                            const variation syst = variation::nom) const;
-    // The same shift driven by the kappa uncertainty alone, with no central
-    // bias. This is the simulation nuisance: data already carries the nominal
-    // correction, so the template only has to move by the measurement error.
-    // Returns pt unchanged for the nominal variation.
-    float GetMuonGESigmaShiftedPt(const float pt, const float eta,
-                                  const float phi, const int charge,
-                                  const variation syst) const;
-
-    // High-pT resolution width, a cubic in the full momentum p (not pt).
-    float GetMuonHighPtResolution(const float p, const float eta) const;
-    // Extra smearing applied to simulation in the high-pT regime. Returns 1 for
-    // data and for eras with no resolution map.
-    float GetMuonHighPtSmearFactor(const float p, const float eta,
-                                   const unsigned int seed,
-                                   const variation syst = variation::nom) const;
     float GetMuonIDSF(const TString &key, const MuonView &muon,
                       variation syst = variation::nom) const;
     float GetMuonIDSF(const TString &key, const MuonViewCollection &muons,

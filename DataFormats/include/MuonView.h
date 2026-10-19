@@ -73,25 +73,18 @@ struct MuonSoA {
     std::vector<float> tunePPt;
     std::vector<unsigned char> highPtRegime;
     std::vector<float> highPtPt;
-    std::vector<float> highPtScaleUp;
-    std::vector<float> highPtScaleDown;
-    std::vector<float> highPtResUp;
-    std::vector<float> highPtResDown;
     // Providers, bound by AnalyzerCore. Each stage is materialised on first
     // access to one of its lanes and never before: the nominal path pays for
     // the nominal only.
     std::function<void()> populateMomentum;            // correctedPt, miniAODPt
     std::function<void()> populateMomentumVariations;  // momentumScale*/Res*
     std::function<void()> populateHighPt;              // tunePPt, highPtRegime, highPtPt
-    std::function<void()> populateHighPtVariations;    // highPtScale*/Res*
     mutable bool momentumReady = false;
     mutable bool momentumComputing = false;
     mutable bool momentumVariationsReady = false;
     mutable bool momentumVariationsComputing = false;
     mutable bool highPtReady = false;
     mutable bool highPtComputing = false;
-    mutable bool highPtVariationsReady = false;
-    mutable bool highPtVariationsComputing = false;
 
     std::size_t size() const { return pt.size(); }
     std::size_t rawSize() const { return size(); }
@@ -112,12 +105,6 @@ struct MuonSoA {
     void ensureHighPt() const {
         ensureMomentum();
         materialise(populateHighPt, highPtReady, highPtComputing, "high-pT");
-    }
-    void ensureHighPtVariations() const {
-        ensureHighPt();
-        ensureMomentumVariations();
-        materialise(populateHighPtVariations, highPtVariationsReady,
-                    highPtVariationsComputing, "high-pT variation");
     }
 
 private:
@@ -195,28 +182,11 @@ public:
         store->ensureHighPt();
         return idx < store->highPtRegime.size() && store->highPtRegime[idx] != 0;
     }
-    // Below the boundary this is the medium-pT (Rochester) momentum; above it,
-    // TuneP with the Generalized Endpoint scale on data and the extra
-    // resolution smearing in simulation.
+    // Below the boundary this is the medium-pT momentum, Pt(); above it, the
+    // uncorrected TuneP momentum.
     float HighPtPt() const {
         store->ensureHighPt();
         return idx < store->highPtPt.size() ? store->highPtPt[idx] : Pt();
-    }
-    float HighPtScaleUp() const {
-        store->ensureHighPtVariations();
-        return idx < store->highPtScaleUp.size() ? store->highPtScaleUp[idx] : HighPtPt();
-    }
-    float HighPtScaleDown() const {
-        store->ensureHighPtVariations();
-        return idx < store->highPtScaleDown.size() ? store->highPtScaleDown[idx] : HighPtPt();
-    }
-    float HighPtResUp() const {
-        store->ensureHighPtVariations();
-        return idx < store->highPtResUp.size() ? store->highPtResUp[idx] : HighPtPt();
-    }
-    float HighPtResDown() const {
-        store->ensureHighPtVariations();
-        return idx < store->highPtResDown.size() ? store->highPtResDown[idx] : HighPtPt();
     }
     // Full momentum from the high-pT lane. The reco scale factor is binned in
     // p rather than pt, so callers need this rather than HighPtPt().
