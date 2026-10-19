@@ -228,6 +228,8 @@ public:
     bool HasElectronHEEPIDSF() const { return static_cast<bool>(cset_electron_heep); }
     float GetElectronHEEPIDSF(const float scEta, const float pt,
                               const variation syst = variation::nom) const;
+    float GetElectronHEEPIDSF(const ElectronView &electron,
+                              const variation syst = variation::nom) const;
     static constexpr float HEEP_SF_MIN_PT = 35.f; // map lower edge
     // photon
 
@@ -269,17 +271,28 @@ public:
     // Single lepton trigger from POG. The electron HLT maps start at 25 GeV
     // with error flow; pt is clamped to that edge.
     static constexpr float ELECTRON_HLT_SF_MIN_PT = 25.f; // HLT map lower edge
-    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool isData, const variation syst = variation::nom) const;
+    // The view forms pick the inputs: MiniAODPt() for both flavours, signed
+    // Eta() for muons and signed ScEta() for electrons.
+    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float eta, const float pt, const bool isData, const variation syst = variation::nom) const;
+    float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const MuonView &muon, const bool isData, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonView &muon, const variation syst = variation::nom) const;
     float GetMuonTriggerSF(const TString &key, const MuonViewCollection &muons, const variation syst = variation::nom) const;
     float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const bool isDATA, const variation syst = variation::nom) const;
+    float GetElectronTriggerEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const bool isDATA, const variation syst = variation::nom) const;
     inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, phi, true, syst);
     };
     inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) {
         return GetElectronTriggerEff(Electron_ID_SF_Key, eta, pt, phi, false, syst);
     };
+    inline float GetElectronTriggerDataEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const {
+        return GetElectronTriggerEff(Electron_ID_SF_Key, electron, true, syst);
+    };
+    inline float GetElectronTriggerMCEff(const TString &Electron_ID_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const {
+        return GetElectronTriggerEff(Electron_ID_SF_Key, electron, false, syst);
+    };
     float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const float eta, const float pt, const float phi, const variation syst = variation::nom) const;
+    float GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key, const ElectronView &electron, const variation syst = variation::nom) const;
 
     // PUWeights
     float GetPUWeight(const float nTrueInt, const variation syst = variation::nom, const TString &source = "") const;

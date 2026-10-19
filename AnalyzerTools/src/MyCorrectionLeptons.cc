@@ -659,6 +659,11 @@ float MyCorrection::GetElectronHEEPIDSF(const float scEta, const float pt,
                        scEta, clampedPt});
 }
 
+float MyCorrection::GetElectronHEEPIDSF(const ElectronView &electron,
+                                        const variation syst) const {
+  return GetElectronHEEPIDSF(electron.ScEta(), electron.MiniAODPt(), syst);
+}
+
 float MyCorrection::GetElectronIDSF(const TString &key,
                                     const ElectronView &electron,
                                     const variation syst) const {
@@ -717,6 +722,14 @@ float MyCorrection::GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key,
                         {"mc", getSystString_MUO(syst), eta, pt});
 }
 
+// The efficiency map is binned in signed eta.
+float MyCorrection::GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key,
+                                      const MuonView &muon, const bool isData,
+                                      const variation syst) const {
+  return GetMuonTriggerEff(Muon_Trigger_Eff_Key, muon.Eta(), muon.MiniAODPt(),
+                           isData, syst);
+}
+
 float MyCorrection::GetMuonTriggerSF(const TString &key,
                                      const MuonView &muon,
                                      const variation syst) const {
@@ -754,10 +767,8 @@ float MyCorrection::GetMuonTriggerSF(const TString &key,
   float failData = 1.f;
   float failMc = 1.f;
   for (const auto muon : muons) {
-    failData *= 1.f - GetMuonTriggerEff(
-        key, std::fabs(muon.Eta()), muon.Pt(), true, syst);
-    failMc *= 1.f - GetMuonTriggerEff(
-        key, std::fabs(muon.Eta()), muon.Pt(), false, syst);
+    failData *= 1.f - GetMuonTriggerEff(key, muon, true, syst);
+    failMc *= 1.f - GetMuonTriggerEff(key, muon, false, syst);
   }
   const float passMc = 1.f - failMc;
   return passMc == 0.f ? 1.f : (1.f - failData) / passMc;
@@ -793,6 +804,22 @@ float MyCorrection::GetElectronTriggerEff(
     cerr << "[MyCorrection::GetElectronTriggerEff] " << e.what() << endl;
     throw;
   }
+}
+
+float MyCorrection::GetElectronTriggerEff(const TString &Electron_ID_SF_Key,
+                                          const ElectronView &electron,
+                                          const bool isDATA,
+                                          const variation syst) const {
+  return GetElectronTriggerEff(Electron_ID_SF_Key, electron.ScEta(),
+                               electron.MiniAODPt(), electron.Phi(), isDATA,
+                               syst);
+}
+
+float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
+                                         const ElectronView &electron,
+                                         const variation syst) const {
+  return GetElectronTriggerSF(Electron_Trigger_SF_Key, electron.ScEta(),
+                              electron.MiniAODPt(), electron.Phi(), syst);
 }
 
 float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
