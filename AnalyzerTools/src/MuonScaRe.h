@@ -99,14 +99,15 @@ struct MuonCrystalBall {
   }
 };
 
-// The POG corrections are derived for 26 < pt < 200 GeV and are applied
-// nowhere else; outside that window a muon keeps its NanoAOD pt.
+// Validity window, as the POG C++ reference applies it: the scale from
+// MUON_SCARE_MIN_PT up with no upper bound, the smearing only while the
+// scaled pt is inside [MUON_SCARE_MIN_PT, MUON_SCARE_MAX_PT].
 constexpr float MUON_SCARE_MIN_PT = 26.f;
 constexpr float MUON_SCARE_MAX_PT = 200.f;
 
-// The POG guards: a corrected pt that is not finite, negative, or off by more
-// than a factor 2 (0.1) from the input is an artefact of a sparsely populated
-// bin and is discarded in favour of the input.
+// The POG guards: a corrected pt that is not finite, negative, or more than
+// twice (less than a tenth of) the input is an artefact of a sparsely
+// populated bin and is discarded in favour of the input.
 inline bool MuonScaReResultIsSane(const double corrected, const double input) {
   if (!std::isfinite(corrected) || corrected < 0.)
     return false;

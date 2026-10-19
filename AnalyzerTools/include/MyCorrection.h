@@ -114,8 +114,9 @@ public:
     //
     // HasMuonScaleSmearing() tells the caller which one is configured.
     bool HasMuonScaleSmearing() const { return muSS_loaded; }
-    // POG recipe, valid for 26 < pt < 200 GeV; outside that window every lane
-    // equals pt.  trackerLayers is ignored for data.  The resolution smearing
+    // POG recipe: the scale applies from 26 GeV up, the smearing only while
+    // the scaled pt is inside [26, 200] GeV, the scale uncertainty at any pt.
+    // trackerLayers is ignored for data.  The resolution smearing
     // draws its random number from the file's own deterministic generator
     // (event number, lumi section, phi), so it reproduces across passes and
     // does not depend on the framework RNG mode.

@@ -59,14 +59,18 @@ MyCorrection::MuonScaleAndError MyCorrection::GetMuonScaleAndError(
 // Ball and k = sqrt(k_data^2 - k_mc^2) the residual smearing needed to reach
 // the data width (0 when simulation is already wider).
 //
-// The order of operations and the uncertainty model follow the POG reference
-// (jsonpog-integration examples/MuonScaRe.cc, muoScaleAndSmearingRDFExample):
-//  * the scale uncertainty is evaluated on the fully corrected pt, from the
-//    statistical errors of M and A and their correlation, and is applied to
-//    simulation only;
+// The order of operations, the validity window and the uncertainty model
+// follow the POG C++ reference (jsonpog-integration examples/MuonScaRe.cc,
+// pt_scale / pt_resol / pt_scale_var / pt_resol_var):
+//  * the scale applies from 26 GeV up, with no upper bound;
+//  * the smearing applies only while the scaled pt is inside [26, 200] GeV;
+//  * the scale uncertainty is evaluated on the fully corrected pt at any pt,
+//    from the statistical errors of M and A and their correlation, and is
+//    applied to simulation only;
 //  * the resolution uncertainty shifts k by its statistical error while
 //    keeping the same random draw, so the variation is a coherent shift of
-//    the nominal rather than an independent re-smearing.
+//    the nominal rather than an independent re-smearing; a shifted value that
+//    fails the sanity check falls back to the scale-only pt.
 // The file also carries "syst" variations (mass-binning changes); the POG
 // example does not use them and neither does this.
 // ---------------------------------------------------------------------------
@@ -74,69 +78,68 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
     const int charge, const float pt, const float eta, const float phi,
     const int trackerLayers, const unsigned long long eventNumber,
     const unsigned int lumiBlock, const bool withVariations) const {
-  MuonMomentumLanes lanes{pt, pt, pt, pt, pt};
   if (!muSS_loaded)
     throwNullCorrection("GetMuonScaleSmearing");
-  if (!(pt > SKNano::MUON_SCARE_MIN_PT) || !(pt < SKNano::MUON_SCARE_MAX_PT))
-    return lanes;
 
   const double etaD = eta, phiD = phi, ptD = pt;
   const double q = charge;
 
-  // ---- Scale ------------------------------------------------------------
-  const correction::Correction::Ref &mRef = IsDATA ? muSS_m_data : muSS_m_mc;
-  const correction::Correction::Ref &aRef = IsDATA ? muSS_a_data : muSS_a_mc;
-  const double m = safeEvaluate(mRef, "GetMuonScaleSmearing/m", {etaD, phiD, "nom"});
-  const double a = safeEvaluate(aRef, "GetMuonScaleSmearing/a", {etaD, phiD, "nom"});
-  double ptScaled = 1. / (m / ptD + q * a);
-  if (!SKNano::MuonScaReResultIsSane(ptScaled, ptD))
-    ptScaled = ptD;
-
-  if (IsDATA) {
-    lanes.nominal = lanes.scaleUp = lanes.scaleDown = lanes.resUp =
-        lanes.resDown = static_cast<float>(ptScaled);
-    return lanes;
+  // ---- Scale, from the lower bound up (pt_scale) ---------------------------
+  double ptScaled = ptD;
+  if (ptD >= SKNano::MUON_SCARE_MIN_PT) {
+    const correction::Correction::Ref &mRef = IsDATA ? muSS_m_data : muSS_m_mc;
+    const correction::Correction::Ref &aRef = IsDATA ? muSS_a_data : muSS_a_mc;
+    const double m = safeEvaluate(mRef, "GetMuonScaleSmearing/m", {etaD, phiD, "nom"});
+    const double a = safeEvaluate(aRef, "GetMuonScaleSmearing/a", {etaD, phiD, "nom"});
+    ptScaled = 1. / (m / ptD + q * a);
+    // Not in the POG reference: 1/(m/pt + q*a) has a pole at pt = m/|a|,
+    // which the largest 2024 data alignment terms put near 4 TeV.
+    if (!SKNano::MuonScaReResultIsSane(ptScaled, ptD))
+      ptScaled = ptD;
   }
 
-  // ---- Resolution (simulation only) -------------------------------------
-  // sigma(pt) from the quadratic, evaluated on the scaled pt as the POG does.
-  const double nL = trackerLayers;
+  if (IsDATA) {
+    const float nominal = static_cast<float>(ptScaled);
+    return {nominal, nominal, nominal, nominal, nominal};
+  }
+
+  // ---- Resolution, simulation only, inside the window (pt_resol) -----------
   const double absEta = std::fabs(etaD);
-  const double p0 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 0});
-  const double p1 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 1});
-  const double p2 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 2});
-  double sigma = p0 + p1 * ptScaled + p2 * ptScaled * ptScaled;
-  if (sigma < 0.)
-    sigma = 0.;
-
-  const double kData = safeEvaluate(muSS_k_data, "GetMuonScaleSmearing/k_data", {absEta, "nom"});
-  const double kMC = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_mc", {absEta, "nom"});
-  const double k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
-
-  // Flat random number from the file's hash generator, then shaped by the
-  // Crystal Ball fitted for this |eta| and tracker-layer multiplicity.  The
-  // event number is folded to 32 bits the way the POG reference seeds its
-  // generator; correctionlib's integer input is 32-bit anyway.
-  const int evtSeed = static_cast<int>(static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull));
-  const int lumiSeed = static_cast<int>(lumiBlock);
-  const double u = safeEvaluate(muSS_random, "GetMuonScaleSmearing/RandomSmearing", {evtSeed, lumiSeed, phiD});
-  const SKNano::MuonCrystalBall cb(
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 0}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 1}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 3}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 2}));
-  const double draw = cb.invcdf(u);
-
-  // The POG window applies to the input of the smearing step as well.
-  const bool smearable = ptScaled > SKNano::MUON_SCARE_MIN_PT &&
-                         ptScaled < SKNano::MUON_SCARE_MAX_PT &&
-                         std::isfinite(draw);
   double ptCorr = ptScaled;
-  if (smearable) {
-    const double candidate = ptScaled * (1. + k * sigma * draw);
+  double k = 0.; // stays 0 outside the window: nothing to vary there
+  if (ptScaled >= SKNano::MUON_SCARE_MIN_PT &&
+      ptScaled <= SKNano::MUON_SCARE_MAX_PT) {
+    // sigma(pt) from the quadratic, evaluated on the scaled pt.
+    const double nL = trackerLayers;
+    const double p0 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 0});
+    const double p1 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 1});
+    const double p2 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 2});
+    double sigma = p0 + p1 * ptScaled + p2 * ptScaled * ptScaled;
+    if (sigma < 0.)
+      sigma = 0.;
+
+    const double kData = safeEvaluate(muSS_k_data, "GetMuonScaleSmearing/k_data", {absEta, "nom"});
+    const double kMC = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_mc", {absEta, "nom"});
+    k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
+
+    // Flat random number from the file's hash generator, then shaped by the
+    // Crystal Ball fitted for this |eta| and tracker-layer multiplicity.  The
+    // event number is folded to 32 bits the way the POG reference seeds its
+    // generator; correctionlib's integer input is 32-bit anyway.
+    const int evtSeed = static_cast<int>(static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull));
+    const int lumiSeed = static_cast<int>(lumiBlock);
+    const double u = safeEvaluate(muSS_random, "GetMuonScaleSmearing/RandomSmearing", {evtSeed, lumiSeed, phiD});
+    const SKNano::MuonCrystalBall cb(
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 0}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 1}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 3}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 2}));
+    const double candidate = ptScaled * (1. + k * sigma * cb.invcdf(u));
     if (SKNano::MuonScaReResultIsSane(candidate, ptScaled))
       ptCorr = candidate;
   }
+
+  MuonMomentumLanes lanes;
   lanes.nominal = static_cast<float>(ptCorr);
   if (!withVariations) {
     lanes.scaleUp = lanes.scaleDown = lanes.resUp = lanes.resDown =
@@ -144,7 +147,7 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
     return lanes;
   }
 
-  // ---- Scale uncertainty, on the corrected pt ----------------------------
+  // ---- Scale uncertainty, on the corrected pt (pt_scale_var) ---------------
   const double statA = safeEvaluate(muSS_a_mc, "GetMuonScaleSmearing/a_stat", {etaD, phiD, "stat"});
   const double statM = safeEvaluate(muSS_m_mc, "GetMuonScaleSmearing/m_stat", {etaD, phiD, "stat"});
   const double rho = safeEvaluate(muSS_m_mc, "GetMuonScaleSmearing/rho_stat", {etaD, phiD, "rho_stat"});
@@ -154,17 +157,18 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
   lanes.scaleUp = static_cast<float>(ptCorr + unc);
   lanes.scaleDown = static_cast<float>(ptCorr - unc);
 
-  // ---- Resolution uncertainty: shift k, keep the draw --------------------
+  // ---- Resolution uncertainty: shift k, keep the draw (pt_resol_var) -------
   lanes.resUp = lanes.resDown = lanes.nominal;
-  if (k > 0. && smearable && ptCorr != ptScaled) {
+  if (k != 0.) {
     const double kUnc = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_unc", {absEta, "stat"});
-    const double pull = sigma * draw; // == (ptCorr/ptScaled - 1)/k
-    const double up = ptScaled * (1. + (k + kUnc) * pull);
-    const double down = ptScaled * (1. + (k - kUnc) * pull);
-    if (SKNano::MuonScaReResultIsSane(up, ptScaled))
-      lanes.resUp = static_cast<float>(up);
-    if (SKNano::MuonScaReResultIsSane(down, ptScaled))
-      lanes.resDown = static_cast<float>(down);
+    const double stdTimesDraw = (ptCorr / ptScaled - 1.) / k;
+    const auto shifted = [&](const double kShifted) {
+      const double value = ptScaled * (1. + kShifted * stdTimesDraw);
+      return static_cast<float>(
+          SKNano::MuonScaReResultIsSane(value, ptScaled) ? value : ptScaled);
+    };
+    lanes.resUp = shifted(k + kUnc);
+    lanes.resDown = shifted(k - kUnc);
   }
   return lanes;
 }
