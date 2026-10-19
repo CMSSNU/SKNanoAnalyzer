@@ -486,7 +486,20 @@ public:
     }
     // Functions
     float GetScaleVariation(const MyCorrection::variation &muF_syst, const MyCorrection::variation &muR_syst);
+    //! Slot of one (muF, muR) pair in an LHEScaleWeight-ordered array (muR
+    //! outer, muF inner), also used for the parallel patch_ScaleVariation and
+    //! sumScaleVariation arrays. n_entries is the array's own size: 9 with the
+    //! (1,1) nominal kept, 8 with it dropped. Throws for any other size and for
+    //! (nom, nom) on an 8-entry array, which has no such slot.
+    static std::size_t ScaleVariationIndex(const MyCorrection::variation &muF_syst,
+                                           const MyCorrection::variation &muR_syst,
+                                           std::size_t n_entries);
     float GetPSWeight(const MyCorrection::variation &ISR_syst, const MyCorrection::variation &FSR_syst);
+    //! Slot of one (ISR, FSR) pair in PSWeight: [ISR up, FSR up, ISR down, FSR
+    //! down]. Requires n_entries == 4 and exactly one of the two varied.
+    static std::size_t PSWeightIndex(const MyCorrection::variation &ISR_syst,
+                                     const MyCorrection::variation &FSR_syst,
+                                     std::size_t n_entries);
     inline float GetBTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetBTaggingWP(tagger, wp); }
     inline pair<float, float> GetCTaggingWP(const JetTagging::JetFlavTagger &tagger, const JetTagging::JetFlavTaggerWP &wp) { return myCorr->GetCTaggingWP(tagger, wp); }
     inline float GetBTaggingWP(){ return myCorr->GetBTaggingWP(); }
