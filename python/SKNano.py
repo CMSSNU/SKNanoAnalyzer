@@ -356,8 +356,16 @@ def copySnapshotFileList(source_dir, target_dir, relpaths):
     copied = 0
     skipped = []
     for relpath in relpaths:
+        if any(part in SOURCE_SNAPSHOT_IGNORE_NAMES for part in relpath.split("/")):
+            skipped.append(relpath)
+            continue
         source = os.path.join(source_dir, relpath)
         if not os.path.isfile(source):
+            # A directory symlink or a nested repo's gitlink: git lists it,
+            # but there is no regular file to copy. Record it rather than
+            # dropping it silently, so a manifest reader can tell the two
+            # apart from a genuinely-skipped source file.
+            skipped.append(relpath)
             continue
         name = os.path.basename(relpath)
         if name.endswith(SOURCE_SNAPSHOT_IGNORE_SUFFIXES):
