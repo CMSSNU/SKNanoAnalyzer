@@ -320,7 +320,16 @@ public:
         SKNano::CorrectionLaneMask jesLanes = {},
         const TString &jesSource = "total") const;
     // jerc_fatjet
-    
+    // Mirrors the AK4 functions above, reading fatJet_jerc.json.gz. Kept
+    // separate rather than parameterised because the global tags, the
+    // correction set and the caching all differ. The JES uncertainty source
+    // names are capitalised ("Total"), matching the AK8 key naming.
+    float GetFJER(const float eta, const float pt, const float rho) const;
+    float GetFJERSF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+    float GetFJESSF(const float area, const float eta, const float pt, const float phi, const float rho, const unsigned int runNumber) const;
+    float GetFJESUncertainty(const float eta, const float pt, const TString &source = "Total") const;
+    float GetFJESUncertaintySF(const float eta, const float pt, const variation syst = variation::nom, const TString &source = "Total") const;
+
     // jetvetomap
     bool IsJetVetoZone(const float eta, const float phi, const TString &mapCategory) const;
     
@@ -517,6 +526,8 @@ private:
     const correction::Correction::Ref &getJERScaleFactorCorrection() const;
     const correction::Correction::Ref &getJERSFUncertaintyCorrection() const;
     const correction::Correction::Ref &getJESUncertaintyCorrection(std::string_view source) const;
+    // Resolves and caches one AK8 correction level from fatJet_jerc.json.gz.
+    const correction::Correction::Ref &getFatJetCorrection(std::string_view level) const;
     float safeEvaluate2D(const correction::Correction::Ref &cset, std::string_view function_name, float x, float y) const;
     float safeEvaluate3D(const correction::Correction::Ref &cset, std::string_view function_name, float x, float y, float z) const;
 
@@ -563,6 +574,7 @@ private:
     unique_ptr<CorrectionSet> cset_electron_variation;
     unique_ptr<CorrectionSet> cset_jetid;
     unique_ptr<CorrectionSet> cset_jerc;
+    unique_ptr<CorrectionSet> cset_jerc_fatjet;
     unique_ptr<CorrectionSet> cset_jetvetomap;
     unique_ptr<CorrectionSet> cset_met;
 
@@ -581,11 +593,25 @@ private:
     // JERC global tags, still carrying the "######" level placeholder.
     string JER_global_tag;
     string JES_global_tag;
+    // AK8 counterparts, from fatJet_jerc.json.gz. Resolution and JES
+    // uncertainties are only ever provided for simulation, so those two stay on
+    // the MC tag for both sample types; only the JES levels differ.
+    string FJER_global_tag;
+    string FJES_global_tag;
+    string FJES_unc_global_tag;
 
     mutable correction::Correction::Ref cachedJERPtResolution;
     mutable correction::Correction::Ref cachedJERScaleFactor;
     mutable correction::Correction::Ref cachedJERSFUncertainty;
     mutable CorrectionRefCache cachedJESUncertaintyCorrections;
+    // One entry per resolved AK8 correction level ("PtResolution",
+    // "ScaleFactor", "SFUncertainty", "Total", ...).
+    mutable CorrectionRefCache cachedFatJetCorrections;
+    mutable correction::CompoundCorrection::Ref cachedFatJetJESCompound;
+    // Input names of the AK8 JES compound, resolved once, plus the buffer they
+    // are filled into. The set of inputs differs by era and sample type.
+    mutable vector<string> cachedFatJetJESInputs;
+    mutable vector<correction::Variable::Type> cachedFatJetJESArgs;
     mutable CorrectionRefCache cachedMuonIDSF;
     mutable CorrectionRefCache cachedMuonTriggerEff;
 

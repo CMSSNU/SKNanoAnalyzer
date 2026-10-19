@@ -3,7 +3,10 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <iterator>
+#include <string>
+#include <vector>
 
 #include "AnalysisException.h"
 #include "EventRange.h"
@@ -55,6 +58,70 @@ struct FatJetSoA {
     ColumnView<int> pfCandPdgId;
     ColumnView<float> pfCandPuppiWeight;
 
+    // JEC/JER lanes, mirroring JetSoA. NanoAOD stores the momentum with the
+    // JEC that production happened to use; these carry the current one plus
+    // the smearing and its variations. Filled lazily on first access.
+    std::vector<float> correctedPt;
+    std::vector<float> correctedMass;
+    std::vector<float> smearedPtNominal;
+    std::vector<float> smearedMassNominal;
+    std::vector<float> smearedPtUp;
+    std::vector<float> smearedPtDown;
+    std::vector<float> smearedMassUp;
+    std::vector<float> smearedMassDown;
+    std::vector<float> jesPtUp;
+    std::vector<float> jesPtDown;
+    std::vector<float> jesMassUp;
+    std::vector<float> jesMassDown;
+    // SoftDrop mass follows the same set: the subjet corrections propagate
+    // into it, and the nominal one is not a no-op.
+    std::vector<float> sdMassNominal;
+    std::vector<float> sdMassJesUp;
+    std::vector<float> sdMassJesDown;
+    std::vector<float> sdMassJerUp;
+    std::vector<float> sdMassJerDown;
+
+    // Intermediates of the nominal pass, kept so the variation passes shift
+    // the same draw and the same gen match instead of re-rolling them.
+    std::vector<float> jerUnitDraw;
+    std::vector<float> jerMatchedGenPt;   // < 0: no match, stochastic term
+    std::vector<float> jerResolution;
+    std::vector<float> sdReferenceMass;   // <= 0: no subjet pair, m_SD untouched
+    std::vector<std::array<float, 2>> sdSubDraw;
+    std::vector<std::array<float, 2>> sdSubGenPt;
+    std::vector<std::array<float, 2>> sdSubResolution;
+
+    // Providers, bound by AnalyzerCore. Staged like JetSoA: the nominal pass
+    // is what CorrectedPt()/SmearedPtNominal()/SDMassNominal() read, and a
+    // JER or JES variation lane materialises its own pass on first access.
+    std::function<void()> populateNominal;
+    std::function<void()> populateJerVariations;
+    std::function<void()> populateJesVariations;
+    mutable bool nominalReady = false;
+    mutable bool nominalComputing = false;
+    mutable bool jerVariationsReady = false;
+    mutable bool jerVariationsComputing = false;
+    mutable bool jesVariationsReady = false;
+    mutable bool jesVariationsComputing = false;
+
+    // No provider bound leaves the lanes empty; accessors fall back to the raw
+    // values.
+    void ensureNominal() const {
+        // Validate the event epoch before a provider reads several branches.
+        static_cast<void>(pt.size());
+        materialise(populateNominal, nominalReady, nominalComputing, "nominal");
+    }
+    void ensureJerVariations() const {
+        ensureNominal();
+        materialise(populateJerVariations, jerVariationsReady,
+                    jerVariationsComputing, "JER variation");
+    }
+    void ensureJesVariations() const {
+        ensureNominal();
+        materialise(populateJesVariations, jesVariationsReady,
+                    jesVariationsComputing, "JES variation");
+    }
+
     std::size_t size() const { return pt.size(); }
     ColumnView<float> &score(JetTagging::FatJetTagger tagger,
                              JetTagging::FatJetTaggerScoreType type) {
@@ -65,6 +132,25 @@ struct FatJetSoA {
                                    JetTagging::FatJetTaggerScoreType type) const {
         return scores[static_cast<std::size_t>(tagger)]
                      [static_cast<std::size_t>(type)];
+    }
+
+private:
+    static void materialise(const std::function<void()> &provider, bool &ready,
+                            bool &computing, const char *what) {
+        if (ready || !provider)
+            return;
+        if (computing)
+            throw SKNano::LogicError(std::string("[FatJetSoA] recursive ") +
+                                     what + " computation");
+        computing = true;
+        try {
+            provider();
+            ready = true;
+            computing = false;
+        } catch (...) {
+            computing = false;
+            throw;
+        }
     }
 };
 
@@ -184,7 +270,30 @@ public:
     short SubJetIdx1() const { return store_->subJetIdx1[index_]; }
     short SubJetIdx2() const { return store_->subJetIdx2[index_]; }
     unsigned char hadronFlavour() const { return store_->hadronFlavour[index_]; }
+    // Raw SoftDrop mass as stored in NanoAOD. Prefer SDMassNominal(), which
+    // carries the subjet corrections; the nominal one is not a no-op.
     float SDMass() const { return store_->softDropMass[index_]; }
+
+    // ---- JEC/JER lanes ------------------------------------------------------
+    // Pt()/M() above stay raw, matching JetView. Pick a lane explicitly, or let
+    // SelectFatJets hand back the projection you asked for.
+    float CorrectedPt() const { return nominalLane(store_->correctedPt, Pt()); }
+    float CorrectedMass() const { return nominalLane(store_->correctedMass, M()); }
+    float SmearedPtNominal() const { return nominalLane(store_->smearedPtNominal, Pt()); }
+    float SmearedMassNominal() const { return nominalLane(store_->smearedMassNominal, M()); }
+    float SmearedPtUp() const { return jerLane(store_->smearedPtUp, SmearedPtNominal()); }
+    float SmearedPtDown() const { return jerLane(store_->smearedPtDown, SmearedPtNominal()); }
+    float SmearedMassUp() const { return jerLane(store_->smearedMassUp, SmearedMassNominal()); }
+    float SmearedMassDown() const { return jerLane(store_->smearedMassDown, SmearedMassNominal()); }
+    float JesPtUp() const { return jesLane(store_->jesPtUp, SmearedPtNominal()); }
+    float JesPtDown() const { return jesLane(store_->jesPtDown, SmearedPtNominal()); }
+    float JesMassUp() const { return jesLane(store_->jesMassUp, SmearedMassNominal()); }
+    float JesMassDown() const { return jesLane(store_->jesMassDown, SmearedMassNominal()); }
+    float SDMassNominal() const { return nominalLane(store_->sdMassNominal, SDMass()); }
+    float SDMassJesUp() const { return jesLane(store_->sdMassJesUp, SDMassNominal()); }
+    float SDMassJesDown() const { return jesLane(store_->sdMassJesDown, SDMassNominal()); }
+    float SDMassJerUp() const { return jerLane(store_->sdMassJerUp, SDMassNominal()); }
+    float SDMassJerDown() const { return jerLane(store_->sdMassJerDown, SDMassNominal()); }
     float Tau1() const { return store_->tau1[index_]; }
     float Tau2() const { return store_->tau2[index_]; }
     float Tau3() const { return store_->tau3[index_]; }
@@ -211,6 +320,21 @@ public:
     }
 
 private:
+    // Reads one correction lane, materialising its stage on first access and
+    // falling back to the supplied value when no provider is bound.
+    float nominalLane(const std::vector<float> &values, const float fallback) const {
+        store_->ensureNominal();
+        return index_ < values.size() ? values[index_] : fallback;
+    }
+    float jerLane(const std::vector<float> &values, const float fallback) const {
+        store_->ensureJerVariations();
+        return index_ < values.size() ? values[index_] : fallback;
+    }
+    float jesLane(const std::vector<float> &values, const float fallback) const {
+        store_->ensureJesVariations();
+        return index_ < values.size() ? values[index_] : fallback;
+    }
+
     const FatJetSoA *store_ = nullptr;
     std::size_t index_ = 0;
 };

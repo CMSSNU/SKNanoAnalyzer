@@ -57,6 +57,11 @@ global_tags:
   JER:      "Summer24Prompt24_JRV2_MC_######_AK4PFPuppi"
   JES_MC:   "Summer24Prompt24_V5_MC_######_AK4PFPuppi"
   JES_DATA: "Summer24Prompt24_V5_DATA_######_AK4PFPuppi"
+  # AK8 counterparts, read from fatJet_jerc.json.gz. FJER has no DATA form for
+  # the same reason JER does not: resolution is only measured in simulation.
+  FJER:      "Summer24Prompt24_JRV2_MC_######_AK8PFPuppi"
+  FJES_MC:   "Summer24Prompt24_V5_MC_######_AK8PFPuppi"
+  FJES_DATA: "Summer24Prompt24_V5_DATA_######_AK8PFPuppi"
 
 # Central POG corrections. required: true aborts the job if the file is
 # missing; everything else only warns. Add "snapshot: <dir>" to an entry to
@@ -88,6 +93,8 @@ pog_files:
   # Not published for 2024 yet -- restore when they appear:
   #   ctagging:   {pog: BTV, name: ctagging.json.gz}
   #   met:        {pog: JME, name: met.json.gz}
+  # AK8 JERC, read through the FJER/FJES global_tags above.
+  jerc_fatjet:        {pog: JME, name: fatJet_jerc.json.gz}
 
 # Home-made inputs under $SKNANO_DATA/2024/.
 data_files:

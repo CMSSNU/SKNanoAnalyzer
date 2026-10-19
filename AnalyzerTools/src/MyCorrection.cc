@@ -36,6 +36,7 @@ MyCorrection::MyCorrection(const TString &era, const TString &period,
   // published for this era yet, is decided by the era yml.
   loadCorrectionSet(config, "jetid", cset_jetid);
   loadCorrectionSet(config, "jerc", cset_jerc);
+  loadCorrectionSet(config, "jerc_fatjet", cset_jerc_fatjet);
   loadCorrectionSet(config, "jetvetomap", cset_jetvetomap);
   loadCorrectionSet(config, "muon", cset_muon);
   loadCorrectionSet(config, "muon_highpt", cset_muon_highpt);
@@ -115,6 +116,11 @@ MyCorrection::MyCorrection(const TString &era, const TString &period,
   // "######" is substituted with the correction level by the JERC accessors.
   JER_global_tag = config.globalTag("JER");
   JES_global_tag = config.globalTag(IsData ? "JES_DATA" : "JES_MC");
+  // Resolution is only ever measured in simulation, so the AK8 JER tag stays on
+  // the MC one for data as well; the same holds for the JES uncertainties.
+  FJER_global_tag = config.globalTag("FJER");
+  FJES_global_tag = config.globalTag(IsData ? "FJES_DATA" : "FJES_MC");
+  FJES_unc_global_tag = config.globalTag("FJES_MC");
 }
 
 MyCorrection::~MyCorrection() {}

@@ -802,13 +802,39 @@ std::vector<std::size_t> AnalyzerCore::SelectJetIndices(
 
 FatJetViewCollection
 AnalyzerCore::SelectFatJets(const FatJetViewCollection &fatjets,
-                            FatJetView::ID id, float ptmin,
-                            float fetamax) const {
+                            FatJetView::ID id, float ptmin, float fetamax,
+                            const MyCorrection::variation &JESVariation,
+                            const MyCorrection::variation &JERVariation) const {
+  const bool jesVaried = JESVariation != MyCorrection::variation::nom;
+  const bool jerVaried = JERVariation != MyCorrection::variation::nom;
+  // Same rule as SelectJetIndices: one nuisance at a time, or the result is
+  // neither variation.
+  if (jesVaried && jerVaried)
+    throw std::runtime_error("[AnalyzerCore::SelectFatJets] JES and JER cannot "
+                             "both be varied in one selection");
+
+  // Pick the momentum lane the caller asked for. Data has no smearing, so its
+  // nominal lane is just the corrected momentum.
+  const auto momentum = [&](const FatJetView &fatjet) {
+    if (IsDATA)
+      return jesVaried ? (JESVariation == MyCorrection::variation::up
+                              ? fatjet.JesPtUp()
+                              : fatjet.JesPtDown())
+                       : fatjet.CorrectedPt();
+    if (jesVaried)
+      return JESVariation == MyCorrection::variation::up ? fatjet.JesPtUp()
+                                                         : fatjet.JesPtDown();
+    if (jerVaried)
+      return JERVariation == MyCorrection::variation::up ? fatjet.SmearedPtUp()
+                                                         : fatjet.SmearedPtDown();
+    return fatjet.SmearedPtNominal();
+  };
+
   std::vector<std::size_t> selected;
   selected.reserve(fatjets.size());
   for (std::size_t index = 0; index < fatjets.size(); ++index) {
     const auto fatjet = fatjets[index];
-    if (fatjet.Pt() < ptmin)
+    if (momentum(fatjet) < ptmin)
       continue;
     if (fabs(fatjet.Eta()) > fetamax)
       continue;
