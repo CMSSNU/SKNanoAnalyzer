@@ -44,6 +44,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from templates.job_dict import main_job, hadd_job, partial_merge_job, final_job
 from python.sample_paths import resolve_sample_paths
+from python.friend_config import friends_for, pair_friends
 from python.dag_edges import RaggedGrouper, group_sizes
 from python.telegram_reporter import send_telegram_message, submission_message
 
@@ -488,21 +489,40 @@ def copyMetadataSnapshotFile(master_dir, source_path):
     shutil.copy2(source_path, target)
     return target
 
-def snapshotResolvedInputs(master_dir, era, sample, sample_paths):
+def snapshotResolvedInputs(master_dir, era, sample, sample_paths, friend_paths=None):
     """Record the files a sample actually resolved to.
 
     A sample json that carries a glob says which files to look for, not which
     files were there at submission time. Without this the run is no longer
     reproducible once the production grows, which is the one thing the old
-    enumerated path lists were good at.
+    enumerated path lists were good at.  `friend_paths` lists, per file, the
+    friend files paired with it.
     """
     target = os.path.join(master_dir, METADATA_SNAPSHOT_DIRNAME,
                           "resolved_inputs", era, f"{sample}.json")
     os.makedirs(os.path.dirname(target), exist_ok=True)
+    payload = {"era": era, "sample": sample,
+               "input_root": os.environ.get("SKNANO_INPUT_ROOT", ""),
+               "nfiles": len(sample_paths), "files": sample_paths}
+    if friend_paths and any(friend_paths):
+        payload["friend_root"] = os.environ.get("SKNANO_FRIEND_ROOT", "")
+        payload["friends"] = friend_paths
     with open(target, "w", encoding="utf-8") as handle:
-        json.dump({"era": era, "sample": sample,
-                   "input_root": os.environ.get("SKNANO_INPUT_ROOT", ""),
-                   "nfiles": len(sample_paths), "files": sample_paths},
+        json.dump(payload, handle, indent=2)
+    return target
+
+def snapshotFriends(master_dir, era, sample, paired, sumw_used, sumsign_used):
+    """Which friend productions a sample ran with and how they changed its
+    normalisation; the run_manifest lists this file next to the sample."""
+    target = os.path.join(master_dir, METADATA_SNAPSHOT_DIRNAME,
+                          "friends", era, f"{sample}.json")
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with open(target, "w", encoding="utf-8") as handle:
+        json.dump({"era": era, "sample": sample, "productions": paired.attached,
+                   "missing_sumw": paired.missing_sumw,
+                   "missing_sumsign": paired.missing_sumsign,
+                   "norm": paired.norm,
+                   "sumw_used": sumw_used, "sumsign_used": sumsign_used},
                   handle, indent=2)
     return target
 
@@ -564,6 +584,7 @@ def writeRunManifest(master_dir, argparser, userflags, dag_list, source_snapshot
             'BatchName': argparser.BatchName,
             'python': argparser.python,
             'skimming_mode': SKIMMING_MODE,
+            'no_friends': argparser.no_friends,
             'failure_policy': argparser.FailurePolicy,
             'max_event_errors': argparser.MaxEventErrors,
             'no_hadd': argparser.no_hadd,
@@ -731,6 +752,8 @@ def setParser():
     parser.add_argument('--ncpu', dest='ncpu', default=1, type=int) 
     parser.add_argument('--batchname', dest='BatchName', default="")
     parser.add_argument('--skimming_mode', action='store_true', default=False, help="Enable this option when anlyzer is skimmer.")
+    parser.add_argument('--no-friends', dest='no_friends', action='store_true', default=False,
+    help="Ignore the friend productions the analyzer's module declares in friends.yml (docs/FriendInput.md)")
     parser.add_argument('--failure-policy', dest='FailurePolicy', default='fail-fast',
     choices=['fail-fast', 'skip-event'], help="Event failure handling policy. Default: fail-fast")
     parser.add_argument('--max-event-errors', dest='MaxEventErrors', default=1, type=int,
@@ -855,6 +878,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
     njobs = argparse.NJobs
     reduction = argparse.Reduction
     
+    submitted_sample = sample
     if sample.startswith("Skim_"):
         SkimInfo = skimInfoJsons[era][sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)]
         sampleInfo = sampleInfoJsons[era][SkimInfo['PD']]
@@ -865,8 +889,7 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
                 "<module>/data/Skim/<era>/ of the analysis that produced it")
         samplePaths = resolve_sample_paths(json.load(open(sample_json_path)), era, period)
         metadata_snapshot_files = snapshotSampleMetadata(masterJobDirectory, era, sample, sample_json_path)
-        metadata_snapshot_files.append(
-            snapshotResolvedInputs(masterJobDirectory, era, sample, samplePaths))
+        friend_key = sample
         sample = SkimInfo['PD']
     else:
         sample_key = sample if isMC else re.sub(f"_{re.escape(period)}$", "", sample)
@@ -883,10 +906,32 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
                 SKNANO_DATA, era, 'Sample', 'CommonSampleInfo.json')
         samplePaths = resolve_sample_paths(sample_spec, era, period)
         metadata_snapshot_files = snapshotSampleMetadata(masterJobDirectory, era, sample, sample_json_path)
-        metadata_snapshot_files.append(
-            snapshotResolvedInputs(masterJobDirectory, era, sample, samplePaths))
+        friend_key = sample_key
 
-    samplePaths = jobFileDivider(samplePaths, njobs)
+    # Friend productions the analyzer's module declares (friends.yml) ride
+    # next to every central file; events their producer never processed are
+    # skipped in the loop, so their genWeight sum leaves the normalisation.
+    friend_productions = [] if argparse.no_friends else friends_for(
+        getAnalysisModuleDirs(), AnalyzerName, era, friend_key)
+    paired = pair_friends(friend_productions, samplePaths, era, submitted_sample, isMC)
+    metadata_snapshot_files.append(
+        snapshotResolvedInputs(masterJobDirectory, era, submitted_sample, samplePaths, paired.paths))
+    sumW, sumSign = (paired.normalisation(sampleInfo["sumW"], sampleInfo["sumsign"])
+                     if isMC else (None, None))
+    if paired.attached:
+        metadata_snapshot_files.append(
+            snapshotFriends(masterJobDirectory, era, submitted_sample, paired, sumW, sumSign))
+        for item in paired.attached:
+            note = f"friend {item['production']} attached to {era}/{submitted_sample}: status counts {item['n_status']}"
+            if item.get('norm'):
+                note += f", filtered: normalised to its own Runs sumW {sumW} (registry {sampleInfo['sumW']})"
+            elif item['missing_lumis']:
+                note += f", events lost in {item['missing_lumis']} lumis"
+                note += (f" (sumW {sampleInfo['sumW']} -> {sumW})" if isMC else
+                         "; subtract those lumis from the luminosity, see friend_summary.json")
+            print(note)
+
+    samplePaths = jobFileDivider(list(zip(samplePaths, paired.paths)), njobs)
 
     
     totalNumberOfJobs = len(samplePaths)
@@ -908,8 +953,8 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             if isMC:
                 job_content = job_content.replace("[sample]", sample)
                 job_content = job_content.replace("[xsec]", str(sampleInfo["xsec"]))
-                job_content = job_content.replace("[sumW]", str(sampleInfo["sumW"]))
-                job_content = job_content.replace("[sumSign]", str(sampleInfo["sumsign"]))
+                job_content = job_content.replace("[sumW]", str(sumW))
+                job_content = job_content.replace("[sumSign]", str(sumSign))
             else:
                 job_content = job_content.replace("module.IsDATA = False", "module.IsDATA = True")
                 job_content = job_content.replace('module.MCSample = "[sample]"',
@@ -928,7 +973,10 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             job_content = job_content.replace("[USERFLAGS]", userflags_str)
             
             # Handle sample paths
-            samplepaths_str = "\n".join([f'    module.AddFile("{path}")' for path in samplePaths[i]])
+            samplepaths_str = "\n".join([
+                f'    module.AddFile("{path}", {json.dumps(friends)})' if friends
+                else f'    module.AddFile("{path}")'
+                for path, friends in samplePaths[i]])
             job_content = job_content.replace("[SAMPLEPATHS]", samplepaths_str)
 
             # Handle reduction/max events
@@ -957,8 +1005,8 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             if isMC:
                 job_content = job_content.replace("[sample]", sample)
                 job_content = job_content.replace("[xsec]", str(sampleInfo["xsec"]))
-                job_content = job_content.replace("[sumW]", str(sampleInfo["sumW"]))
-                job_content = job_content.replace("[sumSign]", str(sampleInfo["sumsign"]))
+                job_content = job_content.replace("[sumW]", str(sumW))
+                job_content = job_content.replace("[sumSign]", str(sumSign))
             else:
                 # For data, remove MC-specific lines
                 job_content = job_content.replace("module.IsDATA = false;", "module.IsDATA = true;")
@@ -977,7 +1025,10 @@ def jobProducer(era, sample, argparse, masterJobDirectory, userflags, isample, t
             job_content = job_content.replace("[USERFLAGS]", userflags_str)
 
             # Handle sample paths
-            samplepaths_str = "\n".join([f'\tmodule.AddFile("{path}");' for path in samplePaths[i]])
+            samplepaths_str = "\n".join([
+                f'\tmodule.AddFile("{path}", {{{", ".join(json.dumps(f) for f in friends)}}});' if friends
+                else f'\tmodule.AddFile("{path}");'
+                for path, friends in samplePaths[i]])
             job_content = job_content.replace("[SAMPLEPATHS]", samplepaths_str)
 
             # Handle reduction/max events
