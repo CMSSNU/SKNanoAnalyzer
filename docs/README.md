@@ -28,6 +28,9 @@ contracts.
 
 - [RNTuple I/O](RNTupleIO.md): input selection, conversion, merging, and
   performance telemetry.
+- [Friend Input](FriendInput.md): custom columns of a private production
+  stored next to the central NanoAOD and attached per file; `friends.yml`,
+  `sknano_friend`, status codes and normalisation.
 - [ROOT Schema Compatibility](RootSchemaCompatibility.md): persistent-object
   ABI and schema-evolution policy.
 

@@ -370,6 +370,11 @@ SKNano.py -a GetEffLumi -i $SAMPLENAME -e $ERA -n 10
 python3 python/sampleManager.py --era $ERA --updateMcInfo
 ```
 
+A private production that only *adds* columns to a central sample does not
+need a sample of its own: build its columns into friend files and declare
+them in the module's `friends.yml`; the submission then attaches them to the
+central sample automatically. See [Friend Input](FriendInput.md).
+
 ## Skimming mode
 Passing `--skimming_mode` writes skim output below
 `$SKNANO_RUN[2,3]_NANOAODPATH/Era/[DATA,MC]/Skim/$USER` and replaces the DAG's
