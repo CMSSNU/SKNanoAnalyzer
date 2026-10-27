@@ -173,6 +173,7 @@ add_subdirectory(DataFormats)
 add_subdirectory(AnalyzerTools)
 add_subdirectory(AnalyzerFramework)
 add_subdirectory(CommonAnalyzers)
+add_subdirectory(tools/sknano_friend)
 
 set(_sknano_default_analysis_module_dirs "")
 file(GLOB _sknano_candidate_module_dirs
@@ -217,6 +218,10 @@ if(BUILD_TESTING)
              COMMAND ${Python3_EXECUTABLE}
                      ${CMAKE_SOURCE_DIR}/scripts/tests/test_sknano_merge.py)
     set_tests_properties(merge_engine PROPERTIES SKIP_RETURN_CODE 77)
+    add_test(NAME friend_config
+             COMMAND ${Python3_EXECUTABLE}
+                     ${CMAKE_SOURCE_DIR}/scripts/tests/test_friend_config.py)
+    set_tests_properties(friend_config PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 # Fetch external dependencies
