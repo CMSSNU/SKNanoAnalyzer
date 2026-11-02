@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "MyCorrection.h"
 #include "TauTestSupport.h"
@@ -12,7 +13,7 @@ namespace {
 
 const TauView::TauID kTestID{LeptonID::TauWorkingPoint::MEDIUM,
                              LeptonID::TauWorkingPoint::TIGHT,
-                             LeptonID::TauWorkingPointVsMu::TIGHT, true, true, 0.2f};
+                             LeptonID::TauWorkingPointVsMu::TIGHT, true, 0.2f, true};
 
 // MyCorrection opens every correction file the era declares, so it is built
 // once for the whole suite rather than per test.
@@ -177,4 +178,38 @@ TEST_F(TauCorrection, TauTriggerSFFallsBackToUnityForUncalibratedDecayModes) {
         EXPECT_FLOAT_EQ(
             mc_->GetTauTriggerSF(100.f, dm, MyCorrection::TauTrigType::DiTau),
             1.f) << "dm " << dm;
+}
+
+TEST_F(TauCorrection, TauTriggerSFDefaultsToTheMediumWorkingPoint) {
+    EXPECT_FLOAT_EQ(
+        mc_->GetTauTriggerSF(100.f, 0, MyCorrection::TauTrigType::DiTau),
+        mc_->GetTauTriggerSF(100.f, 0, MyCorrection::TauTrigType::DiTau,
+                             MyCorrection::variation::nom, "Medium"));
+}
+
+TEST_F(TauCorrection, TauTriggerSFRejectsAnUnpublishedWorkingPoint) {
+    EXPECT_ANY_THROW(mc_->GetTauTriggerSF(100.f, 0, MyCorrection::TauTrigType::DiTau,
+                                          MyCorrection::variation::nom, "NotAWP"));
+}
+
+TEST_F(TauCorrection, TauTriggerSFCollectionFormMultipliesOverTheSelection) {
+    auto f = sknano_test::MakeTaus({100.f, 60.f}, {0.5f, -1.f}, {6, 6}, {6, 6},
+                                   {4, 4});
+    const auto taus = sknano_test::MakeTauCollection(f);
+    const std::vector<std::size_t> indices{0, 1};
+
+    const float expected =
+        mc_->GetTauTriggerSF(100.f, 0, MyCorrection::TauTrigType::DiTau) *
+        mc_->GetTauTriggerSF(60.f, 0, MyCorrection::TauTrigType::DiTau);
+    EXPECT_FLOAT_EQ(
+        mc_->GetTauTriggerSF(MyCorrection::TauTrigType::DiTau, taus, indices),
+        expected);
+}
+
+TEST_F(TauCorrection, TauTriggerSFCollectionFormRejectsOutOfRangeIndices) {
+    auto f = sknano_test::MakeTaus({100.f}, {0.5f}, {6}, {6}, {4});
+    const auto taus = sknano_test::MakeTauCollection(f);
+    EXPECT_THROW(mc_->GetTauTriggerSF(MyCorrection::TauTrigType::DiTau, taus,
+                                      std::vector<std::size_t>{1}),
+                 SKNano::LogicError);
 }

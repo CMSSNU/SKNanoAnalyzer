@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 // Objects
@@ -103,11 +104,27 @@ LHEViewCollection AnalyzerCore::GetAllLHEViews() {
   return LHEViewCollection(std::move(storage));
 }
 
-TauViewCollection AnalyzerCore::GetAllTauViews() {
+namespace {
+
+float TauPtUnder(const TauView &tau, const TauESSource source,
+                 const MyCorrection::variation variation) {
+  if (variation == MyCorrection::variation::nom)
+    return tau.Pt();
+  return tau.ShiftedPt(source, variation == MyCorrection::variation::up);
+}
+
+} // namespace
+
+void AnalyzerCore::RefreshTauViewCache() {
   const Long64_t entry = CurrentEntry();
   if (cachedTauViewsEntry == entry)
-    return cachedTauViews;
+    return;
+  cachedTauViews = TauViewCollection();
+  cachedTauESViews.clear();
+  cachedTauViewsEntry = entry;
+}
 
+TauViewCollection AnalyzerCore::MakeTauViews(const TauView::TauID *id) {
   auto storage = std::make_shared<TauSoA>();
   storage->pt.bind(&Tau_pt);
   storage->eta.bind(&Tau_eta);
@@ -126,41 +143,89 @@ TauViewCollection AnalyzerCore::GetAllTauViews() {
   storage->rawDeepTau2018v2p5VSe.bind(&Tau_rawDeepTau2018v2p5VSe);
   storage->rawDeepTau2018v2p5VSjet.bind(&Tau_rawDeepTau2018v2p5VSjet);
   storage->rawDeepTau2018v2p5VSmu.bind(&Tau_rawDeepTau2018v2p5VSmu);
+  if (id) {
+    storage->hasEnergyScaleID = true;
+    storage->energyScaleVsJet = id->vsJet;
+    storage->energyScaleVsE = id->vsE;
+  }
 
   storage->populateMomentum = [this, target = storage.get()] {
     PopulateTauMomentum(*target);
   };
+  return TauViewCollection(std::move(storage));
+}
 
-  TauViewCollection result(std::move(storage));
-  cachedTauViews = result;
-  cachedTauViewsEntry = entry;
+TauViewCollection AnalyzerCore::GetAllTauViews() {
+  if (tauESEnabled) {
+    if (tauESIds.size() != 1)
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::GetAllTauViews] the tau energy scale is enabled for "
+          "several IDs, so the ID must be passed to GetAllTauViews(id)");
+    return GetAllTauViews(tauESIds.front());
+  }
+
+  RefreshTauViewCache();
+  if (!cachedTauViews.storage())
+    cachedTauViews = MakeTauViews(nullptr);
   return cachedTauViews;
 }
 
-void AnalyzerCore::EnableTauEnergyScale(const TauView::TauID &id,
-                                        const MyCorrection::variation variation) {
-  if (!id.requireCalibratedDecayMode)
-    throw SKNano::ConfigError(
-        "[AnalyzerCore::EnableTauEnergyScale] the tau energy scale is defined "
-        "only for decay modes 0, 1, 10 and 11, so it cannot be enabled for an "
-        "ID with requireCalibratedDecayMode = false");
+TauViewCollection AnalyzerCore::GetAllTauViews(const TauView::TauID &id) {
+  if (!tauESEnabled) {
+    RefreshTauViewCache();
+    if (!cachedTauViews.storage())
+      cachedTauViews = MakeTauViews(nullptr);
+    return cachedTauViews;
+  }
 
-  tauESEnabled = true;
-  tauESId = id;
-  tauESVariation = variation;
-  const auto storage = cachedTauViews.storage();
-  if (storage)
-    storage->momentumReady = false;
+  const auto registered =
+      std::find_if(tauESIds.begin(), tauESIds.end(), [&](const auto &other) {
+        return other.vsJet == id.vsJet && other.vsE == id.vsE;
+      });
+  if (registered == tauESIds.end())
+    throw SKNano::ConfigError(
+        std::string("[AnalyzerCore::GetAllTauViews] no tau energy scale is "
+                    "registered for vsJet ") +
+        ToCorrectionString(id.vsJet) + " / vsE " + ToCorrectionString(id.vsE) +
+        "; pass this ID to EnableTauEnergyScale");
+
+  RefreshTauViewCache();
+  for (const auto &cached : cachedTauESViews)
+    if (cached.vsJet == id.vsJet && cached.vsE == id.vsE)
+      return cached.views;
+  cachedTauESViews.push_back({id.vsJet, id.vsE, MakeTauViews(&*registered)});
+  return cachedTauESViews.back().views;
 }
 
-void AnalyzerCore::SetTauEnergyScaleVariation(
-    const MyCorrection::variation variation) {
-    if (!tauESEnabled || tauESVariation == variation)
-        return;
-    tauESVariation = variation;
-    const auto storage = cachedTauViews.storage();
-    if (storage)
-        storage->momentumReady = false;
+void AnalyzerCore::EnableTauEnergyScale(const TauView::TauID &id) {
+  EnableTauEnergyScale(std::vector<TauView::TauID>{id});
+}
+
+void AnalyzerCore::EnableTauEnergyScale(
+    const std::vector<TauView::TauID> &ids) {
+  if (ids.empty())
+    throw SKNano::ConfigError(
+        "[AnalyzerCore::EnableTauEnergyScale] at least one tau ID is required");
+  for (const auto &id : ids)
+    if (!id.requireCalibratedDecayMode)
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::EnableTauEnergyScale] the tau energy scale is "
+          "defined only for decay modes 0, 1, 10 and 11, so it cannot be "
+          "enabled for an ID with requireCalibratedDecayMode = false");
+
+  tauESEnabled = true;
+  tauESIds = ids;
+  cachedTauViewsEntry = kInvalidCacheEntry;
+  RefreshTauViewCache();
+}
+
+void AnalyzerCore::RequireTauESVariation(
+    const char *where, const MyCorrection::variation variation) const {
+  if (variation != MyCorrection::variation::nom && !tauESEnabled)
+    throw SKNano::ConfigError(
+        std::string("[AnalyzerCore::") + where +
+        "] a tau energy scale variation was requested, but "
+        "EnableTauEnergyScale was never called");
 }
 
 void AnalyzerCore::PopulateTauMomentum(TauSoA &storage) {
@@ -171,27 +236,27 @@ void AnalyzerCore::PopulateTauMomentum(TauSoA &storage) {
   storage.tesPtDown.resize(count);
   storage.tesMassUp.resize(count);
   storage.tesMassDown.resize(count);
+  storage.esSource.resize(count);
 
-  const bool apply = tauESEnabled && !IsDATA && myCorr;
+  const bool apply = storage.hasEnergyScaleID && !IsDATA && myCorr;
+  TauView::TauID id;
+  id.vsJet = storage.energyScaleVsJet;
+  id.vsE = storage.energyScaleVsE;
   for (std::size_t index = 0; index < count; ++index) {
-    const float pt = storage.pt[index];
-    const float mass = storage.mass[index];
+    const TauView tau(&storage, index);
+    const float pt = tau.MiniAODPt();
+    const float mass = tau.MiniAODM();
     float scale = 1.f;
     float scaleUp = 1.f;
     float scaleDown = 1.f;
+    TauESSource source = TauESSource::None;
 
-    if (apply && TauView::IsCalibratedDecayMode(storage.decayMode[index])) {
-      const int dm = static_cast<int>(storage.decayMode[index]);
-      const int genmatch = static_cast<int>(storage.genPartFlav[index]);
-      const TString vsJet = ToCorrectionString(tauESId.vsJet);
-      const TString vsE = ToCorrectionString(tauESId.vsE);
-      const float eta = storage.eta[index];
-      scale = myCorr->GetTauES(pt, eta, dm, genmatch, vsJet, vsE,
-                               tauESVariation);
-      scaleUp = myCorr->GetTauES(pt, eta, dm, genmatch, vsJet, vsE,
-                                 MyCorrection::variation::up);
-      scaleDown = myCorr->GetTauES(pt, eta, dm, genmatch, vsJet, vsE,
-                                   MyCorrection::variation::down);
+    if (apply && TauView::IsCalibratedDecayMode(tau.DecayMode())) {
+      scale = myCorr->GetTauES(id, tau);
+      scaleUp = myCorr->GetTauES(id, tau, MyCorrection::variation::up);
+      scaleDown = myCorr->GetTauES(id, tau, MyCorrection::variation::down);
+      source = TauView::ClassifyESSource(tau.DecayMode(), tau.GenPartFlav(),
+                                         tau.Eta());
     }
 
     storage.correctedPt[index] = pt * scale;
@@ -200,12 +265,15 @@ void AnalyzerCore::PopulateTauMomentum(TauSoA &storage) {
     storage.tesPtDown[index] = pt * scaleDown;
     storage.tesMassUp[index] = mass * scaleUp;
     storage.tesMassDown[index] = mass * scaleDown;
+    storage.esSource[index] = source;
   }
   storage.momentumReady = true;
 }
 
-void AnalyzerCore::PropagateTauSystToMET(const TauViewCollection &taus,
-                                         Particle &met) const {
+void AnalyzerCore::PropagateTauSystToMET(
+    const TauViewCollection &taus, Particle &met, const TauESSource source,
+    const MyCorrection::variation variation) const {
+  RequireTauESVariation("PropagateTauSystToMET", variation);
   if (!tauESEnabled || IsDATA)
     return;
 
@@ -213,11 +281,11 @@ void AnalyzerCore::PropagateTauSystToMET(const TauViewCollection &taus,
   float deltaPy = 0.f;
   for (const auto &tau : taus) {
     const float phi = tau.Phi();
-    const float shift = tau.Pt() - tau.MiniAODPt();
+    const float shift = TauPtUnder(tau, source, variation) - tau.MiniAODPt();
     deltaPx += shift * std::cos(phi);
     deltaPy += shift * std::sin(phi);
   }
-  
+
   met.SetXYZM(met.Px() - deltaPx, met.Py() - deltaPy, 0., 0.);
 }
 
@@ -225,12 +293,32 @@ std::vector<std::size_t>
 AnalyzerCore::SelectTauIndices(const TauViewCollection &taus,
                                const std::vector<std::size_t> &seed_indices,
                                const TauView::TauID &id, const float ptmin,
-                               const float fetamax) const {
+                               const float fetamax, const TauESSource source,
+                               const MyCorrection::variation variation) const {
+  RequireTauESVariation("SelectTauIndices", variation);
+  if (tauESEnabled) {
+    const auto &storage = taus.storage();
+    if (!storage || !storage->hasEnergyScaleID)
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::SelectTauIndices] the tau energy scale is enabled, "
+          "but these taus carry no energy scale ID; get them from "
+          "GetAllTauViews(id)");
+    if (storage->energyScaleVsJet != id.vsJet ||
+        storage->energyScaleVsE != id.vsE)
+      throw SKNano::ConfigError(
+          std::string("[AnalyzerCore::SelectTauIndices] the taus were scaled "
+                      "with vsJet ") +
+          ToCorrectionString(storage->energyScaleVsJet) + " / vsE " +
+          ToCorrectionString(storage->energyScaleVsE) +
+          " but are selected with vsJet " + ToCorrectionString(id.vsJet) +
+          " / vsE " + ToCorrectionString(id.vsE));
+  }
+
   std::vector<std::size_t> selected;
   selected.reserve(taus.size());
   for (auto i : seed_indices) {
     const auto &tau = taus[i];
-    if (!(tau.Pt() > ptmin))
+    if (!(TauPtUnder(tau, source, variation) > ptmin))
       continue;
     if (!(std::abs(tau.Eta()) < fetamax))
       continue;
@@ -244,19 +332,24 @@ AnalyzerCore::SelectTauIndices(const TauViewCollection &taus,
 std::vector<std::size_t>
 AnalyzerCore::SelectTauIndices(const TauViewCollection &taus,
                                const TauView::TauID &id, const float ptmin,
-                               const float fetamax) const {
+                               const float fetamax, const TauESSource source,
+                               const MyCorrection::variation variation) const {
   auto seed_indices = AllIndices(taus);
-  return SelectTauIndices(taus, seed_indices, id, ptmin, fetamax);
+  return SelectTauIndices(taus, seed_indices, id, ptmin, fetamax, source,
+                          variation);
 }
 
 TauViewCollection
 AnalyzerCore::SelectTauViews(const TauViewCollection &taus,
                              std::vector<std::size_t> indices,
-                             bool sortByPt) const {
+                             bool sortByPt, const TauESSource source,
+                             const MyCorrection::variation variation) const {
+  RequireTauESVariation("SelectTauViews", variation);
   if (sortByPt) {
     std::sort(indices.begin(), indices.end(),
               [&](std::size_t lhs, std::size_t rhs) {
-                return taus[lhs].Pt() > taus[rhs].Pt();
+                return TauPtUnder(taus[lhs], source, variation) >
+                       TauPtUnder(taus[rhs], source, variation);
               });
   }
   return TauViewCollection(taus.storage(), std::move(indices));

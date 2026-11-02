@@ -2,6 +2,25 @@
 
 #include <cmath>
 
+TauESSource TauView::ClassifyESSource(const unsigned char dm,
+                                      const unsigned char genmatch,
+                                      const float eta) {
+    if (!IsCalibratedDecayMode(dm))
+        return TauESSource::None;
+    const int slot = dm == 0 ? 0 : dm == 1 ? 1 : dm == 10 ? 2 : 3;
+    if (genmatch == 5)
+        return static_cast<TauESSource>(
+            static_cast<int>(TauESSource::GenuineDM0) + slot);
+    if (genmatch == 1 || genmatch == 3)
+        return static_cast<TauESSource>(
+            static_cast<int>(TauESSource::EFakeDM0Barrel) + 2 * slot +
+            (std::abs(eta) < 1.5f ? 0 : 1));
+    if (genmatch == 2 || genmatch == 4)
+        return static_cast<TauESSource>(
+            static_cast<int>(TauESSource::MuFakeDM0) + slot);
+    return TauESSource::None;
+}
+
 bool TauView::PassID(const TauID &id) const {
     if (id.requireNewDM && !idDecayModeNewDMs())
         return false;

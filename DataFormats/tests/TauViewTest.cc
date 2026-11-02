@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <set>
+#include <string>
+
 #include "TauTestSupport.h"
 
 namespace {
@@ -84,35 +87,35 @@ TEST(TauViewRawScores, UnboundRawDiscriminatorsReturnSentinel) {
 TEST(TauViewID, AcceptsTauMeetingEveryAxis) {
     auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4});
     const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                         true, true, 0.2f};
+                         true, 0.2f};
     EXPECT_TRUE(f->at(0).PassID(id));
 }
 
 TEST(TauViewID, RejectsTauFailingTheJetAxis) {
     auto f = MakeTaus({100.f}, {0.5f}, {4}, {6}, {4});
     const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                         true, true, 0.2f};
+                         true, 0.2f};
     EXPECT_FALSE(f->at(0).PassID(id));
 }
 
 TEST(TauViewID, RejectsTauFailingTheMuonAxis) {
     auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {1});
     const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::TIGHT,
-                         true, true, 0.2f};
+                         true, 0.2f};
     EXPECT_FALSE(f->at(0).PassID(id));
 }
 
 TEST(TauViewID, NoneWorkingPointDisablesThatAxis) {
     auto f = MakeTaus({100.f}, {0.5f}, {6}, {0}, {0});
     const TauView::TauID id{LeptonID::TauWorkingPoint::TIGHT, LeptonID::TauWorkingPoint::NONE, LeptonID::TauWorkingPointVsMu::NONE,
-                         true, true, 0.2f};
+                         true, 0.2f};
     EXPECT_TRUE(f->at(0).PassID(id));
 }
 
 TEST(TauViewID, RejectsTauFailingTheImpactParameterCut) {
     auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4}, {0.5f});
     const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                         true, true, 0.2f};
+                         true, 0.2f};
     EXPECT_FALSE(f->at(0).PassID(id));
 }
 
@@ -121,7 +124,7 @@ TEST(TauViewID, RejectsTauFailingTheImpactParameterCut) {
 // flips the sign of the event weight. docs/SYSTEMATICS.md 2.1.
 TEST(TauViewID, RejectsDecayModesThePOGDoesNotCalibrate) {
     const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                         true, true, 0.2f};
+                         true, 0.2f, true};
     for (const unsigned char dm : {0, 1, 10, 11}) {
         auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4}, {0.f}, {dm});
         EXPECT_TRUE(f->at(0).PassID(id)) << "dm " << static_cast<int>(dm);
@@ -134,11 +137,79 @@ TEST(TauViewID, RejectsDecayModesThePOGDoesNotCalibrate) {
 
 TEST(TauViewID, KeepsUncalibratedDecayModesWhenTheFlagIsOff) {
     TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                      true, false, 0.2f};
+                      true, 0.2f, false};
     for (const unsigned char dm : {2, 5, 6}) {
         auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4}, {0.f}, {dm});
         EXPECT_TRUE(f->at(0).PassID(id)) << "dm " << static_cast<int>(dm);
     }
+}
+
+TEST(TauViewID, DefaultIDKeepsUncalibratedDecayModes) {
+    const TauView::TauID id{};
+    EXPECT_FALSE(id.requireCalibratedDecayMode);
+    for (const unsigned char dm : {2, 5, 6}) {
+        auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4}, {0.f}, {dm});
+        EXPECT_TRUE(f->at(0).PassID(id)) << "dm " << static_cast<int>(dm);
+    }
+}
+
+TEST(TauViewID, PositionalInitializerKeepsItsMeaning) {
+    const TauView::TauID id{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
+                            true, 0.5f};
+    EXPECT_FLOAT_EQ(id.maxDz, 0.5f);
+    EXPECT_FALSE(id.requireCalibratedDecayMode);
+}
+
+TEST(TauViewMomentum, ThrowsWhenNoProviderIsBound) {
+    auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4});
+    f->soa.populateMomentum = nullptr;
+    EXPECT_THROW(f->at(0).Pt(), SKNano::LogicError);
+}
+
+TEST(TauViewESSource, ClassifiesEachTauIntoItsOwnSource) {
+    EXPECT_EQ(TauView::ClassifyESSource(0, 5, 0.5f), TauESSource::GenuineDM0);
+    EXPECT_EQ(TauView::ClassifyESSource(11, 5, 2.0f), TauESSource::GenuineDM11);
+    EXPECT_EQ(TauView::ClassifyESSource(1, 1, 0.5f), TauESSource::EFakeDM1Barrel);
+    EXPECT_EQ(TauView::ClassifyESSource(1, 3, -1.6f), TauESSource::EFakeDM1Endcap);
+    EXPECT_EQ(TauView::ClassifyESSource(10, 1, 1.49f), TauESSource::EFakeDM10Barrel);
+    EXPECT_EQ(TauView::ClassifyESSource(10, 2, 0.5f), TauESSource::MuFakeDM10);
+    EXPECT_EQ(TauView::ClassifyESSource(0, 4, 0.5f), TauESSource::MuFakeDM0);
+    EXPECT_EQ(TauView::ClassifyESSource(0, 0, 0.5f), TauESSource::None);
+    EXPECT_EQ(TauView::ClassifyESSource(0, 6, 0.5f), TauESSource::None);
+    EXPECT_EQ(TauView::ClassifyESSource(5, 5, 0.5f), TauESSource::None);
+}
+
+TEST(TauViewESSource, ShiftedMomentumOnlyMovesForTheTausOwnSource) {
+    auto f = MakeTaus({100.f}, {0.5f}, {6}, {6}, {4});
+    f->soa.populateMomentum = [target = &f->soa] {
+        target->correctedPt = {101.f};
+        target->correctedMass = {1.8f};
+        target->tesPtUp = {103.f};
+        target->tesPtDown = {99.f};
+        target->tesMassUp = {1.83f};
+        target->tesMassDown = {1.77f};
+        target->esSource = {TauESSource::GenuineDM0};
+        target->momentumReady = true;
+    };
+    const TauView tau = f->at(0);
+
+    EXPECT_FLOAT_EQ(tau.ShiftedPt(TauESSource::GenuineDM0, true), 103.f);
+    EXPECT_FLOAT_EQ(tau.ShiftedPt(TauESSource::GenuineDM0, false), 99.f);
+    EXPECT_FLOAT_EQ(tau.ShiftedM(TauESSource::GenuineDM0, true), 1.83f);
+    EXPECT_FLOAT_EQ(tau.ShiftedPt(TauESSource::Total, true), 103.f);
+    EXPECT_FLOAT_EQ(tau.ShiftedPt(TauESSource::GenuineDM1, true), 101.f);
+    EXPECT_FLOAT_EQ(tau.ShiftedM(TauESSource::GenuineDM1, true), 1.8f);
+    EXPECT_FLOAT_EQ(tau.ShiftedPt(TauESSource::None, true), 101.f);
+    EXPECT_FLOAT_EQ(tau.ShiftedP4(TauESSource::GenuineDM0, true).Pt(), 103.f);
+}
+
+TEST(TauViewESSource, DecorrelatedSourcesHaveDistinctNames) {
+    std::set<std::string> names;
+    for (const auto source : kTauESDecorrelatedSources)
+        names.insert(TauESSourceName(source));
+    EXPECT_EQ(names.size(), kTauESDecorrelatedSources.size());
+    EXPECT_EQ(names.count("None"), 0u);
+    EXPECT_EQ(names.count("Total"), 0u);
 }
 
 TEST(TauViewID, WorkingPointEnumMapsToPogStrings) {

@@ -1,6 +1,7 @@
 #ifndef TAUVIEW_H
 #define TAUVIEW_H
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -10,6 +11,61 @@
 #include "LeptonIDEnums.h"
 #include "TLorentzVector.h"
 #include "ViewColumns.h"
+
+enum class TauESSource : unsigned char {
+    None,
+    Total,
+    GenuineDM0,
+    GenuineDM1,
+    GenuineDM10,
+    GenuineDM11,
+    EFakeDM0Barrel,
+    EFakeDM0Endcap,
+    EFakeDM1Barrel,
+    EFakeDM1Endcap,
+    EFakeDM10Barrel,
+    EFakeDM10Endcap,
+    EFakeDM11Barrel,
+    EFakeDM11Endcap,
+    MuFakeDM0,
+    MuFakeDM1,
+    MuFakeDM10,
+    MuFakeDM11
+};
+
+inline constexpr std::array<TauESSource, 16> kTauESDecorrelatedSources{
+    TauESSource::GenuineDM0,      TauESSource::GenuineDM1,
+    TauESSource::GenuineDM10,     TauESSource::GenuineDM11,
+    TauESSource::EFakeDM0Barrel,  TauESSource::EFakeDM0Endcap,
+    TauESSource::EFakeDM1Barrel,  TauESSource::EFakeDM1Endcap,
+    TauESSource::EFakeDM10Barrel, TauESSource::EFakeDM10Endcap,
+    TauESSource::EFakeDM11Barrel, TauESSource::EFakeDM11Endcap,
+    TauESSource::MuFakeDM0,       TauESSource::MuFakeDM1,
+    TauESSource::MuFakeDM10,      TauESSource::MuFakeDM11};
+
+inline const char *TauESSourceName(const TauESSource source) {
+    switch (source) {
+    case TauESSource::None: return "None";
+    case TauESSource::Total: return "Total";
+    case TauESSource::GenuineDM0: return "GenuineDM0";
+    case TauESSource::GenuineDM1: return "GenuineDM1";
+    case TauESSource::GenuineDM10: return "GenuineDM10";
+    case TauESSource::GenuineDM11: return "GenuineDM11";
+    case TauESSource::EFakeDM0Barrel: return "EFakeDM0Barrel";
+    case TauESSource::EFakeDM0Endcap: return "EFakeDM0Endcap";
+    case TauESSource::EFakeDM1Barrel: return "EFakeDM1Barrel";
+    case TauESSource::EFakeDM1Endcap: return "EFakeDM1Endcap";
+    case TauESSource::EFakeDM10Barrel: return "EFakeDM10Barrel";
+    case TauESSource::EFakeDM10Endcap: return "EFakeDM10Endcap";
+    case TauESSource::EFakeDM11Barrel: return "EFakeDM11Barrel";
+    case TauESSource::EFakeDM11Endcap: return "EFakeDM11Endcap";
+    case TauESSource::MuFakeDM0: return "MuFakeDM0";
+    case TauESSource::MuFakeDM1: return "MuFakeDM1";
+    case TauESSource::MuFakeDM10: return "MuFakeDM10";
+    case TauESSource::MuFakeDM11: return "MuFakeDM11";
+    }
+    return "Unknown";
+}
 
 struct TauSoA {
     ColumnView<float> pt;
@@ -36,6 +92,10 @@ struct TauSoA {
     std::vector<float> tesPtDown;
     std::vector<float> tesMassUp;
     std::vector<float> tesMassDown;
+    std::vector<TauESSource> esSource;
+    bool hasEnergyScaleID = false;
+    LeptonID::TauWorkingPoint energyScaleVsJet = LeptonID::TauWorkingPoint::NONE;
+    LeptonID::TauWorkingPoint energyScaleVsE = LeptonID::TauWorkingPoint::NONE;
     std::function<void()> populateMomentum;
     mutable bool momentumReady = false;
     mutable bool momentumComputing = false;
@@ -47,10 +107,8 @@ struct TauSoA {
             return;
         if (momentumComputing)
             throw SKNano::LogicError("[TauSoA] recursive momentum computation");
-        if (!populateMomentum) {
-            momentumReady = true;
-            return;
-        }
+        if (!populateMomentum)
+            throw SKNano::LogicError("[TauSoA] momentum provider is not bound");
         momentumComputing = true;
         try {
             populateMomentum();
@@ -80,14 +138,17 @@ public:
         WorkingPoint vsE = WorkingPoint::NONE;
         WorkingPointVsMu vsMu = WorkingPointVsMu::NONE;
         bool requireNewDM = true;
-        bool requireCalibratedDecayMode = true;
         float maxDz = 0.2f;
+        bool requireCalibratedDecayMode = false;
     };
 
     // The decay modes every TAU correctionlib input covers.
     static constexpr bool IsCalibratedDecayMode(unsigned char dm) {
         return dm == 0 || dm == 1 || dm == 10 || dm == 11;
     }
+
+    static TauESSource ClassifyESSource(unsigned char dm,
+                                        unsigned char genmatch, float eta);
 
     TauView() = default;
     TauView(const TauSoA *storage, std::size_t index)
@@ -130,6 +191,32 @@ public:
         store_->ensureMomentum();
         return index_ < store_->tesMassDown.size() ? store_->tesMassDown[index_]
                                                    : M();
+    }
+    TauESSource ESSource() const {
+        store_->ensureMomentum();
+        return index_ < store_->esSource.size() ? store_->esSource[index_]
+                                                : TauESSource::None;
+    }
+    float ShiftedPt(TauESSource source, bool up) const {
+        if (!ShiftedBy(source))
+            return Pt();
+        return up ? TesPtUp() : TesPtDown();
+    }
+    float ShiftedM(TauESSource source, bool up) const {
+        if (!ShiftedBy(source))
+            return M();
+        return up ? TesMassUp() : TesMassDown();
+    }
+    TLorentzVector ShiftedP4(TauESSource source, bool up) const {
+        TLorentzVector value;
+        value.SetPtEtaPhiM(ShiftedPt(source, up), Eta(), Phi(),
+                           ShiftedM(source, up));
+        return value;
+    }
+    bool ShiftedBy(TauESSource source) const {
+        if (source == TauESSource::None)
+            return false;
+        return source == TauESSource::Total || source == ESSource();
     }
     float Eta() const { return store_->eta[index_]; }
     float Phi() const { return store_->phi[index_]; }

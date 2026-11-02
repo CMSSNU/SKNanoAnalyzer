@@ -62,6 +62,26 @@ struct TauFixture {
     TauView at(std::size_t index) const { return TauView(&soa, index); }
 };
 
+inline void BindRawMomentum(TauSoA &soa) {
+    soa.populateMomentum = [target = &soa] {
+        const std::size_t n = target->pt.size();
+        target->correctedPt.resize(n);
+        target->correctedMass.resize(n);
+        target->tesPtUp.resize(n);
+        target->tesPtDown.resize(n);
+        target->tesMassUp.resize(n);
+        target->tesMassDown.resize(n);
+        target->esSource.assign(n, TauESSource::None);
+        for (std::size_t i = 0; i < n; ++i) {
+            target->correctedPt[i] = target->tesPtUp[i] =
+                target->tesPtDown[i] = target->pt[i];
+            target->correctedMass[i] = target->tesMassUp[i] =
+                target->tesMassDown[i] = target->mass[i];
+        }
+        target->momentumReady = true;
+    };
+}
+
 inline std::shared_ptr<TauFixture>
 MakeTaus(const std::vector<float> &pts, const std::vector<float> &etas,
          const std::vector<unsigned char> &vsJet,
@@ -104,6 +124,7 @@ MakeTaus(const std::vector<float> &pts, const std::vector<float> &etas,
     f->soa.idDeepTau2018v2p5VSe.bind(&f->vsE);
     f->soa.idDeepTau2018v2p5VSjet.bind(&f->vsJet);
     f->soa.idDeepTau2018v2p5VSmu.bind(&f->vsMu);
+    BindRawMomentum(f->soa);
     return f;
 }
 

@@ -163,10 +163,12 @@ public:
 
     enum class TauTrigType { DiTau, ETau, MuTau, DiTauJet };
     float GetTauTriggerSF(const float pt, const int dm, const TauTrigType type,
-                          const variation syst = variation::nom) const;
+                          const variation syst = variation::nom,
+                          const TString &wp = "Medium") const;
     float GetTauTriggerSF(const TauTrigType type, const TauViewCollection &taus,
                           const std::vector<std::size_t> &indices,
-                          const variation syst = variation::nom) const;
+                          const variation syst = variation::nom,
+                          const TString &wp = "Medium") const;
 
     // Trigger
     // Single lepton trigger from POG
@@ -504,6 +506,7 @@ private:
     mutable int electronHltSFHasPhi = -1;
     mutable int electronHltDataEffHasPhi = -1;
     mutable int electronHltMcEffHasPhi = -1;
+    mutable std::unordered_set<int> warnedTauTriggerCoverage;
 
     // Which inputs the era's JES correction takes.  Resolved together with the
     // refs below so the per-jet path is a switch on an enum rather than a

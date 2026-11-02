@@ -12,9 +12,8 @@ using sknano_test::MakeTauCollection;
 using sknano_test::MakeTaus;
 
 // Medium vsJet, VVLoose vsE, Loose vsMu.
-// vsJet, vsE, vsMu, requireNewDM, requireCalibratedDecayMode, maxDz.
 const TauView::TauID kMediumTau{LeptonID::TauWorkingPoint::MEDIUM, LeptonID::TauWorkingPoint::VVLOOSE, LeptonID::TauWorkingPointVsMu::LOOSE,
-                             true, true, 0.2f};
+                             true, 0.2f};
 
 TEST(SelectTauIndices, KeepsOnlyTausPassingEveryCut) {
     // 0: passes.  1: fails pT.  2: fails eta.  3: fails the vsJet axis.
@@ -90,8 +89,10 @@ TEST(SelectTauIndices, RejectsDecayModesThePOGDoesNotCalibrate) {
                       std::vector<float>(n, 0.f), dms);
     const auto taus = MakeTauCollection(f);
     AnalyzerCore core;
+    TauView::TauID calibrated = kMediumTau;
+    calibrated.requireCalibratedDecayMode = true;
 
-    const auto selected = core.SelectTauIndices(taus, kMediumTau, 50.f, 2.3f);
+    const auto selected = core.SelectTauIndices(taus, calibrated, 50.f, 2.3f);
 
     ASSERT_EQ(selected.size(), 4u);
     for (const auto index : selected) {
