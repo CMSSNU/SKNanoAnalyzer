@@ -261,6 +261,22 @@ public:
     float GetTauIDSF_vsMu(const TauView::TauID &id, const TauViewCollection &taus,
                           const variation syst = variation::nom) const;
 
+    float GetTauES(const float pt, const float eta, const int dm,
+                   const int genmatch, const TString &wp_vsJet,
+                   const TString &wp_vsE,
+                   const variation syst = variation::nom) const;
+    float GetTauES(const TauView::TauID &id, const TauView &tau,
+                   const variation syst = variation::nom) const;
+
+    enum class TauTrigType { DiTau, ETau, MuTau, DiTauJet };
+    float GetTauTriggerSF(const float pt, const int dm, const TauTrigType type,
+                          const variation syst = variation::nom,
+                          const TString &wp = "Medium") const;
+    float GetTauTriggerSF(const TauTrigType type, const TauViewCollection &taus,
+                          const std::vector<std::size_t> &indices,
+                          const variation syst = variation::nom,
+                          const TString &wp = "Medium") const;
+
     // Trigger
     // Single lepton trigger from POG
     float GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key, const float abseta, const float pt, const bool isData, const variation syst = variation::nom) const;
@@ -631,12 +647,15 @@ private:
     LazyRef cachedTauIDSFvsJet;
     LazyRef cachedTauIDSFvsE;
     LazyRef cachedTauIDSFvsMu;
+    LazyRef cachedTauES;
+    LazyRef cachedTauTrigger;
 
     // Whether the electron HLT corrections declare a "phi" input.  Probing
     // this per electron used to allocate a vector of all input names.
     mutable int electronHltSFHasPhi = -1;
     mutable int electronHltDataEffHasPhi = -1;
     mutable int electronHltMcEffHasPhi = -1;
+    mutable std::unordered_set<int> warnedTauTriggerCoverage;
 
     // Which inputs the era's JES correction takes.  Resolved together with the
     // refs below so the per-jet path is a switch on an enum rather than a
