@@ -906,7 +906,6 @@
     "WZtoL3Nu": {
         "isMC": 1,
         "PD": "WZtoL3Nu_TuneCP5_13p6TeV_powheg-pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/VV/rntuple/*.root",
         "xsec": 3.077,
         "nmc": 9997000.0,
         "sumsign": 9996480.0,
@@ -1248,7 +1247,6 @@
     "QCD_Pt15to20_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-15to20_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-15to20_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 2348000.0,
         "nmc": 28091910.0,
         "sumsign": 28091910.0,
@@ -1257,7 +1255,6 @@
     "QCD_Pt20to30_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-20to30_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-20to30_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 2037000.0,
         "nmc": 28130575.0,
         "sumsign": 28130575.0,
@@ -1266,7 +1263,6 @@
     "QCD_Pt30to50_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-30to50_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-30to50_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 1042000.0,
         "nmc": 28952958.0,
         "sumsign": 28952958.0,
@@ -1275,7 +1271,6 @@
     "QCD_Pt50to80_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-50to80_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-50to80_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 270800.0,
         "nmc": 30131770.0,
         "sumsign": 30131770.0,
@@ -1284,7 +1279,6 @@
     "QCD_Pt80to120_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-80to120_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-80to120_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 60250.0,
         "nmc": 27867233.0,
         "sumsign": 27867233.0,
@@ -1293,7 +1287,6 @@
     "QCD_Pt120to170_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-120to170_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-120to170_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 13830.0,
         "nmc": 33949580.0,
         "sumsign": 33949580.0,
@@ -1302,7 +1295,6 @@
     "QCD_Pt170to300_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-170to300_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-170to300_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 4416.0,
         "nmc": 31691496.0,
         "sumsign": 31691496.0,
@@ -1311,7 +1303,6 @@
     "QCD_Pt300to470_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-300to470_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-300to470_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 377.1,
         "nmc": 28833430.0,
         "sumsign": 28833430.0,
@@ -1320,7 +1311,6 @@
     "QCD_Pt470to600_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-470to600_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-470to600_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 35.35,
         "nmc": 29400547.0,
         "sumsign": 29400547.0,
@@ -1329,7 +1319,6 @@
     "QCD_Pt600to800_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-600to800_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-600to800_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 10.85,
         "nmc": 32966804.0,
         "sumsign": 32966804.0,
@@ -1338,7 +1327,6 @@
     "QCD_Pt800to1000_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-800to1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-800to1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 1.96,
         "nmc": 31590443.0,
         "sumsign": 31590443.0,
@@ -1347,7 +1335,6 @@
     "QCD_Pt1000toInf_bcToE": {
         "isMC": 1,
         "PD": "QCD_Bin-PT-1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8",
-        "path_glob": "/gv0/Users/achihwan/bkg/nano15/QCD_bcToE/rntuple/QCD_Bin-PT-1000_Fil-bcToE_TuneCP5_13p6TeV_pythia8/**/*.root",
         "xsec": 0.6528,
         "nmc": 19760876.0,
         "sumsign": 19760876.0,
