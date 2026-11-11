@@ -852,102 +852,102 @@
     "WWto2L2Nu": {
         "isMC": 1,
         "PD": "WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "1.673*9",
         "nmc": 239943886.0,
         "sumsign": 239895910.0,
         "sumW": 2828732644.7281265,
-        "note": "need check the xsec",
-        "xsec": 15.057
+        "note": "xsDB, NLO order",
+        "xsec": 11.79
     },
     "WWtoLNu2Q": {
         "isMC": 1,
         "PD": "WWtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "1.673/0.1086*0.6741*6",
         "nmc": 275723961.0,
         "sumsign": 275669765.0,
         "sumW": 13493841713.276768,
-        "note": "need check the xsec",
-        "xsec": 62.30769613259669
+        "note": "xsDB, NLO order",
+        "xsec": 48.94
     },
     "WWto4Q": {
         "isMC": 1,
         "PD": "WWto4Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "1.6741/0.1086/0.1086*0.6741*0.6741",
         "nmc": 151214029.0,
         "sumsign": 151184045.0,
         "sumW": 7680164365.411167,
-        "note": "need check the xsec",
-        "xsec": 64.50158700054943
+        "note": "xsDB, NLO order",
+        "xsec": 50.79
     },
     "WZto3LNu": {
         "isMC": 1,
         "PD": "WZto3LNu_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "(0.3459+0.2366)*9",
         "nmc": 248149069.0,
         "sumsign": 247668979.0,
         "sumW": 1221944303.0921807,
-        "note": "need check the xsec",
-        "xsec": 5.2425
+        "note": "xsDB, NLO order",
+        "xsec": 4.924
     },
     "WZto2L2Q": {
         "isMC": 1,
         "PD": "WZto2L2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "(0.3459+0.2366)/0.1086*0.6741",
         "nmc": 236049432.0,
         "sumsign": 235803796.0,
         "sumW": 1786458941.3901196,
-        "note": "need check the xsec",
-        "xsec": 3.615683701657459
+        "note": "xsDB, NLO order",
+        "xsec": 7.568
     },
     "WZtoLNu2Q": {
         "isMC": 1,
         "PD": "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "(0.3459+0.2366)*3/0.033658*0.69911",
         "nmc": 143874689.0,
         "sumsign": 143813627.0,
         "sumW": 2283328935.031993,
-        "note": "need check the xsec",
-        "xsec": 36.29730598966071
+        "note": "xsDB, NLO order",
+        "xsec": 15.87
+    },
+    "WZtoL3Nu": {
+        "isMC": 1,
+        "PD": "WZtoL3Nu_TuneCP5_13p6TeV_powheg-pythia8",
+        "path_glob": "/gv0/Users/achihwan/bkg/nano15/VV/rntuple/*.root",
+        "xsec": 3.077,
+        "nmc": 9997000.0,
+        "sumsign": 9996480.0,
+        "sumW": 30766065.39253235,
+        "note": "xsDB, NLO order"
     },
     "ZZto4L": {
         "isMC": 1,
         "PD": "ZZto4L_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*9",
         "nmc": 236757511.0,
         "sumsign": 234299669.0,
         "sumW": 329198066.77729774,
-        "note": "need check the xsec",
-        "xsec": 1.4697
+        "note": "xsDB, NLO order",
+        "xsec": 1.39
     },
     "ZZto2Nu2Q": {
         "isMC": 1,
         "PD": "ZZto2Nu2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2/0.033658*0.69911/0.033658*0.2",
         "nmc": 46047410.0,
         "sumsign": 45974330.0,
         "sumW": 222217840.5812168,
-        "note": "need check the xsec",
-        "xsec": 40.310211624522005
+        "note": "xsDB, NLO order",
+        "xsec": 4.826
     },
     "ZZto2L2Q": {
         "isMC": 1,
         "PD": "ZZto2L2Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2*3/0.033658*0.69911",
         "nmc": 171627615.0,
         "sumsign": 170569959.0,
         "sumW": 1165248684.0179186,
-        "note": "need check the xsec",
-        "xsec": 20.351416542872425
+        "note": "xsDB, NLO order",
+        "xsec": 6.788
     },
     "ZZto2L2Nu": {
         "isMC": 1,
         "PD": "ZZto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "0.1633*2*3/0.033658*0.2",
         "nmc": 188715312.0,
         "sumsign": 188298156.0,
         "sumW": 194528941.11289644,
-        "note": "need check the xsec",
-        "xsec": 5.822092815972429
+        "note": "xsDB, NLO order",
+        "xsec": 1.031
     },
     "WZto4Q": {
         "isMC": 1,
