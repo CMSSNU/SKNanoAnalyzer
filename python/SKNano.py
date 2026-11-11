@@ -1022,8 +1022,10 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
             continue
         if entry not in incl_entries:
             incl_entries.append(entry)
-    inclpath = ":".join(incl_entries)
-    
+    # run.sh puts its own copy of install_include (node-local when staging
+    # works) in front of the remaining entries.
+    extra_inclpath = "".join(f":{entry}" for entry in incl_entries[1:])
+
     run_template = "run.python.sh" if argparse.python else "run.sh"
     template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
@@ -1048,7 +1050,8 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     run_content = run_content.replace("[ROCCOR_PATH]", os.environ.get('ROCCOR_PATH', os.path.join(SKNANO_HOME, 'external', 'RoccoR')))
     run_content = run_content.replace("[WORKDIR]", working_dir)
     run_content = run_content.replace("[SKNANO_RUNLOG_LIB]", os.path.join(abs_MasterDirectoryName, 'lib'))
-    run_content = run_content.replace("[ROOT_INCLUDE_PATH]", inclpath)
+    run_content = run_content.replace("[SKNANO_RUNLOG_INCLUDE]", install_include)
+    run_content = run_content.replace("[ROOT_INCLUDE_PATH_EXTRA]", extra_inclpath)
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
         f.write(run_content)
 
