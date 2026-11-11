@@ -78,3 +78,43 @@ TEST(SelectTauIndices, EmptyCollectionYieldsEmptyResult) {
 }
 
 }
+
+TEST(SelectTauIndices, RejectsDecayModesThePOGDoesNotCalibrate) {
+    const std::vector<unsigned char> dms{0, 1, 2, 5, 6, 10, 11};
+    const std::size_t n = dms.size();
+    auto f = MakeTaus(std::vector<float>(n, 100.f), std::vector<float>(n, 0.5f),
+                      std::vector<unsigned char>(n, 6),
+                      std::vector<unsigned char>(n, 6),
+                      std::vector<unsigned char>(n, 4),
+                      std::vector<float>(n, 0.f), dms);
+    const auto taus = MakeTauCollection(f);
+    AnalyzerCore core;
+    TauView::TauID calibrated = kMediumTau;
+    calibrated.requireCalibratedDecayMode = true;
+
+    const auto selected = core.SelectTauIndices(taus, calibrated, 50.f, 2.3f);
+
+    ASSERT_EQ(selected.size(), 4u);
+    for (const auto index : selected) {
+        const unsigned char dm = dms[index];
+        EXPECT_TRUE(dm == 0 || dm == 1 || dm == 10 || dm == 11)
+            << "decay mode " << static_cast<int>(dm) << " should be rejected";
+    }
+}
+
+TEST(SelectTauIndices, KeepsUncalibratedDecayModesWhenAsked) {
+    const std::vector<unsigned char> dms{0, 5, 6};
+    const std::size_t n = dms.size();
+    auto f = MakeTaus(std::vector<float>(n, 100.f), std::vector<float>(n, 0.5f),
+                      std::vector<unsigned char>(n, 6),
+                      std::vector<unsigned char>(n, 6),
+                      std::vector<unsigned char>(n, 4),
+                      std::vector<float>(n, 0.f), dms);
+    const auto taus = MakeTauCollection(f);
+    AnalyzerCore core;
+
+    TauView::TauID relaxed = kMediumTau;
+    relaxed.requireCalibratedDecayMode = false;
+
+    EXPECT_EQ(core.SelectTauIndices(taus, relaxed, 50.f, 2.3f).size(), 3u);
+}

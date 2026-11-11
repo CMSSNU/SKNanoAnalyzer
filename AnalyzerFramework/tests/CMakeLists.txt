@@ -5,7 +5,8 @@ add_executable(sknano_framework_tests
     OverlapRemovalTest.cc
     WeightIndexTest.cc
     LeptonCorrectionFlowTest.cc
-    OutputPathCollisionTest.cc)
+    OutputPathCollisionTest.cc
+    TauEnergyScaleTest.cc)
 
 target_link_libraries(sknano_framework_tests PRIVATE
     AnalyzerFramework
