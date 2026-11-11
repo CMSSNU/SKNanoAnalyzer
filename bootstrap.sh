@@ -581,6 +581,44 @@ repair_submodule() {
     git -C "$path" reset --hard HEAD >/dev/null 2>&1
 }
 
+# RoccoR is cloned over ssh from gitlab.cern.ch. When that server does not
+# answer (no key, a host-key or passphrase prompt, a blocked port) the clone
+# hangs with no output. Probe the remote first and, if it does not answer
+# within ROCCOR_PROBE_TIMEOUT seconds, copy RoccoR from the newest numbered
+# directory under ROCCOR_FALLBACK_BASE instead.
+ROCCOR_PATH_IN_REPO=external/RoccoR
+ROCCOR_PROBE_TIMEOUT=20
+ROCCOR_FALLBACK_BASE=/gv0/Users/achihwan_public/roccor
+
+roccor_remote_reachable() {
+    local url
+    url=$(git config --get "submodule.$ROCCOR_PATH_IN_REPO.url" 2>/dev/null) \
+        || url=$(git config -f .gitmodules --get "submodule.$ROCCOR_PATH_IN_REPO.url" 2>/dev/null) \
+        || return 1
+    GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -o BatchMode=yes" \
+        timeout -k 2 "$ROCCOR_PROBE_TIMEOUT" git ls-remote --heads "$url" \
+        </dev/null >/dev/null 2>&1
+}
+
+roccor_fallback() {
+    local latest src
+    # Directories named by a number (e.g. 261111); the highest one wins.
+    latest=$(find "$ROCCOR_FALLBACK_BASE" -mindepth 1 -maxdepth 1 -type d \
+                 -regextype posix-extended -regex '.*/[0-9]+' -printf '%f\n' 2>/dev/null \
+             | sort -n | tail -1)
+    if [[ -z $latest ]]; then
+        info "no numbered directory under $ROCCOR_FALLBACK_BASE"
+        return 1
+    fi
+    src="$ROCCOR_FALLBACK_BASE/$latest/RoccoR"
+    if [[ ! -f $src/RoccoR.cc || ! -f $src/RoccoR.h ]]; then
+        info "$src has no RoccoR.cc / RoccoR.h"
+        return 1
+    fi
+    info "copying RoccoR from $src"
+    mkdir -p "$ROCCOR_PATH_IN_REPO" && cp -a "$src/." "$ROCCOR_PATH_IN_REPO/"
+}
+
 update_submodules() {
     # One submodule per invocation. "git submodule update --init --recursive"
     # aborts the whole run on the first repository the user cannot read, which
@@ -589,6 +627,12 @@ update_submodules() {
     git submodule init >/dev/null 2>&1
     while read -r path; do
         [[ -n $path ]] || continue
+        if [[ $path == "$ROCCOR_PATH_IN_REPO" ]] && ! roccor_ok \
+           && ! roccor_remote_reachable; then
+            info "$path: gitlab.cern.ch did not answer within ${ROCCOR_PROBE_TIMEOUT}s"
+            roccor_fallback || failed+=("$path")
+            continue
+        fi
         info "updating $path"
         if git submodule update --init --recursive -- "$path" >/dev/null 2>&1; then
             repair_submodule "$path"
@@ -614,7 +658,8 @@ else
         else
             fail "external/RoccoR has no source files; the build needs it."
             fail "It lives on gitlab.cern.ch and is cloned over ssh, so you need an"
-            fail "ssh key registered there. See docs/SetupGuide.md, section"
+            fail "ssh key registered there (the copy from $ROCCOR_FALLBACK_BASE"
+            fail "was not usable either). See docs/SetupGuide.md, section"
             fail "\"Before you start\". After adding the key, run:"
             fail "  git submodule update --init external/RoccoR"
         fi
