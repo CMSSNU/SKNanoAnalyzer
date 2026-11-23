@@ -27,11 +27,19 @@ HISTOGRAMS = ("CutFlow", "Systematics/Central/SelectedEvents",
               "Systematics/JESUp/SelectedEvents")
 
 
-def build_shard(root, path: Path, index: int, entries: int) -> None:
-    """Write one shard shaped like analyzer output: RNTuples plus histograms."""
+def build_shard(root, path: Path, index: int, entries: int,
+                 skip_ntuples: frozenset[str] = frozenset()) -> None:
+    """Write one shard shaped like analyzer output: RNTuples plus histograms.
+
+    *skip_ntuples* simulates an RNTuple that was Booked but never Filled:
+    since PR #73, that is not written at all, so the shard carries no key
+    for it (not an empty one).
+    """
     options = root.RDF.RSnapshotOptions()
     options.fOutputFormat = root.RDF.ESnapshotOutputFormat.kRNTuple
     for position, name in enumerate(NTUPLES):
+        if name in skip_ntuples:
+            continue
         if position:
             options.fMode = "UPDATE"
         count = entries if position == 0 else 3
@@ -103,6 +111,45 @@ class MergeEngineTest(unittest.TestCase):
             self.entries)
         for name, total in self.hist_entries.items():
             self.assertAlmostEqual(merged.histograms[name].entries, total)
+
+    def test_staged_merge_survives_a_batch_missing_an_ntuple(self) -> None:
+        """One whole stage-1 batch's shards never Fill "Metadata" (no key at
+        all, per PR #73), while another batch's shards do. The partial for
+        the first batch therefore carries no "Metadata" key, and that partial
+        is merged again with the other in the final stage -- the staged-merge
+        case the old "write an empty RNTuple" behaviour could abort on. The
+        merge must still succeed, with the correct total entry count.
+        """
+        source = self.tmp / "missing_ntuple"
+        source.mkdir(exist_ok=True)
+        shards = []
+        events_total = 0
+        metadata_total = 0
+        for index in range(6):
+            entries = 10 + index
+            skip = {"Metadata"} if index < 3 else frozenset()
+            path = source / f"hists_{index}.root"
+            build_shard(self.root, path, index, entries, skip_ntuples=skip)
+            events_total += entries
+            if not skip:
+                metadata_total += 3
+            shards.append(path)
+
+        output = source / "merged.root"
+        argv = [
+            "sknano_merge", "--output", str(output),
+            "--temp-dir", str(source), "--jobs", "2", "--batch-size", "3",
+            *[str(path) for path in shards],
+        ]
+        saved, sys.argv = sys.argv, argv
+        try:
+            self.assertEqual(merge.main(), 0)
+        finally:
+            sys.argv = saved
+
+        merged = merge.inspect(self.root, output)
+        self.assertEqual(merged.datasets["Events"].entries, events_total)
+        self.assertEqual(merged.datasets["Metadata"].entries, metadata_total)
 
     def test_merged_output_carries_no_repeated_keys(self) -> None:
         output = self._merge("keys.root", "--jobs", "2", "--batch-size", "3")
@@ -258,6 +305,43 @@ class MergeEngineTest(unittest.TestCase):
             self.assertEqual(
                 int(frame.Count().GetValue()),
                 sknano_chain.total_entries(output, name))
+
+    def test_chain_reader_treats_a_missing_ntuple_as_empty(self) -> None:
+        """An ntuple absent from every shard (never Filled, so never written
+        per PR #73) has no key in the chain index at all; that must read as
+        zero files / zero entries, not raise. An unknown *sample* still
+        raises, via load().
+        """
+        import sknano_chain
+
+        source = self.tmp / "missing_ntuple_index"
+        source.mkdir(exist_ok=True)
+        shards = []
+        for index in range(3):
+            path = source / f"hists_{index}.root"
+            build_shard(self.root, path, index, 10 + index,
+                        skip_ntuples={"Metadata"})
+            shards.append(path)
+
+        output = source / "index.root"
+        argv = [
+            "sknano_merge", "--mode", "index", "--output", str(output),
+            "--shard-dir", str(source / "shards"), "--jobs", "1",
+            *[str(path) for path in shards],
+        ]
+        saved, sys.argv = sys.argv, argv
+        try:
+            self.assertEqual(merge.main(), 0)
+        finally:
+            sys.argv = saved
+
+        self.assertNotIn("Metadata", sknano_chain.ntuples(output))
+        self.assertEqual(sknano_chain.files(output, "Metadata"), [])
+        self.assertEqual(sknano_chain.total_entries(output, "Metadata"), 0)
+        self.assertGreater(sknano_chain.total_entries(output, "Events"), 0)
+
+        with self.assertRaises(FileNotFoundError):
+            sknano_chain.files(self.tmp / "no_such_sample.root", "Metadata")
 
 
 class GroupingTest(unittest.TestCase):

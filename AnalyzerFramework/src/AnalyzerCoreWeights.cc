@@ -98,16 +98,9 @@ bool AnalyzerCore::PassMetFilter(const JetViewCollection &AllJets,
   return PassNoiseFilter(AllJets, ev, met_type);
 }
 
-float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst,
-                                      const MyCorrection::variation &muR_syst) {
-  if (nLHEScaleWeight == 0)
-    return 1.;
-  // (nom, nom) is the central value by definition; it needs no slot, and the
-  // 8-entry layout does not have one.
-  if (muF_syst == MyCorrection::variation::nom &&
-      muR_syst == MyCorrection::variation::nom)
-    return 1.f;
-
+std::size_t AnalyzerCore::ScaleVariationIndex(
+    const MyCorrection::variation &muF_syst,
+    const MyCorrection::variation &muR_syst, std::size_t n_entries) {
   // LHEScaleWeight is a 3x3 grid over (muR, muF) in {0.5, 1, 2} with muR as the
   // outer index: slot = 3 * iR + iF. Producers ship it either complete (9
   // entries) or with the (1, 1) nominal at slot 4 dropped (8 entries), and
@@ -115,46 +108,85 @@ float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst,
   // checked carries 9. Assuming 8 unconditionally silently returns the nominal
   // for (muF up, muR nom) and reads a neighbouring scale pair for the three
   // combinations above it, so the muF-up nuisance collapses to zero while
-  // muR-up quietly mixes in a muF shift.
-  const auto axisIndex = [](const MyCorrection::variation &v) -> int {
+  // muR-up quietly mixes in a muF shift. Any other length is a layout this
+  // mapping does not know, so it throws rather than read a wrong cell.
+  if (n_entries != 8 && n_entries != 9)
+    throw SKNano::LogicError(
+        "[AnalyzerCore::ScaleVariationIndex] scale-variation array has " +
+        std::to_string(n_entries) + " entries; expected 8 or 9");
+  const auto axisIndex = [](const MyCorrection::variation &v) -> std::size_t {
     return v == MyCorrection::variation::down
                ? 0
                : (v == MyCorrection::variation::nom ? 1 : 2);
   };
-  int slot = 3 * axisIndex(muR_syst) + axisIndex(muF_syst);
-  if (nLHEScaleWeight == 8 && slot > 4)
-    slot -= 1; // nominal slot absent, everything above it shifts down
+  std::size_t slot = 3 * axisIndex(muR_syst) + axisIndex(muF_syst);
+  if (n_entries == 8) {
+    if (slot == 4)
+      throw SKNano::LogicError(
+          "[AnalyzerCore::ScaleVariationIndex] (nom, nom) has no slot in the "
+          "8-entry layout");
+    if (slot > 4)
+      slot -= 1; // nominal slot absent, everything above it shifts down
+  }
+  return slot;
+}
 
-  if (slot < 0 || slot >= static_cast<int>(nLHEScaleWeight))
+float AnalyzerCore::GetScaleVariation(const MyCorrection::variation &muF_syst,
+                                      const MyCorrection::variation &muR_syst) {
+  const std::size_t n = nLHEScaleWeight;
+  if (n == 0)
+    return 1.;
+  // Checked before the (nom, nom) shortcut so an unknown layout fails on the
+  // first call, not on the first variation.
+  if (n != 8 && n != 9)
     throw SKNano::LogicError(
-        "[AnalyzerCore::GetScaleVariation] slot " + std::to_string(slot) +
-        " is out of range for nLHEScaleWeight = " +
-        std::to_string(nLHEScaleWeight));
-  return LHEScaleWeight[slot];
+        "[AnalyzerCore::GetScaleVariation] unexpected nLHEScaleWeight = " +
+        std::to_string(n) + "; expected 8 or 9");
+  // (nom, nom) is the central value by definition; it needs no slot, and the
+  // 8-entry layout does not have one.
+  if (muF_syst == MyCorrection::variation::nom &&
+      muR_syst == MyCorrection::variation::nom)
+    return 1.f;
+  return LHEScaleWeight[ScaleVariationIndex(muF_syst, muR_syst, n)];
+}
+
+std::size_t AnalyzerCore::PSWeightIndex(const MyCorrection::variation &ISR_syst,
+                                        const MyCorrection::variation &FSR_syst,
+                                        std::size_t n_entries) {
+  if (n_entries != 4)
+    throw SKNano::LogicError(
+        "[AnalyzerCore::PSWeightIndex] PS-weight array has " +
+        std::to_string(n_entries) + " entries; expected 4");
+  // [0] ISR=2 FSR=1, [1] ISR=1 FSR=2, [2] ISR=0.5 FSR=1, [3] ISR=1 FSR=0.5.
+  using V = MyCorrection::variation;
+  if (FSR_syst == V::nom && ISR_syst == V::up)
+    return 0;
+  if (ISR_syst == V::nom && FSR_syst == V::up)
+    return 1;
+  if (FSR_syst == V::nom && ISR_syst == V::down)
+    return 2;
+  if (ISR_syst == V::nom && FSR_syst == V::down)
+    return 3;
+  throw SKNano::LogicError(
+      "[AnalyzerCore::PSWeightIndex] requested variation is not implemented: "
+      "vary exactly one of ISR and FSR");
 }
 
 float AnalyzerCore::GetPSWeight(const MyCorrection::variation &ISR_syst,
                                 const MyCorrection::variation &FSR_syst) {
-  //[0] is ISR=2 FSR=1; [1] is ISR=1 FSR=2[2] is ISR=0.5 FSR=1; [3] is ISR=1
-  // FSR=0.5;
-  if (nPSWeight == 1)
+  // No PS weights (0) or the single placeholder 1 that NanoAOD writes when
+  // the generator stored none.
+  const std::size_t n = nPSWeight;
+  if (n == 0 || n == 1)
     return 1.;
-  if (ISR_syst == MyCorrection::variation::up &&
-      FSR_syst == MyCorrection::variation::nom)
-    return PSWeight[0];
-  else if (ISR_syst == MyCorrection::variation::nom &&
-           FSR_syst == MyCorrection::variation::up)
-    return PSWeight[1];
-  else if (ISR_syst == MyCorrection::variation::down &&
-           FSR_syst == MyCorrection::variation::nom)
-    return PSWeight[2];
-  else if (ISR_syst == MyCorrection::variation::nom &&
-           FSR_syst == MyCorrection::variation::down)
-    return PSWeight[3];
-  else {
+  if (n != 4)
     throw SKNano::LogicError(
-        "[AnalyzerCore::GetPSWeight] requested variation is not implemented");
-  }
+        "[AnalyzerCore::GetPSWeight] unexpected nPSWeight = " +
+        std::to_string(n) + "; expected 4");
+  if (ISR_syst == MyCorrection::variation::nom &&
+      FSR_syst == MyCorrection::variation::nom)
+    return 1.f;
+  return PSWeight[PSWeightIndex(ISR_syst, FSR_syst, n)];
 }
 
 float AnalyzerCore::GetHT(const JetViewCollection &jets,

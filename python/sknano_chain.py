@@ -48,20 +48,27 @@ def _resolve(index_file: Path, recorded: str) -> str:
 
 
 def files(sample_root: str | Path, ntuple: str) -> list[str]:
-    """Shard paths holding ``ntuple``, in the order they were produced."""
+    """Shard paths holding ``ntuple``, in the order they were produced.
+
+    An ntuple missing from the index means it was Booked but never Filled in
+    any shard -- the writer no longer writes those, so there is no key to
+    record. That is indistinguishable from a chain with zero entries, so
+    return no files rather than raising; an unknown *sample* still raises,
+    via ``load()``.
+    """
     index_file = index_path(sample_root)
     index = load(sample_root)
     if ntuple not in index["ntuples"]:
-        raise KeyError(
-            f"{ntuple} is not in {index_file}; "
-            f"available: {sorted(index['ntuples'])}"
-        )
+        return []
     return [_resolve(index_file, entry["path"])
             for entry in index["ntuples"][ntuple]["files"]]
 
 
 def total_entries(sample_root: str | Path, ntuple: str) -> int:
-    return load(sample_root)["ntuples"][ntuple]["total_entries"]
+    index = load(sample_root)
+    if ntuple not in index["ntuples"]:
+        return 0
+    return index["ntuples"][ntuple]["total_entries"]
 
 
 def rdataframe(sample_root: str | Path, ntuple: str):

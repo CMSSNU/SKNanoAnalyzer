@@ -130,8 +130,6 @@ SOURCE_SNAPSHOT_IGNORE_SUFFIXES = (
     ".o",
     ".pyc",
     ".pkl",
-    ".tsv",
-    ".csv",
     ".npz",
     ".npy",
     ".h5",
@@ -357,8 +355,16 @@ def copySnapshotFileList(source_dir, target_dir, relpaths):
     copied = 0
     skipped = []
     for relpath in relpaths:
+        if any(part in SOURCE_SNAPSHOT_IGNORE_NAMES for part in relpath.split("/")):
+            skipped.append(relpath)
+            continue
         source = os.path.join(source_dir, relpath)
         if not os.path.isfile(source):
+            # A directory symlink or a nested repo's gitlink: git lists it,
+            # but there is no regular file to copy. Record it rather than
+            # dropping it silently, so a manifest reader can tell the two
+            # apart from a genuinely-skipped source file.
+            skipped.append(relpath)
             continue
         name = os.path.basename(relpath)
         if name.endswith(SOURCE_SNAPSHOT_IGNORE_SUFFIXES):
@@ -805,7 +811,7 @@ def getMambaEnvSettings():
     env_prefix = os.environ.get('CONDA_PREFIX', '')
     if not env_prefix:
         print('\033[91m'+"Error: no conda/mamba environment is active, source setup.sh before submitting"+'\033[0m')
-        exit()
+        sys.exit(1)
     host_root_prefix = os.environ.get('MAMBA_ROOT_PREFIX') or os.path.dirname(os.path.dirname(env_prefix))
     mamba_exe = os.environ.get('MAMBA_EXE', '')
     host_bin_path = os.path.dirname(mamba_exe) if mamba_exe else os.path.join(host_root_prefix, 'bin')
@@ -828,7 +834,18 @@ def checkRootMatchesEnv(env_prefix):
     if not os.path.exists(os.path.join(env_prefix, "lib", soname)):
         print('\033[91m'+f"Error: {probe} needs {soname}, which {env_prefix} does not provide"+'\033[0m')
         print('\033[91m'+"The jobs would segfault on library load. Activate the environment the libraries were built in, or rebuild."+'\033[0m')
-        exit()
+        sys.exit(1)
+
+def applyMambaSettings(text):
+    """Substitute the [MAMBA_*] placeholders shared by run/run.python/hadd/merge_partial templates."""
+    mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
+    text = text.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
+    text = text.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
+    text = text.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
+    text = text.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
+    text = text.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
+    text = text.replace("[MAMBA_ENV]", mamba_env)
+    return text
 
 def getInputSampleList(inputArguments):
     #if string
@@ -1073,19 +1090,15 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
             continue
         if entry not in incl_entries:
             incl_entries.append(entry)
-    inclpath = ":".join(incl_entries)
-    
+    # run.sh puts its own copy of install_include (node-local when staging
+    # works) in front of the remaining entries.
+    extra_inclpath = "".join(f":{entry}" for entry in incl_entries[1:])
+
     run_template = "run.python.sh" if argparse.python else "run.sh"
     template_path = os.path.join(SKNANO_HOME, "templates", run_template)
     with open(template_path, 'r') as f:
         run_content = f.read()
-    mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
-    run_content = run_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
-    run_content = run_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
-    run_content = run_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
-    run_content = run_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
-    run_content = run_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
-    run_content = run_content.replace("[MAMBA_ENV]", mamba_env)
+    run_content = applyMambaSettings(run_content)
     snapshot_home = os.path.join(abs_MasterDirectoryName, SOURCE_SNAPSHOT_DIRNAME)
     lhapdf_include_dir = os.environ.get('LHAPDF_INCLUDE_DIR', os.path.join(SKNANO_HOME, 'external', 'lhapdf', 'redhat', 'include'))
     lhapdf_lib_dir = os.environ.get('LHAPDF_LIB_DIR', os.path.join(SKNANO_HOME, 'external', 'lhapdf', 'redhat', 'lib'))
@@ -1099,7 +1112,8 @@ def makeMainAnalyzerJobs(working_dir,abs_MasterDirectoryName,totalNumberOfJobs, 
     run_content = run_content.replace("[ROCCOR_PATH]", os.environ.get('ROCCOR_PATH', os.path.join(SKNANO_HOME, 'external', 'RoccoR')))
     run_content = run_content.replace("[WORKDIR]", working_dir)
     run_content = run_content.replace("[SKNANO_RUNLOG_LIB]", os.path.join(abs_MasterDirectoryName, 'lib'))
-    run_content = run_content.replace("[ROOT_INCLUDE_PATH]", inclpath)
+    run_content = run_content.replace("[SKNANO_RUNLOG_INCLUDE]", install_include)
+    run_content = run_content.replace("[ROOT_INCLUDE_PATH_EXTRA]", extra_inclpath)
     with open(os.path.join(working_dir,"run.sh"),'w') as f:
         f.write(run_content)
 
@@ -1144,13 +1158,7 @@ def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
         template_path = os.path.join(SKNANO_HOME, "templates", "merge_partial.sh")
         with open(template_path, 'r') as f:
             partial_content = f.read()
-        mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
-        partial_content = partial_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
-        partial_content = partial_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
-        partial_content = partial_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
-        partial_content = partial_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
-        partial_content = partial_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
-        partial_content = partial_content.replace("[MAMBA_ENV]", mamba_env)
+        partial_content = applyMambaSettings(partial_content)
         partial_content = partial_content.replace("[WORKDIR]", working_dir)
         partial_content = partial_content.replace("[SKNANO_HOME]", SKNANO_HOME)
         partial_content = partial_content.replace("[GROUP_SIZE]", str(argparser.MergeGroupSize))
@@ -1179,13 +1187,7 @@ def makeHaddJobs(working_dir,argparser,sample,totalNumberofJobs):
     template_path = os.path.join(SKNANO_HOME, "templates", "hadd.sh")
     with open(template_path, 'r') as f:
         hadd_content = f.read()
-    mamba_root_prefix, mamba_env, mamba_env_prefix, mamba_host_root_prefix, mamba_host_bin_path = getMambaEnvSettings()
-    hadd_content = hadd_content.replace("[MAMBA_BIN_PATH]", os.path.join(mamba_root_prefix, "bin"))
-    hadd_content = hadd_content.replace("[MAMBA_ROOT_PREFIX]", mamba_root_prefix)
-    hadd_content = hadd_content.replace("[MAMBA_HOST_BIN_PATH]", mamba_host_bin_path)
-    hadd_content = hadd_content.replace("[MAMBA_HOST_ROOT_PREFIX]", mamba_host_root_prefix)
-    hadd_content = hadd_content.replace("[MAMBA_ENV_PREFIX]", mamba_env_prefix)
-    hadd_content = hadd_content.replace("[MAMBA_ENV]", mamba_env)
+    hadd_content = applyMambaSettings(hadd_content)
     hadd_content = hadd_content.replace("[WORKDIR]", working_dir)
     hadd_content = hadd_content.replace("[SKNANO_HOME]", SKNANO_HOME)
     hadd_content = hadd_content.replace("[TARGET]", hadd_target)
@@ -1547,6 +1549,11 @@ if __name__ == '__main__':
     parser = setParser()
     args = parser.parse_args()
     validateInstalledAnalyzer(args.Analyzer, args.python)
+    # Refuse a ROOT/env mismatch here, before anything is created: this is the
+    # same check getMambaEnvSettings() repeats per sample/merge-job template,
+    # but run once upfront so a doomed submission never leaves a half-built
+    # run directory behind.
+    getMambaEnvSettings()
     eras = getEraList(args.Era, args.Run)
     SKIMMING_MODE = args.skimming_mode
     if args.Analyzer.startswith("Skim_") and not SKIMMING_MODE:

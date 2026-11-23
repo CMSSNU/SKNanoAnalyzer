@@ -89,8 +89,6 @@ struct ElectronSoA {
 
     std::size_t size() const { return pt.size(); }
 
-    // No provider bound (e.g. a standalone unit test) leaves the lanes empty
-    // and the accessors fall back to the uncorrected pt.
     void ensureMomentum() const {
         // Validate the event epoch before a provider reads several branches.
         static_cast<void>(pt.size());
@@ -124,10 +122,15 @@ struct ElectronSoA {
     }
 
 private:
+    // Both stages are bound by AnalyzerCore; a missing provider would leave
+    // Pt() uncorrected, so it is an error rather than a fallback.
     static void materialise(const std::function<void()> &provider, bool &ready,
                             bool &computing, const char *what) {
-        if (ready || !provider)
+        if (ready)
             return;
+        if (!provider)
+            throw SKNano::LogicError(std::string("[ElectronSoA] ") + what +
+                                     " provider is not bound");
         if (computing)
             throw SKNano::LogicError(std::string("[ElectronSoA] recursive ") +
                                      what + " computation");
@@ -160,8 +163,7 @@ public:
     // MiniAODPt() for the uncorrected NanoAOD value.
     float Pt() const {
         assertCurrentEvent();
-        return idx < store->correctedPt.size() ? store->correctedPt[idx]
-                                               : store->pt[idx];
+        return lane(store->correctedPt);
     }
     float MiniAODPt() const { return store->pt[idx]; }
     // Scale variations ride on the smeared momentum; smear variations ride on
@@ -169,22 +171,22 @@ public:
     float ScaleUpPt() const {
         static_cast<void>(store->size());
         store->ensureMomentumVariations();
-        return idx < store->scaleUpPt.size() ? store->scaleUpPt[idx] : Pt();
+        return lane(store->scaleUpPt);
     }
     float ScaleDownPt() const {
         static_cast<void>(store->size());
         store->ensureMomentumVariations();
-        return idx < store->scaleDownPt.size() ? store->scaleDownPt[idx] : Pt();
+        return lane(store->scaleDownPt);
     }
     float SmearUpPt() const {
         static_cast<void>(store->size());
         store->ensureMomentumVariations();
-        return idx < store->smearUpPt.size() ? store->smearUpPt[idx] : Pt();
+        return lane(store->smearUpPt);
     }
     float SmearDownPt() const {
         static_cast<void>(store->size());
         store->ensureMomentumVariations();
-        return idx < store->smearDownPt.size() ? store->smearDownPt[idx] : Pt();
+        return lane(store->smearDownPt);
     }
     float Eta() const { return store->eta[idx]; }
     float Phi() const { return store->phi[idx]; }
@@ -261,6 +263,13 @@ private:
         static_cast<void>(store->size());
         store->ensureMomentum();
     }
+    // A stage that ran fills every lane it owns, data included; an empty lane
+    // is a provider bug, not a cue to fall back to the nominal.
+    float lane(const std::vector<float> &values) const {
+        if (idx >= values.size())
+            throw SKNano::LogicError("[ElectronView] correction lane is not populated");
+        return values[idx];
+    }
     const ElectronSoA *store = nullptr;
     std::size_t idx = 0;
 };
@@ -270,8 +279,6 @@ public:
     using Base = EventRange<ElectronSoA, ElectronView>;
     using Base::Base;
     ElectronViewCollection() = default;
-    explicit ElectronViewCollection(std::shared_ptr<ElectronSoA> storage,
-                                    bool skipCrack);
 };
 
 #endif // ELECTRONVIEW_H

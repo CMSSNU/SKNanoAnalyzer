@@ -1,5 +1,6 @@
 #include "MyCorrection.h"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -121,6 +122,34 @@ string substituteJercLevel(const string &global_tag, std::string_view level,
   return key;
 }
 
+// The JME files spell the summed JES source "Total" (..._V5_MC_Total_AK4PFPuppi)
+// and have no lower-case key, while the SystematicHelper convention passes
+// "total". Map empty and any-case "total" onto the JSON key.
+std::string_view normaliseJesSource(std::string_view source) {
+  if (source.empty())
+    return "Total";
+  constexpr std::string_view total = "total";
+  if (source.size() == total.size() &&
+      std::equal(source.begin(), source.end(), total.begin(),
+                 [](char a, char b) {
+                   return std::tolower(static_cast<unsigned char>(a)) == b;
+                 }))
+    return "Total";
+  return source;
+}
+
+// CorrectionSet::at() reports a missing key as a bare "map::at" with no name.
+// It has no find(), so walk it; this runs once per key, on a cache miss.
+correction::Correction::Ref findCorrection(const correction::CorrectionSet &set,
+                                           const string &key,
+                                           const char *context) {
+  for (const auto &[name, ref] : set)
+    if (name == key)
+      return ref;
+  throw SKNano::ConfigError(string("[MyCorrection::") + context +
+                            "] no correction named '" + key + "'");
+}
+
 } // namespace
 
 const correction::Correction::Ref &
@@ -149,19 +178,14 @@ MyCorrection::getJERSFUncertaintyCorrection() const {
 
 const correction::Correction::Ref &
 MyCorrection::getJESUncertaintyCorrection(std::string_view source) const {
-  // The JSON spells the summed source "Total" (..._V5_MC_Total_AK4PFPuppi);
-  // there is no lower-case key, so "total" resolves to nothing and throws.
-  // Accept either spelling so the default argument and any lower-case caller
-  // land on the same correction.
-  std::string_view sourceKey = source.empty() ? "Total" : source;
-  if (sourceKey == "total")
-    sourceKey = "Total";
+  const std::string_view sourceKey = normaliseJesSource(source);
   auto it = cachedJESUncertaintyCorrections.find(sourceKey);
   if (it == cachedJESUncertaintyCorrections.end()) {
     const string key = substituteJercLevel(JES_global_tag, sourceKey,
                                            "GetJESUncertainty");
     it = cachedJESUncertaintyCorrections
-             .emplace(string(sourceKey), cset_jerc->at(key))
+             .emplace(string(sourceKey),
+                      findCorrection(*cset_jerc, key, "GetJESUncertainty"))
              .first;
   }
   return it->second;
@@ -350,6 +374,7 @@ float MyCorrection::GetJESUncertaintySF(const float eta, const float pt,
 
 const correction::Correction::Ref &
 MyCorrection::getFatJetCorrection(std::string_view level) const {
+  level = normaliseJesSource(level);
   auto it = cachedFatJetCorrections.find(level);
   if (it != cachedFatJetCorrections.end())
     return it->second;
@@ -372,7 +397,8 @@ MyCorrection::getFatJetCorrection(std::string_view level) const {
 
   const string key = substituteJercLevel(tag, level, "GetFatJetCorrection");
   return cachedFatJetCorrections
-      .emplace(string(level), cset_jerc_fatjet->at(key))
+      .emplace(string(level), findCorrection(*cset_jerc_fatjet, key,
+                                             "GetFatJetCorrection"))
       .first->second;
 }
 
@@ -453,11 +479,8 @@ float MyCorrection::GetFJESSF(const float area, const float eta, const float pt,
 
 float MyCorrection::GetFJESUncertainty(const float eta, const float pt,
                                        const TString &source) const {
-  const std::string_view level =
-      source.IsNull()
-          ? std::string_view("Total")
-          : std::string_view(source.Data(),
-                             static_cast<std::size_t>(source.Length()));
+  const std::string_view level(source.Data(),
+                               static_cast<std::size_t>(source.Length()));
   return safeEvaluate2D(getFatJetCorrection(level), "GetFJESUncertainty", eta,
                         pt);
 }
