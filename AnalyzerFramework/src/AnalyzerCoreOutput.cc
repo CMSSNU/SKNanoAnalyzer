@@ -80,25 +80,6 @@ resolveRNTupleDirectory(TFile &file, const std::string &path) {
   return {&file, flattenRNTuplePath(path)};
 }
 
-#if 0 // RNTuple inside a TDirectory: breaks hadd (ROOT 6.40.02), see above
-std::pair<TDirectory *, std::string>
-resolveRNTupleDirectory_inDirectory(TFile &file, const std::string &path) {
-  const auto slash = path.find_last_of('/');
-  if (slash == std::string::npos)
-    return {&file, path};
-  const std::string directoryName = path.substr(0, slash);
-  const std::string objectName = path.substr(slash + 1);
-  TDirectory *directory = file.GetDirectory(directoryName.c_str());
-  if (!directory)
-    directory = file.mkdir(directoryName.c_str());
-  if (!directory)
-    throw SKNano::LogicError("[AnalyzerCore::BookRNTuple] cannot create "
-                             "output directory '" +
-                             directoryName + "'");
-  return {directory, objectName};
-}
-#endif
-
 // Column representation must be chosen before the model is frozen, so the
 // half-precision requests are applied here, on the way to the first writer.
 void applyHalfPrecision(ROOT::RFieldBase &field) {
@@ -461,11 +442,12 @@ void AnalyzerCore::FinalizeRNTuples() {
     // unmergeable.
     if (output->fields.empty())
       continue;
-    // An RNTuple that was never filled has no writer yet. Do not create one just
-    // to persist an empty (zero-cluster) RNTuple: hadd (ROOT 6.40.02,
+    // An RNTuple that was never filled has no writer yet. Do not create one
+    // just to persist an empty (zero-cluster) RNTuple: a writer-written empty
+    // RNTuple merges fine in a single-stage hadd, but hadd (ROOT 6.40.02,
     // RNTupleMerger::MergeSourceClusters) aborts with "!clusterIds.empty()
-    // violated" as soon as such an input is merged, so a job in which one
-    // booked RNTuple stayed empty would break the merge of the whole sample.
+    // violated" when an *hadd output* that itself holds an empty RNTuple is
+    // merged again in a later stage -- the case a staged/partial merge hits.
     // A missing key therefore means "no entries in this RNTuple".
     if (!output->writer) {
       std::cout << "[AnalyzerCore::WriteHist] Skipping empty RNTuple: " << name
@@ -589,12 +571,21 @@ void AnalyzerCore::HistogramGroup::Fill(
 void AnalyzerCore::ValidateTreePath(std::string_view treeName) const {
   if (treeName.empty())
     throw SKNano::ConfigError("[AnalyzerCore::BookRNTuple] name is empty");
+  // RNTuples are always written at the top level under their flattened name
+  // (see flattenRNTuplePath), so two Book()ed paths that look unrelated
+  // before flattening -- e.g. "A/B_C" and "A_B/C" -- can still collide on
+  // the same output key.
+  const std::string flatTreeName = flattenRNTuplePath(std::string(treeName));
   for (const auto &[otherNtuple, unused] : rntupleOutputs_) {
     static_cast<void>(unused);
     if (outputPathsConflict(treeName, otherNtuple))
       throw SKNano::ConfigError(
           "[AnalyzerCore::BookRNTuple] output path conflicts with RNTuple '" +
           otherNtuple + "'");
+    if (flatTreeName == flattenRNTuplePath(otherNtuple))
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::BookRNTuple] output path '" + flatTreeName +
+          "' collides after flattening with RNTuple '" + otherNtuple + "'");
   }
   const auto checkHistograms = [&](const auto &histograms) {
     for (const auto &[histogram, unused] : histograms) {
@@ -603,6 +594,13 @@ void AnalyzerCore::ValidateTreePath(std::string_view treeName) const {
         throw SKNano::ConfigError(
             "[AnalyzerCore::BookRNTuple] output path conflicts with histogram '" +
             histogram + "'");
+      // A histogram with no subdirectory is also written under its own name
+      // at the top level, the same place the flattened RNTuple key lands.
+      if (histogram.find('/') == std::string::npos &&
+          flatTreeName == histogram)
+        throw SKNano::ConfigError(
+            "[AnalyzerCore::BookRNTuple] output path '" + flatTreeName +
+            "' collides after flattening with histogram '" + histogram + "'");
     }
   };
   checkHistograms(histmap1d);
@@ -615,12 +613,18 @@ void AnalyzerCore::ValidateHistogramPath(
   if (histogramName.empty())
     throw SKNano::ConfigError(
         "[AnalyzerCore::BookHist] histogram name is empty");
+  const bool topLevel = histogramName.find('/') == std::string_view::npos;
   for (const auto &[ntupleName, unused] : rntupleOutputs_) {
     static_cast<void>(unused);
     if (outputPathsConflict(histogramName, ntupleName))
       throw SKNano::ConfigError(
           "[AnalyzerCore::BookHist] output path conflicts with RNTuple '" +
           ntupleName + "'");
+    if (topLevel && histogramName == flattenRNTuplePath(ntupleName))
+      throw SKNano::ConfigError(
+          "[AnalyzerCore::BookHist] output path '" +
+          std::string(histogramName) +
+          "' collides after flattening with RNTuple '" + ntupleName + "'");
   }
 }
 

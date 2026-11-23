@@ -62,6 +62,18 @@ validated merger permits missing datasets while requiring identical schemas
 where a dataset is present. This keeps empty categories mergeable without
 inventing placeholder fields.
 
+RNTuples are always written at the top level of the file: `Book("dir/name")`
+is stored under the flattened key `dir_name`, never inside a TDirectory
+named `dir`. The registry rejects two booked paths whose flattened keys
+collide (e.g. `"A/B_C"` and `"A_B/C"`, or an RNTuple colliding with a
+top-level histogram of the same flattened name) at `Book()` time.
+
+A dataset that is booked but never `Fill()`ed is not written at all, the
+same as a dynamic-schema dataset that is never used: it has no key in the
+output file. Readers that go through `sknano_chain` treat a missing key as
+zero shards / zero entries rather than an error; code reading the file
+directly should not assume every booked name has a key.
+
 ## Histogram groups
 
 Use a group to define a common output directory and book fixed histograms once:

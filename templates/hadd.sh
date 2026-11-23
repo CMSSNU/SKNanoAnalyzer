@@ -21,10 +21,10 @@ if ! command -v micromamba > /dev/null 2>&1; then
     exit 1
 fi
 eval "$(micromamba shell hook -s bash)"
-if [ -d "${MAMBA_ROOT_PREFIX}/envs/[MAMBA_ENV]" ]; then
-    micromamba activate [MAMBA_ENV] || exit 1
-else
+if [ -d "[MAMBA_ENV_PREFIX]" ]; then
     micromamba activate [MAMBA_ENV_PREFIX] || exit 1
+else
+    micromamba activate [MAMBA_ENV] || exit 1
 fi
 
 # Conda activation scripts may probe unset toolchain variables. Enable nounset

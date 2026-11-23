@@ -1,6 +1,6 @@
 #!/bin/bash
 unset CONDA_PREFIX CONDA_DEFAULT_ENV CONDA_PROMPT_MODIFIER CONDA_SHLVL
-unset MAMBA_EXE
+unset MAMBA_EXE ROOTSYS PYTHONHOME PYTHONPATH LD_LIBRARY_PATH
 export PATH=[MAMBA_BIN_PATH]:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export MAMBA_ROOT_PREFIX=[MAMBA_ROOT_PREFIX]
 # [MAMBA_BIN_PATH] lives inside the singularity image the batch jobs run in.
@@ -15,10 +15,10 @@ if ! command -v micromamba > /dev/null 2>&1; then
     exit 1
 fi
 eval "$(micromamba shell hook -s bash)"
-if [ -d "${MAMBA_ROOT_PREFIX}/envs/[MAMBA_ENV]" ]; then
-    micromamba activate [MAMBA_ENV] || exit 1
-else
+if [ -d "[MAMBA_ENV_PREFIX]" ]; then
     micromamba activate [MAMBA_ENV_PREFIX] || exit 1
+else
+    micromamba activate [MAMBA_ENV] || exit 1
 fi
 
 export SKNANO_HOME=[SKNANO_HOME]

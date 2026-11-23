@@ -1,149 +1,19 @@
 #include "MyCorrection.h"
 #include "MuonScaRe.h"
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "TRandom3.h"
 
-namespace {
-
-// ---------------------------------------------------------------------------
-// Generalized Endpoint curvature bias kappa_b, in 1/TeV, with its uncertainty.
-//
-// Above ~200 GeV the momentum comes largely from the muon system, so the scale
-// bias measured at the Z peak from tracker information alone does not describe
-// it. The GE method injects additive biases into simulation and picks the one
-// that reproduces data in q/pT. Source: MUO POG "High pT: Momentum Scale"
-// (methodology in AN-2018/008).
-//
-// Grid is [phi bin][eta bin]. Phi bins are [-180,-60), [-60,60), [60,180]
-// degrees; eta bins are [-2.4,-2.1), [-2.1,-1.2), [-1.2,0), [0,1.2), [1.2,2.1),
-// [2.1,2.4]. Eta keeps its sign here -- do not fold to |eta|.
-//
-// 2024 and 2025 are deliberately absent: those measurements use a different
-// binning and are not settled. Eras without a map are left uncorrected rather
-// than treated as an error.
-// ---------------------------------------------------------------------------
-struct GECell {
-  float kappa;
-  float sigma;
-};
-
-// Binning is per era rather than fixed: the published 2022-2023 maps are
-// 3 phi x 6 eta, while the 2024/2025 measurement uses a finer grid. Edges are
-// the inner boundaries; a value below the first edge lands in bin 0 and one
-// above the last edge in the final bin. Cells are indexed [phi][eta].
-struct GEMap {
-  std::vector<float> phiEdgesDeg; // inner boundaries in degrees
-  std::vector<float> etaEdges;    // inner boundaries, signed eta
-  std::vector<std::vector<GECell>> cells;
-
-  const GECell *find(const float eta, const float phi) const {
-    if (std::fabs(eta) > 2.4f)
-      return nullptr;
-    const float phiDeg = phi * 180.f / static_cast<float>(M_PI);
-    std::size_t iphi = 0;
-    while (iphi < phiEdgesDeg.size() && phiDeg >= phiEdgesDeg[iphi])
-      ++iphi;
-    std::size_t ieta = 0;
-    while (ieta < etaEdges.size() && eta >= etaEdges[ieta])
-      ++ieta;
-    if (iphi >= cells.size() || ieta >= cells[iphi].size())
-      return nullptr;
-    return &cells[iphi][ieta];
-  }
-};
-
-const std::vector<float> kGePhiEdges3 = {-60.f, 60.f};
-const std::vector<float> kGeEtaEdges6 = {-2.1f, -1.2f, 0.f, 1.2f, 2.1f};
-
-const std::unordered_map<std::string, GEMap> kGeKappa = {
-    {"2022",
-     {kGePhiEdges3, kGeEtaEdges6,
-      {
-          {{-0.16f, 0.1f}, {-0.03f, 0.05f}, {-0.05f, 0.04f}, {0.f, 0.04f}, {0.07f, 0.06f}, {-0.06f, 0.11f}},
-          {{0.11f, 0.1f}, {-0.01f, 0.06f}, {0.06f, 0.04f}, {0.02f, 0.03f}, {0.05f, 0.05f}, {-0.06f, 0.1f}},
-          {{0.17f, 0.11f}, {0.16f, 0.04f}, {-0.04f, 0.04f}, {-0.01f, 0.03f}, {0.04f, 0.06f}, {-0.f, 0.09f}},
-      }}},
-    {"2022EE",
-     {kGePhiEdges3, kGeEtaEdges6,
-      {
-          {{-0.12f, 0.05f}, {-0.03f, 0.03f}, {0.013f, 0.022f}, {0.029f, 0.023f}, {-0.04f, 0.03f}, {-0.28f, 0.05f}},
-          {{0.24f, 0.05f}, {0.1f, 0.03f}, {-0.006f, 0.022f}, {-0.047f, 0.022f}, {-0.14f, 0.03f}, {-0.48f, 0.05f}},
-          {{0.28f, 0.05f}, {0.07f, 0.03f}, {-0.028f, 0.022f}, {0.018f, 0.022f}, {0.07f, 0.03f}, {0.05f, 0.05f}},
-      }}},
-    {"2023",
-     {kGePhiEdges3, kGeEtaEdges6,
-      {
-          {{-0.21f, 0.06f}, {-0.01f, 0.04f}, {0.01f, 0.027f}, {-0.045f, 0.03f}, {0.01f, 0.04f}, {0.f, 0.07f}},
-          {{0.08f, 0.07f}, {-0.04f, 0.04f}, {0.07f, 0.025f}, {0.03f, 0.027f}, {-0.13f, 0.04f}, {-0.36f, 0.06f}},
-          {{0.27f, 0.07f}, {0.05f, 0.04f}, {0.054f, 0.026f}, {0.02f, 0.027f}, {0.f, 0.04f}, {-0.04f, 0.06f}},
-      }}},
-    {"2023BPix",
-     {kGePhiEdges3, kGeEtaEdges6,
-      {
-          {{-0.25f, 0.08f}, {0.07f, 0.05f}, {0.02f, 0.04f}, {-0.02f, 0.04f}, {0.08f, 0.06f}, {0.12f, 0.09f}},
-          {{-0.05f, 0.08f}, {0.f, 0.05f}, {0.05f, 0.03f}, {-0.05f, 0.04f}, {-0.17f, 0.05f}, {-0.33f, 0.09f}},
-          {{0.24f, 0.09f}, {0.09f, 0.05f}, {-0.01f, 0.03f}, {0.03f, 0.04f}, {0.04f, 0.06f}, {-0.2f, 0.07f}},
-      }}},
-};
-
-// ---------------------------------------------------------------------------
-// High-pT muon momentum resolution.
-//
-// The width is a cubic in the FULL momentum p, not pT: the measurement fits
-// (1/p - 1/p_gen)/(1/p_gen) in bins of p. Source: Schulte & Zhong, "High-pT
-// muon resolution measurement for 2022 and 2023" (2024-06-03).
-// Index [0] = barrel |eta| < 1.2, [1] = forward 1.2 - 2.4.
-//
-// 2024 is absent: the POG has that measurement in progress and currently asks
-// analyses to evaluate the non-closure in their own phase space. With no entry
-// the nominal smearing is a no-op and only the uncertainty remains.
-// ---------------------------------------------------------------------------
-struct MuonResPoly {
-  float a0, a1, a2, a3;
-};
-using MuonResSet = std::array<MuonResPoly, 2>;
-
-const std::unordered_map<std::string, MuonResSet> kMuonResPoly = {
-    {"2022",
-     {{{0.01152f, 5.95e-5f, -2.92e-8f, 5.14e-12f},
-       {0.01405f, 5.28e-5f, -1.90e-8f, 3.01e-12f}}}},
-    {"2022EE",
-     {{{0.0126f, 5.89e-5f, -2.85e-8f, 4.92e-12f},
-       {0.0150f, 4.81e-5f, -1.42e-8f, 1.95e-12f}}}},
-    {"2023",
-     {{{0.0172f, 6.15e-5f, -3.14e-8f, 5.82e-12f},
-       {0.01424f, 5.31e-5f, -1.92e-8f, 3.21e-12f}}}},
-    {"2023BPix",
-     {{{0.0118f, 6.14e-5f, -3.12e-8f, 5.74e-12f},
-       {0.0141f, 5.38e-5f, -2.00e-8f, 3.42e-12f}}}},
-};
-
-// Extra smearing strength f = sqrt(smearfac^2 - 1): 10% -> 0.458, 5% -> 0.320.
-// f = 0 means simulation already matches data in that era and eta region.
-const std::unordered_map<std::string, std::array<float, 2>> kMuonSmearF = {
-    {"2022", {{0.000f, 0.320f}}},
-    {"2022EE", {{0.320f, 0.460f}}},
-    {"2023", {{0.320f, 0.460f}}},
-    {"2023BPix", {{0.000f, 0.568f}}},
-};
-
-// The systematic is a flat ten percent regardless of era and eta.
-constexpr float kMuonSmearSystF = 0.4583f;
-
-int MuonResEtaBin(const float eta) { return (std::fabs(eta) < 1.2f) ? 0 : 1; }
-
-} // namespace
-
 MyCorrection::MuonScaleAndError MyCorrection::GetMuonScaleAndError(
     int charge, float pt, float eta, float phi, int trackerLayers,
     const float matched_pt) const {
+  if (!roccorLoaded)
+    throw SKNano::ConfigError("[MyCorrection::GetMuonScaleAndError] RoccoR is "
+                              "not loaded for this era");
   float roccor = 1.;
   float roccor_err = 0.;
 
@@ -189,92 +59,108 @@ MyCorrection::MuonScaleAndError MyCorrection::GetMuonScaleAndError(
 // Ball and k = sqrt(k_data^2 - k_mc^2) the residual smearing needed to reach
 // the data width (0 when simulation is already wider).
 //
-// The order of operations and the uncertainty model follow the POG reference
-// (jsonpog-integration examples/MuonScaRe.cc, muoScaleAndSmearingRDFExample):
-//  * the scale uncertainty is evaluated on the fully corrected pt, from the
-//    statistical errors of M and A and their correlation, and is applied to
-//    simulation only;
+// The order of operations, the validity window and the uncertainty model
+// follow the POG C++ reference (jsonpog-integration examples/MuonScaRe.cc,
+// pt_scale / pt_resol / pt_scale_var / pt_resol_var):
+//  * the scale applies from 26 GeV up, with no upper bound;
+//  * the smearing applies only while the scaled pt is inside [26, 200] GeV;
+//  * the scale uncertainty is evaluated on the fully corrected pt at any pt,
+//    from the statistical errors of M and A and their correlation, and is
+//    applied to simulation only;
 //  * the resolution uncertainty shifts k by its statistical error while
 //    keeping the same random draw, so the variation is a coherent shift of
-//    the nominal rather than an independent re-smearing.
+//    the nominal rather than an independent re-smearing; a shifted value that
+//    fails the sanity check falls back to the scale-only pt.
 // The file also carries "syst" variations (mass-binning changes); the POG
 // example does not use them and neither does this.
 // ---------------------------------------------------------------------------
-MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
+MuonScaReState MyCorrection::GetMuonScaleSmearing(
     const int charge, const float pt, const float eta, const float phi,
     const int trackerLayers, const unsigned long long eventNumber,
-    const unsigned int lumiBlock, const bool withVariations) const {
-  MuonMomentumLanes lanes{pt, pt, pt, pt, pt};
+    const unsigned int lumiBlock) const {
   if (!muSS_loaded)
     throwNullCorrection("GetMuonScaleSmearing");
-  if (!(pt > SKNano::MUON_SCARE_MIN_PT) || !(pt < SKNano::MUON_SCARE_MAX_PT))
-    return lanes;
 
   const double etaD = eta, phiD = phi, ptD = pt;
   const double q = charge;
 
-  // ---- Scale ------------------------------------------------------------
-  const correction::Correction::Ref &mRef = IsDATA ? muSS_m_data : muSS_m_mc;
-  const correction::Correction::Ref &aRef = IsDATA ? muSS_a_data : muSS_a_mc;
-  const double m = safeEvaluate(mRef, "GetMuonScaleSmearing/m", {etaD, phiD, "nom"});
-  const double a = safeEvaluate(aRef, "GetMuonScaleSmearing/a", {etaD, phiD, "nom"});
-  double ptScaled = 1. / (m / ptD + q * a);
-  if (!SKNano::MuonScaReResultIsSane(ptScaled, ptD))
-    ptScaled = ptD;
-
-  if (IsDATA) {
-    lanes.nominal = lanes.scaleUp = lanes.scaleDown = lanes.resUp =
-        lanes.resDown = static_cast<float>(ptScaled);
-    return lanes;
+  // ---- Scale, from the lower bound up (pt_scale) ---------------------------
+  double ptScaled = ptD;
+  if (ptD >= SKNano::MUON_SCARE_MIN_PT) {
+    const correction::Correction::Ref &mRef = IsDATA ? muSS_m_data : muSS_m_mc;
+    const correction::Correction::Ref &aRef = IsDATA ? muSS_a_data : muSS_a_mc;
+    const double m = safeEvaluate(mRef, "GetMuonScaleSmearing/m", {etaD, phiD, "nom"});
+    const double a = safeEvaluate(aRef, "GetMuonScaleSmearing/a", {etaD, phiD, "nom"});
+    ptScaled = 1. / (m / ptD + q * a);
+    // Not in the POG reference: 1/(m/pt + q*a) has a pole at pt = m/|a|,
+    // which the largest 2024 data alignment terms put near 4 TeV.
+    if (!SKNano::MuonScaReResultIsSane(ptScaled, ptD))
+      ptScaled = ptD;
   }
 
-  // ---- Resolution (simulation only) -------------------------------------
-  // sigma(pt) from the quadratic, evaluated on the scaled pt as the POG does.
-  const double nL = trackerLayers;
+  MuonScaReState state{ptScaled, ptScaled, 0.};
+  if (IsDATA)
+    return state;
+
+  // ---- Resolution, simulation only, inside the window (pt_resol) -----------
+  // k stays 0 outside the window: there is nothing to vary there.
   const double absEta = std::fabs(etaD);
-  const double p0 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 0});
-  const double p1 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 1});
-  const double p2 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 2});
-  double sigma = p0 + p1 * ptScaled + p2 * ptScaled * ptScaled;
-  if (sigma < 0.)
-    sigma = 0.;
+  if (ptScaled >= SKNano::MUON_SCARE_MIN_PT &&
+      ptScaled <= SKNano::MUON_SCARE_MAX_PT) {
+    // sigma(pt) from the quadratic, evaluated on the scaled pt.
+    const double nL = trackerLayers;
+    const double p0 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 0});
+    const double p1 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 1});
+    const double p2 = safeEvaluate(muSS_poly_params, "GetMuonScaleSmearing/poly", {absEta, nL, 2});
+    double sigma = p0 + p1 * ptScaled + p2 * ptScaled * ptScaled;
+    if (sigma < 0.)
+      sigma = 0.;
 
-  const double kData = safeEvaluate(muSS_k_data, "GetMuonScaleSmearing/k_data", {absEta, "nom"});
-  const double kMC = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_mc", {absEta, "nom"});
-  const double k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
+    const double kData = safeEvaluate(muSS_k_data, "GetMuonScaleSmearing/k_data", {absEta, "nom"});
+    const double kMC = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_mc", {absEta, "nom"});
+    const double k = (kMC < kData) ? std::sqrt(kData * kData - kMC * kMC) : 0.;
+    state.k = k;
 
-  // Flat random number from the file's hash generator, then shaped by the
-  // Crystal Ball fitted for this |eta| and tracker-layer multiplicity.  The
-  // event number is folded to 32 bits the way the POG reference seeds its
-  // generator; correctionlib's integer input is 32-bit anyway.
-  const int evtSeed = static_cast<int>(static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull));
-  const int lumiSeed = static_cast<int>(lumiBlock);
-  const double u = safeEvaluate(muSS_random, "GetMuonScaleSmearing/RandomSmearing", {evtSeed, lumiSeed, phiD});
-  const SKNano::MuonCrystalBall cb(
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 0}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 1}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 3}),
-      safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 2}));
-  const double draw = cb.invcdf(u);
-
-  // The POG window applies to the input of the smearing step as well.
-  const bool smearable = ptScaled > SKNano::MUON_SCARE_MIN_PT &&
-                         ptScaled < SKNano::MUON_SCARE_MAX_PT &&
-                         std::isfinite(draw);
-  double ptCorr = ptScaled;
-  if (smearable) {
-    const double candidate = ptScaled * (1. + k * sigma * draw);
+    // Flat random number from the file's hash generator, then shaped by the
+    // Crystal Ball fitted for this |eta| and tracker-layer multiplicity.  The
+    // event number is folded to 32 bits the way the POG reference seeds its
+    // generator; correctionlib's integer input is 32-bit anyway.
+    const int evtSeed = static_cast<int>(static_cast<unsigned int>(eventNumber & 0xFFFFFFFFull));
+    const int lumiSeed = static_cast<int>(lumiBlock);
+    const double u = safeEvaluate(muSS_random, "GetMuonScaleSmearing/RandomSmearing", {evtSeed, lumiSeed, phiD});
+    const SKNano::MuonCrystalBall cb(
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 0}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 1}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 3}),
+        safeEvaluate(muSS_cb_params, "GetMuonScaleSmearing/cb", {absEta, nL, 2}));
+    const double candidate = ptScaled * (1. + k * sigma * cb.invcdf(u));
     if (SKNano::MuonScaReResultIsSane(candidate, ptScaled))
-      ptCorr = candidate;
+      state.correctedPt = candidate;
   }
-  lanes.nominal = static_cast<float>(ptCorr);
-  if (!withVariations) {
+  return state;
+}
+
+MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearingVariations(
+    const MuonScaReState &state, const int charge, const float eta,
+    const float phi) const {
+  if (!muSS_loaded)
+    throwNullCorrection("GetMuonScaleSmearingVariations");
+  MuonMomentumLanes lanes;
+  lanes.nominal = static_cast<float>(state.correctedPt);
+  // The POG publishes no data-side uncertainty; the nuisance rides on the
+  // simulation templates.
+  if (IsDATA) {
     lanes.scaleUp = lanes.scaleDown = lanes.resUp = lanes.resDown =
         lanes.nominal;
     return lanes;
   }
+  const double etaD = eta, phiD = phi;
+  const double q = charge;
+  const double ptScaled = state.scaledPt;
+  const double ptCorr = state.correctedPt;
+  const double k = state.k;
 
-  // ---- Scale uncertainty, on the corrected pt ----------------------------
+  // ---- Scale uncertainty, on the corrected pt (pt_scale_var) ---------------
   const double statA = safeEvaluate(muSS_a_mc, "GetMuonScaleSmearing/a_stat", {etaD, phiD, "stat"});
   const double statM = safeEvaluate(muSS_m_mc, "GetMuonScaleSmearing/m_stat", {etaD, phiD, "stat"});
   const double rho = safeEvaluate(muSS_m_mc, "GetMuonScaleSmearing/rho_stat", {etaD, phiD, "rho_stat"});
@@ -284,17 +170,18 @@ MyCorrection::MuonMomentumLanes MyCorrection::GetMuonScaleSmearing(
   lanes.scaleUp = static_cast<float>(ptCorr + unc);
   lanes.scaleDown = static_cast<float>(ptCorr - unc);
 
-  // ---- Resolution uncertainty: shift k, keep the draw --------------------
+  // ---- Resolution uncertainty: shift k, keep the draw (pt_resol_var) -------
   lanes.resUp = lanes.resDown = lanes.nominal;
-  if (k > 0. && smearable && ptCorr != ptScaled) {
-    const double kUnc = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_unc", {absEta, "stat"});
-    const double pull = sigma * draw; // == (ptCorr/ptScaled - 1)/k
-    const double up = ptScaled * (1. + (k + kUnc) * pull);
-    const double down = ptScaled * (1. + (k - kUnc) * pull);
-    if (SKNano::MuonScaReResultIsSane(up, ptScaled))
-      lanes.resUp = static_cast<float>(up);
-    if (SKNano::MuonScaReResultIsSane(down, ptScaled))
-      lanes.resDown = static_cast<float>(down);
+  if (k != 0.) {
+    const double kUnc = safeEvaluate(muSS_k_mc, "GetMuonScaleSmearing/k_unc", {std::fabs(etaD), "stat"});
+    const double stdTimesDraw = (ptCorr / ptScaled - 1.) / k;
+    const auto shifted = [&](const double kShifted) {
+      const double value = ptScaled * (1. + kShifted * stdTimesDraw);
+      return static_cast<float>(
+          SKNano::MuonScaReResultIsSane(value, ptScaled) ? value : ptScaled);
+    };
+    lanes.resUp = shifted(k + kUnc);
+    lanes.resDown = shifted(k - kUnc);
   }
   return lanes;
 }
@@ -313,7 +200,7 @@ float MyCorrection::GetMuonHighPtSF(const TString &key, const float eta,
                                     const float pt,
                                     const variation syst) const {
   if (!cset_muon_highpt)
-    return 1.f;
+    throwNullCorrection("GetMuonHighPtSF");
   // The maps stop at |eta| = 2.4 and start at 50 GeV; correctionlib throws
   // outside them. The JSON applies abs() to eta itself.
   const float clampedEta =
@@ -327,7 +214,7 @@ float MyCorrection::GetMuonHighPtSF(const TString &key, const float eta,
 float MyCorrection::GetMuonHighPtRECOSF(const float eta, const float p,
                                         const variation syst) const {
   if (!cset_muon_highpt)
-    return 1.f;
+    throwNullCorrection("GetMuonHighPtRECOSF");
   // Binned in the full momentum p, not pt -- see the POG high-pT twiki.
   const float clampedEta =
       std::min(std::fabs(eta), HIGHPT_SF_MAX_ABSETA - 1e-3f);
@@ -335,112 +222,6 @@ float MyCorrection::GetMuonHighPtRECOSF(const float eta, const float p,
   auto cset = cset_muon_highpt->at("NUM_GlobalMuons_DEN_TrackerMuonProbes");
   return safeEvaluate(cset, "GetMuonHighPtRECOSF",
                       {clampedEta, clampedP, getSystString_MUO(syst)});
-}
-
-float MyCorrection::GetMuonGEScaledPt(const float pt, const float eta,
-                                      const float phi, const int charge,
-                                      const variation syst) const {
-  const auto it = kGeKappa.find(GetEra().Data());
-  if (it == kGeKappa.end())
-    return pt; // No map for this era (Run 2, 2024+); leave the momentum alone.
-
-  const GECell *cell = it->second.find(eta, phi);
-  if (!cell)
-    return pt;
-
-  float kappa = cell->kappa;
-  if (syst == variation::up)
-    kappa += cell->sigma;
-  else if (syst == variation::down)
-    kappa -= cell->sigma;
-
-  // k_meas = k_true + kappa  =>  pT_corr = pT / (1 - q * kappa * pT[TeV])
-  const float ptTeV = pt / 1000.f;
-  const float denom = 1.f - static_cast<float>(charge) * kappa * ptTeV;
-
-  // Guard the pole: kappa*pT approaching 1 blows the correction up, which a
-  // multi-TeV muon can reach. Emitting the uncorrected momentum beats emitting
-  // a runaway one.
-  if (std::fabs(denom) < 0.1f) {
-    std::cerr << "[MyCorrection::GetMuonGEScaledPt] Near-singular GE correction"
-              << " (denom = " << denom << ", kappa = " << kappa
-              << " TeV^-1, pT = " << pt << " GeV, q = " << charge
-              << "); keeping the uncorrected pT." << std::endl;
-    return pt;
-  }
-  return pt / denom;
-}
-
-float MyCorrection::GetMuonGESigmaShiftedPt(const float pt, const float eta,
-                                            const float phi, const int charge,
-                                            const variation syst) const {
-  if (syst == variation::nom)
-    return pt;
-
-  const auto it = kGeKappa.find(GetEra().Data());
-  if (it == kGeKappa.end())
-    return pt;
-  const GECell *cell = it->second.find(eta, phi);
-  if (!cell)
-    return pt;
-
-  // Centred on zero: the shift is the uncertainty on kappa, not kappa itself.
-  const float sigma = cell->sigma;
-  const float kappa = (syst == variation::up) ? sigma : -sigma;
-
-  const float ptTeV = pt / 1000.f;
-  const float denom = 1.f - static_cast<float>(charge) * kappa * ptTeV;
-  if (std::fabs(denom) < 0.1f) {
-    std::cerr << "[MyCorrection::GetMuonGESigmaShiftedPt] Near-singular shift"
-              << " (denom = " << denom << ", sigma = " << sigma
-              << " TeV^-1, pT = " << pt << " GeV, q = " << charge
-              << "); keeping the unshifted pT." << std::endl;
-    return pt;
-  }
-  return pt / denom;
-}
-
-float MyCorrection::GetMuonHighPtResolution(const float p,
-                                            const float eta) const {
-  const auto it = kMuonResPoly.find(GetEra().Data());
-  if (it == kMuonResPoly.end())
-    return 0.f;
-  const MuonResPoly &c = it->second[MuonResEtaBin(eta)];
-  return c.a0 + c.a1 * p + c.a2 * p * p + c.a3 * p * p * p;
-}
-
-float MyCorrection::GetMuonHighPtSmearFactor(const float p, const float eta,
-                                             const unsigned int seed,
-                                             const variation syst) const {
-  if (IsDATA)
-    return 1.f;
-  const auto itF = kMuonSmearF.find(GetEra().Data());
-  if (itF == kMuonSmearF.end())
-    return 1.f; // No map for this era (Run 2, 2024+); no extra smearing.
-
-  const float fNom = itF->second[MuonResEtaBin(eta)];
-  float f = fNom;
-  if (syst == variation::up) {
-    // Independent Gaussians, so the widths add in quadrature.
-    f = std::sqrt(fNom * fNom + kMuonSmearSystF * kMuonSmearSystF);
-  } else if (syst == variation::down) {
-    // Convolution can only widen a resolution, so this floors at zero, which
-    // makes the nuisance one-sided wherever the nominal smearing is already 0.
-    f = std::sqrt(
-        std::max(fNom * fNom - kMuonSmearSystF * kMuonSmearSystF, 0.f));
-  }
-  if (f <= 0.f)
-    return 1.f;
-
-  const float sigma = GetMuonHighPtResolution(p, eta);
-  if (sigma <= 0.f)
-    return 1.f;
-
-  // Nominal and variations share the seed so they share the Gaussian pull:
-  // the variation is then a coherent shift rather than an independent
-  // re-smearing, which would pile resolution on top of the nominal.
-  TRandom3 rng(seed);
-  return 1.f + rng.Gaus(0.f, sigma * f);
 }
 
 float MyCorrection::GetMuonRECOSF(const MuonViewCollection &muons,
@@ -493,10 +274,8 @@ float MyCorrection::GetElectronScaleUnc(const float scEta,
                                         const variation syst) const {
   if (IsDATA)
     return 1.0;
-  // Eras whose EGM scale-and-smearing file is absent get no variation rather
-  // than a null dereference.
   if (!cset_electron_variation)
-    return 1.0;
+    throwNullCorrection("GetElectronScaleUnc");
 
   switch (Run) {
   case 2: {
@@ -546,7 +325,7 @@ float MyCorrection::GetElectronScaleCorr(const float scEta,
   if (Run != 3)
     return 1.f;
   if (!cset_electron_variation)
-    return 1.f;
+    throwNullCorrection("GetElectronScaleCorr");
 
   // seedGain is a binned axis (edges 0/5/10/15) with clamp flow, not a
   // category, so gains 1, 6 and 12 land in their own bins and anything else
@@ -570,7 +349,7 @@ float MyCorrection::GetElectronSmearWidth(const float pt, const float r9,
   if (Run != 3)
     return 0.f;
   if (!cset_electron_variation)
-    return 0.f;
+    throwNullCorrection("GetElectronSmearWidth");
 
   const string systKey = (syst == variation::up)     ? "smear_up"
                          : (syst == variation::down) ? "smear_down"
@@ -596,11 +375,13 @@ float MyCorrection::GetElectronRECOSF(const float eta, const float pt,
     // EGM_era_prompt is precomputed; concatenating it here allocated a string
     // for every electron.
     const auto &cset = cachedElectronIDSF.get(cset_electron, "Electron-ID-SF");
-    const char *ptRange =
-        pt < 20.f ? "RecoBelow20" : (pt < 75.f ? "Reco20to75" : "RecoAbove75");
+    const float clampedPt = std::max(pt, ELECTRON_SF_MIN_PT);
+    const char *ptRange = clampedPt < 20.f
+                              ? "RecoBelow20"
+                              : (clampedPt < 75.f ? "Reco20to75" : "RecoAbove75");
     return safeEvaluate(cset, "GetElectronRECOSF",
                         {EGM_era_prompt, getSystString_EGM(syst), ptRange, eta,
-                         pt});
+                         clampedPt});
   }
   default:
     throw runtime_error("[MyCorrection::GetElectronRECOSF] Invalid run number");
@@ -611,7 +392,7 @@ float MyCorrection::GetElectronRECOSF(const ElectronView &electron,
                                       const variation syst) const {
   // Uncalibrated pt, as the muon SFs read MiniAODPt(): Pt() now carries the
   // EGM scale and smearing, which would move electrons across SF pt bins.
-  return GetElectronRECOSF(std::fabs(electron.Eta()), electron.MiniAODPt(),
+  return GetElectronRECOSF(electron.ScEta(), electron.MiniAODPt(),
                            electron.Phi(), syst);
 }
 
@@ -639,7 +420,7 @@ float MyCorrection::GetElectronIDSF(const TString &Electron_ID_SF_Key,
   return safeEvaluate(cset, "GetElectronIDSF",
                       {EGM_era_prompt, getSystString_EGM(syst),
                        Electron_ID_SF_Key.Data(),
-                       eta, pt < 999.9f ? pt : 999.9f});
+                       eta, std::clamp(pt, ELECTRON_SF_MIN_PT, 999.9f)});
 }
 
 float MyCorrection::GetElectronHEEPIDSF(const float scEta, const float pt,
@@ -657,12 +438,17 @@ float MyCorrection::GetElectronHEEPIDSF(const float scEta, const float pt,
                        scEta, clampedPt});
 }
 
+float MyCorrection::GetElectronHEEPIDSF(const ElectronView &electron,
+                                        const variation syst) const {
+  return GetElectronHEEPIDSF(electron.ScEta(), electron.MiniAODPt(), syst);
+}
+
 float MyCorrection::GetElectronIDSF(const TString &key,
                                     const ElectronView &electron,
                                     const variation syst) const {
   // Uncalibrated pt, as the muon SFs read MiniAODPt(): Pt() now carries the
   // EGM scale and smearing, which would move electrons across SF pt bins.
-  return GetElectronIDSF(key, std::fabs(electron.Eta()), electron.MiniAODPt(),
+  return GetElectronIDSF(key, electron.ScEta(), electron.MiniAODPt(),
                          electron.Phi(), syst);
 }
 
@@ -715,6 +501,14 @@ float MyCorrection::GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key,
                         {"mc", getSystString_MUO(syst), eta, pt});
 }
 
+// The efficiency map is binned in signed eta.
+float MyCorrection::GetMuonTriggerEff(const TString &Muon_Trigger_Eff_Key,
+                                      const MuonView &muon, const bool isData,
+                                      const variation syst) const {
+  return GetMuonTriggerEff(Muon_Trigger_Eff_Key, muon.Eta(), muon.MiniAODPt(),
+                           isData, syst);
+}
+
 float MyCorrection::GetMuonTriggerSF(const TString &key,
                                      const MuonView &muon,
                                      const variation syst) const {
@@ -752,10 +546,8 @@ float MyCorrection::GetMuonTriggerSF(const TString &key,
   float failData = 1.f;
   float failMc = 1.f;
   for (const auto muon : muons) {
-    failData *= 1.f - GetMuonTriggerEff(
-        key, std::fabs(muon.Eta()), muon.Pt(), true, syst);
-    failMc *= 1.f - GetMuonTriggerEff(
-        key, std::fabs(muon.Eta()), muon.Pt(), false, syst);
+    failData *= 1.f - GetMuonTriggerEff(key, muon, true, syst);
+    failMc *= 1.f - GetMuonTriggerEff(key, muon, false, syst);
   }
   const float passMc = 1.f - failMc;
   return passMc == 0.f ? 1.f : (1.f - failData) / passMc;
@@ -778,18 +570,35 @@ float MyCorrection::GetElectronTriggerEff(
   if (hasPhi < 0)
     hasPhi = isInputInCorrection("phi", cset) ? 1 : 0;
 
+  const float clampedPt = std::max(pt, ELECTRON_HLT_SF_MIN_PT);
   try {
     if (hasPhi == 0)
       return safeEvaluate(cset, "GetTriggerEff",
                           {EGM_era_key, ValType,
-                           Electron_Trigger_SF_Key.Data(), eta, pt});
+                           Electron_Trigger_SF_Key.Data(), eta, clampedPt});
     return safeEvaluate(cset, "GetTriggerEff",
                         {EGM_era_key, ValType, Electron_Trigger_SF_Key.Data(),
-                         eta, pt, phi});
+                         eta, clampedPt, phi});
   } catch (const exception &e) {
     cerr << "[MyCorrection::GetElectronTriggerEff] " << e.what() << endl;
     throw;
   }
+}
+
+float MyCorrection::GetElectronTriggerEff(const TString &Electron_ID_SF_Key,
+                                          const ElectronView &electron,
+                                          const bool isDATA,
+                                          const variation syst) const {
+  return GetElectronTriggerEff(Electron_ID_SF_Key, electron.ScEta(),
+                               electron.MiniAODPt(), electron.Phi(), isDATA,
+                               syst);
+}
+
+float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
+                                         const ElectronView &electron,
+                                         const variation syst) const {
+  return GetElectronTriggerSF(Electron_Trigger_SF_Key, electron.ScEta(),
+                              electron.MiniAODPt(), electron.Phi(), syst);
 }
 
 float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
@@ -801,14 +610,15 @@ float MyCorrection::GetElectronTriggerSF(const TString &Electron_Trigger_SF_Key,
   if (electronHltSFHasPhi < 0)
     electronHltSFHasPhi = isInputInCorrection("phi", cset) ? 1 : 0;
 
+  const float clampedPt = std::max(pt, ELECTRON_HLT_SF_MIN_PT);
   try {
     if (electronHltSFHasPhi == 0)
       return safeEvaluate(cset, "GetTriggerEff",
                           {EGM_era_key, getSystString_EGM(syst),
-                           Electron_Trigger_SF_Key.Data(), eta, pt});
+                           Electron_Trigger_SF_Key.Data(), eta, clampedPt});
     return safeEvaluate(cset, "GetTriggerEff",
                         {EGM_era_key, getSystString_EGM(syst),
-                         Electron_Trigger_SF_Key.Data(), eta, pt, phi});
+                         Electron_Trigger_SF_Key.Data(), eta, clampedPt, phi});
   } catch (const exception &e) {
     cerr << "[MyCorrection::GetElectronTriggerSF] " << e.what() << endl;
     throw;
