@@ -10,6 +10,12 @@
 
 namespace SKNano {
 
+// Friend file contract (docs/FriendInput.md): the per-entry status field and
+// the one-entry metadata RNTuple every friend file carries.
+inline constexpr const char *kFriendStatusField = "SKFriend_status";
+inline constexpr const char *kFriendInfoNTuple = "SKFriendInfo";
+inline constexpr std::uint32_t kFriendFormatVersion = 1;
+
 // Type-erased bridge between the analyzer's generated branch wrappers and
 // ROOT's typed RNTuple views.  Keeping ROOT's RNTuple templates in the .cc
 // file avoids exposing their evolving implementation to every analyzer and
@@ -100,6 +106,21 @@ public:
     makeScalarColumn(const std::string &name, std::type_index outputType) const;
     std::shared_ptr<RNTupleVectorColumn>
     makeVectorColumn(const std::string &name, std::type_index elementType) const;
+
+    // Friend RNTuple: a second file whose dataset has the same entry count and
+    // order as the primary (built by sknano_friend), served through the same
+    // column factories so branches and handles cannot tell the files apart.
+    // A field present in both files is taken from the friend only for the
+    // collections the friend's SKFriendInfo record declares as overrides; any
+    // other duplicate is a configuration error.  run/luminosityBlock/event are
+    // reserved for the per-entry alignment check in noteEntry and never
+    // exposed from the friend.  Call after open(), before the first read.
+    void addFriend(const std::string &fileName);
+    std::size_t friendCount() const noexcept;
+    // SKFriend_status of the entry: 0 present, 1 rejected by a filtered
+    // production's event filter, 2 lost from an unfiltered production.  The
+    // maximum over all friends; 0 without friends.
+    std::uint8_t friendStatus(std::uint64_t localEntry) const;
 
 private:
     class Impl;

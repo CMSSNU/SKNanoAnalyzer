@@ -31,6 +31,10 @@ export SKNANO_OUTPUT="/gv0/Users/$USER/SKNanoOutput"
 # this, so moving to another cluster is one variable rather than a rewrite of
 # every sample json.
 export SKNANO_INPUT_ROOT="/gv0/DATA/SKNano/NanoAODv15_RNTuple"
+# Friend RNTuples (custom columns next to the central files, see
+# docs/FriendInput.md) mirror the central paths below <root>/<production>/;
+# a module shares them with other users by pinning `root` in friends.yml.
+export SKNANO_FRIEND_ROOT="/gv0/Users/$USER/SKNanoFriend"
 echo "@@@@ Working Directory: $SKNANO_HOME"
 
 CONFIG_FILE="$SKNANO_HOME/config/config.$USER"
@@ -53,7 +57,7 @@ if [ -f "${CONFIG_FILE}" ]; then
     # Override the defaults above. A key that is present but empty --
     # config.default ships every key that way -- keeps the default.
     for _sknano_key in SKNANO_HOME SKNANO_RUNLOG SKNANO_OUTPUT SKNANO_INPUT_ROOT \
-                       MAMBA_EXE MAMBA_ROOT_PREFIX; do
+                       SKNANO_FRIEND_ROOT MAMBA_EXE MAMBA_ROOT_PREFIX; do
         _sknano_value=$(_sknano_config_value "${_sknano_key}")
         if [[ -n "${_sknano_value}" ]]; then
             export "${_sknano_key}=${_sknano_value}"

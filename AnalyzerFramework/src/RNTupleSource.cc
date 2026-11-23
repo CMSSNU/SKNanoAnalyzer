@@ -402,19 +402,85 @@ std::uint64_t MetricInt(const ROOT::RNTupleReader &reader, const char *name) {
                    : 0;
 }
 
+void AddReaderMetrics(RNTupleReadStats &stats, const ROOT::RNTupleReader &reader) {
+    stats.readPayloadBytes +=
+        MetricInt(reader, "RNTupleReader.RPageSourceFile.szReadPayload");
+    stats.readOverheadBytes +=
+        MetricInt(reader, "RNTupleReader.RPageSourceFile.szReadOverhead");
+    stats.readCalls += MetricInt(reader, "RNTupleReader.RPageSourceFile.nRead");
+    stats.readVCalls += MetricInt(reader, "RNTupleReader.RPageSourceFile.nReadV");
+    stats.unzipBytes += MetricInt(reader, "RNTupleReader.RPageSourceFile.szUnzip");
+    stats.readWallSeconds += static_cast<double>(MetricInt(
+        reader, "RNTupleReader.RPageSourceFile.timeWallRead")) * 1e-9;
+    stats.unzipWallSeconds += static_cast<double>(MetricInt(
+        reader, "RNTupleReader.RPageSourceFile.timeWallUnzip")) * 1e-9;
+}
+
+// NanoAOD naming: `nX` is the count of collection X, `X_y` one of its
+// columns, anything else is its own collection.
+std::string CollectionOf(const std::string &field) {
+    const auto underscore = field.find('_');
+    if (underscore != std::string::npos)
+        return field.substr(0, underscore);
+    if (field.size() > 1 && field[0] == 'n')
+        return field.substr(1);
+    return field;
+}
+
+bool IsReservedFriendField(const std::string &name) {
+    return name == "run" || name == "luminosityBlock" || name == "event" ||
+           name == kFriendStatusField;
+}
+
+// The event identity of a dataset, read for the friend alignment check.
+struct KeyViews {
+    explicit KeyViews(ROOT::RNTupleReader &reader)
+        : run(reader.GetView<std::uint32_t>("run")),
+          lumi(reader.GetView<std::uint32_t>("luminosityBlock")),
+          event(reader.GetView<std::uint64_t>("event")) {}
+    ROOT::RNTupleView<std::uint32_t> run;
+    ROOT::RNTupleView<std::uint32_t> lumi;
+    ROOT::RNTupleView<std::uint64_t> event;
+};
+
+std::string FormatKey(KeyViews &keys, std::uint64_t entry) {
+    std::ostringstream out;
+    out << keys.run(entry) << ":" << keys.lumi(entry) << ":" << keys.event(entry);
+    return out.str();
+}
+
 } // namespace
 
 class RNTupleSource::Impl {
 public:
+    struct FieldInfo {
+        std::string type;
+        int owner = -1; // -1 primary, otherwise index into `friends`
+    };
+    struct Friend {
+        std::unique_ptr<ROOT::RNTupleReader> reader;
+        std::unique_ptr<InputPrefetcher> prefetcher;
+        std::string file;
+        std::unique_ptr<KeyViews> keys;
+        std::unique_ptr<ROOT::RNTupleView<std::uint8_t>> status;
+    };
+
     std::unique_ptr<ROOT::RNTupleReader> reader;
     std::unique_ptr<InputPrefetcher> prefetcher;
     bool metrics = false;
     std::string file;
-    // Top-level field name -> on-disk type name, snapshotted once per file.
-    // RNTupleReader::GetDescriptor() clones the descriptor under a lock and
-    // FindFieldId() is a linear scan over every top-level field, so neither may
-    // be called from the per-entry read path.
-    std::unordered_map<std::string, std::string> fieldTypes;
+    std::string ntupleName;
+    // open() settings, replayed for every friend.
+    ROOT::RNTupleReadOptions readOptions;
+    unsigned prefetchClusters = 0;
+    std::unordered_set<std::string> prefetchFields;
+    std::vector<Friend> friends;
+    std::unique_ptr<KeyViews> primaryKeys; // created with the first friend
+    // Top-level field name -> on-disk type name and owning file, snapshotted
+    // once per file.  RNTupleReader::GetDescriptor() clones the descriptor
+    // under a lock and FindFieldId() is a linear scan over every top-level
+    // field, so neither may be called from the per-entry read path.
+    std::unordered_map<std::string, FieldInfo> fieldTypes;
 
     void snapshotFields() {
         fieldTypes.clear();
@@ -422,7 +488,63 @@ public:
             return;
         const auto &descriptor = reader->GetDescriptor();
         for (const auto &field : descriptor.GetTopLevelFields())
-            fieldTypes.emplace(field.GetFieldName(), field.GetTypeName());
+            fieldTypes.emplace(field.GetFieldName(),
+                               FieldInfo{field.GetTypeName(), -1});
+    }
+
+    ROOT::RNTupleReader &readerFor(const std::string &name) const {
+        const auto entry = fieldTypes.find(name);
+        if (entry == fieldTypes.end() || entry->second.owner < 0)
+            return *reader;
+        return *friends[static_cast<std::size_t>(entry->second.owner)].reader;
+    }
+
+    const std::string &fileOf(const std::string &name) const {
+        const auto entry = fieldTypes.find(name);
+        if (entry == fieldTypes.end() || entry->second.owner < 0)
+            return file;
+        return friends[static_cast<std::size_t>(entry->second.owner)].file;
+    }
+
+    std::unique_ptr<InputPrefetcher>
+    makePrefetcher(ROOT::RNTupleReader &source, const std::string &fileName) {
+        if (prefetchClusters == 0)
+            return nullptr;
+        // Remote protocols have no page cache to warm; only plain paths qualify.
+        if (fileName.find("://") != std::string::npos &&
+            fileName.compare(0, 7, "file://") != 0)
+            return nullptr;
+        const std::string path =
+            fileName.compare(0, 7, "file://") == 0 ? fileName.substr(7) : fileName;
+        try {
+            auto layout = BuildPrefetchLayout(source.GetDescriptor());
+            if (layout.clusters.empty())
+                return nullptr;
+            return std::make_unique<InputPrefetcher>(
+                path, std::move(layout), prefetchClusters, prefetchFields);
+        } catch (const std::exception &error) {
+            std::cerr << "[RNTupleSource] prefetch disabled for " << fileName
+                      << ": " << error.what() << std::endl;
+            return nullptr;
+        }
+    }
+
+    void checkAlignment(std::uint64_t entry) {
+        const auto run = primaryKeys->run(entry);
+        const auto lumi = primaryKeys->lumi(entry);
+        const auto event = primaryKeys->event(entry);
+        for (auto &friendFile : friends) {
+            if (friendFile.keys->run(entry) == run &&
+                friendFile.keys->lumi(entry) == lumi &&
+                friendFile.keys->event(entry) == event)
+                continue;
+            throw SKNano::ConfigError(
+                "[RNTupleSource] friend " + friendFile.file +
+                " is not aligned with " + file + " at entry " +
+                std::to_string(entry) + ": primary run:lumi:event " +
+                FormatKey(*primaryKeys, entry) + ", friend " +
+                FormatKey(*friendFile.keys, entry));
+        }
     }
 };
 
@@ -440,39 +562,108 @@ void RNTupleSource::open(const std::string &ntupleName,
     options.SetClusterCache(enableClusterCache
         ? ROOT::RNTupleReadOptions::EClusterCache::kOn
         : ROOT::RNTupleReadOptions::EClusterCache::kOff);
+    close();
     try {
         auto reader = ROOT::RNTupleReader::Open(ntupleName, fileName, options);
         impl_->reader = std::move(reader);
         impl_->file = fileName;
+        impl_->ntupleName = ntupleName;
         impl_->metrics = enableMetrics;
+        impl_->readOptions = options;
+        impl_->prefetchClusters = prefetchClusters;
+        impl_->prefetchFields = prefetchFields ? *prefetchFields
+                                               : std::unordered_set<std::string>{};
         impl_->snapshotFields();
     } catch (const std::exception &error) {
         throw SKNano::ConfigError("[RNTupleSource] cannot open '" + ntupleName +
                                   "' in " + fileName + ": " + error.what());
     }
-    impl_->prefetcher.reset();
-    if (prefetchClusters == 0)
-        return;
-    // Remote protocols have no page cache to warm; only plain paths qualify.
-    if (fileName.find("://") != std::string::npos &&
-        fileName.compare(0, 7, "file://") != 0)
-        return;
-    const std::string path =
-        fileName.compare(0, 7, "file://") == 0 ? fileName.substr(7) : fileName;
+    impl_->prefetcher = impl_->makePrefetcher(*impl_->reader, fileName);
+}
+
+void RNTupleSource::addFriend(const std::string &fileName) {
+    if (!impl_->reader)
+        throw SKNano::LogicError("[RNTupleSource] open() must precede addFriend()");
+    Impl::Friend friendFile;
+    friendFile.file = fileName;
+    std::vector<std::string> overrides;
     try {
-        auto layout = BuildPrefetchLayout(impl_->reader->GetDescriptor());
-        if (!layout.clusters.empty())
-            impl_->prefetcher = std::make_unique<InputPrefetcher>(
-                path, std::move(layout), prefetchClusters,
-                prefetchFields ? *prefetchFields
-                               : std::unordered_set<std::string>{});
+        auto info = ROOT::RNTupleReader::Open(kFriendInfoNTuple, fileName);
+        if (info->GetNEntries() != 1)
+            throw std::runtime_error(std::string(kFriendInfoNTuple) +
+                                     " must hold exactly one entry");
+        const auto version = info->GetView<std::uint32_t>("formatVersion")(0);
+        if (version != kFriendFormatVersion)
+            throw std::runtime_error("friend format version " +
+                                     std::to_string(version) + ", expected " +
+                                     std::to_string(kFriendFormatVersion));
+        overrides = info->GetView<std::vector<std::string>>("overrides")(0);
+        const auto centralEntries = info->GetView<std::uint64_t>("centralEntries")(0);
+        if (centralEntries != impl_->reader->GetNEntries())
+            throw std::runtime_error(
+                "built for a primary with " + std::to_string(centralEntries) +
+                " entries, this one has " +
+                std::to_string(impl_->reader->GetNEntries()));
+        friendFile.reader = ROOT::RNTupleReader::Open(impl_->ntupleName, fileName,
+                                                      impl_->readOptions);
+        if (friendFile.reader->GetNEntries() != impl_->reader->GetNEntries())
+            throw std::runtime_error(
+                "has " + std::to_string(friendFile.reader->GetNEntries()) +
+                " entries, the primary has " +
+                std::to_string(impl_->reader->GetNEntries()));
+        friendFile.keys = std::make_unique<KeyViews>(*friendFile.reader);
+        friendFile.status = std::make_unique<ROOT::RNTupleView<std::uint8_t>>(
+            friendFile.reader->GetView<std::uint8_t>(kFriendStatusField));
+        if (!impl_->primaryKeys)
+            impl_->primaryKeys = std::make_unique<KeyViews>(*impl_->reader);
     } catch (const std::exception &error) {
-        std::cerr << "[RNTupleSource] prefetch disabled for " << fileName
-                  << ": " << error.what() << std::endl;
+        throw SKNano::ConfigError("[RNTupleSource] cannot attach friend " +
+                                  fileName + " to " + impl_->file + ": " +
+                                  error.what());
     }
+
+    const int owner = static_cast<int>(impl_->friends.size());
+    const auto &descriptor = friendFile.reader->GetDescriptor();
+    for (const auto &field : descriptor.GetTopLevelFields()) {
+        const auto name = field.GetFieldName();
+        if (IsReservedFriendField(name))
+            continue;
+        auto existing = impl_->fieldTypes.find(name);
+        if (existing == impl_->fieldTypes.end()) {
+            impl_->fieldTypes.emplace(name, Impl::FieldInfo{field.GetTypeName(), owner});
+            continue;
+        }
+        if (existing->second.owner >= 0)
+            throw SKNano::ConfigError(
+                "[RNTupleSource] field '" + name + "' is provided by two friends, " +
+                impl_->friends[static_cast<std::size_t>(existing->second.owner)].file +
+                " and " + fileName);
+        const auto collection = CollectionOf(name);
+        if (std::find(overrides.begin(), overrides.end(), collection) == overrides.end())
+            throw SKNano::ConfigError(
+                "[RNTupleSource] friend " + fileName + " field '" + name +
+                "' also exists in " + impl_->file + "; the friend must declare '" +
+                collection + "' in its overrides to replace it");
+        existing->second = Impl::FieldInfo{field.GetTypeName(), owner};
+    }
+    friendFile.prefetcher = impl_->makePrefetcher(*friendFile.reader, fileName);
+    impl_->friends.push_back(std::move(friendFile));
+}
+
+std::size_t RNTupleSource::friendCount() const noexcept {
+    return impl_->friends.size();
+}
+
+std::uint8_t RNTupleSource::friendStatus(std::uint64_t localEntry) const {
+    std::uint8_t status = 0;
+    for (const auto &friendFile : impl_->friends)
+        status = std::max(status, (*friendFile.status)(localEntry));
+    return status;
 }
 
 void RNTupleSource::close() {
+    impl_->friends.clear();
+    impl_->primaryKeys.reset();
     impl_->prefetcher.reset();
     impl_->reader.reset();
     impl_->file.clear();
@@ -484,28 +675,29 @@ void RNTupleSource::noteEntry(
     const std::unordered_set<std::string> *activeFields) {
     if (impl_->prefetcher)
         impl_->prefetcher->noteEntry(localEntry, activeFields);
+    for (auto &friendFile : impl_->friends)
+        if (friendFile.prefetcher)
+            friendFile.prefetcher->noteEntry(localEntry, activeFields);
+    if (!impl_->friends.empty())
+        impl_->checkAlignment(localEntry);
 }
 
 RNTupleReadStats RNTupleSource::readStats() const {
     RNTupleReadStats stats;
-    if (impl_->prefetcher) {
-        stats.prefetchBytes = impl_->prefetcher->bytes();
-        stats.prefetchRanges = impl_->prefetcher->ranges();
-        stats.prefetchClusters = impl_->prefetcher->clustersWarmed();
-    }
-    if (impl_->reader && impl_->metrics) {
-        const auto &reader = *impl_->reader;
-        stats.readPayloadBytes =
-            MetricInt(reader, "RNTupleReader.RPageSourceFile.szReadPayload");
-        stats.readOverheadBytes =
-            MetricInt(reader, "RNTupleReader.RPageSourceFile.szReadOverhead");
-        stats.readCalls = MetricInt(reader, "RNTupleReader.RPageSourceFile.nRead");
-        stats.readVCalls = MetricInt(reader, "RNTupleReader.RPageSourceFile.nReadV");
-        stats.unzipBytes = MetricInt(reader, "RNTupleReader.RPageSourceFile.szUnzip");
-        stats.readWallSeconds = static_cast<double>(MetricInt(
-            reader, "RNTupleReader.RPageSourceFile.timeWallRead")) * 1e-9;
-        stats.unzipWallSeconds = static_cast<double>(MetricInt(
-            reader, "RNTupleReader.RPageSourceFile.timeWallUnzip")) * 1e-9;
+    const auto addPrefetch = [&stats](const InputPrefetcher *prefetcher) {
+        if (!prefetcher)
+            return;
+        stats.prefetchBytes += prefetcher->bytes();
+        stats.prefetchRanges += prefetcher->ranges();
+        stats.prefetchClusters += prefetcher->clustersWarmed();
+    };
+    addPrefetch(impl_->prefetcher.get());
+    if (impl_->reader && impl_->metrics)
+        AddReaderMetrics(stats, *impl_->reader);
+    for (const auto &friendFile : impl_->friends) {
+        addPrefetch(friendFile.prefetcher.get());
+        if (impl_->metrics)
+            AddReaderMetrics(stats, *friendFile.reader);
     }
     return stats;
 }
@@ -532,7 +724,7 @@ std::string RNTupleSource::fieldType(const std::string &name) const {
     const auto entry = impl_->fieldTypes.find(name);
     if (entry == impl_->fieldTypes.end())
         return {};
-    return entry->second;
+    return entry->second.type;
 }
 
 const std::string &RNTupleSource::fileName() const noexcept {
@@ -548,7 +740,7 @@ RNTupleSource::makeScalarColumn(const std::string &name,
         throw SKNano::ConfigError("[RNTupleSource] missing field '" + name +
                                   "' in " + impl_->file);
 
-    auto &reader = *impl_->reader;
+    auto &reader = impl_->readerFor(name);
     const auto diskType = fieldType(name);
     try {
         if (IsCardinality(diskType)) {
@@ -581,7 +773,7 @@ RNTupleSource::makeScalarColumn(const std::string &name,
     } catch (const std::exception &error) {
         throw SKNano::ConfigError("[RNTupleSource] scalar field '" + name +
                                   "' has incompatible type " + diskType +
-                                  " in " + impl_->file + ": " + error.what());
+                                  " in " + impl_->fileOf(name) + ": " + error.what());
     }
     throw SKNano::ConfigError("[RNTupleSource] unsupported scalar mapping for field '" +
                               name + "' (disk type " + diskType + ")");
@@ -596,7 +788,7 @@ RNTupleSource::makeVectorColumn(const std::string &name,
         throw SKNano::ConfigError("[RNTupleSource] missing field '" + name +
                                   "' in " + impl_->file);
     try {
-        auto &reader = *impl_->reader;
+        auto &reader = impl_->readerFor(name);
         if (Is<float>(elementType)) return std::make_shared<VectorColumn<float>>(reader, name);
         if (Is<double>(elementType)) return std::make_shared<VectorColumn<double>>(reader, name);
         if (Is<int>(elementType)) return std::make_shared<VectorColumn<int>>(reader, name);
@@ -610,7 +802,7 @@ RNTupleSource::makeVectorColumn(const std::string &name,
     } catch (const std::exception &error) {
         throw SKNano::ConfigError("[RNTupleSource] vector field '" + name +
                                   "' has incompatible type " + fieldType(name) +
-                                  " in " + impl_->file + ": " + error.what());
+                                  " in " + impl_->fileOf(name) + ": " + error.what());
     }
     throw SKNano::ConfigError("[RNTupleSource] unsupported vector mapping for field '" +
                               name + "' (disk type " + fieldType(name) + ")");

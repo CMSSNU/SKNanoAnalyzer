@@ -42,6 +42,12 @@ public:
 
     virtual void SetRNTupleName(TString name);
     virtual int AddFile(TString filename);
+    // The friends are opened alongside this file and must be aligned with it
+    // entry for entry (docs/FriendInput.md); pairing them in one call keeps a
+    // generated job from ever pairing them by position.
+    // Entries a friend does not hold (rejected by a filtered production, or
+    // lost from an unfiltered one) never reach executeEvent().
+    int AddFile(TString filename, const std::vector<std::string> &friends);
     Long64_t GetInputEntries();
     void RegisterBranches();
     void ResetBranchStates();
@@ -164,6 +170,7 @@ public:
 
     std::string inputDatasetName = "Events";
     std::vector<std::string> inputFiles;
+    std::vector<std::vector<std::string>> inputFriends; // parallel to inputFiles
     struct RNTupleFileRange {
         std::string fileName;
         Long64_t begin = 0;

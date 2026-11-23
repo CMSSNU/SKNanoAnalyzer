@@ -61,10 +61,16 @@ void SKNanoLoader::SetRNTupleName(TString name)
 
 int SKNanoLoader::AddFile(TString filename)
 {
+    return AddFile(filename, {});
+}
+
+int SKNanoLoader::AddFile(TString filename, const std::vector<std::string> &friends)
+{
     const std::string path = filename.Data();
     if (path.empty())
         return 0;
     inputFiles.push_back(path);
+    inputFriends.push_back(friends);
     rntupleFileRanges.clear();
     rntupleTotalEntries = -1;
     return 1;
@@ -107,6 +113,8 @@ void SKNanoLoader::OpenRNTupleFile(std::size_t index)
     next->open(inputDatasetName, rntupleFileRanges[index].fileName,
                rntupleMetrics, rntupleClusterCache, rntuplePrefetchClusters,
                &branchManager.getActiveBranches());
+    for (const auto &friendFile : inputFriends[index])
+        next->addFriend(friendFile);
     // attachRNTuple clears views into the previous reader before the old
     // RNTupleSource is destroyed by the unique_ptr move below.
     branchManager.attachRNTuple(next.get());
@@ -226,6 +234,22 @@ void SKNanoLoader::Loop()
 
         if (globalEntry < skipEntries)
             continue;
+
+        // An event the friend does not hold is out of the sample: a filtered
+        // production rejected it (its normalisation is the producer's
+        // pre-filter sum), or an unfiltered one lost it (its genWeight was
+        // subtracted at submission).  Either way it must not be analysed.
+        if (rntupleSource->friendCount() > 0)
+        {
+            const auto status = rntupleSource->friendStatus(
+                static_cast<std::uint64_t>(currentLocalEntry));
+            if (status != 0)
+            {
+                performanceTelemetry.addCounter(
+                    status == 1 ? "friend_filtered_events" : "friend_missing_events");
+                continue;
+            }
+        }
 
         int current_percent = (entriesToProcess > 0) ? (processed * 100) / entriesToProcess : 100;
 

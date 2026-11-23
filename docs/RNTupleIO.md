@@ -9,7 +9,9 @@ RNTuple fields.
 
 The framework code generator consumes only the canonical NanoAOD schema.
 External modules bind custom scalar and vector fields through typed runtime
-handles and provide their own event-scoped row views.
+handles and provide their own event-scoped row views. Custom fields of a
+private production can live in a friend file attached next to each central
+file instead of a full private copy; see [Friend Input](FriendInput.md).
 
 ## Run an analyzer
 
