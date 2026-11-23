@@ -37,12 +37,39 @@ export ROCCOR_PATH=[ROCCOR_PATH]
 export ONNXRUNTIME_INCLUDE_DIR=${CONDA_PREFIX}/include/onnxruntime/core/session
 export ONNXRUNTIME_LIB_DIR=${CONDA_PREFIX}/lib
 
-export LD_LIBRARY_PATH=[SKNANO_RUNLOG_LIB]:${CONDA_PREFIX}/lib:[LHAPDF_LIB_DIR]:$CORRECTION_LIB_DIR
-
 export ROOT_HIST=0
-export ROOT_INCLUDE_PATH=[ROOT_INCLUDE_PATH]
 
-cd [WORKDIR]
+# Run from a copy on the node's local disk. Started from the runlog directory
+# on the shared filesystem, each job probes it hundreds of times before the
+# first event (ROOT and the dynamic loader look there first for every library
+# and header, and ROOT also searches the working directory) and pages the
+# libraries in over the network; hundreds of jobs starting together put that
+# load on the storage servers. The copy is about 10 MB. If it fails, the job
+# runs from the runlog directory as before.
+run_dir=[WORKDIR]
+run_lib=[SKNANO_RUNLOG_LIB]
+run_include=[SKNANO_RUNLOG_INCLUDE]
+if [ -n "${_CONDOR_SCRATCH_DIR:-}" ]; then
+    # A subdirectory: HTCondor transfers back only top-level sandbox files.
+    stage=$_CONDOR_SCRATCH_DIR/sknano_stage
+else
+    stage=$(mktemp -d "${TMPDIR:-/tmp}/sknano_stage.XXXXXX") && trap 'rm -rf "$stage"' EXIT
+fi
+if [ -n "$stage" ] && mkdir -p "$stage/lib" "$stage/include" \
+    && cp -rL "$run_lib/." "$stage/lib" \
+    && cp -rL "$run_include/." "$stage/include" \
+    && cp "$run_dir/job_$1.cc" "$stage/"; then
+    run_dir=$stage
+    run_lib=$stage/lib
+    run_include=$stage/include
+else
+    echo "run.sh: staging to local disk failed, running from $run_dir" >&2
+fi
+
+export LD_LIBRARY_PATH=$run_lib:${CONDA_PREFIX}/lib:[LHAPDF_LIB_DIR]:$CORRECTION_LIB_DIR
+export ROOT_INCLUDE_PATH=$run_include[ROOT_INCLUDE_PATH_EXTRA]
+
+cd "$run_dir"
 
 root -l -b -q job_$1.cc
 exit $?

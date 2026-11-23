@@ -710,7 +710,38 @@ float MyCorrection::GetTauIDSF_vsMu(const TauView::TauID &id,
   return GetTauIDSF_vsMuRaw(id, tau.Eta(), tau.GenPartFlav(), syst);
 }
 
+float MyCorrection::GetTauES(const float pt, const float eta, const int dm,
+                             const int genmatch, const TString &wp_vsJet,
+                             const TString &wp_vsE,
+                             const variation syst) const {
+  if (IsDATA)
+    return 1.f;
+  const auto &cset = cachedTauES.get(cset_tau, "tau_energy_scale");
+  return safeEvaluate(cset, "GetTauES",
+                      {static_cast<double>(pt), static_cast<double>(eta), dm,
+                       genmatch, string("DeepTau2018v2p5"),
+                       string(wp_vsJet.Data()), string(wp_vsE.Data()),
+                       getSystString_TAU(syst)});
+}
+
+float MyCorrection::GetTauES(const TauView::TauID &id, const TauView &tau,
+                             const variation syst) const {
+  return GetTauES(tau.MiniAODPt(), tau.Eta(), tau.DecayMode(),
+                  tau.GenPartFlav(), ToCorrectionString(id.vsJet),
+                  ToCorrectionString(id.vsE), syst);
+}
+
 namespace {
+
+const char *tauTrigTypeString(const MyCorrection::TauTrigType type) {
+  switch (type) {
+  case MyCorrection::TauTrigType::DiTau:    return "ditau";
+  case MyCorrection::TauTrigType::ETau:     return "etau";
+  case MyCorrection::TauTrigType::MuTau:    return "mutau";
+  case MyCorrection::TauTrigType::DiTauJet: return "ditaujet";
+  }
+  throw SKNano::LogicError("[MyCorrection::GetTauTriggerSF] unknown trigger type");
+}
 
 // A stale index would read a neighbouring tau and silently mis-weight the
 // event, so it is reported rather than clamped.  Matches GetMuonIDSF.
@@ -722,6 +753,47 @@ inline void requireTauIndex(const char *where, const std::size_t index,
 }
 
 } // namespace
+
+float MyCorrection::GetTauTriggerSF(const float pt, const int dm,
+                                    const TauTrigType type,
+                                    const variation syst,
+                                    const TString &wp) const {
+  if (IsDATA)
+    return 1.f;
+  const auto &cset = cachedTauTrigger.get(cset_tau, "tau_trigger");
+  // "Medium" is the only working point published for 2024, and it is a PNet
+  // point rather than the DeepTau point the offline selection uses.
+  const float sf =
+      safeEvaluate(cset, "GetTauTriggerSF",
+                   {static_cast<double>(pt), dm, string(tauTrigTypeString(type)),
+                    string(wp.Data()), string("sf"),
+                    getSystString_TAU(syst)});
+  // The file returns -1 for a decay mode it does not cover. Multiplying that
+  // into an event weight flips its sign, silently, so it is refused here.
+  if (!(sf > 0.f)) {
+    const int key = static_cast<int>(type) * 64 + (dm + 1);
+    if (warnedTauTriggerCoverage.insert(key).second)
+      cerr << "[MyCorrection::GetTauTriggerSF] Warning: " << tauTrigTypeString(type)
+           << " trigger SF is not covered for dm " << dm << " (got " << sf
+           << "), returning 1." << endl;
+    return 1.f;
+  }
+  return sf;
+}
+
+float MyCorrection::GetTauTriggerSF(const TauTrigType type,
+                                    const TauViewCollection &taus,
+                                    const std::vector<std::size_t> &indices,
+                                    const variation syst,
+                                    const TString &wp) const {
+  float weight = 1.f;
+  for (const std::size_t index : indices) {
+    requireTauIndex("GetTauTriggerSF", index, taus.size());
+    weight *= GetTauTriggerSF(taus[index].Pt(), taus[index].DecayMode(), type,
+                              syst, wp);
+  }
+  return weight;
+}
 
 float MyCorrection::GetTauIDSF_vsJet(const TauView::TauID &id,
                                      const TauViewCollection &taus,

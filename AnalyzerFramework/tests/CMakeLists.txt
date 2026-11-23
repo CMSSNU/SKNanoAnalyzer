@@ -6,6 +6,7 @@ add_executable(sknano_framework_tests
     WeightIndexTest.cc
     LeptonCorrectionFlowTest.cc
     OutputPathCollisionTest.cc)
+    TauEnergyScaleTest.cc)
 
 target_link_libraries(sknano_framework_tests PRIVATE
     AnalyzerFramework

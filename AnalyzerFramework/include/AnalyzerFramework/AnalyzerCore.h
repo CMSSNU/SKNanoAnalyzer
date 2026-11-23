@@ -132,6 +132,12 @@ private:
     TString j_tight, j_loose;
 };
 
+struct TauESViewCacheEntry {
+    TauView::WorkingPoint vsJet;
+    TauView::WorkingPoint vsE;
+    TauViewCollection views;
+};
+
 class AnalyzerCore: public SKNanoLoader {
 public:
     enum class RNTupleOutputProfile { Fast, Sparse };
@@ -374,17 +380,33 @@ public:
     GenJetViewCollection GetAllGenJetViews();
     LHEViewCollection GetAllLHEViews();
     TauViewCollection GetAllTauViews();
-    std::vector<std::size_t>
-    SelectTauIndices(const TauViewCollection &taus,
+    TauViewCollection GetAllTauViews(const TauView::TauID &id);
+    void PopulateTauMomentum(TauSoA &storage);
+
+    void EnableTauEnergyScale(const TauView::TauID &id);
+    void EnableTauEnergyScale(const std::vector<TauView::TauID> &ids);
+    bool TauEnergyScaleEnabled() const noexcept { return tauESEnabled; }
+
+    void PropagateTauSystToMET(
+        const TauViewCollection &taus, Particle &met,
+        TauESSource source = TauESSource::Total,
+        MyCorrection::variation variation = MyCorrection::variation::nom) const;
+    std::vector<std::size_t> SelectTauIndices(const TauViewCollection &taus,
                      const std::vector<std::size_t> &seed_indices,
                      const TauView::TauID &id, const float ptmin,
-                     const float fetamax) const;
+                     const float fetamax,
+                     TauESSource source = TauESSource::Total,
+                     MyCorrection::variation variation = MyCorrection::variation::nom) const;
     std::vector<std::size_t> SelectTauIndices(const TauViewCollection &taus,
                                               const TauView::TauID &id,
                                               const float ptmin,
-                                              const float fetamax) const;
+                                              const float fetamax,
+                                              TauESSource source = TauESSource::Total,
+                                              MyCorrection::variation variation = MyCorrection::variation::nom) const;
     TauViewCollection SelectTauViews(const TauViewCollection &taus,
-        std::vector<std::size_t> indices, bool sortByPt = true) const;
+        std::vector<std::size_t> indices, bool sortByPt = true,
+        TauESSource source = TauESSource::Total,
+        MyCorrection::variation variation = MyCorrection::variation::nom) const;
     GenDressedLeptonViewCollection GetAllGenDressedLeptonViews();
     GenIsolatedPhotonViewCollection GetAllGenIsolatedPhotonViews();
     GenVisTauViewCollection GetAllGenVisTauViews();
@@ -743,6 +765,15 @@ protected:
     JetViewCollection cachedJetViews;
     Long64_t cachedGenViewsEntry = kInvalidCacheEntry;
     GenViewCollection cachedGenViews;
+    Long64_t cachedTauViewsEntry = kInvalidCacheEntry;
+    TauViewCollection cachedTauViews;
+    std::vector<TauESViewCacheEntry> cachedTauESViews;
+    bool tauESEnabled = false;
+    std::vector<TauView::TauID> tauESIds;
+    TauViewCollection MakeTauViews(const TauView::TauID *id);
+    void RefreshTauViewCache();
+    void RequireTauESVariation(const char *where,
+                               MyCorrection::variation variation) const;
     Long64_t cachedGenJetViewsEntry = kInvalidCacheEntry;
     GenJetViewCollection cachedGenJetViews;
     std::unordered_map<std::string, std::unique_ptr<float>> scalar_float_storage;
