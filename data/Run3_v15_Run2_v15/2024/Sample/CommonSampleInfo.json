@@ -644,117 +644,125 @@
     "WWto2L2Nu": {
         "isMC": 1,
         "PD": "WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 12.98,
         "nmc": 239943886.0,
         "sumsign": 239895910.0,
         "sumW": 2828732644.7281265,
-        "note": "xsDB, NLO order",
-        "xsec": 11.79
+        "note": "SMP-24-001,NNLO"
+        
     },
     "WWtoLNu2Q": {
         "isMC": 1,
         "PD": "WWtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec_formula": "12.98/(3*0.1086)*2*0.6741",
+        "xsec": 53.72,
         "nmc": 275723961.0,
         "sumsign": 275669765.0,
         "sumW": 13493841713.276768,
-        "note": "xsDB, NLO order",
-        "xsec": 48.94
+        "note": "SMP-24-001,NNLO(WWto2L2Nu)*BR"
     },
     "WWto4Q": {
         "isMC": 1,
         "PD": "WWto4Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec_formula": "12.98*0.6742/0.1086*6",
+        "xsec": 55.58,
         "nmc": 151214029.0,
         "sumsign": 151184045.0,
         "sumW": 7680164365.411167,
-        "note": "xsDB, NLO order",
-        "xsec": 50.79
+        "note": "SMP-24-001,NNLO(WWto2L2Nu)*BR"
+        
     },
     "WZto3LNu": {
         "isMC": 1,
         "PD": "WZto3LNu_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 5.31,
         "nmc": 248149069.0,
         "sumsign": 247668979.0,
         "sumW": 1221944303.0921807,
-        "note": "xsDB, NLO order",
-        "xsec": 4.924
+        "note": "SMP-24-001,NNLO"
+        
     },
     "WZto2L2Q": {
         "isMC": 1,
         "PD": "WZto2L2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 8.17,
         "nmc": 236049432.0,
         "sumsign": 235803796.0,
         "sumW": 1786458941.3901196,
-        "note": "xsDB, NLO order",
-        "xsec": 7.568
+        "note": "SMP-24-001,NNLO"
+        
     },
     "WZtoLNu2Q": {
         "isMC": 1,
         "PD": "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 17.1396,
         "nmc": 143874689.0,
         "sumsign": 143813627.0,
         "sumW": 2283328935.031993,
-        "note": "xsDB, NLO order",
-        "xsec": 15.87
+        "note": "xsDB(15.87)*1.08 (SMP-24-001,WZ NNLO method)"
     },
     "WZtoL3Nu": {
         "isMC": 1,
         "PD": "WZtoL3Nu_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec": 3.077,
+        "xsec": 3.321316,
         "nmc": 9997000.0,
         "sumsign": 9996480.0,
         "sumW": 30766065.39253235,
-        "note": "xsDB, NLO order"
+        "note": "xsDB(3.077)*1.08 (SMP-24-001,WZ NNLO method)"
     },
     "ZZto4L": {
         "isMC": 1,
         "PD": "ZZto4L_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 1.65,
         "nmc": 236757511.0,
         "sumsign": 234299669.0,
         "sumW": 329198066.77729774,
-        "note": "xsDB, NLO order",
-        "xsec": 1.39
+        "note": "SMP-24-001,NNLO"
     },
     "ZZto2Nu2Q": {
         "isMC": 1,
         "PD": "ZZto2Nu2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 4.826,
         "nmc": 46047410.0,
         "sumsign": 45974330.0,
         "sumW": 222217840.5812168,
-        "note": "xsDB, NLO order",
-        "xsec": 4.826
+        "note": "xsDB, NLO order"
     },
     "ZZto2L2Q": {
         "isMC": 1,
         "PD": "ZZto2L2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 8.08,
         "nmc": 171627615.0,
         "sumsign": 170569959.0,
         "sumW": 1165248684.0179186,
-        "note": "xsDB, NLO order",
-        "xsec": 6.788
+        "note": "SMP-24-001,NNLO"
     },
     "ZZto2L2Nu": {
         "isMC": 1,
         "PD": "ZZto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
+        "xsec": 1.19,
         "nmc": 188715312.0,
         "sumsign": 188298156.0,
         "sumW": 194528941.11289644,
-        "note": "xsDB, NLO order",
-        "xsec": 1.031
+        "note": "SMP-24-001,NNLO"
     },
     "WZto4Q": {
         "isMC": 1,
         "PD": "WZto4Q-1Jets-4FS_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
-        "xsec": -1,
+        "xsec": 24.88,
         "nmc": 6163657.0,
         "sumsign": 3580883.0,
-        "sumW": 255679067.6994629
+        "sumW": 255679067.6994629,
+        "note": "xsDB, NLO order"
     },
     "ZZto4Q": {
         "isMC": 1,
         "PD": "ZZto4Q-1Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
-        "xsec": -1,
+        "xsec": 7.832,
         "nmc": 4971870.0,
         "sumsign": 2956872.0,
-        "sumW": 65887310.438827515
+        "sumW": 65887310.438827515,
+        "note": "xsDB, NLO order"
     },
     "QCD_HT40to70": {
         "isMC": 1,
