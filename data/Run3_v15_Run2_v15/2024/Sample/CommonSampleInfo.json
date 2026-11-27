@@ -664,7 +664,7 @@
     "WWto4Q": {
         "isMC": 1,
         "PD": "WWto4Q_TuneCP5_13p6TeV_powheg-pythia8",
-        "xsec_formula": "12.98*0.6742/0.1086*6",
+        "xsec_formula": "12.98*0.6742/(0.1086*3)^2",
         "xsec": 55.58,
         "nmc": 151214029.0,
         "sumsign": 151184045.0,
